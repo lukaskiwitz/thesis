@@ -41,7 +41,6 @@
             <FieldName>cytokine</FieldName>
             <DiffusionConstant>100.0</DiffusionConstant>
             <DecayConstant>0.01</DecayConstant>
-            <InitialConcentrationExpression>0</InitialConcentrationExpression>
          </DiffusionData>
          <BoundaryConditions>
             <Plane Axis="X">

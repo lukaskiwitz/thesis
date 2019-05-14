@@ -1,6 +1,6 @@
 Km = 10
 vmax = 50
-threshold = 100
+threshold = 1000
 secrConst = 50
 from PySteppables import *
 import CompuCell
