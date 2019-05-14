@@ -1,0 +1,84 @@
+<CompuCell3D Revision="20190430" Version="3.7.9">
+   
+   <Potts>
+      <!-- Basic properties of CPM (GGH) algorithm -->
+      <Dimensions x="100" y="100" z="1"/>
+      <Steps>500</Steps>
+      <Temperature>0.1</Temperature>
+      <NeighborOrder>1</NeighborOrder>
+   </Potts>
+   
+   <Plugin Name="CellType">
+      
+      <!-- Listing all cell types in the simulation -->
+      <CellType TypeId="0" TypeName="Medium"/>
+      <CellType TypeId="1" TypeName="source"/>
+      <CellType TypeId="2" TypeName="sink"/>
+      <CellType TypeId="3" TypeName="neutral"/>
+   </Plugin>
+   <Plugin Name="Volume">
+        <VolumeEnergyParameters CellType="source" LambdaVolume="2.0" TargetVolume="10"/>
+        <VolumeEnergyParameters CellType="sink" LambdaVolume="2.0" TargetVolume="10"/>
+        <VolumeEnergyParameters CellType="neutral" LambdaVolume="2.0" TargetVolume="10"/>
+   </Plugin>
+   <Plugin Name="Surface">
+        <SurfaceEnergyParameters CellType="source" LambdaSurface="2.0" TargetSurface="5"/>
+        <SurfaceEnergyParameters CellType="sink" LambdaSurface="2.0" TargetSurface="5"/>
+        <SurfaceEnergyParameters CellType="neutral" LambdaSurface="2.0" TargetSurface="5"/>
+   </Plugin>
+
+   <Plugin Name="CenterOfMass">
+      
+      <!-- Module tracking center of mass of each cell -->
+   </Plugin>
+   
+   <Steppable Type="SteadyStateDiffusionSolver2D">
+      
+      <!-- Specification of PDE solvers -->
+      <DiffusionField Name="cytokine">
+        <ManageSecretionInPython/>
+         <DiffusionData>
+            <FieldName>cytokine</FieldName>
+            <DiffusionConstant>100.0</DiffusionConstant>
+            <DecayConstant>0.01</DecayConstant>
+            <InitialConcentrationExpression>0</InitialConcentrationExpression>
+         </DiffusionData>
+         <BoundaryConditions>
+            <Plane Axis="X">
+               <ConstantValue PlanePosition="Min" Value="0"/>
+               <ConstantValue PlanePosition="Max" Value="0"/>
+               <!-- Other options are (examples): -->
+               <!-- <Periodic/> -->
+               <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+            </Plane>
+            <Plane Axis="Y">
+               <ConstantValue PlanePosition="Min" Value="0"/>
+               <ConstantValue PlanePosition="Max" Value="0"/>
+               <!-- Other options are (examples): -->
+               <!-- <Periodic/> -->
+               <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+            </Plane>
+         </BoundaryConditions>
+      </DiffusionField>
+   </Steppable>
+   
+   <Steppable Type="BlobInitializer">
+   
+
+   <Region>
+      <Center x="50" y="50" z="0"/>
+      <Radius>2</Radius>
+      <Gap>0</Gap>
+      <Width>2</Width>
+      <Types>source</Types>
+   </Region>
+   <Region>
+      <Center x="50" y="50" z="0"/>
+      <Radius>40</Radius>
+      <Gap>10</Gap>
+      <Width>2</Width>
+      <Types>sink</Types>
+   </Region>
+</Steppable>
+
+</CompuCell3D>
