@@ -31,6 +31,11 @@ from steadyStateTest2Steppables import cellSwitch
 instanceOfcellSwitch=cellSwitch(_simulator=sim,_frequency=1)
 steppableRegistry.registerSteppable(instanceOfcellSwitch)
 
+
+from steadyStateTest2Steppables import SBML
+instanceOfSBML=SBML(_simulator=sim,_frequency=1)
+steppableRegistry.registerSteppable(instanceOfSBML)
+
 CompuCellSetup.mainLoop(sim,simthread,steppableRegistry)
         
         

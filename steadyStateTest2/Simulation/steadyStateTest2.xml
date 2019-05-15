@@ -4,7 +4,7 @@
       
       <!--- Basic properties of CPM (GGH) algorithm -->
       <Dimensions x="100" y="100" z="1"/>
-      <Steps>500</Steps>
+      <Steps>100</Steps>
       <Temperature>1</Temperature>
       <NeighborOrder>1</NeighborOrder>
    </Potts>
@@ -145,12 +145,19 @@
    
    <Steppable Type="UniformInitializer">
       <Region>
-         <BoxMin x="10" y="20" z="0"/>
-         <BoxMax x="90" y="90" z="1"/>
-         <Gap>10</Gap>
-         <Width>5</Width>
+         <BoxMin x="30" y="30" z="0"/>
+         <BoxMax x="70" y="70" z="1"/>
+         <Gap>5</Gap>
+         <Width>2</Width>
          <Types>cd4</Types>
       </Region>
+<!--             <Region> -->
+<!--                  <BoxMin x="45" y="45" z="0"/> -->
+<!--                  <BoxMax x="55" y="55" z="1"/> -->
+<!--                  <Gap>0</Gap> -->
+<!--                  <Width>10</Width> -->
+<!--                  <Types>cd4</Types> -->
+<!--             </Region> -->
    </Steppable>
    <Steppable Type="BlobInitializer">
    <Region>
