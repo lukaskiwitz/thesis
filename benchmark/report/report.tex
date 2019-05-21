@@ -1,0 +1,38 @@
+\documentclass[12pt,a4paper]{scrreprt}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\begin{document} 
+	\chapter{Fenics}
+		\section{Math stuff}
+			\subsection{Variational Form of the Poisson equation}
+			\begin{align*}
+				D \nabla^2 u  &= f\\
+				D \nabla^2 u v &= f v \\
+				D \int_\Omega \nabla^2 u dx &= \int_\Omega f v dx
+			\end{align*}
+			\paragraph{left hand side}
+			By adding $\int_\Omega \nabla u \nabla v dx$ and using Green's first  identity the \textit{lhs} yields
+			\begin{equation}\label{poissonVar}
+				D \int_\Omega \nabla^2 u dx  
+				= 
+				D \left( \int_{\partial\Omega} v(\nabla u \cdot \vec{n}) ds - \int_\Omega \nabla u \cdot \nabla v dx \right)
+			\end{equation}
+			\paragraph{right hand side}
+				...
+			\subsection{Boundary Conditions}
+			Since the test function must vanish on $\partial \Omega$, only terms concerning $\nabla u \cdot \vec{n}$ must be substituted into \ref{poissonVar}. In order to specify different BCs on different parts of the boundary, the boundary integral in \ref{poissonVar} can be constructed as a sum
+			\begin{equation*}
+				\int_{\partial\Omega} v(\nabla u \cdot \vec{n})ds = \sum \int_{\partial\Omega} v(\nabla u \cdot \vec{n})ds_i 
+			\end{equation*}
+			over the pieces $s_i$ of the boundary\footnote{It is my understanding that this piecewise construction is possible as result of the FEM approach since the solution $u$ is taken from the $H^1$ Sobolev space, which allows for discontinues derivatives.}.
+			The above admits both Neumann and nonlinear boundary conditions of the form
+			
+			\begin{align*}
+				\nabla u \cdot \vec{n} = const\\
+				\nabla u \cdot \vec{n} = q(u,\vec{p})
+			\end{align*}
+			where $q$ depends on $u$ and possible a parameter vector $\vec{p}$.
+	\end{document}

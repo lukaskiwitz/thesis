@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 20 21:51:21 2019
+
+@author: lukas
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+lu = np.load("lu_time.npy")
+cg = np.load("cg_time.npy")
+gmres = np.load("gmres_time.npy")
+
+#lu = np.flip(lu)
+#cg = np.flip(cg)
+
+plt.plot(lu[:,0],lu[:,1])
+
+plt.plot(cg[:,0],cg[:,1])
+
+plt.plot(gmres[:,0],gmres[:,1])
+
+plt.legend(["lu","cg","gmres"])
