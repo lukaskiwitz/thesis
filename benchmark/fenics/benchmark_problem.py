@@ -78,7 +78,7 @@ def mySolve(mesh, boundary_markers,subdomains,p):
     
     problem = NonlinearVariationalProblem(F,u, dirichlet,J=derivative(F, u))
     solver = NonlinearVariationalSolver(problem)
-    solver.parameters["newton_solver"]["linear_solver"] = "bicgstab"
+    solver.parameters["newton_solver"]["linear_solver"] = "cg"
     solver.parameters["newton_solver"]["preconditioner"] = "ilu"
     
     solver.solve()
@@ -99,7 +99,7 @@ errorNorm = []
 errorPoint = []
 timing = []
 
-for t in [128]:#np.arange(16,32,16):
+for t in [32]:#np.arange(16,32,16):
     
     p = {
          "R":pow(10,2),
