@@ -9,12 +9,6 @@ from __future__ import print_function
 
 import fenics as fcs
 
-class DummyError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-            
 class PoissonSolver:
     """
     class to solve the stationary diffusion equation in 2D/3D with nonlinear boundary condition
@@ -42,29 +36,6 @@ class PoissonSolver:
     subdomains = []
     dim = 2
     p = {}
-    
-    def q(self,u):
-        """
-        evaluates nonlinear BC; used internaly by fenics solver
-        parameters are take from self.p
-        
-        Parameters
-        ----------
-        
-        u:fenics.MeshFunction 
-            represents solution term for fenincs.NonlinearVariationalSolver
-            
-        Returns
-        -------
-        fenics Form
-            nonlinear boundary condition
-            
-        """
-        R = self.p["R"]
-        q = self.p["q"]
-        k_on = self.p["k_on"]
-
-        return (q-u*k_on*R)
     
     def __init__(self,mesh,subdomains,boundary_markers,dim):
         """
@@ -137,8 +108,9 @@ class PoissonSolver:
                 value = fcs.Expression(str(value),degree=2)
                 self.neumann.append(value*v*ds(i.patch))
             if "Rec" in i.bcDict:
-                #nonlinear Secretion according to q(u); value of dict entry is discarded
-                self.nonLinBC.append(self.q(u)*v*ds(i.patch))
+                #nonlinear Secretion according to Function object q(u,p) passed in dict entry
+                q = i.bcDict["Rec"]
+                self.nonLinBC.append(q(u,self.p)*v*ds(i.patch))
         print(self.subdomains)
         #Defines variational form of poisson equation with boundary integrals as sums
         F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.neumann) - sum(self.nonLinBC))

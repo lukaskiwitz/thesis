@@ -14,9 +14,14 @@ import fenics as fcs
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-import gc
 
+def cellBC(u,p):
+        R = p["R"]
+        q = p["q"]
+        k_on = p["k_on"]
 
+        return (q-u*k_on*R)
+    
     
 def u_exact(x,p):
     R = p["R"]
@@ -57,14 +62,13 @@ def run(res,options):
     domRad = 1#radius of the domain
     box = entity.OuterSphere([0,0,0],domRad,bcDict=boxBC)#instantiates SubDomain at origin;
     
-    meshGen = myMesh.MeshGenerator(outerBoundary=box)#instantiates meshgenerator object
-    cellList=[{"center":[0,0,0],"radius":p["rho"],"bcDict":{"Rec":""}}]#defines list of cells(as SubDomain objects) in simulation
+    meshGen = myMesh.MeshGenerator(outerBoundary=box)#instantiates my meshgenerator object
+    cellList=[{"center":[0,0,0],"radius":p["rho"],"bcDict":{"Rec":cellBC}}]#defines list of cells(as objects of SubDomain) in simulation
     meshGen.cellList= cellList
     meshGen.dim = 3#explicitly sets mesh dimension
     
     meshGen.compileSubdomains()
-    #print(meshGen.domain)
-    mesh,subdomains, boundary_markers = meshGen.meshGen(t)#returns mesh, subdomains and boundary_markers
+    mesh,subdomains, boundary_markers = meshGen.meshGen(res)#returns mesh, subdomains and boundary_markers
 
     
     """Solver Setup"""
@@ -73,8 +77,8 @@ def run(res,options):
     solver.compileSolver()
     
     #alters parameters of fenics solver
-    solver.solver.parameters["newton_solver"]["linear_solver"] = "lu"
-    #solver.solver.parameters["newton_solver"]["preconditioner"] = "ilu"
+    solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
+    solver.solver.parameters["newton_solver"]["preconditioner"] = "ilu"
         
     """runs simulation"""
     start = time.process_time_ns()
@@ -92,16 +96,23 @@ def run(res,options):
 
 
 
-timing = []
-for t in [16,32,64,128]:
-    solution = []
-    try:
-        dT,u = run(t,"")
-        timing.append([t,dT])
-    except:
-        print("Failed lu")
+
     
-np.save("lu",np.array(timing))
+dT,sol = run(64,"")
+
+
+x = np.linspace(p["rho"],1,100)
+
+y = [u_exact(i,p) for i in x]
+
+plt.plot(x,y)
+plt.plot(sol[0],sol[1])
+
+plt.legend(["exact","FEM"])
+plt.xlabel("r")
+plt.ylabel("u")
+plt.title("problem 1")
+#plt.savefig("problem_1.png",dpi=200)   
    
         
         
