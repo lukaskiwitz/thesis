@@ -111,7 +111,6 @@ class PoissonSolver:
                 #nonlinear Secretion according to Function object q(u,p) passed in dict entry
                 q = i.bcDict["Rec"]
                 self.nonLinBC.append(q(u,self.p)*v*ds(i.patch))
-        print(self.subdomains)
         #Defines variational form of poisson equation with boundary integrals as sums
         F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.neumann) - sum(self.nonLinBC))
         
@@ -136,8 +135,8 @@ class PoissonSolver:
         """
         #calls fenics solver; renames u for proper vtk output and returns solution u
         self.solver.solve()
-        print("solving")
+        
         self.u.rename('u','u')
         return self.u
     def __del__(self):
-        print("delete")
+        pass
