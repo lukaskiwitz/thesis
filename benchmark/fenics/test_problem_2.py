@@ -21,11 +21,11 @@ def cellBC(u,p):
     Defines the flux boundary conditions for the cell.
     Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
-        R = p["R"]
-        q = p["q"]
-        k_on = p["k_on"]
+    R = p["R"]
+    q = p["q"]
+    k_on = p["k_on"]
 
-        return (q-u*k_on*R)
+    return (q-u*k_on*R)
 def outerBC(u,p):
     """
     Defines the flux boundary condition on the outer boundary.
@@ -103,7 +103,7 @@ def run(res,p):
     
     meshGen.compileSubdomains()
     #print(meshGen.domain)
-    mesh,subdomains, boundary_markers = meshGen.meshGen(res,load="mesh.xml")#returns mesh, subdomains and boundary_markers
+    mesh,subdomains, boundary_markers = meshGen.meshGen(res)#returns mesh, subdomains and boundary_markers
     
     #file=dlf.File("mesh.xml")
     #file<< mesh
@@ -140,19 +140,19 @@ def run(res,p):
     return end-start,[x,y_sol]
 
 
-for i in np.linspace(pow(10,1),pow(10,6),10):
-    p["R"] = i
-    dT,sol = run(64,p)
-    
-    
-    x = np.linspace(p["rho"],p["L"]+p["rho"],100)
-    
-    y = [u_exact(i,p) for i in x]
-    
-    #plt.plot(x,y)
-    plt.plot(sol[0],sol[1])
-    #plt.savefig("problem_2.png",dpi=200)   
-    
+#for i in np.linspace(pow(10,1),pow(10,6),10):
+#p["R"] = i
+dT,sol = run(64,p)
+
+
+x = np.linspace(p["rho"],p["L"]+p["rho"],100)
+
+y = [u_exact(i,p) for i in x]
+
+#plt.plot(x,y)
+plt.plot(sol[0],sol[1])
+#plt.savefig("problem_2.png",dpi=200)   
+
 #plt.legend(["exact","FEM"])
 plt.xlabel("r")
 plt.ylabel("u")

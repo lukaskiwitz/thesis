@@ -110,7 +110,8 @@ class PoissonSolver:
             if "Rec" in i.bcDict:
                 #nonlinear Secretion according to Function object q(u,p) passed in dict entry
                 q = i.bcDict["Rec"]
-                self.nonLinBC.append(q(u,self.p)*v*ds(i.patch))
+                p = i.bcDict["p"] if "p" in i.bcDict else self.p
+                self.nonLinBC.append(q(u,p)*v*ds(i.patch))
         #Defines variational form of poisson equation with boundary integrals as sums
         F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.neumann) - sum(self.nonLinBC))
         
