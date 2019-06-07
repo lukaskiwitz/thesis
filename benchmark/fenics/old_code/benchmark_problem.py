@@ -26,7 +26,7 @@ def u_exact(x,p):
     rho = p["rho"]
     D= p["D"]
     
-    return q*rho/(np.linalg.norm(x)*k_on*R+D*4*np.pi*rho)
+    return q*rho/(np.linalg.norm(x)*(k_on*R+D*4*np.pi*rho))
 
 def u_exact_exp(p):
     R = str(p["R"])
@@ -46,7 +46,7 @@ def mySolve(mesh, boundary_markers,subdomains,p):
     
     ds = Measure("ds", domain=mesh, subdomain_data=boundary_markers)
     
-    V = FunctionSpace(mesh, 'P', 1)
+    V = FunctionSpace(mesh, 'P', 2)
     u = Function(V)
     v = TestFunction(V)
     f = Constant(0)
@@ -78,7 +78,7 @@ def mySolve(mesh, boundary_markers,subdomains,p):
     
     problem = NonlinearVariationalProblem(F,u, dirichlet,J=derivative(F, u))
     solver = NonlinearVariationalSolver(problem)
-    solver.parameters["newton_solver"]["linear_solver"] = "bicgstab"
+    solver.parameters["newton_solver"]["linear_solver"] = "cg"
     solver.parameters["newton_solver"]["preconditioner"] = "ilu"
     
     solver.solve()
@@ -99,7 +99,7 @@ errorNorm = []
 errorPoint = []
 timing = []
 
-for t in [128]:#np.arange(16,32,16):
+for t in [32]:#np.arange(16,32,16):
     
     p = {
          "R":pow(10,2),
@@ -123,16 +123,16 @@ for t in [128]:#np.arange(16,32,16):
     y_exact = []
     y_exact_project = []
     y_sol = []
-    #p["D"] = 10
+    
     for i in x:
         y_exact.append(u_exact([i,0,0],p))
-    for i in x:
-        y_exact_project.append(u([i,0,0]))
+#    for i in x:
+#        y_exact_project.append(u_e([i,0,0]))
     for i in x:
         y_sol.append(u([i,0,0]))
     
     plt.plot(x,y_exact)
-    plt.plot(x,y_exact_project)
+    #plt.plot(x,y_exact_project)
     plt.plot(x,y_sol)
     
 
