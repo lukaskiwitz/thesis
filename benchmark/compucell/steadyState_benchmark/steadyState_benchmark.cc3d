@@ -1,5 +1,0 @@
-<Simulation version="3.6.2">
-   <XMLScript Type="XMLScript">Simulation/steadyState_benchmark.xml</XMLScript>
-   <PythonScript Type="PythonScript">Simulation/steadyState_benchmark.py</PythonScript>
-   <Resource Type="Python">Simulation/steadyState_benchmarkSteppables.py</Resource>
-</Simulation>

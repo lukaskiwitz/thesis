@@ -1,6 +1,0 @@
-<Simulation version="3.6.2">
-   <XMLScript Type="XMLScript">Simulation/steadyStateTest.xml</XMLScript>
-   <PythonScript Type="PythonScript">Simulation/steadyStateTest.py</PythonScript>
-   <Resource Type="Python">Simulation/steadyStateTestSteppables.py</Resource>
-   
-</Simulation>
