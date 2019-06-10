@@ -7,4 +7,5 @@ Created on Fri Jun  7 12:22:58 2019
 """
 
 class BooleanInternalSolver:
-    pass
+    def step(self,dT,p):
+        pass

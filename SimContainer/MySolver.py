@@ -8,6 +8,7 @@ Created on Tue May 21 13:56:50 2019
 from __future__ import print_function
 
 import fenics as fcs
+import BC
 
 class MySolver:
     pass
@@ -32,14 +33,15 @@ class PoissonSolver(MySolver):
     dim: {2,3}
         mesh dimension
     """
-    neumann = []
+    
     dirichlet = []
-    nonLinBC = []
+    integralBC = []
     subdomains = []
     dim = 2
     p = {}
     mesh = None
     boundary_markers = None
+    fieldQuantity = ""
     
     def __init__(self):
         """
@@ -84,38 +86,31 @@ class PoissonSolver(MySolver):
         f = fcs.Constant(0)
         
         #checks wether diffusioncoefficient is given as paramenter
+        
         if "D" in self.p:
             D = fcs.Constant(self.p["D"])
         else:
-            D = fcs.Constant(1)
+            pass
             
         #defines ds as object of fencis class Measure, to give piecwise boundary integral as ds(i) for piece i
         ds = fcs.Measure("ds", domain=self.mesh, subdomain_data=self.boundary_markers)
         
         # iterates over subdomain list to set boundary condition according "bcDict" field
-        self.neumann = []
+        
         self.dirichlet = []
-        self.nonLinBC = []
+        self.integralBC = []
         for i in self.subdomains:
-            if "D" in i.bcDict:
+            e = i["entity"]
+            patch = i["patch"]
+            bc = e.getBC(self.fieldQuantity)
+            if type(bc) == BC.DirichletBC:
                 #Dirichlet BC
-                value = i.bcDict["D"]
-                value = fcs.Expression(str(value),degree=2)
-                bc = fcs.DirichletBC(self.V, value ,self.boundary_markers,i.patch)
-                self.dirichlet.append(bc)
-            if "N" in i.bcDict:
-                #Neumann BC
-                value = i.bcDict["N"]
-                value = fcs.Expression(str(value),degree=2)
-                self.neumann.append(value*v*ds(i.patch))
-            if "Rec" in i.bcDict:
-                #nonlinear Secretion according to Function object q(u,p) passed in dict entry
-                q = i.bcDict["Rec"]
-                p = i.bcDict["p"] if "p" in i.bcDict else self.p
-                
-                self.nonLinBC.append(q(u,p)*v*ds(i.patch))
+                self.dirichlet.append(bc.getBC(self.V,self.boundary_markers,patch))
+            if type(bc) == BC.Integral:
+                self.integralBC.append(bc.getBC(u)*v*ds(patch))
+        
         #Defines variational form of poisson equation with boundary integrals as sums
-        F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.neumann) - sum(self.nonLinBC))
+        F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.integralBC))
         
         #Defines nonlinear variational problem as F == 0 with Dirichlet BC and Jacobian given as the Gateaux derivative of F
         # with respect to u

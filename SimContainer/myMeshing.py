@@ -13,7 +13,7 @@ import fenics as fcs
 
 class MeshGenerator:
     outerBoundary = entity.OuterCube([-1,-1],[1,1])
-    cellList = []
+    objectList = []
     subdomains = []
     dim = 2
     def __init__(self,**kwargs):
@@ -47,7 +47,7 @@ class MeshGenerator:
 
     def compileSubdomains(self):
         self.subdomains = []
-        for i in self.cellList:
+        for i in self.objectList:
             r = i["radius"]
             c = i["center"]
             if "bcDict" in i:

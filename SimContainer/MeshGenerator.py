@@ -12,17 +12,17 @@ import fenics as fcs
 
 
 class MeshGenerator:
-    outerBoundary = None
-    cellList = []
-    subdomains = []
+    outerDomain = None
+    entityList = []
+    
     dim = 2
     def __init__(self,**kwargs):
-            if "outerBoundary" in kwargs:
-                self.outerBoundary = kwargs["outerBoundary"]
+            if "outerDomain" in kwargs:
+                self.outerDomain = kwargs["outerDomain"]
     def meshGen(self,resolution,**kwargs):
-        domain = self.outerBoundary.getGeometry(self.dim)
-        for i in self.subdomains:
-            domain -= i.getGeometry(self.dim)
+        domain = self.outerDomain["entity"].getSubDomain().getGeometry(self.dim)
+        for i in self.entityList:
+            domain -= i["entity"].getSubDomain().getGeometry(self.dim)
         if "load" in kwargs:
             path = kwargs["load"]
             mesh = dlf.Mesh(path)
@@ -36,11 +36,13 @@ class MeshGenerator:
         
         
         
-        for i,o in enumerate(self.subdomains):
-            o.mark(boundary_markers,i+2)
-            self.subdomains[i].patch = i+2
+        self.outerDomain["entity"] .getSubDomain().mark(boundary_markers,1)
+        self.outerDomain["patch"] = 1
+        
+        for i,o in enumerate(self.entityList):
+            a = self.outerDomain["patch"]+1
+            o["entity"].getSubDomain().mark(boundary_markers,i+a)
+            o["patch"] = i+a
             
-        self.outerBoundary.mark(boundary_markers,1)
-        self.outerBoundary.patch = 1
-        self.subdomains.insert(0,self.outerBoundary)
+    
         return mesh,boundary_markers
