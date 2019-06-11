@@ -8,20 +8,20 @@ Created on Fri Jun  7 12:48:49 2019
 import MySolver
 import MeshGenerator as mshGen
 import dolfin as dlf
+import fenics as fcs
 import os 
 
 class FieldProblem:
-    fieldName = ""
-    res = 32
-    meshCached = ""
-    registeredEntities = []
-    outerDomain = {}
-    solver = None
-    fieldQuantity = ""
-    p = {}
     
     def __init__(self):
-        pass
+        self.fieldName = ""
+        self.res = 32
+        self.meshCached = ""
+        self.registeredEntities = []
+        self.outerDomain = {}
+        self.solver = None
+        self.fieldQuantity = ""
+        self.p = {}
     def addEntity(self,entity):
         self.registeredEntities.append({"entity":entity,"patch":0})
     def removeEntity(self,entity):
@@ -66,9 +66,9 @@ class FieldProblem:
         
         self.solver.fieldQuantity = self.fieldQuantity
         self.outerDomain["entity"].updateBCs()
-        
         for i in self.registeredEntities:
             i["entity"].updateBCs()
+            
             
         subdomains = [self.outerDomain]
         for e in self.registeredEntities:
@@ -85,9 +85,27 @@ class FieldProblem:
         self.solver.compileSolver()
         self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
         self.solver.solver.parameters["newton_solver"]["preconditioner"] = "ilu"
-    
+    def computeBoundaryFlux(self):
+        boundary_markers = self.solver.boundary_markers
+        mesh = self.solver.mesh
+        u = self.solver.u
+        n = fcs.FacetNormal(mesh)
+        
+        ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
+        for i in self.registeredEntities:
+            entity = i["entity"]
+            patch = i["patch"]
+        
+            flux_key = "flux_{f}".format(f=self.fieldName)
+            
+            flux = fcs.dot(n,fcs.nabla_grad(u))*ds(patch)
+            flux_n = -1*fcs.assemble(flux)
+#            print("flux_n:"+str(flux_n))
+            if flux_key not in entity.p:
+                entity.p["flux_cytokine"] = 0
+            entity.p[flux_key] = flux_n if flux_n > 0 else 0
+        
     def step(self,dt):
-        self.updateBCs()
         return self.solver.solve()
     def getFields(self):
         """TODO"""

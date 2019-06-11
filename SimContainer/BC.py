@@ -7,28 +7,28 @@ Created on Sat Jun  8 14:17:07 2019
 """
 import fenics as fcs
 class BC:
-    fieldQuantity = ""
-    pass
+    
     def __init__(self,**kwargs):
+        self.fieldQuantity = ""
         if "fieldQuantity" in kwargs:
             self.fieldQuantity = kwargs["fieldQuantity"]
 class Integral(BC):
-    value = None
-    p = {}
-    q = lambda u,p : 0
     def __init__(self,q,**kwargs):
+        self.value = None
+        self.p = {}
         self.q = q
         super().__init__(**kwargs)
     def getBC(self,u):
       return self.q(u,self.p)
         
 class DirichletBC(BC):
-    degree = 1
-    value = None
-    def __init__(self,**kwargs):
-        super.__init__(**kwargs)
+    
+    def __init__(self,value,**kwargs):
+        self.degree = 1
+        self.value = value
+        super().__init__(**kwargs)
         
     def getBC(self,V,boundary_markers,patch):
         value = fcs.Expression(str(self.value),degree=self.degree)
-        bc = fcs.DirichletBC(V, value ,self.boundary_markers,patch)
+        bc = fcs.DirichletBC(V, value ,boundary_markers,patch)
         return bc

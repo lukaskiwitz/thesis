@@ -21,10 +21,12 @@ def makeCellList(p):
                 ])
     cell_center.p = p_center
     cellList.append(cell_center)
+    interSolver = intSolver.BooleanInternalSolver()
     
-    for l,r in enumerate([0.4,0.8]):
-        interSolver = intSolver.BooleanInternalSolver()
-        for i,phi in enumerate(np.linspace(0,2*np.pi,6*(l+1))):
+    for l,r in enumerate([0.2,0.4,0.6]):
+        n = 6*(l+1)
+        print(np.linspace(0,2*np.pi*(1-1/n),n))
+        for i,phi in enumerate(np.linspace(0,2*np.pi*(1-1/n),n)):
             p_temp = deepcopy(p)
             p_temp["R"] = 10**4#10**4 if (i+l) % 2 == 0 else 10**2
             x = r*np.cos(phi)
@@ -33,14 +35,16 @@ def makeCellList(p):
                 bc.Integral(cellBC,fieldQuantity="C")
                 ])
             cell.p = p_temp
+            cell.addSolver(deepcopy(interSolver))
             cellList.append(cell)
+    print(len(cellList))
     return cellList
 
 p_global= {
          "R":pow(10,2),
          "q": 10,
          "k_on": 111.6,
-         "rho": 0.1,
+         "rho": 0.05,
          "D":10,
          "L":1,
          "R_resp":pow(10,2),
@@ -54,7 +58,7 @@ p_global= {
 
 
 domain = Entity.DomainSphere([0,0,0],1,[
-        bc.Integral(outerBC,fieldQuantity="C")
+        bc.DirichletBC("0",fieldQuantity="C")
         ])
 domain.p = p_global
 
@@ -68,11 +72,12 @@ vtkfile = fcs.File("./sol/solution.pvd")
 
 fieldProblem.setSolver(solver)
 fieldProblem.p = p_global
-fieldProblem.meshCached = "./cache/meshCache_64_cytokine.xml"
-fieldProblem.res = 64
+fieldProblem.meshCached = "./cache/meshCache_90_cytokine.xml"
+fieldProblem.res = 90
 fieldProblem.setOuterDomain(domain)
 
 sc = sc.SimContainer()
+
 for i in makeCellList(p_global):
     sc.addEntity(i)
 
@@ -80,8 +85,8 @@ sc.addField(fieldProblem)
 
 sc.initialize()
 
-for i in range(1):
-    sc.step(1)
+for i in range(50):
+    sc.step(25)
     u = sc.fields[0].getFields()
     vtkfile << u
     

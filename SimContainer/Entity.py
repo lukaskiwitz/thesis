@@ -9,10 +9,12 @@ Created on Fri Jun  7 12:22:13 2019
 import MySubDomain as SD
 
 class Entity:
-    fieldQuantities = []
-    bcList = []
-    internalSolvers = []
-    p = {}
+    def __init__(self):
+        self.fieldQuantities = []
+        self.internalSolvers = []
+        self.p = {}
+    def addSolver(self,solver):
+        self.internalSolvers.append(solver)
     def getBC(self,fieldQuantity):
         for i in self.bcList:
             if i.fieldQuantity == fieldQuantity:
@@ -25,9 +27,10 @@ class Entity:
             i.p = self.p
     def step(self,dT):
         for i in self.internalSolvers:
-            i.step(dT,self)
-    def getBoundaryValues(self,u):
-        subdomain = self.getSubDomain()
+            i.step(dT,self.p)
+            return i.timeToStateChange(self.p)
+#            print(self.p["R"])
+        
         
 class Cell(Entity):
     def __init__(self,center,radius,bcList):
