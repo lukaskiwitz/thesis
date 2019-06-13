@@ -8,11 +8,12 @@ Created on Fri Jun  7 12:21:51 2019
 #import FieldProblem as fp
 #import Entity
 import numpy as np
+import pandas as pd
+
 class SimContainer:
     def __init__(self):    
         self.entityList = []
         self.fields = []
-        self.nextTimeStep = 1
     
     def initialize(self):
         for field in self.fields:
@@ -26,25 +27,23 @@ class SimContainer:
             
             field.generateMesh(cache=True)
             field.updateSolver()
-                        
+    def log(self):
+        dataDict = {}
+        for i,entity in enumerate(self.entityList):
+            dataDict["entity_"+str(i)] = entity.log()
+        return dataDict
     def step(self,dT_min):
         
-        nextTimeSteps = []
-        print("next time step"+str(self.nextTimeStep))
-        for entity in self.entityList:
-            nextStep = entity.step(self.nextTimeStep)
-            if nextStep:
-                nextTimeSteps.append(nextStep)
-        print("steps: "+str(nextTimeSteps))
-        if len(nextTimeSteps) > 0:
-            self.nextTimeStep = np.min(nextTimeSteps)
-        else:
-            self.nextTimeStep = dT_min
+#        print("next time step"+str(self.nextTimeStep))
         
+        for i,entity in enumerate(self.entityList):
+            entity.step(dT_min)
+#        print("steps: "+str(nextTimeSteps))
         for field in self.fields:
             field.updateSolver()
-            field.step(self.nextTimeStep)
+            field.step(dT_min)
             field.computeBoundaryFlux()
+#            field.log()
 
     def addEntity(self,entity):
         self.entityList.append(entity)

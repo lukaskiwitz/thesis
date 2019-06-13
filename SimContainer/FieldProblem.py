@@ -35,9 +35,8 @@ class FieldProblem:
         
     def setOuterDomain(self,domain):
         self.outerDomain = {"entity":domain,"patch":0}
-    def getBoundaryValues(self):
-        for b in self.solver.boundary_markers:
-            pass
+    def log(self):
+        pass
     def generateMesh(self,**kwargs):
         
         
@@ -84,7 +83,7 @@ class FieldProblem:
         
         self.solver.compileSolver()
         self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
-        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "ilu"
+        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "amg"
     def computeBoundaryFlux(self):
         boundary_markers = self.solver.boundary_markers
         mesh = self.solver.mesh
@@ -95,15 +94,19 @@ class FieldProblem:
         for i in self.registeredEntities:
             entity = i["entity"]
             patch = i["patch"]
-        
+#            print("patch: "+str(patch))
             flux_key = "flux_{f}".format(f=self.fieldName)
+           
+#            flux = (-fcs.dot(n,fcs.grad(u)))*ds(patch)+entity.p["q"]*ds(patch)
+            flux = -fcs.dot(n,fcs.grad(u))*ds(patch)
+            flux_n = fcs.assemble(flux)
             
-            flux = fcs.dot(n,fcs.nabla_grad(u))*ds(patch)
-            flux_n = -1*fcs.assemble(flux)
+#            print("flux: "+str(fcs.assemble(fcs.dot(n,fcs.grad(u))*ds(patch)))+"flux_n"+str(flux_n))
+            
 #            print("flux_n:"+str(flux_n))
             if flux_key not in entity.p:
                 entity.p["flux_cytokine"] = 0
-            entity.p[flux_key] = flux_n if flux_n > 0 else 0
+            entity.p[flux_key] = flux_n #if flux_n > 0 else 0
         
     def step(self,dt):
         return self.solver.solve()
