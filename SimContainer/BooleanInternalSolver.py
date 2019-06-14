@@ -8,9 +8,9 @@ Created on Fri Jun  7 12:22:58 2019
 import pandas as pd
 class BooleanInternalSolver:
     def __init__(self):
-        self.internal = {"level":0,"threshold":1e-16,"decay":0.8}
+        self.internal = {"level":0,"threshold":2e-12,"decay":0.8}
     def log(self,p):
-        df = {"flux":p["flux_cytokine"],"level":self.internal["level"]}
+        df = {"flux":p["flux_cytokine"],"level":self.internal["level"],"R":p["R"]}
         return df
         
     def step(self,dT,p):
@@ -21,14 +21,15 @@ class BooleanInternalSolver:
 #        print("-------------------------")
         uptake = p["flux_cytokine"]
         self.internal["level"] += dT*(uptake - self.internal["decay"]*self.internal["level"])
+#        self.internal["level"] += dT*uptake - 
         
         
 #        print("level={l}".format(l=self.internal["level"]))
-        if self.internal["level"] > self.internal["threshold"]:
+        if self.internal["level"] > self.internal["threshold"] and p["R"] > 10**2:
 #            print("-------------------switch---------------------")
-            pass#p["R"] = 10**2
-        else:
-           pass# p["R"] = 10**4
+            p["R"] = p["R"]*(1-0.5)
+        elif p["R"] < 10**4:
+           p["R"] = p["R"]*(1+0.5)
     def timeToStateChange(self,p):
         uptake = p["flux_cytokine"]
         

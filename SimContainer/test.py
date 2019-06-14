@@ -92,7 +92,7 @@ if not os.path.isdir("./logs"):
     
 for i in range(100):
     #sc.entityList[0].p["R"] = 10**(i)
-    sc.step(1)
+    sc.step(20)
     
     
     
