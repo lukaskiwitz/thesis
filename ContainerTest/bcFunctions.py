@@ -15,7 +15,7 @@ def cellBC(u,p):
     R = p["R"]
     q = p["q"]
     k_on = p["k_on"]
-    
+
     R = fcs.Constant(R)
     q = fcs.Constant(q)
     k_on = fcs.Constant(k_on)
@@ -37,5 +37,5 @@ def outerBC(u,p):
     R_resp = fcs.Constant(p["R_resp"])
     
     return u
-#    return -1*(q-u*k_on*R)
+#    return (q-u*k_on*R)
 #    return k_on*u*(L+rho)*N*R_resp

@@ -30,7 +30,7 @@ class SimContainer:
     def log(self):
         dataDict = {}
         for i,entity in enumerate(self.entityList):
-            dataDict[entity.name+str(i)] = entity.log()
+            dataDict["entity_"+str(i)] = entity.log()
         return dataDict
     def getEntityByName(self,name):
         for i in self.entityList:

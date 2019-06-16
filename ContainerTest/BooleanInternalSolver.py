@@ -19,15 +19,15 @@ class BooleanInternalSolver:
 #        print(p["flux_cytokine"])
 #        print("level={l}".format(l=self.internal["level"]))
 #        print("-------------------------")
-        uptake = round(p["flux_cytokine"],14)
+        uptake = -p["flux_cytokine"]+p["q"]
         self.internal["level"] += dT*(uptake - p["decay"]*self.internal["level"])
         
         
 #        print("level={l}".format(l=self.internal["level"]))
         if self.internal["level"] > p["threshold"] and p["R"] > p["low"]:
-            p["R"] = p["R"]*(1-dT*p["receptor_decay"])
+            p["R"] = p["R"]*(1-dT*0.1)
         elif self.internal["level"] < p["threshold"] and p["R"] < p["high"]:
-           pass#p["R"] = p["R"]*(1+dT*p["receptor_decay"])
+           p["R"] = p["R"]*(1+dT*0.1)
     def timeToStateChange(self,p):
         uptake = p["flux_cytokine"]
         

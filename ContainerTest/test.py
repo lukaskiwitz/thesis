@@ -58,9 +58,7 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 ])
                 if x == 0 and y == 0 and z == 0:
                     p_temp["R"] = p_global["low"]
-#                    p_temp["q"] *= 10
-                    cell.name = "cell_center"
-                cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
+                    cell.name = "center"
                 cell.p = p_temp
                 cell.addSolver(deepcopy(interSolver))
                 cellList.append(cell)
@@ -69,15 +67,14 @@ def makeCellListGrid(p,xLine,yLine,zLine):
 factor = 1e+12
 p_global= {
          "R":6.642156e-12*factor,
-         "q": 1.6605391e-14*factor*100,
+         "q": 1.6605391e-14*factor,
          "k_on": (0.031**(-1))*factor,
          "rho": 0.05,
          "D":0.01**2,
          "high":6.642156e-12*factor,
          "low":1.6605391e-13*factor,
-         "threshold":0.05/(factor),
-         "decay":0.1,
-         "receptor_decay":0.1,
+         "threshold":0.0001,
+         "decay":0.01,
          "L":5,
          "R_resp":pow(10,2),
          "N":100
@@ -88,7 +85,7 @@ p_global= {
 #domain = Entity.DomainSphere([0,0,0],0.5,[
 #        bc.Integral(outerBC,fieldQuantity="C")
 #        ])
-domain = Entity.DomainCube([-1,-1,-0.3],[1,1,0.3],[
+domain = Entity.DomainCube([-0.5,-0.5,-0.3],[0.5,0.5,0.3],[
         bc.Integral(outerBC,fieldQuantity="C")
         ])
 domain.p = p_global
@@ -103,15 +100,15 @@ vtkfile = fcs.File("./sol/solution.pvd")
 
 fieldProblem.setSolver(solver)
 fieldProblem.p = p_global
-fieldProblem.meshCached = "./cache/meshCache_128_cytokine.xml"
-fieldProblem.res = 128
+fieldProblem.meshCached = "./cache/meshCache_64_cytokine.xml"
+fieldProblem.res = 64
 fieldProblem.setOuterDomain(domain)
 
 sc = sc.SimContainer()
 
-x = np.linspace(-0.9,0.9,9)
-y = np.linspace(-0.9,0.9,9)
-z = np.array([-0.2,0,0.2])#np.linspace(-0.2,0.2,2)
+x = np.linspace(-0.2,0.2,3)
+y = np.linspace(-0.2,0.2,3)
+z = np.array([0])#np.linspace(-0.2,0.2,2)
 
 for i in makeCellListGrid(p_global,x,y,z):
     sc.addEntity(i)
@@ -122,19 +119,17 @@ sc.initialize()
 
 if not os.path.isdir("./logs"):    
     os.mkdir("./logs")
-else:
-    for file in os.listdir("./logs"):
-        os.remove("./logs/"+str(file))
+
 times = []
-for n,i in enumerate(range(200)):#enumerate(np.linspace(p_global["low"],p_global["high"],10)):
+for n,i in enumerate(np.linspace(p_global["low"],p_global["high"],10)):
     start = time.process_time()
-    sc.step(1)
+    sc.step(0)
     end = time.process_time()
     
     print("time: "+str(end-start)+"s for step number "+str(n))
     times.append(end-start)
-#    sc.getEntityByName("center").p["R"] = i
-#    print("changing entity: "+str(sc.getEntityByName("center").name)+" R="+str(i))
+    sc.getEntityByName("center").p["R"] = i
+    print("changing entity: "+str(sc.getEntityByName("center").name)+" R="+str(i))
     
     
     dump = json.dumps(sc.log())
@@ -152,9 +147,7 @@ for n,i in enumerate(range(200)):#enumerate(np.linspace(p_global["low"],p_global
 ##    flux_n = -1*fcs.assemble(flux)
     
     vtkfile << u
-
-with open("./timing","w") as file:
-        file.write(times)
+    
     
 
 
