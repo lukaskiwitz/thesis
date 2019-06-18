@@ -61,6 +61,8 @@ class FieldProblem:
         self.solver.boundary_markers = boundary_markers
         self.solver.p = self.p
         
+#        vtkfile = fcs.File("./mesh/"+self.fieldName+".pvd")
+#        vtkfile << self.solver.mesh
     def updateBCs(self):
         
         self.solver.fieldQuantity = self.fieldQuantity

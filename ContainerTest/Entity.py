@@ -43,6 +43,8 @@ class Cell(Entity):
         super().__init__()
     def getSubDomain(self):
         return SD.CellSubDomain(self.center,self.radius)
+    def getRefineDomain(self):
+        return SD.CellSubDomain(self.center,self.radius*(1+0.5))
     def log(self):
         dataDict = {}
         for i,s in enumerate(self.internalSolvers):
