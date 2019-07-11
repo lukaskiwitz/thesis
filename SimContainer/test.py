@@ -8,153 +8,157 @@ import numpy as np
 import matplotlib.pyplot as plt
 import BC as bc
 import SimContainer as sc
-from bcFunctions import cellBC,outerBC
+from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6
 from copy import copy,deepcopy
 import BooleanInternalSolver as intSolver
 import json
 import os
 import time
+import random
+from scipy.constants import N_A
 
-def makeCellListSphere(p):
-    p_center = deepcopy(p)
-    p_center["R"] = 10**2
-#    p_center["q"] = 10
-    cellList = []
-    cell_center = Entity.Cell([0,0,0],p_center["rho"],[
-                bc.Integral(cellBC,fieldQuantity="C")
-                ])
-    cell_center.p = p_center
-    cellList.append(cell_center)
-#    interSolver = intSolver.BooleanInternalSolver()
-    
-#    for l,r in enumerate([0.15,0.3]):
-#        n = 6*(l+1)
-#        print(np.linspace(0,2*np.pi*(1-1/n),n))
-#        for i,phi in enumerate(np.linspace(0,2*np.pi*(1-1/n),n)):
-#            p_temp = deepcopy(p)
-#            p_temp["R"] = 10**8#10**4 if (i+l) % 2 == 0 else 10**2
-#            x = r*np.cos(phi)
-#            y = r*np.sin(phi)
-#            cell = Entity.Cell([x,y,0],p_temp["rho"],[
-#                bc.Integral(cellBC,fieldQuantity="C")
-#                ])
-#            cell.p = p_temp
-#            cell.name = "cell_{r}_{phi}".format(r=r,phi=phi)
-#            cell.addSolver(deepcopy(interSolver))
-#            cellList.append(cell)
-#    print(len(cellList))
-    return cellList
+factor = 1e10
 
 def makeCellListGrid(p,xLine,yLine,zLine):
     
     interSolver = intSolver.BooleanInternalSolver()
     cellList = []
+    ran = random.Random()
+    ran.seed(1)
     for x in xLine:
         for y in yLine:
             for z in zLine:                    
                 p_temp = deepcopy(p)
-                cell = Entity.Cell([x,y,z],p_temp["rho"],[
-                bc.Integral(cellBC,fieldQuantity="C")
+                cell = Entity.Cell([x,y,z],p_temp["rho"],
+               [
+                       bc.Integral(cellBC_il2,fieldQuantity="il2"),
+                       bc.Integral(cellBC_il6,fieldQuantity="il6")
                 ])
-                if x == 0 and y == 0 and z == 0:
-                    p_temp["R"] = p_global["low"]
-#                    p_temp["q"] *= 10
-                    cell.name = "cell_center"
+                draw = ran.random()
+                if draw > 3/4:
+                    p_temp["q_il2"] = 2*N_A**-1*10e9*factor #two molecules per second
+                    p_temp["R_il2"] = p_temp["high"]
+                elif draw > 2/4:
+                    p_temp["R_il2"] = p_temp["high"]
+                else:
+                    p_temp["q_il2"] = 0
+                    p_temp["R_il2"] = p_temp["low"]
                 cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
                 cell.p = p_temp
-                cell.addSolver(deepcopy(interSolver))
+#                cell.addSolver(deepcopy(interSolver))
                 cellList.append(cell)
    
     return cellList
-factor = 1e+12
+dd = 1.2
 p_global= {
-         "R":6.642156e-12*factor,
-         "q": 1.6605391e-14*factor*100,
-         "k_on": (0.031**(-1))*factor,
-         "rho": 0.05,
-         "D":0.01**2,
-         "high":6.642156e-12*factor,
-         "low":1.6605391e-13*factor,
-         "threshold":0.05/(factor),
-         "decay":0.1,
-         "receptor_decay":0.1,
-         "L":5,
-         "R_resp":pow(10,2),
-         "N":100
+         "R_il2":0,
+         "R_il6":100*N_A**-1*10e9*factor,
+         "q_il6":0,
+         "q_il2":0,
+         "k_on": ((0.031*factor)**(-1)),#111.6 per hour
+         "rho": 0.05,#mu
+         "D":0.01**2,#mu² per s
+         "high":4000*N_A**-1*10e9*factor,
+         "low":100*N_A**-1*10e9*factor,
+         "kd":1/36000,
+         "dd":dd
         }
 
-
-
-#domain = Entity.DomainSphere([0,0,0],0.5,[
-#        bc.Integral(outerBC,fieldQuantity="C")
-#        ])
-domain = Entity.DomainCube([-1,-1,-0.3],[1,1,0.3],[
-        bc.Integral(outerBC,fieldQuantity="C")
+domain = Entity.DomainCube([-dd,-dd,-dd],[dd,dd,dd],[
+       bc.Integral(outerBC_il2,fieldQuantity="il2"),
+       bc.Integral(outerBC_il6,fieldQuantity="il6")
         ])
-domain.p = p_global
+p_domain = deepcopy(p_global)
+p_domain.update({
+         "R_il2":4000*N_A**-1*10e9*factor,
+         "R_il6":0,
+         "q_il6":2*N_A**-1*10e9*factor,
+         "q_il2":0,})
+domain.p = p_domain
+
+"""IL-2"""
+solver_il2 = MySolver.PoissonSolver()
+
+fieldProblem_il2 = fp.FieldProblem()
+fieldProblem_il2.fieldName = "il2"
+fieldProblem_il2.fieldQuantity = "il2"
 
 
-solver = MySolver.PoissonSolver()
+fieldProblem_il2.setSolver(solver_il2)
+fieldProblem_il2.p = deepcopy(p_global)
+#fieldProblem_il2.meshCached = "./cache/meshCache_il2"
+fieldProblem_il2.setOuterDomain(domain)
 
-fieldProblem = fp.FieldProblem()
-fieldProblem.fieldName = "cytokine"
-fieldProblem.fieldQuantity = "C"
-vtkfile = fcs.File("./sol/solution.pvd")
+"""IL-6"""
+solver_il6 = MySolver.PoissonSolver()
 
-fieldProblem.setSolver(solver)
-fieldProblem.p = p_global
-fieldProblem.meshCached = "./cache/meshCache_128_cytokine.xml"
-fieldProblem.res = 128
-fieldProblem.setOuterDomain(domain)
+fieldProblem_il6 = fp.FieldProblem()
+fieldProblem_il6.fieldName = "il6"
+fieldProblem_il6.fieldQuantity = "il6"
+
+
+fieldProblem_il6.setSolver(solver_il6)
+fieldProblem_il6.p = deepcopy(p_global)
+fieldProblem_il6.meshCached = "./cache/meshCache_il2"
+fieldProblem_il6.setOuterDomain(domain)
 
 sc = sc.SimContainer()
+boxDim = 1
 
-x = np.linspace(-0.9,0.9,9)
-y = np.linspace(-0.9,0.9,9)
-z = np.array([-0.2,0,0.2])#np.linspace(-0.2,0.2,2)
+n = 2*boxDim/0.2
+#n = 3
+
+x = np.linspace(-boxDim,boxDim,int(n))
+y = np.linspace(-boxDim,boxDim,int(n))
+z = np.linspace(-boxDim,boxDim,int(n))
+
+#x = [0]
+#y = x
+#z = x
 
 for i in makeCellListGrid(p_global,x,y,z):
     sc.addEntity(i)
 
-sc.addField(fieldProblem)
+sc.addField(fieldProblem_il2)
+sc.addField(fieldProblem_il6)
 
 sc.initialize()
-
+print("init complete")
 if not os.path.isdir("./logs"):    
     os.mkdir("./logs")
 else:
     for file in os.listdir("./logs"):
         os.remove("./logs/"+str(file))
 times = []
-for n,i in enumerate(range(200)):#enumerate(np.linspace(p_global["low"],p_global["high"],10)):
+
+sc.saveSubdomains()
+print("subdomains saved")
+sc.saveDomain()
+print("domain saved")
+
+
+xScale = []
+for n,i in enumerate(range(1)):
+#    sc.fields[0].solver.p["kd"] = 1/(10**i)
+#    q = i*N_A*1e-9*3600e-1
+    p_domain["R_il2"] *= fcs.Constant(10)
+    xScale.append([n,i])
     start = time.process_time()
     sc.step(1)
     end = time.process_time()
-    
     print("time: "+str(end-start)+"s for step number "+str(n))
     times.append(end-start)
-#    sc.getEntityByName("center").p["R"] = i
-#    print("changing entity: "+str(sc.getEntityByName("center").name)+" R="+str(i))
-    
-    
+
     dump = json.dumps(sc.log())
     with open("./logs/"+str(i),"w") as file:
         file.write(dump)
-    u = sc.fields[0].getFields()
-    
-#    mesh = solver.mesh
-#    V_vec = fcs.FunctionSpace(mesh,"CG",1)
-#    n = fcs.FacetNormal(mesh)
-#    
-#    ds = fcs.Measure("dS", domain=mesh)
-#    flux = fcs.project(fcs.div(fcs.grad(u)),V_vec)
-#    
-##    flux_n = -1*fcs.assemble(flux)
-    
-    vtkfile << u
+#    u = sc.fields[0].getFields()
+        
+    sc.saveFields()
 
-with open("./timing","w") as file:
-        file.write(times)
+
+#with open("./timing","w") as file:
+#        file.write(times)
     
 
 

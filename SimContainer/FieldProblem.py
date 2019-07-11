@@ -9,7 +9,9 @@ import MySolver
 import MeshGenerator as mshGen
 import dolfin as dlf
 import fenics as fcs
+from decimal import Decimal
 import os 
+import math
 
 class FieldProblem:
     
@@ -36,26 +38,32 @@ class FieldProblem:
     def setOuterDomain(self,domain):
         self.outerDomain = {"entity":domain,"patch":0}
     def log(self):
-        pass
+        di = {"type":str(type(self)),
+              "fieldName":self.fieldName,
+              "res":self.res,
+              "meshCache":self.meshCached,
+              "registeredEntities":[i["entity"].id for i in self.registeredEntities],
+              "outerDomain":self.outerDomain["entity"].log(),
+              "solver":self.solver.log(),
+              "fieldQuantity":self.fieldQuantity,
+              "p":self.p
+                }
+        return di
     def generateMesh(self,**kwargs):
         
         
+            
         meshGen = mshGen.MeshGenerator(outerDomain=self.outerDomain)
         meshGen.entityList = self.registeredEntities
         meshGen.dim = 3
         res = self.res
-        if kwargs["cache"]:
-            if self.meshCached == "":
-                mesh, boundary_markers = meshGen.meshGen(res)
-                self.meshCached = "./cache/meshCache_{res}_{field}.xml".format(res=res,field=self.fieldName)
-                if not os.path.isdir("./cache"):    
-                    os.mkdir("./cache")
-                file=dlf.File(self.meshCached)
-                file<< mesh
-            else:
-                mesh, boundary_markers = meshGen.meshGen(res,load=self.meshCached)
+        if not kwargs["cache"] or self.meshCached == "":
+            if not os.path.isdir("./cache"):    
+                os.mkdir("./cache")
+            mesh, boundary_markers = meshGen.meshGen(res,load=False,path="./cache/meshCache_{field}".format(field=self.fieldName))
+            self.meshCached = "./cache/meshCache_{field}".format(field=self.fieldName)
         else:
-            mesh, boundary_markers = meshGen.meshGen(res)
+            mesh, boundary_markers = meshGen.meshGen(res,path=self.meshCached,load=True)
         
         self.solver.mesh = mesh
         self.solver.boundary_markers = boundary_markers
@@ -83,7 +91,17 @@ class FieldProblem:
         
         self.solver.compileSolver()
         self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
-        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "amg"
+        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "hypre_euclid"
+#        self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-20
+#        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-20
+        
+#        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["absolute_tolerance"] = 1e-20
+#        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["relative_tolerance"] = 1e-5
+        
+#        for k,v in self.solver.solver.parameters["newton_solver"]["krylov_solver"].items():
+#            print(k+": "+"%.2E"%Decimal(v))
+#        print("-----------------------------------------------")
+#        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-20
     def computeBoundaryFlux(self):
         boundary_markers = self.solver.boundary_markers
         mesh = self.solver.mesh
@@ -108,10 +126,31 @@ class FieldProblem:
                 entity.p["flux_cytokine"] = 0
             entity.p[flux_key] = flux_n #if flux_n > 0 else 0
         
-    def step(self,dt):
+    def step(self,dT):
         return self.solver.solve()
-    def getFields(self):
+    def getField(self):
         """TODO"""
         return self.solver.u
+    def getSubDomains(self):
+        return self.solver.boundary_markers
+    def getSubDomainsVis(self,key="q"):
+        mesh = self.solver.mesh
+#        mesh= fcs.BoundaryMesh(mesh,"exterior")
+        boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim()-1)
+        boundary_markers.set_all(0)
+        
+        for o in self.registeredEntities: 
+            e = o["entity"]
+            e.getCompiledSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
+        
+        return boundary_markers
+    def getOuterDomainVis(self,key="q"):
+        mesh = self.solver.mesh
+        boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim() - 1)
+        boundary_markers.set_all(0)
+        
+        e = self.outerDomain["entity"]
+        e.getSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
+        return self.solver.boundary_markers
         
         

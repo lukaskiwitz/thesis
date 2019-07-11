@@ -5,7 +5,7 @@ Created on Fri Jun  7 12:22:58 2019
 
 @author: kiwitz
 """
-import pandas as pd
+
 class BooleanInternalSolver:
     def __init__(self):
         self.internal = {"level":0}

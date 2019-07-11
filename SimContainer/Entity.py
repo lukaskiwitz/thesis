@@ -8,6 +8,7 @@ Created on Fri Jun  7 12:22:13 2019
 
 import MySubDomain as SD
 import pandas as pd
+import fenics as fcs
 
 class Entity:
     def __init__(self):
@@ -15,6 +16,7 @@ class Entity:
         self.fieldQuantities = []
         self.internalSolvers = []
         self.p = {}
+        self.id = 0
     def addSolver(self,solver):
         self.internalSolvers.append(solver)
     def getBC(self,fieldQuantity):
@@ -33,7 +35,10 @@ class Entity:
             return i.timeToStateChange(self.p)
 #            print(self.p["R"])
     def log(self):
-        pass
+        return {}
+    
+    def getState(self,key="q"):
+        return self.p[key]
         
 class Cell(Entity):
     def __init__(self,center,radius,bcList):
@@ -43,16 +48,26 @@ class Cell(Entity):
         super().__init__()
     def getSubDomain(self):
         return SD.CellSubDomain(self.center,self.radius)
-    def log(self):
-        dataDict = {}
-        for i,s in enumerate(self.internalSolvers):
-            dataDict["solver_"+str(i)] = s.log(self.p)
-        return dataDict
+    def getCompiledSubDomain(self):
+        return fcs.CompiledSubDomain("on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
+                              c0=self.center[0],c1=self.center[1],c2=self.center[2],r=self.radius)
+    def log(self):        
+        di = {"type":str(type(self)),
+              "id":self.id,
+              "name":self.name,
+              "center":self.center,
+              "radius":self.radius,
+              "p":self.p
+              }
+        return di
+    def getState(self, key="q"):
+        return self.p[key]
     
 class DomainEntity(Entity):
     def __init__(self,**kwargs):
         super().__init__()
-        
+    def log(self):
+        return {"type":str(type(self))}
 class DomainSphere(DomainEntity):
     def __init__(self,center,radius,bcList):
         self.center = center

@@ -34,16 +34,17 @@ class PoissonSolver(MySolver):
         mesh dimension
     """
     
-    dirichlet = []
-    integralBC = []
-    subdomains = []
-    dim = 2
-    p = {}
-    mesh = None
-    boundary_markers = None
-    fieldQuantity = ""
+    
     
     def __init__(self):
+        self.dirichlet = []
+        self.integralBC = []
+        self.subdomains = []
+        self.dim = 2
+        self.p = {}
+        self.mesh = None
+        self.boundary_markers = None
+        self.fieldQuantity = ""
         """
         Initalizes required fields.
         
@@ -65,7 +66,10 @@ class PoissonSolver(MySolver):
         
         #defines functionspace v over mesh with first order Lagrange elemnts
         super().__init__()
-        
+    def log(self):
+        return {"fieldQuantity":self.fieldQuantity,
+                "p":self.p
+                }
     def compileSolver(self):
         """
         compiles Solver; must be run befor solve()
@@ -76,11 +80,26 @@ class PoissonSolver(MySolver):
             defines problem and instantiates fenics solver
             
         """
-        self.V = fcs.FunctionSpace(self.mesh,"P",1)
+        self.E_u = fcs.FiniteElement("P",self.mesh.ufl_cell(),1)
+        self.E_c = fcs.FiniteElement("R",self.mesh.ufl_cell(),0)
+        
+#        self.V = fcs.FunctionSpace(self.mesh,self.E_u * self.E_c)
+        self.V = fcs.FunctionSpace(self.mesh,self.E_u)
+
         
         #define trialfunction u, testfunction v from functionspace V
+        
+#        m = fcs.Function(self.V)
         u = fcs.Function(self.V)
-        v = fcs.TestFunction(self.V)
+        m = u
+#        (u,c) = fcs.split(m)
+#        (v_u,v_c) = fcs.TestFunction(self.V)
+        (v_u) = fcs.TestFunction(self.V)
+
+
+
+#        u = fcs.Function(self.V)
+#        v = fcs.TestFunction(self.V)
         
         #define constants
         f = fcs.Constant(0)
@@ -89,6 +108,14 @@ class PoissonSolver(MySolver):
         
         if "D" in self.p:
             D = fcs.Constant(self.p["D"])
+        else:
+            pass
+        if "kd" in self.p:
+            kd = fcs.Constant(self.p["kd"])
+        else:
+            pass
+        if "mean" in self.p:
+            mean = fcs.Constant(self.p["mean"])
         else:
             pass
             
@@ -107,14 +134,15 @@ class PoissonSolver(MySolver):
                 #Dirichlet BC
                 self.dirichlet.append(bc.getBC(self.V,self.boundary_markers,patch))
             if type(bc) == BC.Integral:
-                self.integralBC.append(bc.getBC(u)*v*ds(patch))
+                self.integralBC.append(bc.getBC(u)*v_u*ds(patch))
         
         #Defines variational form of poisson equation with boundary integrals as sums
-        F = -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx) + f*v*fcs.dx + D*(sum(self.integralBC))
-        
+        F_u = -D*(fcs.dot(fcs.grad(u), fcs.grad(v_u))*fcs.dx)  - u*kd*v_u*fcs.dx + f*v_u*fcs.dx + D*(sum(self.integralBC))
+#        F_c = (c*v_u + u*v_c)*fcs.dx  - mean*v_c*fcs.dx
+        F = F_u#+ F_c
         #Defines nonlinear variational problem as F == 0 with Dirichlet BC and Jacobian given as the Gateaux derivative of F
         # with respect to u
-        problem = fcs.NonlinearVariationalProblem(F,u, self.dirichlet,J=fcs.derivative(F, u))
+        problem = fcs.NonlinearVariationalProblem(F,m, self.dirichlet,J=fcs.derivative(F, m))
         
         #instantiates fenics solver class as a field of "PoissonSolver"
         self.solver = fcs.NonlinearVariationalSolver(problem)
@@ -133,8 +161,9 @@ class PoissonSolver(MySolver):
         """
         #calls fenics solver; renames u for proper vtk output and returns solution u
         self.solver.solve()
-        
-        self.u.rename('u','u')
+#        u,c  = self.m.split()
+        self.u.rename(self.fieldQuantity,self.fieldQuantity)
+#        self.u = u
         return self.u
     def __del__(self):
         pass

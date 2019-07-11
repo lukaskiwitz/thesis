@@ -7,35 +7,64 @@ Created on Mon Jun 10 19:42:20 2019
 """
 
 import fenics as fcs
-def cellBC(u,p):
+import numpy as np
+def cellBC_il2(u,p):
     """
     Defines the flux boundary conditions for the cell.
     Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
-    R = p["R"]
-    q = p["q"]
+    R = p["R_il2"]/(4*np.pi*p["rho"]**2)
+    q = p["q_il2"]/(4*np.pi*p["rho"]**2)
+#    q = p["q"]
     k_on = p["k_on"]
     
     R = fcs.Constant(R)
     q = fcs.Constant(q)
     k_on = fcs.Constant(k_on)
     
+    
     return (q-u*k_on*R)
-def outerBC(u,p):
+
+def cellBC_il6(u,p):
+    """
+    Defines the flux boundary conditions for the cell.
+    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
+    """
+    R = p["R_il6"]/(4*np.pi*p["rho"]**2)
+    q = p["q_il6"]/(4*np.pi*p["rho"]**2)
+#    q = p["q"]
+    k_on = p["k_on"]
+    
+    R = fcs.Constant(R)
+    q = fcs.Constant(q)
+    k_on = fcs.Constant(k_on)
+    
+    
+    return (q-u*k_on*R)
+
+def outerBC_il2(u,p):
     """
     Defines the flux boundary condition on the outer boundary.
     Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
-    R = p["R"]
-    q = p["q"]
-    k_on = p["k_on"]
-    
+
     k_on = fcs.Constant(p["k_on"])
-    rho = fcs.Constant(p["rho"])
-    L = fcs.Constant(p["L"])
-    N = fcs.Constant(p["N"])
-    R_resp = fcs.Constant(p["R_resp"])
+   
+    R = fcs.Constant(p["R_il2"])/(4*np.pi*p["rho"]**2)
+    q = fcs.Constant(p["q_il2"]/(4*np.pi*p["rho"]**2))
+    rd = R*fcs.Constant(1e0) #receptor density
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*rd)
+
+def outerBC_il6(u,p):
+    """
+    Defines the flux boundary condition on the outer boundary.
+    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
+    """
+    k_on = fcs.Constant(p["k_on"])
     
-    return u
-#    return -1*(q-u*k_on*R)
-#    return k_on*u*(L+rho)*N*R_resp
+    R = fcs.Constant(p["R_il6"])/(4*np.pi*p["rho"]**2)
+    q = fcs.Constant(p["q_il6"]/(4*np.pi*p["rho"]**2))
+    
+    rd = R*fcs.Constant(1e0) #receptor density
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*rd)
+    
