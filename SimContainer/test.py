@@ -17,8 +17,25 @@ import time
 import random
 from scipy.constants import N_A
 
-factor = 1e10
+factor = 1e0
 
+    
+def updateState(p,sc,t):
+    ran = random.Random()
+    ran.seed(t)
+    for i,e in enumerate(sc.entityList):
+        p_temp = deepcopy(p)
+        draw = ran.random()
+        if draw > 3/4:
+            p_temp["q_il2"] = 2*N_A**-1*10e9*factor #two molecules per second
+            p_temp["R_il2"] = p_temp["low"]
+        elif draw > 2/4:
+            p_temp["R_il2"] = p_temp["high"]
+        else:
+            p_temp["q_il2"] = 0
+            p_temp["R_il2"] = p_temp["low"]
+        e.p = p_temp
+        
 def makeCellListGrid(p,xLine,yLine,zLine):
     
     interSolver = intSolver.BooleanInternalSolver()
@@ -37,7 +54,7 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 draw = ran.random()
                 if draw > 3/4:
                     p_temp["q_il2"] = 2*N_A**-1*10e9*factor #two molecules per second
-                    p_temp["R_il2"] = p_temp["high"]
+                    p_temp["R_il2"] = p_temp["low"]
                 elif draw > 2/4:
                     p_temp["R_il2"] = p_temp["high"]
                 else:
@@ -55,12 +72,12 @@ p_global= {
          "R_il6":100*N_A**-1*10e9*factor,
          "q_il6":0,
          "q_il2":0,
-         "k_on": ((0.031*factor)**(-1)),#111.6 per hour
+         "k_on": 10e-9*111.6/60**2,#111.6 per hour
          "rho": 0.05,#mu
          "D":0.01**2,#mu² per s
          "high":4000*N_A**-1*10e9*factor,
          "low":100*N_A**-1*10e9*factor,
-         "kd":1/36000,
+         "kd":0.1/(60*2),
          "dd":dd
         }
 
@@ -73,7 +90,7 @@ p_domain.update({
          "R_il2":4000*N_A**-1*10e9*factor,
          "R_il6":0,
          "q_il6":2*N_A**-1*10e9*factor,
-         "q_il2":0,})
+         "q_il2":0})
 domain.p = p_domain
 
 """IL-2"""
@@ -86,7 +103,7 @@ fieldProblem_il2.fieldQuantity = "il2"
 
 fieldProblem_il2.setSolver(solver_il2)
 fieldProblem_il2.p = deepcopy(p_global)
-#fieldProblem_il2.meshCached = "./cache/meshCache_il2"
+fieldProblem_il2.meshCached = "./cache/meshCache_il2"
 fieldProblem_il2.setOuterDomain(domain)
 
 """IL-6"""
@@ -120,41 +137,48 @@ for i in makeCellListGrid(p_global,x,y,z):
     sc.addEntity(i)
 
 sc.addField(fieldProblem_il2)
-sc.addField(fieldProblem_il6)
+#sc.addField(fieldProblem_il6)
 
-sc.initialize()
+sc.initialize(load_subdomain="./cache/boundary_markers.h5")
+#sc.initialize()
 print("init complete")
-if not os.path.isdir("./logs"):    
-    os.mkdir("./logs")
+if not os.path.isdir("./logs"):
+    try:
+        os.mkdir("./logs")
+    except:
+        pass
 else:
     for file in os.listdir("./logs"):
-        os.remove("./logs/"+str(file))
+        try:
+            os.remove("./logs/"+str(file))
+        except:
+            pass
 times = []
 
-sc.saveSubdomains()
-print("subdomains saved")
-sc.saveDomain()
-print("domain saved")
+#sc.saveSubdomains()
+#print("subdomains saved")
+#sc.saveDomain()
+#print("domain saved")
 
 
 xScale = []
-for n,i in enumerate(range(1)):
+for n,i in enumerate(range(3)):
 #    sc.fields[0].solver.p["kd"] = 1/(10**i)
 #    q = i*N_A*1e-9*3600e-1
-    p_domain["R_il2"] *= fcs.Constant(10)
     xScale.append([n,i])
+    updateState(p_global,sc,n)
     start = time.process_time()
     sc.step(1)
     end = time.process_time()
     print("time: "+str(end-start)+"s for step number "+str(n))
     times.append(end-start)
-
+#    fieldProblem_il2.p["kd"] *= 0.1
     dump = json.dumps(sc.log())
     with open("./logs/"+str(i),"w") as file:
         file.write(dump)
 #    u = sc.fields[0].getFields()
         
-    sc.saveFields()
+    sc.saveFields(n)
 
 
 #with open("./timing","w") as file:

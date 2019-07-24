@@ -63,7 +63,10 @@ class FieldProblem:
             mesh, boundary_markers = meshGen.meshGen(res,load=False,path="./cache/meshCache_{field}".format(field=self.fieldName))
             self.meshCached = "./cache/meshCache_{field}".format(field=self.fieldName)
         else:
-            mesh, boundary_markers = meshGen.meshGen(res,path=self.meshCached,load=True)
+            if "load_subdomain" in kwargs:
+                mesh, boundary_markers = meshGen.meshGen(res,path=self.meshCached,load=True,load_subdomain=kwargs["load_subdomain"])
+            else:
+                mesh, boundary_markers = meshGen.meshGen(res,path=self.meshCached,load=True)
         
         self.solver.mesh = mesh
         self.solver.boundary_markers = boundary_markers
@@ -87,13 +90,11 @@ class FieldProblem:
         can be used to change Simulation objects if the mesh was not changed
         """
         self.updateBCs()
-        
-        
         self.solver.compileSolver()
         self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
-        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "hypre_euclid"
-#        self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-20
-#        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-20
+        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "amg"
+        self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-25
+        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-15
         
 #        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["absolute_tolerance"] = 1e-20
 #        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["relative_tolerance"] = 1e-5
