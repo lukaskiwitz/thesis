@@ -136,8 +136,8 @@ z = np.linspace(-boxDim,boxDim,int(n))
 for i in makeCellListGrid(p_global,x,y,z):
     sc.addEntity(i)
 
-sc.addField(fieldProblem_il2)
-#sc.addField(fieldProblem_il6)
+#sc.addField(fieldProblem_il2)
+sc.addField(fieldProblem_il6)
 
 sc.initialize(load_subdomain="./cache/boundary_markers.h5")
 #sc.initialize()
@@ -162,7 +162,7 @@ times = []
 
 
 xScale = []
-for n,i in enumerate(range(3)):
+for n,i in enumerate(range(1)):
 #    sc.fields[0].solver.p["kd"] = 1/(10**i)
 #    q = i*N_A*1e-9*3600e-1
     xScale.append([n,i])

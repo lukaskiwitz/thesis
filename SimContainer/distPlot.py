@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import h5py
 import json
 import os
+import re
+from copy import deepcopy
 
 mesh = fcs.Mesh()
 with fcs.XDMFFile("./cache/meshCache_il2.xdmf") as f:
@@ -31,47 +33,72 @@ with open(cell_dump_path,"r") as file:
     cell_data = json.loads(d)
 
 
-result = []
-tmpIndexList = []
-for file in os.listdir("./sol/distplot"):
+results = {}
+fields = ["il6"]
+for field in fields:
     
-    il2 = fcs.Function(V)
-    with fcs.HDF5File(fcs.MPI.comm_world,"./sol/distplot/"+file,"r") as f:
-        f.read(il2,"il2")
+    fileList = os.listdir("./sol/distplot")
+    bList = [((re.compile(field)).search("{field}(?=.*\.h5)".format(field=i))) for i in fileList]
+    fileList = np.delete(fileList,[i for i,e in enumerate(bList) if not e])
+    fileList = fileList[-1:]
+    tmpIndexList = []
+    result = []
+    for no,file in enumerate(fileList):
+        
+        u = fcs.Function(V)
+        with fcs.HDF5File(fcs.MPI.comm_world,"./sol/distplot/"+file,"r") as f:
+            f.read(u,field)
+        print("reading file {file} ({no}/{tot})".format(file=file,no=no,tot=len(fileList)))
+        
+        ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
+        area = 4*np.pi*5**2
+        for i in cell_data:   
+#            print("patch no: "+str(i["patch"]))
+            
+            r = i["center"][0]
+            i["v"] = fcs.assemble(u*ds(i["patch"]))/(4*np.pi*0.05**2)*10**9
+            if r in tmpIndexList:
+                result[tmpIndexList.index(r)].append(i)
+            else:
+                result.append([i])
+                tmpIndexList.append(r)
+    results[field] = deepcopy(result)
     
-    
-    ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
-    area = 4*np.pi*5**2
-    for i in cell_data:   
-        print("patch no: "+str(i["patch"]))
-        r = i["center"][0]
-        i["v"] = fcs.assemble(il2*ds(i["patch"]))/(4*np.pi*0.05**2)*10**9
-        if r in tmpIndexList:
-            result[tmpIndexList.index(r)].append(i)
-        else:
-            result.append([i])
-            tmpIndexList.append(r)
-    
-x = []
-d = []
-for i in result:
-    v= [e["v"] for e in i]
-    indecies = [i for (i,v) in enumerate(v) if v < 0]
-    v = np.delete(v,indecies)
-#    print(indecies)
-    x.append(i[0]["center"][0])
-    d.append(v)
+color = ["r","b"]
+thresh = [10e-10,10e-10]
 
-#d = np.array()
-#d = d[2:]
+#with open("./distPlot_dump.json","w") as file:
+#    file.write(json.dumps(results))
+with open("./distPlot_dump.json","r") as file:
+    results_old = json.load(file)
+results.update(results_old)
+    
+for c,field in enumerate(["il2","il6"]):
+    x = []
+    d = []
+    if field in results:
+        for i in results[field]:
+            v= [e["v"] for e in i]
+            indecies = [i for (i,v) in enumerate(v) if v < thresh[c]]
+            v = np.delete(v,indecies)
+        #    print(indecies)
+            x.append(i[0]["center"][0])
+            d.append(v)
+    
+    #d = np.array()
+    #d = d[2:]
+    
+    #d = np.transpose(d,axes=(1,0))
+    y = [np.mean(v) for i,v in enumerate(d)]
+    plt.plot(x,y,color[c]+"+",label=field)
 
-#d = np.transpose(d,axes=(1,0))
-for i,v in enumerate(d):
-#    plt.plot(np.ones(len(v))*x[i],v,"+")
-    pass
-plt.plot(x,[len(i) for i in d])
-#plt.ylim((np.min(d[0]),np.max(d[-1])))
-
+#    plt.plot(x,[len(i) for i in d])
+#    plt.ylim((np.min(d.flatten()),np.max(d.flatten())))
+plt.savefig("./distPlot.png")
+plt.xticks(np.arange(-1,1.25,0.25),np.arange(0,2.25,0.25)*100)
+plt.xlabel(r'distance from left boundary $\left[ \mu \operatorname{m} \right]$')
+plt.ylabel(r'nM')
+plt.legend()
     
 
 

@@ -57,6 +57,7 @@ class SimContainer:
         
         for i,entity in enumerate(self.entityList):
             entity.step(dT_min)
+            
 #        print("steps: "+str(nextTimeSteps))
         for field in self.fields:
             field.updateSolver()
