@@ -95,6 +95,7 @@ class FieldProblem:
         self.solver.solver.parameters["newton_solver"]["preconditioner"] = "amg"
         self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-35
         self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-14
+
         
 #        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["absolute_tolerance"] = 1e-20
 #        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["relative_tolerance"] = 1e-5

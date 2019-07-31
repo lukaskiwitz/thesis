@@ -43,6 +43,8 @@ def updateState(p,sc,t):
         draw = ran.random()
         if draw > 3/4:
             p_temp["q_il2"] = p_global["q_high"]#two molecules per second
+
+
             p_temp["R_il2"] = p_temp["low"]
         elif draw > 2/4:
             p_temp["R_il2"] = p_temp["high"]
@@ -80,7 +82,6 @@ def makeCellListGrid(p,xLine,yLine,zLine):
    
     return cellList
 
-
 domain = Entity.DomainCube([-dd,-dd,-dd],[dd,dd,dd],[
        bc.Integral(outerBC_il2,fieldQuantity="il2"),
        bc.Integral(outerBC_il6,fieldQuantity="il6")
@@ -90,6 +91,7 @@ p_domain.update({
          "R_il2":p_global["high"],
          "R_il6":0,
          "q_il6":p_global["q_high"],
+
          "q_il2":0})
 domain.p = p_domain
 
@@ -139,6 +141,7 @@ for i in makeCellListGrid(p_global,x,y,z):
 sc.addField(fieldProblem_il2)
 #sc.addField(fieldProblem_il6)
 
+
 sc.initialize(load_subdomain="./cache/boundary_markers.h5")
 #sc.initialize()
 print("init complete")
@@ -162,8 +165,11 @@ times = []
 
 
 xScale = []
+
 for n,i in enumerate(range(250)):
 
+#    sc.fields[0].solver.p["kd"] = 1/(10**i)
+#    q = i*N_A*1e-9*3600e-1
     xScale.append([n,i])
     updateState(p_global,sc,n)
     start = time.process_time()
@@ -171,6 +177,7 @@ for n,i in enumerate(range(250)):
     end = time.process_time()
     print("time: "+str(end-start)+"s for step number "+str(n))
     times.append(end-start)
+
     dump = json.dumps(sc.log())
     with open("./logs/"+str(i),"w") as file:
         file.write(dump)
