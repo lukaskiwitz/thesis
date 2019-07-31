@@ -114,11 +114,7 @@ class PoissonSolver(MySolver):
             kd = fcs.Constant(self.p["kd"])
         else:
             pass
-        if "mean" in self.p:
-            mean = fcs.Constant(self.p["mean"])
-        else:
-            pass
-            
+
         #defines ds as object of fencis class Measure, to give piecwise boundary integral as ds(i) for piece i
         ds = fcs.Measure("ds", domain=self.mesh, subdomain_data=self.boundary_markers)
         

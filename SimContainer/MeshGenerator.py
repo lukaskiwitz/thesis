@@ -15,6 +15,8 @@ import random
 #import h5py
 import pygmsh 
 import meshio
+import os
+import json
 
 
 class MeshGenerator:
@@ -51,28 +53,46 @@ class MeshGenerator:
             meshio.write(path+".xdmf", meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
         else:
             print("loading Mesh from:"+path+".xdmf")
-        
-
         mesh = dlf.Mesh()
         with dlf.XDMFFile(dlf.MPI.comm_world, path+".xdmf") as f:
             f.read(mesh)
         print("mesh loaded")
         
         
-        boundary_markers = fcs.MeshFunction("size_t",mesh, mesh.topology().dim() - 1)
-        boundary_markers.set_all(0)
-        print("boundaries marked")
-        
-        
-        self.outerDomain["entity"] .getSubDomain().mark(boundary_markers,1)
-        self.outerDomain["patch"] = 1
-        print("outer domain set")
-        
-        for i,o in enumerate(self.entityList):
-            a = self.outerDomain["patch"]+1
-            o["entity"].getCompiledSubDomain().mark(boundary_markers,i+a)
-            o["patch"] = i+a
-        print("loop complete")
-            
-    
+        if "load_subdomain" in kwargs and os.path.isfile(kwargs["load_subdomain"]):
+            subPath = kwargs["load_subdomain"]
+            print("loading subdomain from "+kwargs["load_subdomain"])
+            boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
+            with fcs.HDF5File(fcs.MPI.comm_world,subPath,"r") as f:
+                f.read(boundary_markers,"/boundaries")
+            self.outerDomain["patch"] = 1
+            for i,o in enumerate(self.entityList):
+                a = self.outerDomain["patch"]+1
+                o["patch"] = i+a
+                
+        else:
+            boundary_markers = fcs.MeshFunction("size_t",mesh, mesh.topology().dim() - 1)
+            boundary_markers.set_all(0)
+            print("boundaries marked")
+            self.outerDomain["entity"] .getSubDomain().mark(boundary_markers,1)
+            self.outerDomain["patch"] = 1
+            print("outer domain set")
+            for i,o in enumerate(self.entityList):
+                a = self.outerDomain["patch"]+1
+                o["entity"].getCompiledSubDomain().mark(boundary_markers,i+a)
+                o["patch"] = i+a
+            print("loop complete")
+            if "load_subdomain" in kwargs:
+                subPath = kwargs["load_subdomain"]
+                with fcs.HDF5File(fcs.MPI.comm_world,subPath,"w") as f:
+                    f.write(boundary_markers,"/boundaries")
+        self.jsonDump()
         return mesh,boundary_markers
+    def jsonDump(self):
+        print("dumping json cell data")
+        dumpList = []
+        for i in self.entityList:
+            dumpList.append({"patch":i["patch"],"center":i["entity"].center})
+        dump = json.dumps(dumpList)
+        with open("./cell_dump.json","w") as file:
+            file.write(dump)
