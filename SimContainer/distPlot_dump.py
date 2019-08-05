@@ -21,7 +21,7 @@ with fcs.XDMFFile("./cache/meshCache_il2.xdmf") as f:
 
 V = fcs.FunctionSpace(mesh,"P",1)
     
-subPath = "./cache/boundary_markers.h5"
+subPath = "./cache/boundary_markers_il2.h5"
 boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
 with fcs.HDF5File(fcs.MPI.comm_world,subPath,"r") as f:
     f.read(boundary_markers,"/boundaries")

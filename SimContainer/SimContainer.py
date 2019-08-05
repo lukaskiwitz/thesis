@@ -23,7 +23,8 @@ class SimContainer:
         self.subdomainFiles = []
         self.domainFiles = []
         self.fieldFiles = []
-        
+        self.boundaryMarkers = []
+         
         for i in self.fields:
             self.subdomainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,"./cache/subdomain_"+i.fieldName+".xdmf"))
             self.domainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,"./cache/domain_"+i.fieldName+".xdmf"))

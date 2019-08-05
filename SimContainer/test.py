@@ -18,7 +18,7 @@ import random
 from scipy.constants import N_A
 
 factor = 1e0
-dd = 1.2
+dd = 1.15
 p_global= {
          "R_il2":0,
          "R_il6":100*N_A**-1*10e9*factor,
@@ -26,7 +26,7 @@ p_global= {
          "q_il2":0,
          "k_on": 10e-9*111.6/60**2,#111.6 per hour
          "rho": 0.05,#mu
-         "D":0.01**2,#mu² per s
+         "D":0.1**2,#mu² per s
          "high":4000*N_A**-1*10e9*factor,
          "low":100*N_A**-1*10e9*factor,
          "kd":0.1/(60*2),
@@ -91,7 +91,6 @@ p_domain.update({
          "R_il2":p_global["high"],
          "R_il6":0,
          "q_il6":p_global["q_high"],
-
          "q_il2":0})
 domain.p = p_domain
 
@@ -142,7 +141,8 @@ sc.addField(fieldProblem_il2)
 #sc.addField(fieldProblem_il6)
 
 
-sc.initialize(load_subdomain="./cache/boundary_markers.h5")
+sc.initialize(load_subdomain="./cache/boundary_markers_il2.h5")
+
 #sc.initialize()
 print("init complete")
 if not os.path.isdir("./logs"):
@@ -160,18 +160,18 @@ times = []
 
 #sc.saveSubdomains()
 #print("subdomains saved")
-#sc.saveDomain()
-#print("domain saved")
+sc.saveDomain()
+print("domain saved")
 
 
 xScale = []
 
-for n,i in enumerate(range(250)):
+for n,i in enumerate(range(100)):
 
 #    sc.fields[0].solver.p["kd"] = 1/(10**i)
 #    q = i*N_A*1e-9*3600e-1
     xScale.append([n,i])
-    updateState(p_global,sc,n)
+    updateState(p_global,sc,i)
     start = time.process_time()
     sc.step(1)
     end = time.process_time()
