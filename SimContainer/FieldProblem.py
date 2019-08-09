@@ -36,14 +36,14 @@ class FieldProblem:
         self.solver = solver
         
     def setOuterDomain(self,domain):
-        self.outerDomain = {"entity":domain,"patch":0}
+        self.outerDomain = domain
     def log(self):
         di = {"type":str(type(self)),
               "fieldName":self.fieldName,
               "res":self.res,
               "meshCache":self.meshCached,
               "registeredEntities":[i["entity"].id for i in self.registeredEntities],
-              "outerDomain":self.outerDomain["entity"].log(),
+              "outerDomain":self.outerDomain.log(),
               "solver":self.solver.log(),
               "fieldQuantity":self.fieldQuantity,
               "p":self.p
@@ -75,12 +75,10 @@ class FieldProblem:
     def updateBCs(self):
         
         self.solver.fieldQuantity = self.fieldQuantity
-        self.outerDomain["entity"].updateBCs()
+        self.outerDomain.updateBCs()
         for i in self.registeredEntities:
             i["entity"].updateBCs()
-            
-            
-        subdomains = [self.outerDomain]
+        subdomains = self.outerDomain.getSubDomains(fieldQuantity = self.fieldQuantity)
         for e in self.registeredEntities:
             subdomains.append(e)
         self.solver.subdomains = subdomains
@@ -92,7 +90,7 @@ class FieldProblem:
         self.updateBCs()
         self.solver.compileSolver()
         self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
-        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "amg"
+        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "hypre_amg"
         self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-35
         self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-5
 
@@ -151,8 +149,9 @@ class FieldProblem:
         boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim() - 1)
         boundary_markers.set_all(0)
         
-        e = self.outerDomain["entity"]
-        e.getSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
+        e = self.outerDomain
+        for o in e.getSubDomains():   
+            o["entity"].getSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
         return self.solver.boundary_markers
         
         

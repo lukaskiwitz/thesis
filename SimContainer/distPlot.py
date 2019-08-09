@@ -87,7 +87,7 @@ il6Average = myPlot(
 def treshhold(l,f):
     indices = [l.index(e) for e in l if not f(e)]
     return list(np.delete(l,indices))
-t = [0.64,0.54]
+t = [0.0025,0.015]
 
 il2p = myPlot(
         data,
@@ -184,7 +184,7 @@ ax2.tick_params(axis="y",labelcolor=color)
 ax2.set_ylabel(r'IL6 nM',color=color)
 
 ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
-plt.xticks(np.arange(-1,1.25,0.25),np.arange(0,225,25))
+plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
 plt.savefig("averageConcentrations.png",dpi=600)
 
 plt.close()
@@ -192,7 +192,7 @@ plt.figure(2)
 plt.errorbar(x,il2p,yerr=il2pSD,label="il2",capsize=5)
 plt.plot(x,il6p,label="il6")
 plt.legend()
-plt.xticks(np.arange(-1,1.25,0.25),np.arange(0,225,25))
+plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
 plt.xlabel(r'distance from left boundary $[\mu m]$')
 plt.ylabel(r'fraction of positive cells')
 plt.savefig("simpleFractions.png",dpi=600)
@@ -203,7 +203,7 @@ plt.plot(x,il2pil6n,label="IL2$^+$ IL6$^-$")
 plt.plot(x,il2nil6p,label="IL2$^-$ IL6$^+$")
 plt.plot(x,il2nil6n,label="IL2$^-$ IL6$^-$")
 plt.legend(loc= "upper right")
-plt.xticks(np.arange(-1,1.25,0.25),np.arange(0,225,25))
+plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
 plt.xlabel(r'distance from left boundary $[\mu m]$')
 plt.ylabel(r'fraction of positive cells')
 
@@ -228,5 +228,5 @@ ax2.tick_params(axis="y",labelcolor=color)
 ax2.set_ylabel(r'IL6 nM',color=color)
 ax2.legend(loc="lower right")
 ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
-plt.xticks(np.arange(-1,1.25,0.25),np.arange(0,225,25))
+plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
 plt.savefig("conditionalConcentrations.png",dpi=600)

@@ -126,11 +126,17 @@ class PoissonSolver(MySolver):
             e = i["entity"]
             patch = i["patch"]
             bc = e.getBC(self.fieldQuantity)
-            if type(bc) == BC.DirichletBC:
+            if isinstance(bc,BC.outerBC):
+#                print(type(bc))
+#                print(bc.fieldQuantity)
+                pass
+            if type(bc) == BC.DirichletBC or type(bc) == BC.outerDirichletBC:
                 #Dirichlet BC
+                print("patch"+str(patch))
                 self.dirichlet.append(bc.getBC(self.V,self.boundary_markers,patch))
-            if type(bc) == BC.Integral:
+            if type(bc) == BC.Integral or type(bc) == BC.outerIntegral:
                 self.integralBC.append(bc.getBC(u)*v_u*ds(patch))
+#        print(len(self.dirichlet))
         
         #Defines variational form of poisson equation with boundary integrals as sums
         F_u = -D*(fcs.dot(fcs.grad(u), fcs.grad(v_u))*fcs.dx)  - u*kd*v_u*fcs.dx + f*v_u*fcs.dx + D*(sum(self.integralBC))

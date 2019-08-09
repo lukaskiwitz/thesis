@@ -32,3 +32,30 @@ class DirichletBC(BC):
         value = fcs.Expression(str(self.value),degree=self.degree)
         bc = fcs.DirichletBC(V, value ,boundary_markers,patch)
         return bc
+
+class outerBC(BC):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+class outerDirichletBC(outerBC):
+    def __init__(self,value,expr,**kwargs):
+        self.degree = 1
+        self.expr = expr
+        self.value = value
+#        self.p = {}
+        super().__init__(**kwargs)
+        
+    def getBC(self,V,boundary_markers,patch):
+        value = fcs.Expression(str(self.value),degree=self.degree)
+        bc = fcs.DirichletBC(V, value ,boundary_markers,patch)
+        return bc
+    
+class outerIntegral(outerBC):
+    def __init__(self,q,expr,**kwargs):
+        self.value = None
+        self.expr = expr
+#        self.p = {}
+        self.q = q
+        super().__init__(**kwargs)
+    def getBC(self,u):
+        return self.q(u,self.p)

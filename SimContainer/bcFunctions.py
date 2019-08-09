@@ -24,7 +24,6 @@ def cellBC_il2(u,p):
     a = fcs.Constant(4*np.pi*p["rho"]**2)
     
     
-
     return (q-u*k_on*R)/(D*a)
 
 def cellBC_il6(u,p):
@@ -56,7 +55,22 @@ def outerBC_il2(u,p):
     q = fcs.Constant(p["q_il2"])
     a  = fcs.Constant(4*np.pi*p["rho"]**2)
     
-    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*R)/(D*a)
+    return (q-u*k_on*R)/(D*a)
+
+def absorbing_il2(u,p):
+    """
+    Defines the flux boundary condition on the outer boundary.
+    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
+    """
+
+    k_on = fcs.Constant(p["k_on"])
+    D = fcs.Constant(p["D"])
+    R = fcs.Constant(p["R_il2"])
+    q = fcs.Constant(p["q_il2"])
+    a  = fcs.Constant(4*np.pi*p["rho"]**2)
+    
+    return fcs.Constant(0.1 )*u
+
 
 
 def outerBC_il6(u,p):
@@ -72,6 +86,6 @@ def outerBC_il6(u,p):
     a = fcs.Constant(4*np.pi*p["rho"]**2)
     
     
-    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*R)/(D*a)
+    return (q-u*k_on*R)/(D*a)
 
     

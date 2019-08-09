@@ -33,8 +33,8 @@ class MeshGenerator:
           characteristic_length_max=0.1
           )
         
-        p1 = self.outerDomain["entity"].getSubDomain().p1
-        p2 = self.outerDomain["entity"].getSubDomain().p2
+        p1 = self.outerDomain.getSubDomainGeometry().p1
+        p2 = self.outerDomain.getSubDomainGeometry().p2
         
         domain =  geom.add_box(p1,np.array(p2)-np.array(p1))
         entities = []
@@ -65,20 +65,20 @@ class MeshGenerator:
             boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
             with fcs.HDF5File(fcs.MPI.comm_world,subPath,"r") as f:
                 f.read(boundary_markers,"/boundaries")
-            self.outerDomain["patch"] = 1
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain["patch"]+1
+                a = self.outerDomain.getSubDomains()[-1]["patch"]+1
                 o["patch"] = i+a
                 
         else:
             boundary_markers = fcs.MeshFunction("size_t",mesh, mesh.topology().dim() - 1)
             boundary_markers.set_all(0)
             print("boundaries marked")
-            self.outerDomain["entity"] .getSubDomain().mark(boundary_markers,1)
-            self.outerDomain["patch"] = 1
+            
+            for i in self.outerDomain.getSubDomains():
+                i["entity"].getSubDomain().mark(boundary_markers,i["patch"])
             print("outer domain set")
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain["patch"]+1
+                a = self.outerDomain.getSubDomains()[-1]["patch"]+1
                 o["entity"].getCompiledSubDomain().mark(boundary_markers,i+a)
                 o["patch"] = i+a
             print("loop complete")

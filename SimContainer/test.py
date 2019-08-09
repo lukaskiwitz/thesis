@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import BC as bc
 import SimContainer as sc
-from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6
+from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6,absorbing_il2
 from copy import copy,deepcopy
 import BooleanInternalSolver as intSolver
 import json
@@ -21,14 +21,14 @@ factor = 1e0
 dd = 1.15
 p_global= {
          "R_il2":0,
-         "R_il6":100*N_A**-1*10e9*factor,
+         "R_il6":10*N_A**-1*10e9*factor,
          "q_il6":0,
          "q_il2":0,
-         "k_on": 10e-9*111.6/60**2,#111.6 per hour
+         "k_on": 10e9*111.6/60**2,#111.6 per hour
          "rho": 0.05,#mu
          "D":0.1**2,#mu² per s
-         "high":4000*N_A**-1*10e9*factor,
-         "low":100*N_A**-1*10e9*factor,
+         "high":400*N_A**-1*10e9*factor,
+         "low":10*N_A**-1*10e9*factor,
          "kd":0.1/(60*2),
          "q_high":2*N_A**-1*10e9*factor,
          "dd":dd
@@ -43,13 +43,15 @@ def updateState(p,sc,t):
         draw = ran.random()
         if draw > 3/4:
             p_temp["q_il2"] = p_global["q_high"]#two molecules per second
-
-
             p_temp["R_il2"] = p_temp["low"]
         elif draw > 2/4:
             p_temp["R_il2"] = p_temp["high"]
         else:
             p_temp["R_il2"] = p_temp["low"]
+            
+        draw = ran.random()
+        if draw > 3/4:
+            pass#p_temp["q_il6"] = p_global["q_high"]#two molecules per second
         e.p = p_temp
         
 def makeCellListGrid(p,xLine,yLine,zLine):
@@ -67,32 +69,27 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                        bc.Integral(cellBC_il2,fieldQuantity="il2"),
                        bc.Integral(cellBC_il6,fieldQuantity="il6")
                 ])
-#                draw = ran.random()
-#                if draw > 3/4:
-#                    p_temp["q_il2"] = p_global["q_high"]#two molecules per second
-#                    p_temp["R_il2"] = p_temp["low"]
-#                elif draw > 2/4:
-#                    p_temp["R_il2"] = p_temp["high"]
-#                else:
-#                    p_temp["R_il2"] = p_temp["low"]
                 cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
                 cell.p = p_temp
 #                cell.addSolver(deepcopy(interSolver))
                 cellList.append(cell)
    
     return cellList
-
-domain = Entity.DomainCube([-dd,-dd,-dd],[dd,dd,dd],[
-       bc.Integral(outerBC_il2,fieldQuantity="il2"),
-       bc.Integral(outerBC_il6,fieldQuantity="il6")
-        ])
 p_domain = deepcopy(p_global)
 p_domain.update({
          "R_il2":p_global["high"],
          "R_il6":0,
          "q_il6":p_global["q_high"],
          "q_il2":0})
-domain.p = p_domain
+
+domain = Entity.DomainCube([-dd,-dd,-dd],[dd,dd,dd],p_domain,[
+       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+#       bc.outerDirichletBC(0,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+       bc.outerIntegral(outerBC_il2,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+       bc.outerIntegral(outerBC_il6,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il6"),
+       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il6")
+        ])
+
 
 """IL-2"""
 solver_il2 = MySolver.PoissonSolver()
@@ -160,13 +157,13 @@ times = []
 
 #sc.saveSubdomains()
 #print("subdomains saved")
-sc.saveDomain()
-print("domain saved")
+#sc.saveDomain()
+#print("domain saved")
 
 
 xScale = []
 
-for n,i in enumerate(range(100)):
+for n,i in enumerate(range(10)):
 
 #    sc.fields[0].solver.p["kd"] = 1/(10**i)
 #    q = i*N_A*1e-9*3600e-1

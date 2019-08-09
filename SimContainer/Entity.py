@@ -9,6 +9,7 @@ Created on Fri Jun  7 12:22:13 2019
 import MySubDomain as SD
 import pandas as pd
 import fenics as fcs
+import BC as bc
 
 class Entity:
     def __init__(self):
@@ -38,7 +39,10 @@ class Entity:
         return {}
     
     def getState(self,key="q"):
-        return self.p[key]
+        if key in self.p:
+            return self.p[key]
+        else:
+            return 0
         
 class Cell(Entity):
     def __init__(self,center,radius,bcList):
@@ -77,10 +81,49 @@ class DomainSphere(DomainEntity):
     def getSubDomain(self):
         return SD.OuterSphere(self.center,self.radius)
 class DomainCube(DomainEntity):
-    def __init__(self,p1,p2,bcList):
+    def __init__(self,p1,p2,p,bcList):
         self.p1 = p1
         self.p2 = p2
+        self.p = p
+#        for i,bc in enumerate(bcList):
+#            bcList[i].p = p
+##            print(bcList[i].p)
         self.bcList = bcList
+        self.subdomainDict = self.__compileSubdomains()
         super().__init__()
-    def getSubDomain(self):
+    def __compileSubdomains(self):
+        subdomainDict = {}
+        for i,o in enumerate(self.bcList):
+            if isinstance(o,bc.outerBC):
+                e = compiledEntity(o.expr,o,self.p)
+                e.p = self.p
+                e.fieldQuantity = o.fieldQuantity
+                if o.expr not in subdomainDict.keys():
+                    subdomainDict[o.expr] = [e]
+                else:
+                    subdomainDict[o.expr].append(e)
+        return subdomainDict
+        
+    def getSubDomains(self,**kwargs):
+        subdomains = []
+        for i,o in enumerate(self.subdomainDict.values()):
+            if "fieldQuantity" in kwargs:
+                for e in o:
+                    if e.fieldQuantity == kwargs["fieldQuantity"]:
+                        subdomains.append({"entity":e,"patch":i+1})
+            else:
+                subdomains.append({"entity":o[0],"patch":i+1})
+        return subdomains
+    def getSubDomainGeometry(self):
         return SD.OuterCube(self.p1,self.p2)
+class compiledEntity(Entity):
+    def __init__(self,expr,bc,p):
+        self.bc = bc
+        self.p = p
+        self.expr = expr
+    def getSubDomain(self):
+        box = "near(x[0],{dd}) || near(x[0],-{dd}) || near(x[1],{dd}) || near(x[1],-{dd}) || near(x[2],{dd}) || near(x[2],-{dd})".format(dd=self.p["dd"])
+        return fcs.CompiledSubDomain(self.expr+"&&("+box+")")
+    def getBC(self,fieldQuantity):
+        self.bc.p = self.p
+        return self.bc
