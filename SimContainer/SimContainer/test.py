@@ -44,12 +44,12 @@ p_sim = {#default values
          "q_il6":0
          }
 p_c = {
-         "k_on":10e9*111.6/60**2,#111.6 per hour
+         "k_on": 10e9*111.6/60**2,#111.6 per hour
          "rho": 0.05,#mu
          "D":(10**0.5*0.01)**2,#mu² per s
          "R_h":400*N_A**-1*10e9,
          "R_l":10*N_A**-1*10e9,
-         "kd":0,#0.1/(60*2),
+         "kd":0.1/(60*2),
          "q_h":10*N_A**-1*10e9,
          "q_l":0,
          "radius":2,
@@ -63,7 +63,7 @@ T = range(1)
 
 """secHigh_dirichlet_fractionLow"""
 p_il2 = {
-     "R_il2_s":p_c["R_l"],#secretors
+     "R_il2_s":p_c["R_h"],#secretors
      "R_il2_f":p_c["R_l"],#fraction 
      "R_il2_n":p_c["R_l"],#normal
      "R_il2_b":p_c["R_h"],#boundary
@@ -77,7 +77,7 @@ p_il6 = {
      "R_il6_f":p_c["R_l"],
      "R_il6_n":0,
      "R_il6_b":0,
-     "q_il6_s":p_c["q_h"]*0.5,
+     "q_il6_s":p_c["q_h"]*1,
      "q_il6_f":p_c["q_l"]*1,
      "q_il6_n":p_c["q_l"]*1,
      "q_il6_b":p_c["q_h"],
@@ -85,14 +85,17 @@ p_il6 = {
 
 domainBC = [
        bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-#       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
+       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
+#       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
        bc.outerIntegral(outerBC_il6,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6"),
        bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
         ]
 
-run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test_kd/",extCache="/extra/kiwitz/extCache/")
+run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/bc_Test/",extCache="/extra/kiwitz/extCache/")
 
+
+#T = range(100)
+#
 #"""secHigh_dirichlet_fractionLow"""
 #p_il2 = {
 #     "R_il2_s":p_c["R_h"],#secretors
@@ -109,7 +112,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#     "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"]*1,
 #     "q_il6_f":p_c["q_l"]*1,
 #     "q_il6_n":p_c["q_l"]*1,
 #     "q_il6_b":p_c["q_h"],
@@ -141,7 +144,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#     "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"],
 #     "q_il6_f":p_c["q_l"],
 #     "q_il6_n":p_c["q_l"],
 #     "q_il6_b":p_c["q_h"],
@@ -155,7 +158,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
 #        ]
 #
-#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/secLow_dirichlet_fractionHigh/",extCache="/extra/kiwitz/extCache/")
+#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/secLow_dirichlet_fractionHigh/",extCache="/extra/kiwitz/extCache/")
 #
 #"""secHigh_noFLux_fractionLow"""
 #p_il2 = {
@@ -173,7 +176,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#     "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"],
 #     "q_il6_f":p_c["q_l"],
 #     "q_il6_n":p_c["q_l"],
 #     "q_il6_b":p_c["q_h"],
@@ -187,7 +190,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
 #        ]
 #
-#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/secHigh_noFLux_fractionLow/",extCache="/extra/kiwitz/extCache/")
+#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/secHigh_noFLux_fractionLow/",extCache="/extra/kiwitz/extCache/")
 #
 #"""secLow_noFlux_fractionHigh"""
 #p_il2 = {
@@ -205,7 +208,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#    "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"],
 #     "q_il6_f":p_c["q_l"],
 #     "q_il6_n":p_c["q_l"],
 #     "q_il6_b":p_c["q_h"],
@@ -219,7 +222,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
 #        ]
 #
-#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/secLow_noFlux_fractionHigh/",extCache="/extra/kiwitz/extCache/")
+#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/secLow_noFlux_fractionHigh/",extCache="/extra/kiwitz/extCache/")
 #
 #"""secHigh_fLux_fractionLow"""
 #p_il2 = {
@@ -237,7 +240,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#     "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"],
 #     "q_il6_f":p_c["q_l"],
 #     "q_il6_n":p_c["q_l"],
 #     "q_il6_b":p_c["q_h"],
@@ -251,7 +254,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
 #        ]
 #
-#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/secHigh_fLux_fractionLow/",extCache="/extra/kiwitz/extCache/")
+#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/secHigh_fLux_fractionLow/",extCache="/extra/kiwitz/extCache/")
 #
 #"""secLow_flux_fractionHigh"""
 #p_il2 = {
@@ -269,7 +272,7 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #     "R_il6_f":p_c["R_l"],
 #     "R_il6_n":0,
 #     "R_il6_b":0,
-#     "q_il6_s":p_c["q_h"]*0.5,
+#     "q_il6_s":p_c["q_h"],
 #     "q_il6_f":p_c["q_l"],
 #     "q_il6_n":p_c["q_l"],
 #     "q_il6_b":p_c["q_h"],
@@ -283,40 +286,8 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 #       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
 #        ]
 #
-#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/secLow_flux_fractionHigh/",extCache="/extra/kiwitz/extCache/")
-#
-#
-#from distPlot_dump_test import distPlot_dump
-#from distPlot import distPlot
-#import mpi4py.MPI as MPI
-#import seaborn as sns
-#
-#path = "/extra/kiwitz/results/"
-#extCache = "/extra/kiwitz/extCache/"
-#fields = ["il2","il6"]
-#
-#comm = MPI.COMM_WORLD
-#rank = comm.Get_rank()
-#size = comm.Get_size()
-#
-#l = ["secHigh_dirichlet_fractionLow",
-#"secLow_dirichlet_fractionHigh",
-#"secHigh_noFLux_fractionLow",
-#"secLow_noFlux_fractionHigh",
-#"secHigh_fLux_fractionLow",
-#"secLow_flux_fractionHigh"]
-##l = l[2:-1]
-##l = l[2:3]
-#threshholds = [
-#        [0.2,0.5]
-#        ]
-#for i in l:
-#    pass
-#    distPlot_dump(path+i+"/",extCache,fields,12)
-##for i in l:  
-##    pass
-##    distPlot(path+i+"/",threshholds[0],cutoff=[10,10],imgPath="/home/kiwitz/plots/",l=i)
-##distPlot("/extra/kiwitz/test/data/",threshholds[0])
+#run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/secLow_flux_fractionHigh/",extCache="/extra/kiwitz/extCache/")
+
 
 
 

@@ -33,7 +33,7 @@ class MeshGenerator:
             if "outerDomain" in kwargs:
                 self.outerDomain = kwargs["outerDomain"]
     def meshGen(self,resolution,**kwargs):
-#        print(kwargs)
+        
         geom = pygmsh.opencascade.Geometry(
           characteristic_length_min=kwargs["min_char_length"] if "min_char_length" in kwargs else 0.001,
           characteristic_length_max=kwargs["max_char_length"]if "min_char_length" in kwargs else 0.05,

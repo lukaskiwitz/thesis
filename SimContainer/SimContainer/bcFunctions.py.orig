@@ -24,7 +24,11 @@ def cellBC_il2(u,p):
     a = fcs.Constant(4*np.pi*p["rho"]**2)
     
     
+<<<<<<< HEAD
     return (q-u*k_on*R)/(D*a)
+=======
+    return (q-u*k_on*R)/D
+>>>>>>> fca2b5a28f43acb18a8718dcf4c58e4b78dcb53b
 
 def cellBC_il6(u,p):
     """
@@ -41,7 +45,12 @@ def cellBC_il6(u,p):
     k_on = fcs.Constant(k_on)
     a = fcs.Constant(4*np.pi*p["rho"]**2)
     
+<<<<<<< HEAD
     return (q-u*k_on*R)/(D*a)
+=======
+    
+    return (q-u*k_on*R)/D
+>>>>>>> fca2b5a28f43acb18a8718dcf4c58e4b78dcb53b
 
 def outerBC_il2(u,p):
     """
@@ -51,37 +60,18 @@ def outerBC_il2(u,p):
 
     k_on = fcs.Constant(p["k_on"])
     D = fcs.Constant(p["D"])
+<<<<<<< HEAD
     R = fcs.Constant(p["R_il2"])
     q = fcs.Constant(p["q_il2"])
-    a  = fcs.Constant(4*np.pi*p["rho"]**2)
+    a = fcs.Constant((p["dd"])**2)
     
-    return (q-u*k_on*R)/(D*a)
-def outerBC_il2_unitTest(u,p):
-   
-
-    k_on = fcs.Constant(p["k_on"])
-    D = fcs.Constant(p["D"])
-    R = fcs.Constant(p["R_il2_N"])
-    q = fcs.Constant(p["q_il2"])
-    a  = fcs.Constant(4*np.pi*p["radius"]**2)
-    
-    return (q-u*k_on*R)/(D*a)
-
-def absorbing_il2(u,p):
-    """
-    Defines the flux boundary condition on the outer boundary.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
-    """
-
-    k_on = fcs.Constant(p["k_on"])
-    D = fcs.Constant(p["D"])
-    R = fcs.Constant(p["R_il2"])
-    q = fcs.Constant(p["q_il2"])
-    a  = fcs.Constant(4*np.pi*p["rho"]**2)
-    
-    return fcs.Constant(0.1 )*u
-
-
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*R)/(D*a)
+=======
+    R = fcs.Constant(p["R_il2"])/(4*np.pi*p["rho"]**2)
+    q = fcs.Constant(p["q_il2"]/(4*np.pi*p["rho"]**2))
+    rd = R*fcs.Constant(1e0) #receptor density
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*rd)/D
+>>>>>>> fca2b5a28f43acb18a8718dcf4c58e4b78dcb53b
 
 def outerBC_il6(u,p):
     """
@@ -90,12 +80,18 @@ def outerBC_il6(u,p):
     """
     k_on = fcs.Constant(p["k_on"])
     D = fcs.Constant(p["D"])
-
+<<<<<<< HEAD
     R = fcs.Constant(p["R_il6"])
     q = fcs.Constant(p["q_il6"])
-    a = fcs.Constant(4*np.pi*p["rho"]**2)
+    a = fcs.Constant((p["dd"])**2)
     
     
-    return (q-u*k_on*R)/(D*a)
-
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*R)/(D*a)
+=======
+    R = fcs.Constant(p["R_il6"])/(4*np.pi*p["rho"]**2)
+    q = fcs.Constant(p["q_il6"]/(4*np.pi*p["rho"]**2))
+    
+    rd = R*fcs.Constant(1e0) #receptor density
+    return fcs.Expression("near(x[0],-dd) ? 1 : 0",degree=1,dd=p["dd"])*(q-u*k_on*rd)/D
+>>>>>>> fca2b5a28f43acb18a8718dcf4c58e4b78dcb53b
     

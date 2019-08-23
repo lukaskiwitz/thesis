@@ -19,17 +19,13 @@ def makeDataFrame_1(x,runs,**kwargs):
     frames = []
     l = kwargs["label"] if "label" in kwargs else "y"
     for run in runs:
-#        print("run: "+str(len(run)))
         for i,row in enumerate(run):
-#            print("row: "+str(len(row)))
-#            print("element :"+str(len(row[0])))
-            frames.append(pd.DataFrame({"x":[x[i]]*len(row),"u":row,"l":l}))
+                frames.append(pd.DataFrame({"x":[x[i]]*len(row),"u":row,"l":l}))
     frame = frames[0]
     for i in frames[:-1]:
         frame = frame.append(i)
     if "cutoff" in kwargs:
         frame = frame[frame.u  < kwargs["cutoff"]]
-        
     return frame
 
 def makeDataFrame_2(x,rows,**kwargs):
@@ -90,11 +86,8 @@ def sanitize(dump):
     return x,data
 path = "./"
 def distPlot(path,thresholds,**kwargs):
-    
-    imgPath = path+"plots/"
-    if "imgPath" in kwargs:
-        imgPath = kwargs["imgPath"]+"/"+kwargs["l"]
-    os.makedirs(imgPath,exist_ok=True)
+    imgPath = "plots/"
+    os.makedirs(path+imgPath,exist_ok=True)
     
     with open(path+"distPlot_dump_il2.json","r") as file:
         dump_il2 = json.load(file)
@@ -243,15 +236,15 @@ def distPlot(path,thresholds,**kwargs):
 #    sns.lineplot(x="x",y="u",ci="sd",data=il2p)
 #    sns.lineplot(x="x",y="u",ci="sd",data=il6p)
     
-#    sns.set_context("paper", rc={"lines.linewidth": 0.1,"lines.markersize":10})
-#    
+    sns.set_context("paper", rc={"lines.linewidth": 0.1,"lines.markersize":10})
+    
     xTicks = [i for i in np.arange(-1.5,2,0.5)]
     xScale = [round(i*100) for i in np.arange(0.15,3.5,0.5)]
     plt.figure(1)
     color = "tab:red"
     fig, ax1 = plt.subplots()
     sns.lineplot(x="x",y="u",ci="sd",data=il2Average,ax=ax1,color=color,markers={"IL-2":"."},style="l",legend=False)
-#    ax1.set_ylim(0)
+    ax1.set_ylim(0,0.1)
     ax1.tick_params(axis="y",labelcolor=color)
     ax1.set_ylabel(r'[IL-2][nM]',color=color)
     ax2 = ax1.twinx()
@@ -259,11 +252,11 @@ def distPlot(path,thresholds,**kwargs):
     sns.lineplot(x="x",y="u",ci="sd",data=il6Average,ax=ax2,color=color,markers=["."],style="l",legend=False)
     ax2.tick_params(axis="y",labelcolor=color)
     ax2.set_ylabel(r'[IL-6][nM]',color=color)
-#    ax2.set_ylim(0)
+    ax2.set_ylim(0,1)
     ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
     plt.xticks(xTicks,xScale)
     
-    plt.savefig(imgPath+"/"+"averageConcentrations.png",dpi=600)
+    plt.savefig(path+imgPath+"averageConcentrations.png",dpi=600)
 #    plt.close()
    
 #    plt.figure(2)
@@ -273,17 +266,15 @@ def distPlot(path,thresholds,**kwargs):
 #    plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
 #    plt.xlabel(r'distance from left boundary $[\mu m]$')
 #    plt.ylabel(r'fraction of positive cells')
-#    plt.savefig(imgPath+"/"+"simpleFractions.png",dpi=600)
-#    plt.xticks(xTicks,xScale)
-#    plt.close()
-    plt.figure(3)
-    sns.lineplot(x="x",y="u",ci="sd",data=conditionalFractions,hue="l")
-    plt.xlabel(r'distance from left boundary $[\mu m]$')
-    plt.ylabel(r'fraction of positive cells')
-    plt.xticks(xTicks,xScale)
-    plt.savefig(imgPath+"/"+"conditionalFractions.png",dpi=600)
-#    plt.close()
-    
+#    plt.savefig(path+imgPath+"simpleFractions.png",dpi=600)
+#   
+#    plt.figure(3)
+#    sns.lineplot(x="x",y="u",ci="sd",data=conditionalFractions,hue="l")
+#    plt.xticks(np.arange(-1,1.25,0.25),np.arange(15,225,25))
+#    plt.xlabel(r'distance from left boundary $[\mu m]$')
+#    plt.ylabel(r'fraction of positive cells')
+#   
+#    plt.savefig(path+imgPath+"conditionalFractions.png",dpi=600)
 ##    
 #    plt.figure(4)
 #    color = "tab:red"
