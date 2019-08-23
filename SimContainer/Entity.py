@@ -12,6 +12,7 @@ import fenics as fcs
 import BC as bc
 from copy import copy,deepcopy
 
+
 class Entity:
     def __init__(self):
         self.name = "default"
@@ -110,16 +111,16 @@ class DomainCube(DomainEntity):
         self.p1 = p1
         self.p2 = p2
         self.p = p
+
         self.bcList = bcList
         self.subdomainDict = self.__compileSubdomains()
         super().__init__()
-        
     def __compileSubdomains(self):
         subdomainDict = {}
         for i,o in enumerate(self.bcList):
             if isinstance(o,bc.outerBC):
-                e = compiledCube(o.expr,o,self.p)
-                e.p = deepcopy(self.p)
+                e = compiledEntity(o.expr,o,self.p)
+                e.p = self.p
                 e.fieldQuantity = o.fieldQuantity
                 if o.expr not in subdomainDict.keys():
                     subdomainDict[o.expr] = [e]

@@ -38,6 +38,7 @@ class MeshGenerator:
           characteristic_length_min=kwargs["min_char_length"] if "min_char_length" in kwargs else 0.001,
           characteristic_length_max=kwargs["max_char_length"]if "min_char_length" in kwargs else 0.05,
           )
+
         if isinstance(self.outerDomain,Entity.DomainCube):
             p1 = self.outerDomain.p1
             p2 = self.outerDomain.p2

@@ -7,9 +7,21 @@ import fenics as fcs
 import numpy as np
 #import matplotlib.pyplot as plt
 import BC as bc
+<<<<<<< HEAD
 #import SimContainer as sc
 from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6,absorbing_il2
 from copy import deepcopy
+=======
+import SimContainer as sc
+from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6,absorbing_il2
+from copy import copy,deepcopy
+import BooleanInternalSolver as intSolver
+import json
+import os
+import time
+import random
+from scipy.constants import N_A
+>>>>>>> 346cb68085eb45681e048f422269d86c3476166d
 
 from scipy.constants import N_A
 from run import run
@@ -39,6 +51,7 @@ p_d = {"x":x,
        }
 p_sim = {#default values
          "R_il2":0,
+<<<<<<< HEAD
          "q_il2":0,
          "R_il6":0,
          "q_il6":0
@@ -318,9 +331,153 @@ run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results/test
 ##    distPlot(path+i+"/",threshholds[0],cutoff=[10,10],imgPath="/home/kiwitz/plots/",l=i)
 ##distPlot("/extra/kiwitz/test/data/",threshholds[0])
 
+=======
+         "R_il6":10*N_A**-1*10e9*factor,
+         "q_il6":0,
+         "q_il2":0,
+         "k_on": 10e9*111.6/60**2,#111.6 per hour
+         "rho": 0.05,#mu
+         "D":0.1**2,#mu² per s
+         "high":400*N_A**-1*10e9*factor,
+         "low":10*N_A**-1*10e9*factor,
+         "kd":0.1/(60*2),
+         "q_high":2*N_A**-1*10e9*factor,
+         "dd":dd
+        }
+
+    
+def updateState(p,sc,t):
+    ran = random.Random()
+    ran.seed(t)
+    for i,e in enumerate(sc.entityList):
+        p_temp = deepcopy(p)
+        draw = ran.random()
+        if draw > 3/4:
+            p_temp["q_il2"] = p_global["q_high"]#two molecules per second
+            p_temp["R_il2"] = p_temp["low"]
+        elif draw > 2/4:
+            p_temp["R_il2"] = p_temp["high"]
+        else:
+            p_temp["R_il2"] = p_temp["low"]
+            
+        draw = ran.random()
+        if draw > 3/4:
+            pass#p_temp["q_il6"] = p_global["q_high"]#two molecules per second
+        e.p = p_temp
+        
+def makeCellListGrid(p,xLine,yLine,zLine):
+    
+    interSolver = intSolver.BooleanInternalSolver()
+    cellList = []
+    ran = random.Random()
+    ran.seed(1)
+    for x in xLine:
+        for y in yLine:
+            for z in zLine:                    
+                p_temp = deepcopy(p)
+                cell = Entity.Cell([x,y,z],p_temp["rho"],
+               [
+                       bc.Integral(cellBC_il2,fieldQuantity="il2"),
+                       bc.Integral(cellBC_il6,fieldQuantity="il6")
+                ])
+                cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
+                cell.p = p_temp
+#                cell.addSolver(deepcopy(interSolver))
+                cellList.append(cell)
+   
+    return cellList
+p_domain = deepcopy(p_global)
+p_domain.update({
+         "R_il2":p_global["high"],
+         "R_il6":0,
+         "q_il6":p_global["q_high"],
+         "q_il2":0})
+
+domain = Entity.DomainCube([-dd,-dd,-dd],[dd,dd,dd],p_domain,[
+       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+#       bc.outerDirichletBC(0,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+       bc.outerIntegral(outerBC_il2,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il2"),
+       bc.outerIntegral(outerBC_il6,"near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il6"),
+       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{dd}) && on_boundary".format(dd=dd),fieldQuantity="il6")
+        ])
+
+
+"""IL-2"""
+solver_il2 = MySolver.PoissonSolver()
+
+fieldProblem_il2 = fp.FieldProblem()
+fieldProblem_il2.fieldName = "il2"
+fieldProblem_il2.fieldQuantity = "il2"
+
+
+fieldProblem_il2.setSolver(solver_il2)
+fieldProblem_il2.p = deepcopy(p_global)
+fieldProblem_il2.meshCached = "./cache/meshCache_il2"
+fieldProblem_il2.setOuterDomain(domain)
+
+"""IL-6"""
+solver_il6 = MySolver.PoissonSolver()
+
+fieldProblem_il6 = fp.FieldProblem()
+fieldProblem_il6.fieldName = "il6"
+fieldProblem_il6.fieldQuantity = "il6"
+
+
+fieldProblem_il6.setSolver(solver_il6)
+fieldProblem_il6.p = deepcopy(p_global)
+fieldProblem_il6.meshCached = "./cache/meshCache_il2"
+fieldProblem_il6.setOuterDomain(domain)
+
+sc = sc.SimContainer()
+boxDim = 1
+
+n = 2*boxDim/0.2
+#n = 3
+
+x = np.linspace(-boxDim,boxDim,int(n))
+y = np.linspace(-boxDim,boxDim,int(n))
+z = np.linspace(-boxDim,boxDim,int(n))
+
+#x = [0]
+#y = x
+#z = x
+
+for i in makeCellListGrid(p_global,x,y,z):
+    sc.addEntity(i)
+
+sc.addField(fieldProblem_il2)
+#sc.addField(fieldProblem_il6)
+
+
+sc.initialize(load_subdomain="./cache/boundary_markers_il2.h5")
+
+#sc.initialize()
+print("init complete")
+if not os.path.isdir("./logs"):
+    try:
+        os.mkdir("./logs")
+    except:
+        pass
+else:
+    for file in os.listdir("./logs"):
+        try:
+            os.remove("./logs/"+str(file))
+        except:
+            pass
+times = []
+
+#sc.saveSubdomains()
+#print("subdomains saved")
+#sc.saveDomain()
+#print("domain saved")
+>>>>>>> 346cb68085eb45681e048f422269d86c3476166d
 
 
 
+<<<<<<< HEAD
+=======
+for n,i in enumerate(range(10)):
+>>>>>>> 346cb68085eb45681e048f422269d86c3476166d
 
 
 

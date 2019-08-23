@@ -149,10 +149,10 @@ class FieldProblem:
 #        mesh = self.solver.mesh
 #        boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim() - 1)
 #        boundary_markers.set_all(0)
-        
-#        e = self.outerDomain
-#        for o in e.getSubDomains():   
-#            o["entity"].getSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
+    
+        e = self.outerDomain
+        for o in e.getSubDomains():   
+            o["entity"].getSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
         return self.solver.boundary_markers
         
         
