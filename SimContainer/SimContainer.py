@@ -18,16 +18,20 @@ class SimContainer:
     def __init__(self):    
         self.entityList = []
         self.fields = []
+        self.path = "./"
     
     def initialize(self,**kwargs):
         self.subdomainFiles = []
         self.domainFiles = []
         self.fieldFiles = []
         self.boundaryMarkers = []
-         
+        
+        
+        os.makedirs(self.path,exist_ok=True)
+        
         for i in self.fields:
-            self.subdomainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,"./cache/subdomain_"+i.fieldName+".xdmf"))
-            self.domainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,"./cache/domain_"+i.fieldName+".xdmf"))
+            self.subdomainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,self.path+"cache/subdomain_"+i.fieldName+".xdmf"))
+            self.domainFiles.append(fcs.XDMFFile(fcs.MPI.comm_world,self.path+"cache/domain_"+i.fieldName+".xdmf"))
             self.fieldFiles.append("field_"+i.fieldName)
             
         for field in self.fields:
@@ -37,9 +41,9 @@ class SimContainer:
                 if fq in entity.fieldQuantities:
                     field.addEntity(entity)
             if "load_subdomain" in kwargs:
-                field.generateMesh(cache=True,load_subdomain=kwargs["load_subdomain"])
+                field.generateMesh(cache=True,path_prefix=self.path,**kwargs)
             else:
-                field.generateMesh(cache=True)
+                field.generateMesh(cache=True,path_prefix=self.path,**kwargs)
             field.updateSolver()
     def log(self):
         lst = []
@@ -63,7 +67,7 @@ class SimContainer:
         for field in self.fields:
             field.updateSolver()
             field.step(dT_min)
-            field.computeBoundaryFlux()
+#            field.computeBoundaryFlux()
     def addEntity(self,entity):
         if len(self.entityList) > 0:
             entity.id = self.entityList[-1].id+1
@@ -79,16 +83,16 @@ class SimContainer:
         for o,i in enumerate(self.fields):
             self.domainFiles[o].write(self.fields[0].getOuterDomainVis("R"))
     def saveFields(self,t):
-        if not os.path.isdir("./sol/distplot"):
+        if not os.path.isdir(self.path+"sol/distplot"):
             try:
-                os.mkdir("./sol/distplot")
+                os.mkdir(self.path+"sol/distplot")
             except:
                 pass
             
         for o,i in enumerate(self.fields):
 #            self.fieldFiles[o].write_checkpoint(i.getField(),"il2",t,dlf.cpp.io.XDMFFile.Encoding.HDF5)
-            with fcs.HDF5File(fcs.MPI.comm_world,"./sol/distplot/"+self.fieldFiles[o]+"_"+str(t)+"_distPlot.h5","w") as f:
+            with fcs.HDF5File(fcs.MPI.comm_world,self.path+"sol/distplot/"+self.fieldFiles[o]+"_"+str(t)+"_distPlot.h5","w") as f:
                 f.write(i.getField(),i.fieldName)
-            with fcs.XDMFFile(fcs.MPI.comm_world,"./sol/"+self.fieldFiles[o]+"_"+str(t)+".xdmf") as f:
+            with fcs.XDMFFile(fcs.MPI.comm_world,self.path+"sol/"+self.fieldFiles[o]+"_"+str(t)+".xdmf") as f:
                 f.write(i.getField(),t)
     
