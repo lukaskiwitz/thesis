@@ -14,7 +14,11 @@ from copy import deepcopy
 import os
 import pandas as pd
 import seaborn as sns
-
+def myLen(e):
+    try:
+        return len(e)
+    except(Exception):
+        return 1
 def makeDataFrame_1(x,runs,**kwargs):
     frames = []
     l = kwargs["label"] if "label" in kwargs else "y"
@@ -36,7 +40,7 @@ def makeDataFrame_2(x,rows,**kwargs):
     frames = []
     l = kwargs["label"] if "label" in kwargs else "y"
     for i,e in enumerate(rows):
-                frames.append(pd.DataFrame({"x":x[i]*len(e),"u":e,"l":l}))
+        frames.append(pd.DataFrame({"x":[x[i]]*myLen(e),"u":e,"l":l}))
     frame = frames[0]
     for i in frames[:-1]:
         frame = frame.append(i)
@@ -87,6 +91,10 @@ def sanitize(dump):
             for o,dist in enumerate(run):
                     indices = [dist.index(cell) for cell in dist if cell["il2"] < 10e-10 or cell["il6"] < 10e-10] 
                     run[o] = list(np.delete(dist,indices))
+    x = x[0:-4] # cut of last 5 cell rows
+    for i,o in enumerate(data):
+        data[i] = data[i][0:-4]
+    
     return x,data
 path = "./"
 def distPlot(path,thresholds,**kwargs):
@@ -104,6 +112,7 @@ def distPlot(path,thresholds,**kwargs):
 
 
     x,data = sanitize(dump)
+#    return None
 #    x = np.arange(-1.5,1.5,0.2)
     il2Average = myPlot(
             data,
@@ -218,9 +227,9 @@ def distPlot(path,thresholds,**kwargs):
     il2Average = makeDataFrame_1(x,il2Average,label="IL-2",cutoff=kwargs["cutoff"][0])
     il6Average = makeDataFrame_1(x,il6Average,label="IL-6",cutoff=kwargs["cutoff"][1])
     
-    il2p = makeDataFrame_2(x,il2p,label="IL-2")
-    il6p = makeDataFrame_2(x,il6p,label="IL-6")
-    simpleFractions = il2p.append(il6p)
+#    il2p = makeDataFrame_2(x,il2p,label="IL-2")
+#    il6p = makeDataFrame_2(x,il6p,label="IL-6")
+#    simpleFractions = il2p.append(il6p)
 #    
     il2pil6p = makeDataFrame_2(x,il2pil6p,label="IL2$^+$ IL6$^+$")
     il2pil6n = makeDataFrame_2(x,il2pil6n,label="IL2$^+$ IL6$^-$")
@@ -244,11 +253,14 @@ def distPlot(path,thresholds,**kwargs):
 #    sns.lineplot(x="x",y="u",ci="sd",data=il2p)
 #    sns.lineplot(x="x",y="u",ci="sd",data=il6p)
     
-#    sns.set_context("paper", rc={"lines.linewidth": 0.1,"lines.markersize":10})
+    sns.set_context("paper", font_scale=1.5,rc={"lines.linewidth": 1,"lines.markersize":20})
 #    
-    xTicks = [i for i in np.arange(-1.5,2,0.5)]
-    xScale = [round(i*100) for i in np.arange(0.15,3.5,0.5)]
-    plt.figure(1)
+#    xTicks = [i for i in np.arange(-1.5,2,0.5)]
+#    xScale = [round(i*100) for i in np.arange(0.15,3.5,0.5)]
+    
+    xTicks = x#[i for i in np.arange(min(x),max(x),0.2)]
+    xScale = [i for i,o in enumerate(xTicks)]
+#    plt.figure(1)
     color = "tab:red"
     fig, ax1 = plt.subplots()
     sns.lineplot(x="x",y="u",ci="sd",data=il2Average,ax=ax1,color=color,markers={"IL-2":"."},style="l",legend=False)
@@ -261,11 +273,20 @@ def distPlot(path,thresholds,**kwargs):
     ax2.tick_params(axis="y",labelcolor=color)
     ax2.set_ylabel(r'[IL-6][nM]',color=color)
 #    ax2.set_ylim(0)
-    ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
+#    ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
+    ax1.set_xlabel(r'cell row')
     plt.xticks(xTicks,xScale)
     
-    plt.savefig(imgPath+"/"+"averageConcentrations.png",dpi=600)
-#    plt.close()
+    
+    
+    if "il2_limits" in kwargs:
+        ax1.set_ylim(kwargs["il2_limits"])
+        
+    if "il6_limits" in kwargs:
+        ax2.set_ylim(kwargs["il6_limits"])
+            
+    plt.savefig(imgPath+"/"+"averageConcentrations.pdf",dpi=1200)
+    plt.close()
    
 #    plt.figure(2)
 #    sns.lineplot(x="x",y="u",ci="sd",data=simpleFractions,hue="l")
@@ -277,13 +298,17 @@ def distPlot(path,thresholds,**kwargs):
 #    plt.savefig(imgPath+"/"+"simpleFractions.png",dpi=600)
 #    plt.xticks(xTicks,xScale)
 #    plt.close()
-    plt.figure(3)
-    sns.lineplot(x="x",y="u",ci="sd",data=conditionalFractions,hue="l")
-    plt.xlabel(r'distance from left boundary $[\mu m]$')
+#    plt.figure(3)
+    sns.lineplot(x="x",y="u",ci="sd",data=conditionalFractions,hue="l",err_style="bars",marker=".")
+#    plt.xlabel(r'distance from left boundary $[\mu m]$')
+    plt.legend(loc="upper right")
+    plt.xlabel(r'cell row')
     plt.ylabel(r'fraction of positive cells')
+    plt.ylim(-5,105)
+    plt.yticks(np.arange(0,120,20),np.arange(0,120,20))
     plt.xticks(xTicks,xScale)
-    plt.savefig(imgPath+"/"+"conditionalFractions.png",dpi=600)
-#    plt.close()
+    plt.savefig(imgPath+"/"+"conditionalFractions.pdf",dpi=1200)
+    plt.close()
     
 ##    
 #    plt.figure(4)

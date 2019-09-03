@@ -139,16 +139,23 @@ class FieldProblem:
 #        mesh= fcs.BoundaryMesh(mesh,"exterior")
         boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim()-1)
         boundary_markers.set_all(0)
+
         
         for o in self.registeredEntities: 
             e = o["entity"]
-            e.getCompiledSubDomain().mark(boundary_markers,e.getState(key="R_il2"))
+#            if e.getState(key=key) > 0:    
+#            print(e.getState(key=key))
+            st = e.getState(key=key)
+            if st == 0:
+                e.getCompiledSubDomain().mark(boundary_markers,-1)
+            else:
+                e.getCompiledSubDomain().mark(boundary_markers,st)
         
         return boundary_markers
     def getOuterDomainVis(self,key="q"):
-#        mesh = self.solver.mesh
-#        boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim() - 1)
-#        boundary_markers.set_all(0)
+        mesh = self.solver.mesh
+        boundary_markers = fcs.MeshFunction("double",mesh, mesh.topology().dim() - 1)
+        boundary_markers.set_all(0)
     
         e = self.outerDomain
         for o in e.getSubDomains():   

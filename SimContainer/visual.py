@@ -25,16 +25,17 @@ l = ["secHigh_dirichlet_fractionLow",
 "secLow_noFlux_fractionHigh",
 "secHigh_fLux_fractionLow",
 "secLow_flux_fractionHigh"]
-l = l[4:5]
+l = l[4:6]
 #l = l[1:2]
 threshholds = [
-        [0.055,0.08],
-        [0.15,0.5],
-        [0.055,0.5],
-        [0.055,0.5],
-        [0.055,0.5],
-        [0.17,0.5]
+        [0.04,0.2],
+        [0.15,0.2],
+        [0.055,0.2],
+        [0.055,0.2],
+        [0.04,0.2],
+        [0.12,0.2]
         ]
+threshholds = threshholds[4:6]
 for i in l:
     pass
 #    distPlot_dump(path+i+"/",extCache,fields,12)

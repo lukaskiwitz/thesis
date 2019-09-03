@@ -66,8 +66,6 @@ class Cell(Entity):
               "p":self.p
               }
         return di
-    def getState(self, key="q"):
-        return self.p[key]
     
 class DomainEntity(Entity):
     def __init__(self,**kwargs):
@@ -119,7 +117,7 @@ class DomainCube(DomainEntity):
         subdomainDict = {}
         for i,o in enumerate(self.bcList):
             if isinstance(o,bc.outerBC):
-                e = compiledEntity(o.expr,o,self.p)
+                e = compiledCube(o.expr,o,self.p)
                 e.p = self.p
                 e.fieldQuantity = o.fieldQuantity
                 if o.expr not in subdomainDict.keys():

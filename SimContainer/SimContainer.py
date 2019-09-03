@@ -78,7 +78,7 @@ class SimContainer:
         self.fields.append(field)
     def saveSubdomains(self):
         for o,i in enumerate(self.fields):
-            self.subdomainFiles[o].write(i.getSubDomainsVis("R"))
+            self.subdomainFiles[o].write(i.getSubDomainsVis(key="q_il2"))
     def saveDomain(self):
         for o,i in enumerate(self.fields):
             self.domainFiles[o].write(self.fields[0].getOuterDomainVis("R"))

@@ -111,15 +111,16 @@ def run(p,T,domainBC,path,**kwargs):
         sc.addEntity(i)
 
     sc.addField(fieldProblem_il2)
-#    sc.addField(fieldProblem_il6)
+    sc.addField(fieldProblem_il6)
     
     sc.initialize(load_subdomain=kwargs["extCache"]+"cache/boundary_markers_il2.h5")
     print("init complete")
     
-#    sc.saveSubdomains()
-#    print("subdomains saved")
-#    sc.saveDomain()
-#    print("domain saved")
+    updateState(p,sc,0)
+    sc.saveSubdomains()
+    print("subdomains saved")
+    sc.saveDomain()
+    print("domain saved")
     
     for n,t in enumerate(T):
         updateState(p,sc,t)
