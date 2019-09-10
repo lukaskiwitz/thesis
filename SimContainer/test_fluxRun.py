@@ -138,6 +138,7 @@ p_c = {
 
 from distPlot_dump_test import distPlot_dump
 from distPlot import distPlot
+from gradient_dump_test import gradient_dump
 import mpi4py.MPI as MPI
 import seaborn as sns
 
@@ -161,9 +162,13 @@ threshholds = [
 #for i in l:
 #    pass
 #    distPlot_dump(path+i+"/",extCache,fields,12)
-for i,e in enumerate(l):  
+for i in l:
     pass
-    distPlot(path+e+"/",threshholds[i],cutoff=[10,10],imgPath="/home/kiwitz/plots_fluxRun/",l=e,il2_limits=(0,0.3),il6_limits=(0,6))
+    gradient_dump(path+i+"/",extCache,fields,12)
+
+#for i,e in enumerate(l):  
+#    pass
+#    distPlot(path+e+"/",threshholds[i],cutoff=[10,10],imgPath="/home/kiwitz/plots_fluxRun/",l=e,il2_limits=(0,0.3),il6_limits=(0,6))
 
 
 

@@ -1,5 +1,0 @@
-/tmp/tmpprcrn9en/dolfin_subdomain_ec924a5e2b962927e4c032ca4cc4e924.cpp: In member function 'virtual bool dolfin::dolfin_subdomain_ec924a5e2b962927e4c032ca4cc4e924::inside(Eigen::Ref<const Eigen::Matrix<double, -1, 1> >, bool) const':
-/tmp/tmpprcrn9en/dolfin_subdomain_ec924a5e2b962927e4c032ca4cc4e924.cpp:63:19: error: expected identifier before '(' token
-          return &&(abs((sqrt(pow(x[0]-0,2)+pow(x[1]-0,2)+pow(x[2]-0,2))-2))<= 10e-2) && on_boundary;
-                   ^
-/tmp/tmpprcrn9en/dolfin_subdomain_ec924a5e2b962927e4c032ca4cc4e924.cpp:63:19: error: expected ';' before '(' token

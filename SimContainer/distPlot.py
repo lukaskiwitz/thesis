@@ -231,10 +231,10 @@ def distPlot(path,thresholds,**kwargs):
 #    il6p = makeDataFrame_2(x,il6p,label="IL-6")
 #    simpleFractions = il2p.append(il6p)
 #    
-    il2pil6p = makeDataFrame_2(x,il2pil6p,label="IL2$^+$ IL6$^+$")
-    il2pil6n = makeDataFrame_2(x,il2pil6n,label="IL2$^+$ IL6$^-$")
-    il2nil6p = makeDataFrame_2(x,il2nil6p,label="IL2$^-$ IL6$^+$")
-    il2nil6n = makeDataFrame_2(x,il2nil6n,label="IL2$^-$ IL6$^-$")
+    il2pil6p = makeDataFrame_2(x,il2pil6p,label="IL2$^+$ IL21$^+$")
+    il2pil6n = makeDataFrame_2(x,il2pil6n,label="IL2$^+$ IL21$^-$")
+    il2nil6p = makeDataFrame_2(x,il2nil6p,label="IL2$^-$ IL21$^+$")
+    il2nil6n = makeDataFrame_2(x,il2nil6n,label="IL2$^-$ IL21$^-$")
 #    
     conditionalFractions = il2pil6p
     for i in [il2pil6n,il2nil6p,il2nil6n]:
@@ -253,29 +253,39 @@ def distPlot(path,thresholds,**kwargs):
 #    sns.lineplot(x="x",y="u",ci="sd",data=il2p)
 #    sns.lineplot(x="x",y="u",ci="sd",data=il6p)
     
-    sns.set_context("paper", font_scale=1.5,rc={"lines.linewidth": 1,"lines.markersize":20})
+    sns.set_context("paper", font_scale=1.5,rc={
+            "lines.linewidth": 1,
+            "lines.markersize":20,
+            'xtick.labelsize': 'small',
+            'ytick.labelsize': 'small',
+            "xtick.major.width": 0.8,
+            "xtick.minor.width": 0.8,
+            "xtick.major.size": 3.5,
+            "xtick.minor.size": 3.5})
 #    
 #    xTicks = [i for i in np.arange(-1.5,2,0.5)]
 #    xScale = [round(i*100) for i in np.arange(0.15,3.5,0.5)]
     
     xTicks = x#[i for i in np.arange(min(x),max(x),0.2)]
-    xScale = [i for i,o in enumerate(xTicks)]
+#    xScale = [i for i,o in enumerate(xTicks)]
+    xScale = [0,"",2,"",5,"",6,"",8,"",10]
 #    plt.figure(1)
     color = "tab:red"
     fig, ax1 = plt.subplots()
     sns.lineplot(x="x",y="u",ci="sd",data=il2Average,ax=ax1,color=color,markers={"IL-2":"."},style="l",legend=False)
 #    ax1.set_ylim(0)
     ax1.tick_params(axis="y",labelcolor=color)
-    ax1.set_ylabel(r'[IL-2][nM]',color=color)
+    ax1.set_ylabel(r'IL-2 on cell surface (nM)',color=color)
     ax2 = ax1.twinx()
     color = "tab:blue"
     sns.lineplot(x="x",y="u",ci="sd",data=il6Average,ax=ax2,color=color,markers=["."],style="l",legend=False)
     ax2.tick_params(axis="y",labelcolor=color)
-    ax2.set_ylabel(r'[IL-6][nM]',color=color)
+    ax2.set_ylabel(r'IL-21 on cell surface (nM)',color=color)
 #    ax2.set_ylim(0)
 #    ax1.set_xlabel(r'distance from left boundary $[\mu m]$')
-    ax1.set_xlabel(r'cell row')
+    ax1.set_xlabel(r'cell distance from boundary')
     plt.xticks(xTicks,xScale)
+    plt.tight_layout()
     
     
     
@@ -302,12 +312,13 @@ def distPlot(path,thresholds,**kwargs):
     sns.lineplot(x="x",y="u",ci="sd",data=conditionalFractions,hue="l",err_style="bars",marker=".")
 #    plt.xlabel(r'distance from left boundary $[\mu m]$')
     plt.legend(loc="upper right")
-    plt.xlabel(r'cell row')
-    plt.ylabel(r'fraction of positive cells')
+    plt.xlabel(r'cell distance from boundary')
+    plt.ylabel(r'fraction of positive cells (%)')
     plt.ylim(-5,105)
     plt.yticks(np.arange(0,120,20),np.arange(0,120,20))
     plt.xticks(xTicks,xScale)
-    plt.savefig(imgPath+"/"+"conditionalFractions.pdf",dpi=1200)
+    plt.tight_layout()
+    plt.savefig(imgPath+"/"+"conditionalFractions.pdf",dpi=600)
     plt.close()
     
 ##    
