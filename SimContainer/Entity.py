@@ -57,7 +57,13 @@ class Cell(Entity):
     def getCompiledSubDomain(self):
         return fcs.CompiledSubDomain("on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
                               c0=self.center[0],c1=self.center[1],c2=self.center[2],r=self.radius)
-    def log(self):        
+    def log(self):    
+        p_out = self.p
+        for i in p_out.keys():
+            if "numpy.float64" == str(type(p_out[i])):
+                p_out[i] = float(p_out[i])
+            if "ndarray" in str(type(p_out[i])):
+                p_out[i] = list(p_out[i])
         di = {"type":str(type(self)),
               "id":self.id,
               "name":self.name,

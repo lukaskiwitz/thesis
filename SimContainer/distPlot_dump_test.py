@@ -81,7 +81,7 @@ def job(files,extCache,cell_data,output):
         resultList.append(deepcopy(dataOUT))
     output.put(resultList)
 
-def distPlot_dump(path,extCache,fields,threads):
+def distPlot_dump(path,extCache,fields,threads,**kwargs):
     
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -96,7 +96,10 @@ def distPlot_dump(path,extCache,fields,threads):
 #    boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
 #    with fcs.HDF5File(local,subPath,"r") as f:
 #        f.read(boundary_markers,"/boundaries")
-    cell_dump_path = path+"cell_dump.json"
+    if "cell_dump" in kwargs:
+            cell_dump_path = kwargs["cell_dump"]+"cell_dump.json"
+    else:
+        cell_dump_path = path+"cell_dump.json"
     with open(cell_dump_path,"r") as file:
         d = file.read()
         cell_data = json.loads(d)

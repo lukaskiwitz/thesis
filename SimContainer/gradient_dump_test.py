@@ -13,34 +13,31 @@ import h5py
 import json
 import os
 import re
+
 from copy import copy,deepcopy
 import mpi4py.MPI as MPI
 import multiprocessing as mp
 from math import ceil
-
-def compute(no,h5File,field,extCache,**kwargs):
-    mesh = kwargs["mesh"]
-#    boundary_markers = kwargs["boundary_markers"]  
-#    cell_data =  kwargs["cell_data"]
-#    tmpIndexList = []
+def collectFilesFormLog(scanLog):
+    pass
+def compute(file,extCache,**kwargs):
     
+    filePath = file["file"]
+    field = file["field"]
+    no = file["no"]
+    mesh = kwargs["mesh"]    
     u = kwargs["u"]
     V_vec = fcs.VectorFunctionSpace(mesh,"P",1)
-    
-#    ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
-    print("projecting gradient")
     grad = fcs.project(fcs.grad(u),V_vec,solver_type="gmres")
-    result = fcs.assemble(fcs.sqrt(fcs.dot(grad,grad))*fcs.dX)
-    print(result)
-    return {"field":field,"result":result}
+    gradient = fcs.assemble(fcs.sqrt(fcs.dot(grad,grad))*fcs.dX)*10**8
+    conc = fcs.assemble(u*fcs.dX)*10**9
+    return {"field":field,"gradient":gradient,"concentration":conc,"file":filePath,"dict":file["dict"]}
 
-def job(files,extCache,cell_data,output):
+def job(files,extCache,output):
     
-#    output.put([i[1] if i else None for i in files])
-#    return None
+
     comm = MPI.COMM_WORLD
-#    rank = comm.Get_rank()
-#    size = comm.Get_size()
+
     local = comm.Dup()
 
     mesh = fcs.Mesh()
@@ -52,50 +49,64 @@ def job(files,extCache,cell_data,output):
     with fcs.HDF5File(local,subPath,"r") as f:
         f.read(boundary_markers,"/boundaries")   
     resultList = []
-    for no,i in enumerate(files):
-        if not i:
+    for n,file in enumerate(files):
+        filePath = file["file"]
+        field = file["field"]
+        no = file["no"]
+        if not file:
             continue
         parameters = {
         "mesh":mesh,
         "V":V,
-        "boundary_markers":boundary_markers,
-        "cell_data":cell_data
+        "boundary_markers":boundary_markers
         }
         u = fcs.Function(V)
-        with fcs.HDF5File(local,i[1],"r") as f:
-            f.read(u,i[2])
+        with fcs.HDF5File(local,filePath,"r") as f:
+            f.read(u,"/"+field)
         parameters["u"] = copy(u)
-        print("reading file {file} ({no}/{tot})".format(file=i[1],no=no,tot=len(files)))
-        dataOUT = compute(i[0],i[1],i[2],extCache,**parameters)
+        print("reading file {file} ({n}/{tot})".format(file=filePath,n=n,tot=len(files)))
+        dataOUT = compute(file,extCache,**parameters)
         resultList.append(deepcopy(dataOUT))
     output.put(resultList)
 
-def gradient_dump(path,extCache,fields,threads):
+def gradient_dump(path,extCache,fields,threads,**kwargs):
     
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    
-    
+    for i in os.listdir(path):
+        if i.endswith(".scan"):
+            with open(path+"/"+i,"r") as file:
+                d = file.read()
+                scanLog = json.loads(d)
+            break
+    timesteps = []
     scatterList = []
-    cell_dump_path = path+"cell_dump.json"
-    with open(cell_dump_path,"r") as file:
-        d = file.read()
-        cell_data = json.loads(d)
     
-    for field in fields:
-        fileList = os.listdir(path+"sol/distplot")
-        bList = [((re.compile(field)).search("{field}(?=.*\.h5)".format(field=i))) for i in fileList]
-        fileList = np.delete(fileList,[i for i,e in enumerate(bList) if not e])
-        for no,file in enumerate(fileList):
-            scatterList.append([no,path+"sol/distplot/"+file,field])
-            
+    for singleScan in scanLog: ## loads timestep logs
+        subFolder = singleScan["subfolder"]
+        for subFile in os.listdir(subFolder):
+            if subFile.endswith(".log"):
+                with open(subFolder+subFile,"r") as f:
+                    d = f.read()
+                    d = "["+d[:-1]+"]"
+                    timestep = json.loads(d)
+                    timesteps.append(timestep)
+            if subFile == "sol":
+                for field in fields:
+                    fileList = os.listdir(subFolder+subFile+"/distplot")
+                    bList = [((re.compile(field)).search("{field}(?=.*\.h5)".format(field=i))) for i in fileList]
+                    fileList = np.delete(fileList,[i for i,e in enumerate(bList) if not e])
+                    for no,file in enumerate(fileList):
+                        scatterList.append({"no":no,
+                                            "file":subFolder+subFile+"/distplot/"+file,
+                                            "field":field,
+                                            "dict":singleScan["dict"]})
+    print("scatter")    
 
     size = ceil(len(scatterList)/threads)
     partitionedList = [scatterList[x:x+size] for x in range(0,len(scatterList),size)]
     resultList = []
     output = mp.Queue(threads)
     
-    jobs = [mp.Process(target=job,args=(i,extCache,cell_data,output)) for i in partitionedList]
+    jobs = [mp.Process(target=job,args=(i,extCache,output)) for i in partitionedList]
     for j in jobs:
         j.start()
         
@@ -106,15 +117,6 @@ def gradient_dump(path,extCache,fields,threads):
     for i in resultList:
         for o in i:
             flattendList.append(o)
-    outDict = {}
-    for o in flattendList:
-        f = o["field"]
-        if f in outDict:    
-            outDict[f].append(o["result"])
-        else:
-            outDict[f] = [o["result"]]
-    for k,v in outDict.items():
-        with open(path+"gradient_dump_"+k+".json","w") as file:
-            file.write(json.dumps(v))
-                    
-#distPlot_dump("/extra/kiwitz/test/data/","/extra/kiwitz/extCache/",["il2","il6"],10)
+
+    with open(path+"gradient_dump.json","w") as file:
+            file.write(json.dumps(flattendList))

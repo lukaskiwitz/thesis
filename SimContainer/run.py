@@ -22,6 +22,14 @@ import os
 import time
 import random
 from scipy.constants import N_A
+import xml.etree.ElementTree as ET
+import StateManager
+
+import mpi4py.MPI as MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 def updateState(p,sc,t):
     ran = random.Random()
@@ -32,10 +40,13 @@ def updateState(p,sc,t):
         if draw > 3/4:
             p_temp["q_il2"] = p["q_il2_s"]#two molecules per second
             p_temp["R_il2"] = p["R_il2_s"]
+            p_temp["type"] = 1
         elif draw > 2/4:
             p_temp["R_il2"] = p["R_il2_f"]
+            p_temp["type"] = 2
         else:
             p_temp["R_il2"] = p["R_il2_n"]
+            p_temp["type"] = 3
             
         draw = ran.random()
         if draw > 3/4:
@@ -61,13 +72,41 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 cell.p = p_temp
                 cellList.append(cell)
     return cellList
+def scan_log(topLevel,output):
+    root = ET.Element("run")
+    for o in output:
+        scan = ET.SubElement(root,"scan")
+        
+        path = ET.SubElement(scan,"path")
+        path.text = str(o["subfolder"])
+        
+        parameters = ET.SubElement(scan,"parameters")
+        
+        constant = ET.SubElement(parameters,"constant")
+        for k,v in o["constant"].items():
+            par = ET.SubElement(constant,k)
+            par.text = str(v)
+        dynamic = ET.SubElement(parameters,"dynamic")
+        for k,v in o["dynamic"].items():
+            par = ET.SubElement(dynamic,k)
+            par.text = str(v)
+        number = ET.SubElement(scan,"number")
+        number.text = str(o["number"])
+        
+        timeSeries = ET.SubElement(scan,"timeSeries")
+    
+    tree = ET.ElementTree(element=root)
+    tree.write(topLevel+"log.scan")
+#    with open(topLevel+"log.scan","w") as f:
+#        f.write(json.dumps(output))
+        
 def run(p,T,domainBC,path,**kwargs):
     
 #    p_c = p_global["p_c"]
 #    p_d = p_global["p_d"]
 #    p_il2 = p_global["p_il2"]
 #    p_il6 = p_global["p_il6"]
-    
+
     p_domain = deepcopy(p)
     p_domain.update({
             "R_il2":p["R_il2_b"],
@@ -111,21 +150,54 @@ def run(p,T,domainBC,path,**kwargs):
         sc.addEntity(i)
 
     sc.addField(fieldProblem_il2)
-    sc.addField(fieldProblem_il6)
+#    sc.addField(fieldProblem_il6)
     
     sc.initialize(load_subdomain=kwargs["extCache"]+"cache/boundary_markers_il2.h5")
     print("init complete")
     
-    updateState(p,sc,0)
-    sc.saveSubdomains()
-    print("subdomains saved")
-    sc.saveDomain()
-    print("domain saved")
+#    updateState(p,sc,0)
+#    sc.saveSubdomains()
+#    print("subdomains saved")
+#    sc.saveDomain()
+#    print("domain saved")
+    stMan = StateManager.StateManager(path)
     
-    for n,t in enumerate(T):
-        updateState(p,sc,t)
-        start = time.process_time()
-        sc.step(1)
-        end = time.process_time()
-        print("time: "+str(end-start)+"s for step number "+str(n))
-        sc.saveFields(n)
+    if "scan" in kwargs:
+        scan = kwargs["scan"]
+        stMan.scan_log(scan,p)
+        
+        for number,s in enumerate(scan):
+            p = stMan.updateSimContainer(sc,number)
+            sc.path = stMan.getScanFolder(number)
+#            sc.initLogs()
+#            p.update(s)
+#            for f in sc.fields:
+#                
+#                f.p = deepcopy(p)
+#                f.solver.p = deepcopy(p)
+#            p_domain.update(s)
+            
+            updateState(p,sc,0)
+            sc.initXdmfFiles()
+#            sc.saveSubdomains()
+                
+            for n,t in enumerate(T):
+                updateState(p,sc,t)
+                start = time.process_time()
+                
+                sc.step(1)
+                end = time.process_time()
+                print("time: "+str(end-start)+"s for step number "+str(n))
+                resultPaths = sc.saveFields(n)
+                for k,v in resultPaths.items():
+                    (distplot,sol) = v
+                    stMan.writeTimeStep(number,n,t,displot=distplot,sol=sol,fieldName=k)
+                
+    else:
+        for n,t in enumerate(T):
+            updateState(p,sc,t)
+            start = time.process_time()
+            sc.step(1)
+            end = time.process_time()
+            print("time: "+str(end-start)+"s for step number "+str(n))
+            sc.saveFields(n)
