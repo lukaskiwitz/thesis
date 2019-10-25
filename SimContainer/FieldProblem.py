@@ -68,7 +68,6 @@ class FieldProblem:
             self.meshCached = path_prefix+"cache/meshCache_{field}".format(field=self.fieldName)
         else:
                 mesh, boundary_markers = meshGen.meshGen(res,path=meshPath,load=True,**kwargs)
-        meshGen.jsonDump(path_prefix)
         self.solver.mesh = mesh
         self.solver.boundary_markers = boundary_markers
         self.solver.p = self.p

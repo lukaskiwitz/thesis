@@ -98,11 +98,3 @@ class MeshGenerator:
                 with fcs.HDF5File(fcs.MPI.comm_world,subPath,"w") as f:
                     f.write(boundary_markers,"/boundaries")
         return mesh,boundary_markers
-    def jsonDump(self,path):
-        print("dumping json cell data")
-        dumpList = []
-        for i in self.entityList:
-            dumpList.append({"patch":i["patch"],"center":i["entity"].center})
-        dump = json.dumps(dumpList)
-        with open(path+"cell_dump.json","w") as file:
-            file.write(dump)

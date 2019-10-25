@@ -38,20 +38,30 @@ def updateState(p,sc,t):
         p_temp = deepcopy(p)
         draw = ran.random()
         if draw > 3/4:
-            p_temp["q_il2"] = p["q_il2_s"]#two molecules per second
+            p_temp["q_il2"] = p["q_il2_s"]
             p_temp["R_il2"] = p["R_il2_s"]
+            
+            p_temp["q_il6"] = p["q_il6_s"]
+            p_temp["R_il6"] = p["R_il6_s"]
+            
             p_temp["type"] = 1
         elif draw > 2/4:
+            p_temp["q_il2"] = p["q_il2_f"]
             p_temp["R_il2"] = p["R_il2_f"]
+            
+            p_temp["q_il6"] = p["q_il6_f"]
+            p_temp["R_il6"] = p["R_il6_f"]
+            
             p_temp["type"] = 2
         else:
+            p_temp["q_il2"] = p["q_il2_n"]
             p_temp["R_il2"] = p["R_il2_n"]
-            p_temp["type"] = 3
+
+            p_temp["q_il6"] = p["q_il6_n"]            
+            p_temp["R_il6"] = p["R_il6_n"]
             
-        draw = ran.random()
-        if draw > 3/4:
-            p_temp["q_il6"] = p["q_il6_s"]#two molecules per second
-            p_temp["R_il6"] = p["R_il6_s"]
+            p_temp["type"] = 3
+                
         e.p = p_temp
         
 def makeCellListGrid(p,xLine,yLine,zLine):
@@ -150,33 +160,27 @@ def run(p,T,domainBC,path,**kwargs):
         sc.addEntity(i)
 
     sc.addField(fieldProblem_il2)
-#    sc.addField(fieldProblem_il6)
+    sc.addField(fieldProblem_il6)
     
     sc.initialize(load_subdomain=kwargs["extCache"]+"cache/boundary_markers_il2.h5")
     print("init complete")
     
-#    updateState(p,sc,0)
-#    sc.saveSubdomains()
-#    print("subdomains saved")
-#    sc.saveDomain()
-#    print("domain saved")
+    updateState(p,sc,0)
+    sc.saveSubdomains()
+    print("subdomains saved")
+    sc.saveDomain()
+    print("domain saved")
     stMan = StateManager.StateManager(path)
     
     if "scan" in kwargs:
         scan = kwargs["scan"]
         stMan.scan_log(scan,p)
+        stMan.addCellDump(sc,0)
+        stMan.writeElementTree()
         
         for number,s in enumerate(scan):
             p = stMan.updateSimContainer(sc,number)
-            sc.path = stMan.getScanFolder(number)
-#            sc.initLogs()
-#            p.update(s)
-#            for f in sc.fields:
-#                
-#                f.p = deepcopy(p)
-#                f.solver.p = deepcopy(p)
-#            p_domain.update(s)
-            
+            sc.path = stMan.getScanFolder(number)            
             updateState(p,sc,0)
             sc.initXdmfFiles()
 #            sc.saveSubdomains()
@@ -191,7 +195,8 @@ def run(p,T,domainBC,path,**kwargs):
                 resultPaths = sc.saveFields(n)
                 for k,v in resultPaths.items():
                     (distplot,sol) = v
-                    stMan.writeTimeStep(number,n,t,displot=distplot,sol=sol,fieldName=k)
+                    stMan.addTimeStep(number,n,t,displot=distplot,sol=sol,fieldName=k)
+                    stMan.writeElementTree()
                 
     else:
         for n,t in enumerate(T):

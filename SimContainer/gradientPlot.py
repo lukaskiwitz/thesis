@@ -17,6 +17,7 @@ import pandas as pd
 import seaborn as sns
 import itertools
 from scipy.constants import N_A
+import lxml.etree as ET
 
 def sortDict(x,keys):
     res = x
@@ -30,14 +31,52 @@ def groupByKey(ls,keys):
         l.append(list(e))
     return l
 def gradientPlot(path,xKey,**kwargs):
+    fieldName = "il2"
+    tree = ET.parse(path+"postProcess.xml")
+    files = tree.findall("/file[@field='{name}']".format(name=fieldName))
+    result = []
+    for file in files:
+        d = {
+            "con":float(file.find("./global/concentration").text)/19.584,#volume quickfix!!
+            "gradient":float(file.find("./global/gradient").text)/19.584,#volume quickfix!!
+            }
+        dynamic = {}
+        for i in json.loads(file.get("dynamic")):
+            dynamic.update({i["name"]:float(i["value"])})
+        d.update(dynamic)
+        result.append(d)
+    result = groupByKey(result,[xKey])
     
-#    imgPath = path+"plots/"
-#    if "imgPath" in kwargs:
-#        imgPath = kwargs["imgPath"]+"/"+kwargs["l"]
-#    os.makedirs(imgPath,exist_ok=True)
+    x = []
+    y = []
+    frames = []
+    for scan in result:
+        gradients = [i["gradient"] for i in scan]
+        con = [i["con"] for i in scan]
+        x_s = round(scan[0][xKey]/(N_A**-1*10e9))
+        x_tot = round((scan[0]["R_il2_s"]+scan[0]["R_il2_f"])/(N_A**-1*10e9))
+        x = round(x_s/x_tot*100)
+#        df = pd.DataFrame(
+#                {"x":[x]*len(gradients),"v":gradients,"type":"gradient","Cytokine":field_scan[0]["field"]},
+#                )
+#        df = df.append(pd.DataFrame(
+#                {"x":[x]*len(gradients),"v":con,"type":"concentration","Cytokine":field_scan[0]["field"]}
+#                ))
+        df = pd.DataFrame(
+                {"x":[x]*len(gradients),"v":gradients,"type":"gradient"},
+                )
+        df = df.append(pd.DataFrame(
+                {"x":[x]*len(gradients),"v":con,"type":"concentration"}
+                ))
+                
+        frames.append(df)
+    frame = frames[0]
+    for i in frames[1:]:
+        frame = frame.append(i)
+        
     
-    with open(path+"gradient_dump.json","r") as file:
-        dump = json.load(file)
+#    with open(path+"gradient_dump.json","r") as file:
+#        dump = json.load(file)
         
 #    sns.set_context("poster", font_scale=1.5,rc={
 #            "lines.linewidth": 1,
@@ -55,42 +94,13 @@ def gradientPlot(path,xKey,**kwargs):
             'xtick.labelsize': 'large',
             'ytick.labelsize': 'large'}
             )
-    dump = groupByKey(dump,["dict",xKey])
-    for i,e in enumerate(dump):
-        dump[i] = groupByKey(e,["field"])
+    
+
 
     x = []
     y = []
     frames = []
-    for singleScan in dump:
-        
-        
-        for field_scan in singleScan:
-            if field_scan[0]["field"] == "il2":
-#            if True:
-                gradients = [i["gradient"]/19.584 for i in field_scan]#volume quickfix!!
-                con = [i["concentration"]/19.584 for i in field_scan]
-                x_s = round(field_scan[0]["dict"][xKey]/(N_A**-1*10e9))
-                x_tot = round((field_scan[0]["dict"]["R_il2_s"]+field_scan[0]["dict"]["R_il2_f"])/(N_A**-1*10e9))
-                x = round(x_s/x_tot*100)
-#                df = pd.DataFrame(
-#                        {"x":[x]*len(gradients),"v":gradients,"type":"gradient","Cytokine":field_scan[0]["field"]},
-#                        )
-#                df = df.append(pd.DataFrame(
-#                        {"x":[x]*len(gradients),"v":con,"type":"concentration","Cytokine":field_scan[0]["field"]}
-#                        ))
-                df = pd.DataFrame(
-                        {"x":[x]*len(gradients),"v":gradients,"type":"gradient"},
-                        )
-                df = df.append(pd.DataFrame(
-                        {"x":[x]*len(gradients),"v":con,"type":"concentration"}
-                        ))
-                
-                frames.append(df)
-    frame = frames[0]
-    for i in frames[1:]:
-        frame = frame.append(i)
-        
+     
     fig = plt.figure(figsize=(6.4,4))
     ax1 = plt.gca()
     color = "tab:red"
@@ -109,13 +119,13 @@ def gradientPlot(path,xKey,**kwargs):
     if "plotPath" in kwargs:
         plt.savefig(kwargs["plotPath"]+"gradient.pdf")
     return fig
-        
+#        
     
         
     
 y = []
-path = "/extra/kiwitz/results_parameter_scan/"
-gradientPlot(path,"R_il2_s",plotPath="/home/kiwitz/parameter_scan_plots/")
+path = "/extra/kiwitz/results_parameter_scan_xmlTest/"
+gradientPlot(path,"R_il2_s",plotPath="/home/kiwitz/parameter_scan_plots_xmlTest/")
 
 #path = "/home/lukas/"
 #gradientPlot(path,plotPath="/home/lukas/")

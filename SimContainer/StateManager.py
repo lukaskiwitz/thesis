@@ -28,7 +28,8 @@ class StateManager:
         self.path = path
         self.scanFolderPattern = "{path}scan_{n}/"
         self.elementTree = None
-        
+    def loadXML(self):
+        self.elementTree = ET.parse("{p}/log.scan".format(p=self.path))
     def getScanFolder(self,n):
             return self.scanFolderPattern.format(n=n,path=self.path)
     def writeElementTree(self):
@@ -67,8 +68,35 @@ class StateManager:
             timeSeries = ET.SubElement(scan,"timeSeries")
         
         self.elementTree = ET.ElementTree(element=root)
-        self.writeElementTree()
-    def writeTimeStep(self,i,n,t,fieldName="field",displot="",sol=""):
+#        self.writeElementTree()
+    def addCellDump(self,sc,i):
+        """
+        i Scan index in xml file
+        """
+        run = self.elementTree.getroot()
+        cellDump = ET.SubElement(run,"cellDump")
+        
+        for f in [sc.fields[0]]:
+            field = ET.SubElement(cellDump,"field")
+            field.set("name",str(f.fieldName))
+            extCache = ET.SubElement(field,"extCache")
+            extCache.text = f.extCache
+            subdomains = ET.SubElement(field,"subdomains")
+            subdomains.text = sc.extBoundaryMarkers
+            for n in f.registeredEntities:
+                cell = ET.SubElement(field,"cell")
+                patch = ET.SubElement(cell,"patch")
+                center = ET.SubElement(cell,"center")
+                
+                patch.text = str(n["patch"])
+                center.text = json.dumps(list(n["entity"].center))
+            
+#            dumpList.append({"patch":i["patch"],"center":i["entity"].center})
+    def loadCellDump(self):
+        cellDump  = self.elementTree.getroot().find("/cellDump")
+        
+        
+    def addTimeStep(self,i,n,t,fieldName="field",displot="",sol=""):
         scans = self.elementTree.getroot().find("scans")
         scan = scans.find("./scan[@i='{i}']".format(i=i))
 #        scan  = next(itertools.islice(scans.iter(tag="scan"),i,i+1,1))

@@ -40,6 +40,7 @@ class SimContainer:
         
         self.boundaryMarkers = []
         self.initXdmfFiles()
+        self.extBoundaryMarkers = kwargs["load_subdomain"]
         for field in self.fields:
             fq = field.fieldQuantity
             for entity in self.entityList:
