@@ -63,6 +63,7 @@ def _prepData(inTree):
         result = result.append(frames[i+1])
     return result
 
+
 def singleScanPlots(data,img):
     scanGroups = data.groupby(by=["scanIndex"])
     th = [0.1,2]
@@ -179,8 +180,6 @@ img = "/home/kiwitz/parameter_scan_qStrength_plots/"
 tree = ET.parse(path+"postProcess.xml")  
 res = _prepData(tree)
 singleScanPlots(res,img)
- 
-
 
 
 
