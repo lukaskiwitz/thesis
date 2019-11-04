@@ -17,6 +17,8 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+
 def cellBC(u,p):
     """
     Defines the flux boundary conditions for the cell.
