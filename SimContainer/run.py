@@ -37,7 +37,7 @@ def updateState(p,sc,t):
     for i,e in enumerate(sc.entityList):
         p_temp = deepcopy(p)
         draw = ran.random()
-        if draw > 3/4:
+        if draw > 1-p["fraction"]:
             p_temp["q_il2"] = p["q_il2_s"]
             p_temp["R_il2"] = p["R_il2_s"]
             
@@ -45,7 +45,7 @@ def updateState(p,sc,t):
             p_temp["R_il6"] = p["R_il6_s"]
             
             p_temp["type"] = 1
-        elif draw > 2/4:
+        elif draw > 1-2*p["fraction"]:
             p_temp["q_il2"] = p["q_il2_f"]
             p_temp["R_il2"] = p["R_il2_f"]
             
