@@ -80,27 +80,15 @@ class PoissonSolver(MySolver):
             defines problem and instantiates fenics solver
             
         """
-        self.E_u = fcs.FiniteElement("P",self.mesh.ufl_cell(),1)
-        self.E_c = fcs.FiniteElement("R",self.mesh.ufl_cell(),0)
-        
-#        self.V = fcs.FunctionSpace(self.mesh,self.E_u * self.E_c)
-        self.V = fcs.FunctionSpace(self.mesh,self.E_u)
 
-        
+
+        self.V = fcs.FunctionSpace(self.mesh,"P",1)
+
         #define trialfunction u, testfunction v from functionspace V
-        
-#        m = fcs.Function(self.V)
-        u = fcs.Function(self.V)
-        m = u
-#        (u,c) = fcs.split(m)
-#        (v_u,v_c) = fcs.TestFunction(self.V)
-        (v_u) = fcs.TestFunction(self.V)
 
+        u = fcs.TrialFunction(self.V)
+        v = fcs.TestFunction(self.V)
 
-
-#        u = fcs.Function(self.V)
-#        v = fcs.TestFunction(self.V)
-        
         #define constants
         f = fcs.Constant(0)
         
@@ -127,27 +115,28 @@ class PoissonSolver(MySolver):
             patch = i["patch"]
             bc = e.getBC(self.fieldQuantity)
             if isinstance(bc,BC.outerBC):
-#                print(type(bc))
-#                print(bc.fieldQuantity)
                 pass
             if type(bc) == BC.DirichletBC or type(bc) == BC.outerDirichletBC:
                 #Dirichlet BC
                 print("patch"+str(patch))
                 self.dirichlet.append(bc.getBC(self.V,self.boundary_markers,patch))
             if type(bc) == BC.Integral or type(bc) == BC.outerIntegral:
-                self.integralBC.append(bc.getBC(u)*v_u*ds(patch))
-#        print(len(self.dirichlet))
+                self.integralBC.append(bc.getBC(u)*v*ds(patch))
         
         #Defines variational form of poisson equation with boundary integrals as sums
-        F_u = -D*(fcs.dot(fcs.grad(u), fcs.grad(v_u))*fcs.dx)  - u*kd*v_u*fcs.dx + f*v_u*fcs.dx + D*(sum(self.integralBC))
-#        F_c = (c*v_u + u*v_c)*fcs.dx  - mean*v_c*fcs.dx
-        F = F_u#+ F_c
+        F= -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx)  - u*kd*v*fcs.dx + f*v*fcs.dx + D*(sum(self.integralBC))
+
         #Defines nonlinear variational problem as F == 0 with Dirichlet BC and Jacobian given as the Gateaux derivative of F
         # with respect to u
-        problem = fcs.NonlinearVariationalProblem(F,m, self.dirichlet,J=fcs.derivative(F, m))
+        # problem = fcs.NonlinearVariationalProblem(F,u, self.dirichlet,J=fcs.derivative(F, u))
+        a = fcs.lhs(F)
+        L = fcs.rhs(F)
+        u = fcs.Function(self.V)
+        problem = fcs.LinearVariationalProblem(a, L, u, self.dirichlet)
         
         #instantiates fenics solver class as a field of "PoissonSolver"
-        self.solver = fcs.NonlinearVariationalSolver(problem)
+        # self.solver = fcs.NonlinearVariationalSolver(problem)
+        self.solver = fcs.LinearVariationalSolver(problem)
         
         #sets field u to be trialfunction
         self.u = u

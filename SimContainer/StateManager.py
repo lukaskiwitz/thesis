@@ -40,7 +40,7 @@ class StateManager:
 
     def writeElementTree(self):
         if not rank == 0:
-            print("not rank 0")
+            # print("not rank 0")
             return None
         f = self.path+"log.scan"
         print("writing element tree to {file}".format(file=f))
@@ -99,14 +99,12 @@ class StateManager:
                 patch.text = str(n["patch"])
                 center.text = json.dumps(list(n["entity"].center))
 
-#            dumpList.append({"patch":i["patch"],"center":i["entity"].center})
     def loadCellDump(self):
-        cellDump = self.elementTree.getroot().find("/cellDump")
+        self.cellDump = self.elementTree.getroot().find("/cellDump")
 
     def addTimeStep(self, i, n, t, fieldName="field", displot="", sol=""):
         scans = self.elementTree.getroot().find("scans")
         scan = scans.find("./scan[@i='{i}']".format(i=i))
-#        scan  = next(itertools.islice(scans.iter(tag="scan"),i,i+1,1))
 
         timeSeries = scan.find("timeSeries")
         field = timeSeries.find("./field[@name='{f}']".format(f=fieldName))

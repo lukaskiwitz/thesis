@@ -21,7 +21,7 @@ import random
 from scipy.constants import N_A
 
 from scipy.constants import N_A
-from run import run
+from run_scan import run
 from distPlot_dump import distPlot_dump
 from distPlot import distPlot
 

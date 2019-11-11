@@ -89,19 +89,12 @@ class FieldProblem:
         """
         self.updateBCs()
         self.solver.compileSolver()
-        self.solver.solver.parameters["newton_solver"]["linear_solver"] = "gmres"
-        self.solver.solver.parameters["newton_solver"]["preconditioner"] = "hypre_amg"
-        self.solver.solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-35
-        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-10
 
-        
-#        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["absolute_tolerance"] = 1e-20
-#        self.solver.solver.parameters["newton_solver"]["krylov_solver"]["relative_tolerance"] = 1e-5
-        
-#        for k,v in self.solver.solver.parameters["newton_solver"]["krylov_solver"].items():
-#            print(k+": "+"%.2E"%Decimal(v))
-#        print("-----------------------------------------------")
-#        self.solver.solver.parameters["newton_solver"]["relative_tolerance"] = 1e-20
+        self.solver.solver.parameters["linear_solver"] = "gmres"
+        self.solver.solver.parameters["preconditioner"] = "hypre_amg"
+        self.solver.solver.parameters["krylov_solver"]["absolute_tolerance"] = 1e-35
+        self.solver.solver.parameters["krylov_solver"]["relative_tolerance"] = 1e-10
+
     def __computeBoundaryFlux(self):
         boundary_markers = self.solver.boundary_markers
         mesh = self.solver.mesh

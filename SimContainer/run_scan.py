@@ -82,40 +82,35 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 cell.p = p_temp
                 cellList.append(cell)
     return cellList
-def scan_log(topLevel,output):
-    root = ET.Element("run")
-    for o in output:
-        scan = ET.SubElement(root,"scan")
+# def scan_log(topLevel,output):
+#     root = ET.Element("run")
+#     for o in output:
+#         scan = ET.SubElement(root,"scan")
+#
+#         path = ET.SubElement(scan,"path")
+#         path.text = str(o["subfolder"])
+#
+#         parameters = ET.SubElement(scan,"parameters")
+#
+#         constant = ET.SubElement(parameters,"constant")
+#         for k,v in o["constant"].items():
+#             par = ET.SubElement(constant,k)
+#             par.text = str(v)
+#         dynamic = ET.SubElement(parameters,"dynamic")
+#         for k,v in o["dynamic"].items():
+#             par = ET.SubElement(dynamic,k)
+#             par.text = str(v)
+#         number = ET.SubElement(scan,"number")
+#         number.text = str(o["number"])
+#
+#         timeSeries = ET.SubElement(scan,"timeSeries")
+#
+#     tree = ET.ElementTree(element=root)
+#     tree.write(topLevel+"log.scan")
+# #    with open(topLevel+"log.scan","w") as f:
+# #        f.write(json.dumps(output))
         
-        path = ET.SubElement(scan,"path")
-        path.text = str(o["subfolder"])
-        
-        parameters = ET.SubElement(scan,"parameters")
-        
-        constant = ET.SubElement(parameters,"constant")
-        for k,v in o["constant"].items():
-            par = ET.SubElement(constant,k)
-            par.text = str(v)
-        dynamic = ET.SubElement(parameters,"dynamic")
-        for k,v in o["dynamic"].items():
-            par = ET.SubElement(dynamic,k)
-            par.text = str(v)
-        number = ET.SubElement(scan,"number")
-        number.text = str(o["number"])
-        
-        timeSeries = ET.SubElement(scan,"timeSeries")
-    
-    tree = ET.ElementTree(element=root)
-    tree.write(topLevel+"log.scan")
-#    with open(topLevel+"log.scan","w") as f:
-#        f.write(json.dumps(output))
-        
-def run(p,T,domainBC,path,**kwargs):
-    
-#    p_c = p_global["p_c"]
-#    p_d = p_global["p_d"]
-#    p_il2 = p_global["p_il2"]
-#    p_il6 = p_global["p_il6"]
+def run(p, T, domainBC, path, **kwargs):
 
     p_domain = deepcopy(p)
     p_domain.update({
@@ -124,6 +119,7 @@ def run(p,T,domainBC,path,**kwargs):
             "R_il6":p["R_il6_b"],
             "q_il6":p["q_il6_b"]
             })
+
     domain = Entity.DomainCube([-p["d_x"],-p["d_y"],-p["d_z"]],[p["d_x"],p["d_y"],p["d_z"]],p_domain,domainBC)
     """IL-2"""
     solver_il2 = MySolver.PoissonSolver()
