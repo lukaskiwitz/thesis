@@ -18,7 +18,7 @@ from typing import cast, List, Tuple
 
 sns.set_context("paper", font_scale=1.5, rc={
     "lines.linewidth": 1,
-    "lines.markersize": 20,
+    "lines.markersize": 0,
     'xtick.labelsize': 'small',
     'ytick.labelsize': 'small',
     "xtick.major.width": 0.8,
@@ -174,31 +174,48 @@ def single_scan_plots(data: pd.DataFrame, img_path: str) -> None:
 
         # plotting
         plt.figure(1)
-        plot_averages(img_path, x_ticks, x_scale, data_frame)
+        # plot_averages(img_path, x_ticks, x_scale, data_frame)
 
         plt.figure(2)
-        plot_simple_fractions(img_path, x_ticks, x_scale, data_frame, t_holds)
+        # plot_simple_fractions(img_path, x_ticks, x_scale, data_frame, t_holds)
 
         plt.figure(3)
         plot_conditional_fractions(img_path, x_ticks, x_scale, data_frame, t_holds)
+        plt.show()
 
 
 def parameter_plot(data: pd.DataFrame, img_path: str) -> None:
     # x = np.unique(data.filter("D").to_numpy())
     # data = data.div(x[3],axis="D")
-    plt.figure(1)
+    plt.figure()
     sns.lineplot(x="scanIndex", y="concentration", ci="sd", data=data,
                  hue="l", err_style="bars", marker=".")
-    # plt.xlabel(r'$D$')
-    # plt.ylabel(r'concentration (nM)')
-    plt.ylabel(r'concentrations')
-    # plt.legend(["IL-2", "IL-6"], title="field")
+    plt.ylabel(r'[IL-2]  (nM)')
+    plt.xlabel("parameter")
+    plt.xticks([1,25,50],["0.1","1","10"])
     plt.tight_layout()
-    # plt.savefig(img_path+"/"+"global_concentration.pdf", dpi=600)
+    plt.savefig(img_path+"/"+"sensitivity_c.pdf", dpi=600)
     plt.ylim([0,20])
+    plt.show()
+
+    plt.figure(1)
+    sns.lineplot(x="scanIndex", y="gradient", ci="sd", data=data,
+                 hue="l", err_style="bars", marker=".")
+    plt.ylabel(r'$\nabla$[IL-2] $\frac{nM}{dm}$')
+    plt.xlabel("parameter")
+    plt.xticks([1, 25, 50], ["0.1", "1", "10"])
+    plt.tight_layout()
+    plt.savefig(img_path + "/" + "sensitivity_grad.pdf", dpi=600)
+    # plt.ylim([0, 20])
     plt.show()
     # plt.close()
 
+def cluster_plot(data: pd.DataFrame,img_path: str,title="") -> None:
+    plt.figure()
+    data= data.loc[(data["scanIndex"] == 0) | (data["scanIndex"] == 25) | (data["scanIndex"] == 49)]
+    sns.scatterplot(x="il2",y="il6",hue="scanIndex",data=data,s=5)
+    plt.title(title)
+    plt.show()
 
 PATH = "/extra/kiwitz/results_parameter_scan_Diffusion/"
 # PATH = "/home/chrx/results_parameter_scan_Diffusion/"
@@ -209,14 +226,15 @@ IMG = "/home/kiwitz/postProcessResult_img/"
 # res = _prepData(tree)
 
 PATH_LIST = [
-    {"path":"/extra/kiwitz/results_parameter_scan_Diffusion/","key":"D"},
-    {"path":"/extra/kiwitz/results_parameter_scan_fraction/","key":"fraction"},
-    {"path":"/extra/kiwitz/results_parameter_scan_kd/","key":"decay"},
-    {"path":"/extra/kiwitz/results_parameter_scan_kON/","key":"k_{on}"},
-    {"path":"/extra/kiwitz/results_parameter_scan_q_s/","key":"q Secretors"},
-    {"path":"/extra/kiwitz/results_parameter_scan_R_il2_f/","key":"R il2 f"},
-    {"path":"/extra/kiwitz/results_parameter_scan_R_il2_s/","key":"R il2 s"}
+    {"path":"/extra/kiwitz/sensitivity_result/Diffusion/","key":r"$D$"},
+    {"path":"/extra/kiwitz/sensitivity_result/fraction/","key":r"$f$"},
+    {"path":"/extra/kiwitz/sensitivity_result/kd/","key":r"$k_d$"},
+    {"path":"/extra/kiwitz/sensitivity_result/kON/","key":r"$k_{\operatorname{on}}$"},
+    {"path":"/extra/kiwitz/sensitivity_result/q_il2_s/","key":r"$q_{s}$"},
+    {"path":"/extra/kiwitz/sensitivity_result/R_il2_f/","key":r"$R_f$"},
+    {"path":"/extra/kiwitz/sensitivity_result/R_il2_s/","key":r"$R_s$"}
              ]
+PATH = "/extra/kiwitz/sensitivity_result/Diffusion/"
 
 res_global: pd.DataFrame = pd.DataFrame()
 for e in PATH_LIST:
@@ -228,6 +246,9 @@ for e in PATH_LIST:
 
 o = parameter_plot(res_global, IMG)
 
-# RES: pd.DataFrame = cast(pd.DataFrame, pd.read_hdf(PATH + 'dataframe.h5', "data"))
+# for path in PATH_LIST:
+#     res: pd.DataFrame = cast(pd.DataFrame, pd.read_hdf(path["path"] + 'dataframe.h5', "data"))
+#     plt.figure()
+#     cluster_plot(res,IMG,title=path["key"])
 # single_scan_plots(RES, IMG)
 

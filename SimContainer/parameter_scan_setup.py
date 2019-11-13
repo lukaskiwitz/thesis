@@ -67,7 +67,7 @@ def execute_scan(scan: List[Dict],p_c: Dict, T:List[float], path:str, ext_cache:
                          "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il2"),
         # bc.outerIntegral(outerBC_il2,
         #                  "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il2"),
-        bc.outerIntegral(outerBC_il6,
+        bc.outerIntegral(lambda u, p: fcs.Constant(0),
                          "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il6"),
         bc.outerIntegral(lambda u, p: fcs.Constant(0),
                          "!near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il6")

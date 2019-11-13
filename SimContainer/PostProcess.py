@@ -301,7 +301,7 @@ class PostProcessor:
                 cell_results = np.empty((1500, len(files) + offset))
                 # name_list = []
                 for cellIndex, cell in enumerate(
-                        files[0].findall("./cellResults/cell")
+                        files[0].findall("./cell_results/cell")
                 ):
 
                     x = json.loads(cell.find("./center").text)[0]
@@ -310,11 +310,11 @@ class PostProcessor:
                     cell_results[cellIndex, 2] = scan_index
                     name_list = []
                     for o, file in enumerate(files):
-                        cell = file.findall("./cellResults/cell")[cellIndex]
+                        cell = file.findall("./cell_results/cell")[cellIndex]
                         field_name = file.get("field")
                         name_list.append(field_name)
                         cell_results[cellIndex, o + offset] = float(
-                            cell.find("./surfaceConcentration").text
+                            cell.find("./surface_concentration").text
                         )
 
                 cell_frame = pd.DataFrame(cell_results, columns=[
@@ -351,17 +351,18 @@ class PostProcessor:
 
 
 PATH_LIST = [
-    # {"path":"/extra/kiwitz/results_parameter_scan_Diffusion/","key":"D"},
-    # {"path":"/extra/kiwitz/results_parameter_scan_fraction/","key":"fraction"},
-    # {"path":"/extra/kiwitz/results_parameter_scan_kd/","key":"decay"},
-    # {"path":"/extra/kiwitz/results_parameter_scan_kON/","key":"k_{on}"},
-    # {"path":"/extra/kiwitz/results_parameter_scan_q_s/","key":"q Secretors"},
-    # {"path":"/extra/kiwitz/results_parameter_scan_R_il2_f/","key":"R il2 f"},
-    {"path":"/extra/kiwitz/results_parameter_scan_R_il2_s/","key":"R il2 s"}
+    {"path":"/extra/kiwitz/sensitivity/Diffusion/","key":"D"},
+    {"path":"/extra/kiwitz/sensitivity/fraction/","key":"fraction"},
+    {"path":"/extra/kiwitz/sensitivity/kd/","key":"decay"},
+    {"path":"/extra/kiwitz/sensitivity/kON/","key":"k_{on}"},
+    {"path":"/extra/kiwitz/sensitivity/q_il2_s/","key":"q Secretors"},
+    {"path":"/extra/kiwitz/sensitivity/R_il2_f/","key":"R il2 f"},
+    {"path":"/extra/kiwitz/sensitivity/R_il2_s/","key":"R il2 s"}
              ]
 for i in PATH_LIST:
     path = i["path"]
     pp = PostProcessor(path)
-    pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
+    # pp.dump(path, 80)
+    # pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
     pp.prep_data().to_hdf(path + 'dataframe.h5', key="data", mode="w")
-# pp.dump(PATH, 64)
+

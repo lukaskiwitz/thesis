@@ -93,7 +93,7 @@ class FieldProblem:
         self.solver.solver.parameters["linear_solver"] = "gmres"
         self.solver.solver.parameters["preconditioner"] = "hypre_amg"
         self.solver.solver.parameters["krylov_solver"]["absolute_tolerance"] = 1e-35
-        self.solver.solver.parameters["krylov_solver"]["relative_tolerance"] = 1e-10
+        self.solver.solver.parameters["krylov_solver"]["relative_tolerance"] = 1e-5
 
     def __computeBoundaryFlux(self):
         boundary_markers = self.solver.boundary_markers
