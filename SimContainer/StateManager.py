@@ -27,12 +27,21 @@ def outputParse(v):
 
 
 class StateManager:
+    """
+    Used to store Simulation state as xml file. Either to save the state of a simulation to file or for usage in post processing
+    """
     def __init__(self, path):
+        """Docstring for constructor
+
+        :param path: This is a test
+        :return None
+        """
         self.path = path
         self.scanFolderPattern = "{path}scan_{n}/"
         self.elementTree = None
 
     def loadXML(self):
+        """loads xml representation from file"""
         self.elementTree = ET.parse("{p}log.scan".format(p=self.path))
 
     def getScanFolder(self, n):

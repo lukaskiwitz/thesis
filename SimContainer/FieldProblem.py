@@ -7,6 +7,7 @@ Created on Fri Jun  7 12:48:49 2019
 """
 #import MySolver
 import MeshGenerator as mshGen
+from Entity import Entity
 #import dolfin as dlf
 import fenics as fcs
 #from decimal import Decimal
@@ -14,8 +15,9 @@ import os
 #import math
 
 class FieldProblem:
-    
     def __init__(self):
+
+
         self.fieldName = ""
         self.res = 32
         self.meshCached = ""
@@ -25,7 +27,10 @@ class FieldProblem:
         self.fieldQuantity = ""
         self.extCache = ""
         self.p = {}
-    def addEntity(self,entity):
+    def addEntity(self,entity: Entity.Entity)-> None:
+        """
+        :param entity: entity to be added
+        """
         self.registeredEntities.append({"entity":entity,"patch":0})
     def removeEntity(self,entity):
         pass

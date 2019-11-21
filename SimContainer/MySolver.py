@@ -3,76 +3,74 @@
 """
 Created on Tue May 21 13:56:50 2019
 
-@author: chrx
+@author: Lukas Kiwitz
 """
 from __future__ import print_function
 
 import fenics as fcs
 import BC
+from typing import List, Dict
+from MySubDomain import MySubDomain
 
 class MySolver:
     pass
 class PoissonSolver(MySolver):
     """
     class to solve the stationary diffusion equation in 2D/3D with nonlinear boundary condition
-    
-    Attributes
-    ----------
-    solver: fenics.NonlinearVariationalSolver
-        instance of fenics nonlinear solver 
-    p: Dict[str,float]
-        stores modell parameters: R,q,k_on,D,rho
-    u: fenics.MeshFunction
-        stores solution
-    neumann: List
-        stores neumann BCs; set by self.compileSolver() 
-    dirichlet: List[fenics.DirichletBC]:
-        stores dirichlet BCs; set by self.compileSolver()
-    nonLinBC:
-        stores nonlinear BCs; set by self.compileSolver()
-    dim: {2,3}
-        mesh dimension
+
+    :var solver: instance of fenics linear solver
+    :vartype solver: fcs.LinearVariationalSolver
+
+    :var p: stores modell parameters: R,q,k_on,D,rho
+    :vartype p: Dict
+    :var u: stores solution
+    :vartype u: fcs.Function
+
+    :var dirichlet: stores dirichlet BCs; set by self.compileSolver()
+    :vartype dirichlet: List[BC.DirichletBC]
+
+    :var integralBC: stores nonlinear BCs; set by self.compileSolver()
+    :vartype integralBC: List[BC.Integral]
+    :var dim: mesh dimension
+    :vartype dim: int
+    :ivar mesh: domain mesh; intended to be genrated by myMeshing.MeshGenerator
+    :vartype mesh: fenics.Mesh
+
+    :var V: Function Space
+    :vartype V: fcs.FunctionSpace
     """
     
     
-    
     def __init__(self):
-        self.dirichlet = []
-        self.integralBC = []
-        self.subdomains = []
-        self.dim = 2
-        self.p = {}
+        """
+                Initalizes required fields.
+
+                Parameters
+                ----------
+                mesh:dolfin.Mesh
+                    domain mesh; intended to be genrated by myMeshing.MeshGenerator
+                subdomains: list of all subdomains (including outer boundary) to read out boundary conditions
+                boundary_markers: fenics.MeshFunction
+                    stores numbering of boundary patches
+                """
+        self.dirichlet: List[BC.DirichletBC] = []
+        self.integralBC: List[BC.Integral] = []
+        self.subdomains: List[MySubDomain] = []
+        self.dim: int = 2
+        self.p: Dict = {}
         self.mesh = None
         self.boundary_markers = None
-        self.fieldQuantity = ""
-        """
-        Initalizes required fields.
-        
-        Parameters
-        ----------
-        mesh:dolfin.Mesh 
-            domain mesh; intended to be genrated by myMeshing.MeshGenerator
-        subdomains: List[myEntites.MySubDomain]
-            list of all subdomains (including outer boundary) to read out boundary conditions
-        boundary_markers: fenics.MeshFunction
-            stores numbering of boundary patches
-        dim : {2,3}
-            mesh dimension
-            
-        Returns
-        -------
-        None
-        """
-        
-        #defines functionspace v over mesh with first order Lagrange elemnts
+        self.fieldQuantity: str = ""
+
         super().__init__()
     def log(self):
         return {"fieldQuantity":self.fieldQuantity,
                 "p":self.p
                 }
     def compileSolver(self):
-        """
+        """Docstring
         compiles Solver; must be run befor solve()
+        ---
         Detailed:
             creates u,v, and V; 
             defines boundary condition from subdomains list
@@ -141,20 +139,16 @@ class PoissonSolver(MySolver):
         #sets field u to be trialfunction
         self.u = u
         
-    def solve(self):
+    def solve(self) -> fcs.Function:
         """
         Wrapper around fenics solve()
-        
-        Returns
-        -------
-        u:fenics.MeshFunction
-            solution
+
         """
         #calls fenics solver; renames u for proper vtk output and returns solution u
         self.solver.solve()
-#        u,c  = self.m.split()
+    #        u,c  = self.m.split()
         self.u.rename(self.fieldQuantity,self.fieldQuantity)
-#        self.u = u
+    #        self.u = u
         return self.u
     def __del__(self):
         pass

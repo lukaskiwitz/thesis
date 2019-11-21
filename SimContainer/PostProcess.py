@@ -195,7 +195,7 @@ class PostProcessor:
         except Exception as e:
             print(e)
 
-    def dump(self, path, threads):
+    def dump(self, path, threads,options_dict={},debug=False):
         # initializes state manager from scan log
         self.stateManager = st.StateManager(path)
         self.stateManager.loadXML()
@@ -234,14 +234,20 @@ class PostProcessor:
                 compute_settings.dynamic = dynamic
                 compute_settings.scan_index = scan.get("i")
                 compute_settings.time_index = step.get("t")
-                compute_settings.compute_surface_concentration = True
-                compute_settings.compute_concentration = True
-                compute_settings.compute_gradient = True
+                if  options_dict == {}:
+                    compute_settings.compute_surface_concentration = False
+                    compute_settings.compute_concentration = True
+                    compute_settings.compute_gradient = True
+                else:
+                    compute_settings.compute_surface_concentration = options_dict["surface_concentration"]
+                    compute_settings.compute_concentration = options_dict["concentration"]
+                    compute_settings.compute_gradient = options_dict["gradient"]
 
                 scatter_list.append(compute_settings)
 
         print("scatter")
-        # scatter_list = scatter_list[0:4]
+        if debug:
+            scatter_list = scatter_list[0:debug]
         size = ceil(len(scatter_list) / threads)
         partitioned_list = [scatter_list[x:x + size]
                            for x in range(0, len(scatter_list), size)]
@@ -283,7 +289,7 @@ class PostProcessor:
                     time = et.SubElement(scan, "timeStep")
                     time.set("i", i["timeIndex"])
                     time.append(i["entry"])
-
+        print("writing post process output to {p}".format(p=self.out_tree_path))
         tree.write(self.out_tree_path, pretty_print=True)
 
     def prep_data(self) -> pd.DataFrame:
@@ -348,21 +354,4 @@ class PostProcessor:
                     d[v.tag] = float(v.text)
                 result.append(d)
         return pd.DataFrame(result)
-
-
-PATH_LIST = [
-    {"path":"/extra/kiwitz/sensitivity/Diffusion/","key":"D"},
-    {"path":"/extra/kiwitz/sensitivity/fraction/","key":"fraction"},
-    {"path":"/extra/kiwitz/sensitivity/kd/","key":"decay"},
-    {"path":"/extra/kiwitz/sensitivity/kON/","key":"k_{on}"},
-    {"path":"/extra/kiwitz/sensitivity/q_il2_s/","key":"q Secretors"},
-    {"path":"/extra/kiwitz/sensitivity/R_il2_f/","key":"R il2 f"},
-    {"path":"/extra/kiwitz/sensitivity/R_il2_s/","key":"R il2 s"}
-             ]
-for i in PATH_LIST:
-    path = i["path"]
-    pp = PostProcessor(path)
-    # pp.dump(path, 80)
-    # pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
-    pp.prep_data().to_hdf(path + 'dataframe.h5', key="data", mode="w")
 
