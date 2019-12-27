@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Entity &#8212; thesisProject 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Entity</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Fri Jun  7 12:22:13 2019</span>
+
+<span class="sd">@author: Lukas Kiwitz</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">import</span> <span class="nn">fenics</span> <span class="k">as</span> <span class="nn">fcs</span>
+
+<span class="kn">import</span> <span class="nn">BC</span> <span class="k">as</span> <span class="nn">bc</span>
+<span class="kn">import</span> <span class="nn">MySubDomain</span> <span class="k">as</span> <span class="nn">SD</span>
+<span class="kn">from</span> <span class="nn">CellType</span> <span class="k">import</span> <span class="n">CellType</span>
+
+
+<div class="viewcode-block" id="Entity"><a class="viewcode-back" href="../index.html#Entity.Entity">[docs]</a><span class="k">class</span> <span class="nc">Entity</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">internal_solver</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">addSolver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solver</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">internalSolvers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getBC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">fieldQuantity</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">i</span>
+
+    <span class="k">def</span> <span class="nf">updateBCs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">:</span>
+            <span class="n">fq</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">fieldQuantity</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fq</span><span class="p">)</span>
+            <span class="n">i</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">internal_solver</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">internal_solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">getState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="Cell"><a class="viewcode-back" href="../index.html#Entity.Cell">[docs]</a><span class="k">class</span> <span class="nc">Cell</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">bcList</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span> <span class="o">=</span> <span class="n">bcList</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SD</span><span class="o">.</span><span class="n">CellSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getCompiledSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fcs</span><span class="o">.</span><span class="n">CompiledSubDomain</span><span class="p">(</span>
+            <span class="s2">&quot;on_boundary &amp;&amp; abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) &lt;= 10e-2)&quot;</span><span class="p">,</span>
+            <span class="n">c0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">c1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">c2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">r</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_cell_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_type</span><span class="p">:</span> <span class="n">CellType</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_type</span> <span class="o">=</span> <span class="n">cell_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">internal_solver</span> <span class="o">=</span> <span class="n">cell_type</span><span class="o">.</span><span class="n">internal_solver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="s2">&quot;p&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cell_type</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;center&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+
+    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">p_out</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s2">&quot;numpy.float64&quot;</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
+                <span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">&quot;ndarray&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
+                <span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">p_out</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">di</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span>
+              <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+              <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+              <span class="s2">&quot;center&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">,</span>
+              <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span>
+              <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+              <span class="p">}</span>
+        <span class="k">return</span> <span class="n">di</span></div>
+
+
+<div class="viewcode-block" id="DomainEntity"><a class="viewcode-back" href="../index.html#Entity.DomainEntity">[docs]</a><span class="k">class</span> <span class="nc">DomainEntity</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))}</span></div>
+
+
+<div class="viewcode-block" id="DomainSphere"><a class="viewcode-back" href="../index.html#Entity.DomainSphere">[docs]</a><span class="k">class</span> <span class="nc">DomainSphere</span><span class="p">(</span><span class="n">DomainEntity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">bcList</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span> <span class="o">=</span> <span class="n">bcList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compileSubdomains</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__compileSubdomains</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subdomainDict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">bc</span><span class="o">.</span><span class="n">OuterBc</span><span class="p">):</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">compiledSphere</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">fieldQuantity</span>
+                <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">expr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subdomainDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">subdomainDict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">subdomainDict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">subdomainDict</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">subdomains</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="s2">&quot;field_quantity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
+                        <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">subdomains</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SD</span><span class="o">.</span><span class="n">OuterSphere</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DomainCube"><a class="viewcode-back" href="../index.html#Entity.DomainCube">[docs]</a><span class="k">class</span> <span class="nc">DomainCube</span><span class="p">(</span><span class="n">DomainEntity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">bcList</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p2</span> <span class="o">=</span> <span class="n">p2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span> <span class="o">=</span> <span class="n">bcList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compileSubdomains</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__compileSubdomains</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subdomainDict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">bc</span><span class="o">.</span><span class="n">OuterBc</span><span class="p">):</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">compiledCube</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">fieldQuantity</span>
+                <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">expr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subdomainDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">subdomainDict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">subdomainDict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">subdomainDict</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">subdomains</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="s2">&quot;field_quantity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
+                        <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">subdomains</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomainGeometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SD</span><span class="o">.</span><span class="n">OuterCube</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compiledCube"><a class="viewcode-back" href="../index.html#Entity.compiledCube">[docs]</a><span class="k">class</span> <span class="nc">compiledCube</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc</span> <span class="o">=</span> <span class="n">bc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="s2">&quot;near(x[0],</span><span class="si">{p1x}</span><span class="s2">) || near(x[0],</span><span class="si">{p0x}</span><span class="s2">) || near(x[1],</span><span class="si">{p1y}</span><span class="s2">) || near(x[1],</span><span class="si">{p0y}</span><span class="s2">) || near(x[2],</span><span class="si">{p1z}</span><span class="s2">) || near(x[2],</span><span class="si">{p0z}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">p1x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">p0x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">p1y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">p0y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">p1z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="n">p0z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">p2</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;expr &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fcs</span><span class="o">.</span><span class="n">CompiledSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">+</span> <span class="s2">&quot;&amp;&amp;(&quot;</span> <span class="o">+</span> <span class="n">box</span> <span class="o">+</span> <span class="s2">&quot;) &amp;&amp; on_boundary&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getBC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc</span></div>
+
+
+<div class="viewcode-block" id="compiledSphere"><a class="viewcode-back" href="../index.html#Entity.compiledSphere">[docs]</a><span class="k">class</span> <span class="nc">compiledSphere</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc</span> <span class="o">=</span> <span class="n">bc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span>
+
+    <span class="k">def</span> <span class="nf">getSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="s2">&quot;abs((sqrt(pow(x[0]-</span><span class="si">{c0}</span><span class="s2">,2)+pow(x[1]-</span><span class="si">{c1}</span><span class="s2">,2)+pow(x[2]-</span><span class="si">{c2}</span><span class="s2">,2))-</span><span class="si">{r}</span><span class="s2">))&lt;= 10e-2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">c2</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                                                                                   <span class="n">r</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;radius&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">fcs</span><span class="o">.</span><span class="n">CompiledSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">+</span> <span class="s2">&quot;&amp;&amp;(&quot;</span> <span class="o">+</span> <span class="n">box</span> <span class="o">+</span> <span class="s2">&quot;) &amp;&amp; on_boundary&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getBC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thesisProject</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Lukas Kiwitz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

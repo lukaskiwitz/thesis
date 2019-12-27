@@ -1,6 +1,8 @@
 #!/home/kiwitz/anaconda3/envs/fenicsproject/bin/python
+"""
+@author: kiwitz
+"""
 
-import multiprocessing as mp
 import subprocess as sp
 import os
 from glob import glob
@@ -13,7 +15,7 @@ def f(script: str) -> None:
     spec = importlib.util.spec_from_file_location(script,"{c}/{s}".format(s=script,c=os.getcwd()))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    # module.name
+    module.name
     print("{c}/post_process.py {p}{s}/".format(s=module.name, p=path_prefix, c=os.getcwd()))
     sp.run("{c}/post_process.py {p}{s}/".format(s=module.name,p=path_prefix,c=os.getcwd()),shell=True)
 

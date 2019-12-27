@@ -1,0 +1,456 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>PostProcess &#8212; thesisProject 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for PostProcess</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Wed Oct 16 12:56:59 2019</span>
+
+<span class="sd">@author: Lukas Kiwitz</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">StateManager</span> <span class="k">as</span> <span class="nn">st</span>
+
+<span class="kn">import</span> <span class="nn">fenics</span> <span class="k">as</span> <span class="nn">fcs</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">lxml.etree</span> <span class="k">as</span> <span class="nn">et</span>
+<span class="kn">import</span> <span class="nn">mpi4py.MPI</span> <span class="k">as</span> <span class="nn">MPI</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span><span class="p">,</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">ceil</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">from</span> <span class="nn">myDictSorting</span> <span class="k">import</span> <span class="n">groupByKey</span>
+
+<div class="viewcode-block" id="ComputeSettings"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings">[docs]</a><span class="k">class</span> <span class="nc">ComputeSettings</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to store computation input and output</span>
+
+<span class="sd">    :param file_path: file path to volume file</span>
+<span class="sd">    :type file_path: str</span>
+
+<span class="sd">    :param field: field name in h5 file</span>
+<span class="sd">    :type field: str</span>
+
+<span class="sd">    :param cell_data: cell data</span>
+<span class="sd">    :type cell_data: List[Dict]</span>
+
+<span class="sd">    :param dynamic: dynamic parameters</span>
+<span class="sd">    :type dynamic: Dict</span>
+
+<span class="sd">    :param scan_index: scan index</span>
+<span class="sd">    :type scan_index: int</span>
+
+<span class="sd">    :param time_index: time index</span>
+<span class="sd">    :type time_index: float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># def __init__(self, file_path: str, field: str, mesh: fcs.Mesh, u: fcs.Function, cell_data: List[Dict],</span>
+    <span class="c1">#              boundary_markers: fcs.MeshFunction, dynamic: Dict, scan_index: int, time_index: float) -&gt; None:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;file path to volume file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dynamic</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scan_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_index</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_gradient</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_concentration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_surface_concentration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="ComputeSettings.set_mesh"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.set_mesh">[docs]</a>    <span class="k">def</span> <span class="nf">set_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">mesh</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Mesh</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span> <span class="o">=</span> <span class="n">mesh</span></div>
+
+
+<div class="viewcode-block" id="ComputeSettings.set_u"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.set_u">[docs]</a>    <span class="k">def</span> <span class="nf">set_u</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">u</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_u</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="n">u</span></div>
+
+    <span class="c1"># noinspection PyPep8Naming,PyPep8Naming</span>
+<div class="viewcode-block" id="ComputeSettings.set_V"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.set_V">[docs]</a>    <span class="k">def</span> <span class="nf">set_V</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">V</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">FunctionSpace</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">FunctionSpace</span> <span class="o">=</span> <span class="n">V</span></div>
+
+
+<div class="viewcode-block" id="ComputeSettings.set_boundary_markers"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.set_boundary_markers">[docs]</a>    <span class="k">def</span> <span class="nf">set_boundary_markers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">bm</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">MeshFunction</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_boundary_markers</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">MeshFunction</span> <span class="o">=</span> <span class="n">bm</span></div>
+
+
+<div class="viewcode-block" id="ComputeSettings.get_mesh"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.get_mesh">[docs]</a>    <span class="k">def</span> <span class="nf">get_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span><span class="n">fcs</span><span class="o">.</span><span class="n">Mesh</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span></div>
+
+
+<div class="viewcode-block" id="ComputeSettings.get_u"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.get_u">[docs]</a>    <span class="k">def</span> <span class="nf">get_u</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_u</span></div>
+
+    <span class="c1"># noinspection PyPep8Naming</span>
+<div class="viewcode-block" id="ComputeSettings.get_V"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.get_V">[docs]</a>    <span class="k">def</span> <span class="nf">get_V</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fcs</span><span class="o">.</span><span class="n">FunctionSpace</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span></div>
+
+
+<div class="viewcode-block" id="ComputeSettings.get_boundary_markers"><a class="viewcode-back" href="../index_back.html#PostProcess.ComputeSettings.get_boundary_markers">[docs]</a>    <span class="k">def</span> <span class="nf">get_boundary_markers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fcs</span><span class="o">.</span><span class="n">MeshFunction</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boundary_markers</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="PostProcessor"><a class="viewcode-back" href="../index_back.html#PostProcess.PostProcessor">[docs]</a><span class="k">class</span> <span class="nc">PostProcessor</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pDicts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cellDump</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_tree_path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;postProcess.xml&quot;</span>
+
+    <span class="c1"># noinspection PyPep8Naming</span>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute_settings</span><span class="p">:</span> <span class="n">ComputeSettings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        performs computations according to compute_settings and return result as element tree string</span>
+
+<span class="sd">        :param compute_settings:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">)</span>
+        <span class="n">global_results</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">)</span>
+        <span class="n">cell_results</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;cell_results&quot;</span><span class="p">)</span>
+
+        <span class="n">result</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;field&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">field</span><span class="p">))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;dynamic&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">dynamic</span><span class="p">))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">scan_index</span><span class="p">))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;timeIndex&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">time_index</span><span class="p">))</span>
+
+        <span class="n">mesh</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Mesh</span> <span class="o">=</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">get_mesh</span><span class="p">()</span>
+        <span class="n">boundary_markers</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">MeshFunction</span> <span class="o">=</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">get_boundary_markers</span><span class="p">()</span>
+        <span class="n">u</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">get_u</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_gradient</span><span class="p">:</span>
+            <span class="n">V_vec</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">VectorFunctionSpace</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">VectorFunctionSpace</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">grad</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span>  <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">fcs</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">V_vec</span><span class="p">,</span> <span class="n">solver_type</span><span class="o">=</span><span class="s2">&quot;gmres&quot;</span><span class="p">)</span>
+            <span class="n">gradient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">fcs</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fcs</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">grad</span><span class="p">))</span> <span class="o">*</span> <span class="n">fcs</span><span class="o">.</span><span class="n">dX</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">8</span>
+            <span class="n">gradient_result</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">global_results</span><span class="p">,</span> <span class="s2">&quot;gradient&quot;</span><span class="p">)</span>
+            <span class="n">gradient_result</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gradient</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_concentration</span><span class="p">:</span>
+            <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">fcs</span><span class="o">.</span><span class="n">dX</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">9</span>
+            <span class="n">concentration_result</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">global_results</span><span class="p">,</span> <span class="s2">&quot;concentration&quot;</span><span class="p">)</span>
+            <span class="n">concentration_result</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">concentration</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_surface_concentration</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">cell_data</span><span class="p">):</span>
+                <span class="n">cell_element</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">cell_results</span><span class="p">,</span> <span class="s2">&quot;cell&quot;</span><span class="p">)</span>
+                <span class="n">patch</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">cell_element</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">)</span>
+                <span class="n">center</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">cell_element</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">)</span>
+                <span class="n">patch</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cell</span><span class="p">[</span><span class="s2">&quot;patch&quot;</span><span class="p">])</span>
+                <span class="n">center</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cell</span><span class="p">[</span><span class="s2">&quot;center&quot;</span><span class="p">]))</span>
+
+                <span class="n">ds</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Measure</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Measure</span><span class="p">(</span><span class="s2">&quot;ds&quot;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span>
+                                 <span class="n">subdomain_data</span><span class="o">=</span><span class="n">boundary_markers</span><span class="p">)</span>
+                <span class="n">v</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span><span class="n">fcs</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">ds</span><span class="p">(</span><span class="n">cell</span><span class="p">[</span><span class="s2">&quot;patch&quot;</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">0.05</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">9</span><span class="p">)</span>
+
+                <span class="n">surface_concentration</span><span class="p">:</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">cell_element</span><span class="p">,</span> <span class="s2">&quot;surface_concentration&quot;</span><span class="p">)</span>
+                <span class="n">surface_concentration</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">et</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="c1"># noinspection PyPep8Naming</span>
+    <span class="k">def</span> <span class="nf">job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute_settings_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ComputeSettings</span><span class="p">],</span> <span class="n">ext_cache</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_domain_cache</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span><span class="n">thread_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+            <span class="n">local</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Dup</span><span class="p">()</span>
+
+            <span class="n">mesh</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Mesh</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">fcs</span><span class="o">.</span><span class="n">XDMFFile</span><span class="p">(</span><span class="n">ext_cache</span> <span class="o">+</span> <span class="s2">&quot;.xdmf&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+            <span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span>
+
+            <span class="c1"># V = fcs.FunctionSpace(mesh, &quot;P&quot;, 1)</span>
+            <span class="n">V</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">FunctionSpace</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">boundary_markers</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">MeshFunction</span><span class="p">(</span>
+                <span class="s2">&quot;size_t&quot;</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">topology</span><span class="p">()</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">fcs</span><span class="o">.</span><span class="n">HDF5File</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">sub_domain_cache</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">boundary_markers</span><span class="p">,</span> <span class="s2">&quot;/boundaries&quot;</span><span class="p">)</span>
+            <span class="n">boundary_markers</span> <span class="o">=</span> <span class="n">boundary_markers</span>
+
+            <span class="n">result_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">compute_settings</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">compute_settings_list</span><span class="p">):</span>
+
+                <span class="n">u</span><span class="p">:</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span>  <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">fcs</span><span class="o">.</span><span class="n">HDF5File</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">compute_settings</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">compute_settings</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">set_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">set_V</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">set_boundary_markers</span><span class="p">(</span><span class="n">boundary_markers</span><span class="p">)</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">set_u</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;reading file </span><span class="si">{file}</span><span class="s2"> (</span><span class="si">{n}</span><span class="s2">/</span><span class="si">{tot}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">compute_settings</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">tot</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">compute_settings_list</span><span class="p">))</span>
+                <span class="p">)</span>
+
+                <span class="n">data_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">compute_settings</span><span class="p">)</span>
+                <span class="n">result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data_out</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;thread no </span><span class="si">{index}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">thread_index</span><span class="p">))</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">result_list</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span><span class="n">options_dict</span><span class="o">=</span><span class="p">{},</span><span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># initializes state manager from scan log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">StateManager</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">loadXML</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ext_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+            <span class="s2">&quot;/cellDump/field/ext_cache&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subdomaincache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+            <span class="s2">&quot;/cellDump/field/subdomains&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;/scans/scan&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pDicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">getParametersFromElement</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;/cellDump/field/cell&quot;</span><span class="p">):</span>
+            <span class="n">patch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;patch&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="n">center</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;center&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cellDump</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">patch</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">:</span> <span class="n">center</span><span class="p">})</span>
+
+        <span class="n">scatter_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ComputeSettings</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1">#        for field in fields:</span>
+        <span class="n">cell_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span>
+            <span class="s2">&quot;/cellDump/field[@name=&#39;il2&#39;]/cell&quot;</span><span class="p">)</span>
+        <span class="n">cell_data</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;patch&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">),</span> <span class="s2">&quot;center&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
+            <span class="n">i</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;center&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cell_data</span><span class="p">]</span>
+        <span class="c1"># loads timestep logs</span>
+        <span class="k">for</span> <span class="n">scan</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateManager</span><span class="o">.</span><span class="n">elementTree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;scans/scan&quot;</span><span class="p">):</span>
+            <span class="n">dynamic</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;parameters/dynamic/parameter&quot;</span><span class="p">)</span>
+            <span class="n">dynamic</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">text</span><span class="p">}</span>
+                       <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dynamic</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">scan</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;timeSeries/field/step&quot;</span><span class="p">):</span>
+
+                <span class="n">compute_settings</span><span class="p">:</span> <span class="n">ComputeSettings</span> <span class="o">=</span> <span class="n">ComputeSettings</span><span class="p">()</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;distPlotPath&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">field</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">getparent</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">cell_data</span> <span class="o">=</span> <span class="n">cell_data</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">dynamic</span> <span class="o">=</span> <span class="n">dynamic</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">scan_index</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">)</span>
+                <span class="n">compute_settings</span><span class="o">.</span><span class="n">time_index</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+                <span class="k">if</span>  <span class="n">options_dict</span> <span class="o">==</span> <span class="p">{}:</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_surface_concentration</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_concentration</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_gradient</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_surface_concentration</span> <span class="o">=</span> <span class="n">options_dict</span><span class="p">[</span><span class="s2">&quot;surface_concentration&quot;</span><span class="p">]</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_concentration</span> <span class="o">=</span> <span class="n">options_dict</span><span class="p">[</span><span class="s2">&quot;concentration&quot;</span><span class="p">]</span>
+                    <span class="n">compute_settings</span><span class="o">.</span><span class="n">compute_gradient</span> <span class="o">=</span> <span class="n">options_dict</span><span class="p">[</span><span class="s2">&quot;gradient&quot;</span><span class="p">]</span>
+
+                <span class="n">scatter_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compute_settings</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;scatter&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">scatter_list</span> <span class="o">=</span> <span class="n">scatter_list</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">debug</span><span class="p">]</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">scatter_list</span><span class="p">)</span> <span class="o">/</span> <span class="n">threads</span><span class="p">)</span>
+        <span class="n">partitioned_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">scatter_list</span><span class="p">[</span><span class="n">x</span><span class="p">:</span><span class="n">x</span> <span class="o">+</span> <span class="n">size</span><span class="p">]</span>
+                           <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">scatter_list</span><span class="p">),</span> <span class="n">size</span><span class="p">)]</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">threads</span><span class="p">)</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ext_cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">subdomaincache</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">partitioned_list</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+            <span class="n">j</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">j</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Join Timeout&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;joined jobs&quot;</span><span class="p">)</span>
+        <span class="n">result_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;collected output from threads&quot;</span><span class="p">)</span>
+        <span class="n">flattend_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">result_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">flattend_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">et</span><span class="o">.</span><span class="n">XML</span><span class="p">(</span><span class="n">o</span><span class="p">))</span>
+        <span class="n">indexed_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">),</span>
+             <span class="s2">&quot;timeIndex&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;timeIndex&quot;</span><span class="p">),</span>
+             <span class="s2">&quot;entry&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flattend_list</span><span class="p">]</span>
+        <span class="n">indexed_list</span> <span class="o">=</span> <span class="n">groupByKey</span><span class="p">(</span><span class="n">indexed_list</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">indexed_list</span><span class="p">):</span>
+            <span class="n">indexed_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">groupByKey</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;timeIndex&quot;</span><span class="p">])</span>
+
+        <span class="n">post_process_result</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s2">&quot;postProcess&quot;</span><span class="p">)</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">ElementTree</span><span class="p">(</span><span class="n">element</span><span class="o">=</span><span class="n">post_process_result</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">indexed_list</span><span class="p">:</span>
+            <span class="n">scan</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">post_process_result</span><span class="p">,</span> <span class="s2">&quot;scan&quot;</span><span class="p">)</span>
+            <span class="c1">#            print(s[0])</span>
+            <span class="n">scan</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">t</span><span class="p">:</span>
+                    <span class="n">time</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">scan</span><span class="p">,</span> <span class="s2">&quot;timeStep&quot;</span><span class="p">)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;timeIndex&quot;</span><span class="p">])</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;entry&quot;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;writing post process output to </span><span class="si">{p}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">out_tree_path</span><span class="p">))</span>
+        <span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_tree_path</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">prep_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">in_tree</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_tree_path</span><span class="p">)</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">scan</span> <span class="ow">in</span> <span class="n">in_tree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;/scan&quot;</span><span class="p">):</span>
+            <span class="n">scan_index</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">))</span>
+            <span class="n">time_steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">scan</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./timeStep&quot;</span><span class="p">)])</span>
+
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">:</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./timeStep[@i=&#39;</span><span class="si">{t}</span><span class="s2">&#39;]/file&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">))</span>
+                <span class="c1"># Todo get number of fields and cells dynamicly</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># one file per field</span>
+                <span class="n">cell_results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1500</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span> <span class="o">+</span> <span class="n">offset</span><span class="p">))</span>
+                <span class="c1"># name_list = []</span>
+                <span class="k">for</span> <span class="n">cellIndex</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                        <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./cell_results/cell&quot;</span><span class="p">)</span>
+                <span class="p">):</span>
+
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;./center&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">cell_results</span><span class="p">[</span><span class="n">cellIndex</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                    <span class="n">cell_results</span><span class="p">[</span><span class="n">cellIndex</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+                    <span class="n">cell_results</span><span class="p">[</span><span class="n">cellIndex</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">scan_index</span>
+                    <span class="n">name_list</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+                        <span class="n">cell</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./cell_results/cell&quot;</span><span class="p">)[</span><span class="n">cellIndex</span><span class="p">]</span>
+                        <span class="n">field_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;field&quot;</span><span class="p">)</span>
+                        <span class="n">name_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+                        <span class="n">cell_results</span><span class="p">[</span><span class="n">cellIndex</span><span class="p">,</span> <span class="n">o</span> <span class="o">+</span> <span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                            <span class="n">cell</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;./surface_concentration&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+                        <span class="p">)</span>
+
+                <span class="n">cell_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cell_results</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                                                                  <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;scanIndex&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">name_list</span><span class="p">)</span>
+                <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cell_frame</span><span class="p">)</span>
+        <span class="c1"># join dataframes</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">prep_global_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">in_tree</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_tree_path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">scan</span> <span class="ow">in</span> <span class="n">in_tree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;/scan&quot;</span><span class="p">):</span>
+            <span class="n">time_steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">))</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">scan</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./timeStep&quot;</span><span class="p">)</span>
+                                    <span class="p">])</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">in_tree</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;/scan&quot;</span><span class="p">):</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;./timeStep/file&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">g_values</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;./global&quot;</span><span class="p">)</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;scanIndex&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scanIndex&quot;</span><span class="p">)),</span>
+                    <span class="s2">&quot;timeIndex&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;timeIndex&quot;</span><span class="p">)),</span>
+                    <span class="s2">&quot;fieldName&quot;</span><span class="p">:</span> <span class="n">file</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;field&quot;</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dynamic&quot;</span><span class="p">)):</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">g_values</span><span class="o">.</span><span class="n">getchildren</span><span class="p">():</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thesisProject</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Lukas Kiwitz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

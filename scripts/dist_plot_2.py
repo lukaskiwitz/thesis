@@ -180,14 +180,14 @@ def parameter_plot(data: pd.DataFrame, img_path: str) -> None:
     os.makedirs(img_path,exist_ok=True)
     plt.figure()
     sns.lineplot(x="scanIndex", y="concentration", ci=None, data=data,
-                 hue="l", err_style="bars", marker=".",legend="brief")
+                 hue="l", err_style="bars", marker="",legend="brief")
     plt.ylabel(r'avg. IL-2 (nM)')
     plt.xlabel("parameter fold-change")
-    plt.xticks([1,25,50],["0.1","1","10"])
+    plt.xticks([1,12,25],["0.1","1","10"])
     plt.tight_layout()
 
     plt.yscale("log")
-    plt.ylim([0, 8])
+    # plt.ylim([0, 8])
     plt.gca().get_yaxis().set_major_formatter(
         ticker.LogFormatter())
     plt.gca().get_yaxis().set_minor_formatter(
@@ -195,24 +195,25 @@ def parameter_plot(data: pd.DataFrame, img_path: str) -> None:
     # plt.ticklabel_format(style="plain")
     plt.savefig(img_path + "/" + "sensitivity_c.pdf", dpi=1200)
     plt.show()
+    plt.close()
 
     plt.figure(1)
     sns.lineplot(x="scanIndex", y="gradient", ci=None, data=data,
-                 hue="l", err_style="bars", marker=".",legend=False)
+                 hue="l", err_style="bars", marker="",legend=False)
     # plt.ylabel(r'$\nabla$[IL-2] $\frac{nM}{dm}$')
     plt.ylabel(r'avg. gradient (nM\dm)')
     plt.xlabel("parameter fold-change")
-    plt.xticks([1, 25, 50], ["0.1", "1", "10"])
-    # plt.tight_layout()
+    plt.xticks([1,12,25],["0.1","1","10"])
+    plt.tight_layout()
     plt.yscale("log")
-    plt.ylim([0, 4])
+    # plt.ylim([0, 4])
     plt.gca().get_yaxis().set_major_formatter(
         ticker.LogFormatter(labelOnlyBase=True))
     plt.gca().get_yaxis().set_minor_formatter(
         ticker.LogFormatter(labelOnlyBase=True))
     plt.savefig(img_path + "/" + "sensitivity_grad.pdf", dpi=1200)
     plt.show()
-    # plt.close()
+    plt.close()
 
 def cluster_plot(data: pd.DataFrame,img_path: str,title="") -> None:
     plt.figure()
@@ -236,36 +237,42 @@ IMG = "/home/kiwitz/postProcessResult_img"
 # tree = ET.parse(pat_holds+"postProcess.xml")
 # res = _prepData(tree)
 
-sns.set_context("poster", font_scale=0.75, rc={
-    "lines.linewidth": 2.5,
-    "lines.markersize": 0,
-    'xtick.labelsize': 'small',
-    'ytick.labelsize': 'small',
-    "xtick.major.width": 0.8,
-    "xtick.minor.width": 0.8,
-    "xtick.major.size": 3.5,
-    "xtick.minor.size": 3.5})  #
+# sns.set_context("poster", font_scale=1, rc={
+#     "lines.linewidth": 3,
+#     "lines.markersize": 0,
+#     'xtick.labelsize': 'small',
+#     'ytick.labelsize': 'small',
+#     "xtick.major.width": 0.8,
+#     "xtick.minor.width": 0.8,
+#     "xtick.major.size": 3.5,
+#     "xtick.minor.size": 3.5})  #
 
+sns.set_context("poster", font_scale=1,rc = {
+    "lines.linewidth": 3
+    }
+)
 PATH_LIST = [
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/Diffusion/","key":r"$D$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/fraction/","key":r"$f$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/kd/","key":r"$k_d$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/kON/","key":r"$k_{\operatorname{on}}$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/qS/","key":r"$q_{s}$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/Ril2F/","key":r"$R_f$"},
-    {"path":"/extra/kiwitz/sensitivity_fullReceptor/Ril2S/","key":r"$R_s$"}
+    {"path":"/extra/kiwitz/sensitivity_new_test/Diffusion/","key":r"$D$"},
+    {"path":"/extra/kiwitz/sensitivity_new_test/fraction/","key":r"$f$"},
+    {"path":"/extra/kiwitz/sensitivity_new_test/kd/","key":r"$k_d$"},
+    {"path":"/extra/kiwitz/sensitivity_new_test/kON/","key":r"$k_{\operatorname{on}}$"},
+    {"path":"/extra/kiwitz/sensitivity_new_test/qS/","key":r"$q_{s}$"},
+    #{"path":"/extra/kiwitz/sensitivity_new_test/Ril2F/","key":r"$R_f$"},
+    {"path":"/extra/kiwitz/sensitivity_new_test/Ril2S/","key":r"$R_s$"}
+    # {"path":"/extra/kiwitz/result_new_test/d_frac/","key":r"$K$"}
              ]
-# PATH = "/extra/kiwitz/sensitivity_result_2/Diffusion/"
+
+
 
 res_global: pd.DataFrame = pd.DataFrame()
 for e in PATH_LIST:
     path = e["path"]
     frame: pd.DataFrame = cast(pd.DataFrame, pd.read_hdf(path + 'global_dataframe.h5', "data"))
     frame = frame.assign(l = e["key"])
-    if e["key"] == "$f$":
-        frame = frame.loc[(frame["fieldName"] == "il2") & (frame["scanIndex"] < 49)]
-    else:
-        frame = frame.loc[frame["fieldName"] == "il2"]
+    # if e["key"] == "$f$":
+    #     frame = frame.loc[(frame["fieldName"] == "il2") & (frame["scanIndex"] < 49)]
+    # else:
+    #     frame = frame.loc[frame["fieldName"] == "il2"]
     res_global= res_global.append(frame)
 
 o = parameter_plot(res_global, IMG)

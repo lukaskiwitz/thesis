@@ -1,4 +1,4 @@
-from bcFunctions import  outerBC_il2, outerBC_il6
+#from bcFunctions import  outerBC_il2, outerBC_il6
 import mpi4py.MPI as MPI
 from run_scan import run
 import BC as bc
@@ -8,7 +8,7 @@ import matplotlib as mpl
 from typing import List, Dict
 import sys
 from PostProcess import  PostProcessor
-mpl.use('Agg')
+# mpl.use('Agg')
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
