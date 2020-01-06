@@ -114,7 +114,7 @@ class FieldProblem:
         :param path_prefix: path to store mesh data
 
         """
-        mesh_gen = mshGen.MeshGenerator(outerDomain=self.outer_domain)
+        mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain,**kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
         res = self.res
@@ -122,6 +122,7 @@ class FieldProblem:
         if not (self.ext_cache == ""):
             os.makedirs(self.ext_cache, exist_ok=True)
         if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
+
             os.makedirs(path_prefix, exist_ok=True)
             mesh, boundary_markers = mesh_gen.meshGen(res, load=False,
                                                       path=mesh_path + "meshCache_{field}".format(field=self.field_name),
@@ -139,7 +140,7 @@ class FieldProblem:
 
         """
         self.solver.fieldQuantity = self.field_quantity
-        self.outer_domain.updateBCs()
+        self.outer_domain.update_bcs()
         for i in self.registered_entities:
             i["entity"].update_bcs()
         subdomains = self.outer_domain.getSubDomains(fieldQuantity=self.field_quantity)

@@ -9,23 +9,15 @@ Created on Mon Aug 12 14:58:01 2019
 import FieldProblem as fp
 import Entity
 import MySolver
-import fenics as fcs
-import numpy as np
-import matplotlib.pyplot as plt
+
 import BC as bc
 import SimContainer as SC
-from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6,absorbing_il2, cellBC_infg
-from copy import copy,deepcopy
-import BooleanInternalSolver as intSolver
-import json
-import os
+from bcFunctions import cellBC_il2,cellBC_il6, cellBC_infg
+from copy import deepcopy
 import time
 import random
-from scipy.constants import N_A
-import xml.etree.ElementTree as ET
 import StateManager
-from CellType import CellType
-from InternalSolver import InternalSolver,ODE_Solver, RuleBasedSolver
+
 import cell_types
 
 import mpi4py.MPI as MPI
@@ -33,12 +25,6 @@ import mpi4py.MPI as MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-
-def make_cell_type(p,update,solver,name):
-    p_temp = deepcopy(p)
-    p_temp.update(update)
-    p_temp["type_name"]=name
-    return CellType(p_temp,solver,name)
 
 
 def updateState(p,sc,t):
@@ -115,13 +101,13 @@ def run(p, T, dt, domainBC, path, **kwargs):
     fieldProblem_il2.fieldQuantity = "il2"
     
     
-    fieldProblem_il2.setSolver(solver_il2)
+    fieldProblem_il2.set_solver(solver_il2)
     fieldProblem_il2.p = deepcopy(p)
 
     if "extCache" in kwargs:
-        fieldProblem_il2.extCache = kwargs["extCache"]+"cache/meshCache_il2"
+        fieldProblem_il2.ext_cache = kwargs["extCache"]+"cache/meshCache_il2"
 
-    fieldProblem_il2.setOuterDomain(domain)
+    fieldProblem_il2.set_outer_domain(domain)
     
     """IL-6"""
     solver_il6 = MySolver.PoissonSolver()
@@ -134,7 +120,7 @@ def run(p, T, dt, domainBC, path, **kwargs):
     fieldProblem_il6.set_solver(solver_il6)
     fieldProblem_il6.p = deepcopy(p)
     if "extCache" in kwargs:
-        fieldProblem_il6.extCache = kwargs["extCache"]+"cache/meshCache_il2"
+        fieldProblem_il6.ext_cache = kwargs["extCache"]+"cache/meshCache_il2"
 
     fieldProblem_il6.set_outer_domain(domain)
 
@@ -149,7 +135,7 @@ def run(p, T, dt, domainBC, path, **kwargs):
     fieldProblem_infg.p = deepcopy(p)
 
     if "extCache" in kwargs:
-        fieldProblem_infg.extCache = kwargs["extCache"] + "cache/meshCache_il2"
+        fieldProblem_infg.ext_cache = kwargs["extCache"] + "cache/meshCache_il2"
 
     fieldProblem_infg.set_outer_domain(domain)
 #Setup

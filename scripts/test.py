@@ -4,9 +4,9 @@
 
 import BC as bc
 import fenics as fcs
-import numpy as np
 from bcFunctions import outerBC_il2, outerBC_il6
 from cell_types import p, p_d, p_sim
+from InternalSolver import InternalSolver
 import time
 
 from run_scan import run
@@ -34,12 +34,12 @@ p_boundary = {
 
 
 domainBC = [
-        bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il2"),
-        bc.outerIntegral(outerBC_il2,"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il2"),
-        bc.outerIntegral(outerBC_il6,"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il6"),
-        bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il6"),
-        bc.outerIntegral(lambda u,p: fcs.Constant(0),"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="infg"),
-        bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="infg")
+        bc.OuterIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il2"),
+        bc.OuterIntegral(outerBC_il2,"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il2"),
+        bc.OuterIntegral(outerBC_il6,"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il6"),
+        bc.OuterIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="il6"),
+        bc.OuterIntegral(lambda u,p: fcs.Constant(0),"near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="infg"),
+        bc.OuterIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],{d_x})".format(d_x=p_d["x"][0]-p_d["margin"]),fieldQuantity="infg")
         ]
 scan = [{"dummy":0}]
 T = range(30)

@@ -11,14 +11,16 @@ from typing import Dict, Callable
 
 class BC:
 
-    def __init__(self, kwargs: Dict) -> None:
+    def __init__(self, **kwargs: Dict) -> None:
+
         self.fieldQuantity = ""
         if "field_quantity" in kwargs:
+            print(kwargs["field_quantity"])
             self.fieldQuantity = kwargs["field_quantity"]
 
 
 class Integral(BC):
-    def __init__(self, q: Callable, kwargs: Dict) -> None:
+    def __init__(self, q: Callable, **kwargs: Dict) -> None:
         self.value = None
         self.p = {}
         self.q = q
@@ -30,7 +32,7 @@ class Integral(BC):
 
 class DirichletBC(BC):
 
-    def __init__(self, value: object, kwargs: Dict) -> None:
+    def __init__(self, value: object, **kwargs: Dict) -> None:
         self.degree = 1
         self.value = value
         super().__init__(**kwargs)
@@ -42,13 +44,13 @@ class DirichletBC(BC):
 
 
 class OuterBC(BC):
-    def __init__(self, kwargs: Dict) -> None:
+    def __init__(self, **kwargs: Dict) -> None:
         super().__init__(**kwargs)
 
 
 class OuterDirichletBC(OuterBC):
 
-    def __init__(self, value: object, expr: str, kwargs: Dict) -> None:
+    def __init__(self, value: object, expr: str, **kwargs: Dict) -> None:
         self.degree = 1
         self.expr = expr
         self.value = value
@@ -62,12 +64,12 @@ class OuterDirichletBC(OuterBC):
 
 class OuterIntegral(OuterBC):
 
-    def __init__(self, q: Callable, expr: str, kwargs: Dict) -> None:
+    def __init__(self, q: Callable, expr: str, **kwargs: Dict) -> None:
         self.value = None
         self.expr = expr
 
         self.q = q
         super().__init__(**kwargs)
 
-    def get_bc(self, u: fcs.MeshFunction) -> object:
+    def get_BC(self, u: fcs.MeshFunction) -> object:
         return self.q(u, self.p)

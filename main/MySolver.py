@@ -94,10 +94,10 @@ class PoissonSolver(MySolver):
         for i in self.subdomains:
             e = i["entity"]
             patch = i["patch"]
-            bc = e.get_bc(self.fieldQuantity)
-            if isinstance(bc, BC.OuterBc):
+            bc = e.get_BC(self.fieldQuantity)
+            if isinstance(bc, BC.OuterBC):
                 pass
-            if type(bc) == BC.DirichletBC or type(bc) == BC.OuterDirichletBc:
+            if type(bc) == BC.DirichletBC or type(bc) == BC.OuterDirichletBC:
                 #Dirichlet BC
                 print("patch"+str(patch))
                 self.dirichlet.append(bc.get_BC(self.V, self.boundary_markers, patch))

@@ -77,7 +77,7 @@ class Entity:
             if i.fieldQuantity == fieldQuantity:
                 return i
 
-    def updateBCs(self) -> None:
+    def update_bcs(self) -> None:
 
         """
 
@@ -87,7 +87,7 @@ class Entity:
         """
 
         self.fieldQuantities = []
-        for i in self.bcList:
+        for i in self.bc_list:
             fq = i.fieldQuantity
             self.fieldQuantities.append(fq)
             i.p = self.p
@@ -245,8 +245,8 @@ class DomainSphere(DomainEntity):
     def __compileSubdomains(self) -> Dict:
         subdomain_dict = {}
         for i, o in enumerate(self.bc_list):
-            if isinstance(o, bc.OuterBc):
-                e = compiledSphere(o.expr, o, self.p)
+            if isinstance(o, bc.OuterBC):
+                e = CompiledSphere(o.expr, o, self.p)
                 e.p = self.p
                 e.fieldQuantity = o.fieldQuantity
                 if o.expr not in subdomain_dict.keys():
@@ -284,8 +284,8 @@ class DomainCube(DomainEntity):
     def __compileSubdomains(self):
         subdomainDict = {}
         for i, o in enumerate(self.bcList):
-            if isinstance(o, bc.OuterBc):
-                e = compiledCube(o.expr, o, self)
+            if isinstance(o, bc.OuterBC):
+                e = CompiledCube(o.expr, o, self)
                 e.p = self.p
                 e.fieldQuantity = o.fieldQuantity
                 if o.expr not in subdomainDict.keys():
@@ -309,7 +309,7 @@ class DomainCube(DomainEntity):
         return SD.OuterCube(self.p1, self.p2)
 
 
-class compiledCube(Entity):
+class CompiledCube(Entity):
 
     def __init__(self, expr, bc, parent):
         self.bc = bc
@@ -334,7 +334,7 @@ class compiledCube(Entity):
         return self.bc
 
 
-class compiledSphere(Entity):
+class CompiledSphere(Entity):
 
     def __init__(self, expr, bc, p):
         self.bc = bc

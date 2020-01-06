@@ -8,7 +8,7 @@ Created on Fri Jun  7 12:21:51 2019
 
 import os
 from copy import deepcopy
-
+#
 import fenics as fcs
 from Entity import Entity
 from FieldProblem import FieldProblem
@@ -89,7 +89,7 @@ class SimContainer:
                 fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/domain_" + i.fieldName + ".xdmf"))
             self.field_files.append("field_" + i.fieldName)
 
-    def initialize(self, kwargs: Dict) -> None:
+    def initialize(self, **kwargs: Dict) -> None:
 
         """
 
@@ -221,7 +221,7 @@ class SimContainer:
             with fcs.XDMFFile(fcs.MPI.comm_world, sol) as f:
                 f.write(i.get_field(), n)
             cells = []
-            for e in i.registeredEntities:
+            for e in i.registered_entities:
                 e = e["entity"]
                 r_dict = deepcopy(e.p)
                 r_dict.update({"id": e.id})

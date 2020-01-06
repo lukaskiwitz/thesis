@@ -98,10 +98,10 @@ class StateManager:
             field = ET.SubElement(cellDump, "field")
             field.set("name", str(f.fieldName))
             extCache = ET.SubElement(field, "ext_cache")
-            extCache.text = f.extCache
+            extCache.text = f.ext_cache
             subdomains = ET.SubElement(field, "subdomains")
             subdomains.text = sc.ext_boundary_markers
-            for n in f.registeredEntities:
+            for n in f.registered_entities:
                 cell = ET.SubElement(field, "cell")
                 patch = ET.SubElement(cell, "patch")
                 center = ET.SubElement(cell, "center")
@@ -180,5 +180,5 @@ class StateManager:
         for f in sc.fields:
             f.p = deepcopy(p)
             f.solver.p = deepcopy(p)
-            f.outerDomain.p.update(s)
+            f.outer_domain.p.update(s)
         return deepcopy(p)
