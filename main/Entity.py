@@ -14,7 +14,7 @@ import fenics as fcs
 import BC as bc
 import MySubDomain as SD
 from BC import BC, OuterBC
-from CellType import CellType
+from EntityType import CellType
 from InternalSolver import InternalSolver
 from MySubDomain import CellSubDomain
 
@@ -43,12 +43,13 @@ class Entity:
     """
 
     def __init__(self):
-        self.name: st = "default"
+        self.name: str = "default"
         self.fieldQuantities: List[str] = []
         self.internal_solver: InternalSolver = None
         self.bc_list = []
         self.p: Dict = {}
         self.id: int = 0
+        self.change_type = ""
 
     def set_internal_solver(self, solver: InternalSolver) -> None:
 
@@ -61,20 +62,20 @@ class Entity:
 
         """
 
-        self.internalSolvers = solver
+        self.internal_solver = solver
 
-    def get_BC(self, fieldQuantity: str) -> BC:
+    def get_BC(self, field_quantity: str) -> BC:
 
         """
-        returns boundary condition for fieldQuantity
+        returns boundary condition for field_quantity
 
-        :param fieldQuantity:
+        :param field_quantity:
         :return:
 
         """
 
-        for i in self.bcList:
-            if i.fieldQuantity == fieldQuantity:
+        for i in self.bc_list:
+            if i.field_quantity == field_quantity:
                 return i
 
     def update_bcs(self) -> None:
@@ -88,9 +89,10 @@ class Entity:
 
         self.fieldQuantities = []
         for i in self.bc_list:
-            fq = i.fieldQuantity
+            fq = i.field_quantity
             self.fieldQuantities.append(fq)
             i.p = self.p
+
 
     def step(self, t: float, dt: float) -> None:
 
@@ -138,18 +140,20 @@ class Cell(Entity):
 
     """
 
-    def __init__(self, center: List[float], radius: float, bcList: List[BC]) -> None:
+    def __init__(self, center: List[float], radius: float, bc_list: List[BC]) -> None:
         """
 
         :param center:
         :param radius:
-        :param bcList:
+        :param bc_list:
         """
+        super().__init__()
 
         self.center: List[float] = center
         self.radius = radius
-        self.bc_list: List[BC] = bcList
-        super().__init__()
+        self.bc_list: List[BC] = bc_list
+
+
 
     def getSubDomain(self) -> CellSubDomain:
         """
@@ -167,8 +171,7 @@ class Cell(Entity):
         return fcs.CompiledSubDomain(
             "on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
             c0=self.center[0], c1=self.center[1], c2=self.center[2], r=self.radius)
-
-    def set_cell_type(self, cell_type: CellType, p=None) -> None:
+    def set_cell_type(self, cell_type: CellType) -> None:
         """
 
         sets this cells type from template object
@@ -177,10 +180,18 @@ class Cell(Entity):
         :return:
 
         """
-        self.cell_type = cell_type
+        self.type_name = cell_type.name
         self.set_internal_solver(cell_type.internal_solver())
-        self.p = deepcopy(p) if (not p == None) else deepcopy(cell_type.p)
+        # self.p = deepcopy(p) if (not p == None) else deepcopy(cell_type.p)
+        self.p.update(deepcopy(cell_type.p))
+        self.p["type_name"] = self.type_name
         self.p["center"] = self.center
+
+    def change_entity_type (self,type_name: str):
+        """
+        schedules type change for next timestep
+        """
+        self.change_type = type_name
 
     # def log(self):
     #     p_out = self.p
@@ -248,7 +259,7 @@ class DomainSphere(DomainEntity):
             if isinstance(o, bc.OuterBC):
                 e = CompiledSphere(o.expr, o, self.p)
                 e.p = self.p
-                e.fieldQuantity = o.fieldQuantity
+                e.field_quantity = o.field_quantity
                 if o.expr not in subdomain_dict.keys():
                     subdomain_dict[o.expr] = [e]
                 else:
@@ -260,7 +271,7 @@ class DomainSphere(DomainEntity):
         for i, o in enumerate(self.subdomain_dict.values()):
             if "field_quantity" in kwargs:
                 for e in o:
-                    if e.fieldQuantity == kwargs["field_quantity"]:
+                    if e.field_quantity == kwargs["field_quantity"]:
                         subdomains.append({"entity": e, "patch": i + 1})
             else:
                 subdomains.append({"entity": o[0], "patch": i + 1})
@@ -272,22 +283,22 @@ class DomainSphere(DomainEntity):
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, p, bcList):
+    def __init__(self, p1, p2, p, bc_list):
         self.p1 = p1
         self.p2 = p2
         self.p = p
 
-        self.bcList = bcList
+        self.bc_list = bc_list
         self.subdomainDict = self.__compileSubdomains()
         super().__init__()
 
     def __compileSubdomains(self):
         subdomainDict = {}
-        for i, o in enumerate(self.bcList):
+        for i, o in enumerate(self.bc_list):
             if isinstance(o, bc.OuterBC):
                 e = CompiledCube(o.expr, o, self)
                 e.p = self.p
-                e.fieldQuantity = o.fieldQuantity
+                e.field_quantity = o.field_quantity
                 if o.expr not in subdomainDict.keys():
                     subdomainDict[o.expr] = [e]
                 else:
@@ -299,7 +310,7 @@ class DomainCube(DomainEntity):
         for i, o in enumerate(self.subdomainDict.values()):
             if "field_quantity" in kwargs:
                 for e in o:
-                    if e.fieldQuantity == kwargs["field_quantity"]:
+                    if e.field_quantity == kwargs["field_quantity"]:
                         subdomains.append({"entity": e, "patch": i + 1})
             else:
                 subdomains.append({"entity": o[0], "patch": i + 1})
@@ -329,7 +340,7 @@ class CompiledCube(Entity):
         print("expr " + self.expr)
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
-    def get_BC(self, fieldQuantity):
+    def get_BC(self, field_quantity):
         self.bc.p = self.p
         return self.bc
 
@@ -346,6 +357,6 @@ class CompiledSphere(Entity):
                                                                                                    r=self.p["radius"])
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
-    def get_BC(self, fieldQuantity):
+    def get_BC(self, field_quantity):
         self.bc.p = self.p
         return self.bc

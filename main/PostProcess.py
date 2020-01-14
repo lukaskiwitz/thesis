@@ -348,7 +348,7 @@ class PostProcessor:
                 d = {
                     "scanIndex": int(file.get("scanIndex")),
                     "timeIndex": int(file.get("timeIndex")),
-                    "fieldName": file.get("field")
+                    "field_name": file.get("field")
                 }
                 for p in json.loads(file.get("dynamic")):
                     d[p["name"]] = p["value"]

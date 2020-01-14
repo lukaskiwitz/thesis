@@ -13,7 +13,9 @@ import fenics as fcs
 from Entity import Entity
 from FieldProblem import FieldProblem
 from typing import Dict
-from CellType import CellType
+from EntityType import CellType,EntityType
+from InternalSolver import InternalSolver
+
 
 
 class SimContainer:
@@ -49,6 +51,9 @@ class SimContainer:
     :var T: current time
     :vartype T: float
 
+    :var entity_templates: list of entity templates
+    :vartyp entity_templates: List[EntityTemplate]
+
     """
 
     def __init__(self) -> None:
@@ -60,6 +65,8 @@ class SimContainer:
         self.domain_files = []
         self.field_files = []
         self.boundary_markers = []
+        self.entity_templates = []
+        self.internal_solvers = []
 
     def init_logs(self) -> None:
 
@@ -84,10 +91,10 @@ class SimContainer:
         os.makedirs(self.path, exist_ok=True)
         for i in self.fields:
             self.subdomain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/subdomain_" + i.fieldName + ".xdmf"))
+                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/subdomain_" + i.field_name + ".xdmf"))
             self.domain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/domain_" + i.fieldName + ".xdmf"))
-            self.field_files.append("field_" + i.fieldName)
+                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/domain_" + i.field_name + ".xdmf"))
+            self.field_files.append("field_" + i.field_name)
 
     def initialize(self, **kwargs: Dict) -> None:
 
@@ -101,7 +108,7 @@ class SimContainer:
         self.ext_boundary_markers = kwargs["load_subdomain"] if "load_subdomain" in kwargs else self.path + "cache/"
 
         for field in self.fields:
-            fq = field.fieldQuantity
+            fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
                 if fq in entity.fieldQuantities:
@@ -149,6 +156,11 @@ class SimContainer:
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.T, dt)
+            if not entity.change_type == "":
+                print("changing type for entity {id}".format(id=entity.id))
+                entity.set_cell_type(self.get_entity_type_by_name(entity.change_type))
+                entity.change_type = ""
+
 
         self.T = self.T + dt
 
@@ -165,6 +177,34 @@ class SimContainer:
         else:
             entity.id = 0
         self.entity_list.append(entity)
+    def add_entity_type(self,template: EntityType):
+        """
+        adds entity template to simulation
+
+        :param template
+        """
+        if template not in self.entity_templates:
+            self.entity_templates.append(template)
+        else:
+            i = self.entity_templates.index(template)
+            self.entity_templates[i] = template
+    def add_internal_solver(self, internal_solver: InternalSolver):
+        if internal_solver not in self.internal_solvers:
+            self.internal_solvers.append(internal_solver)
+        else:
+            i = self.internal_solvers.index(internal_solver)
+            self.internal_solvers[i] = internal_solver
+    def get_internal_solver_by_name(self,name: str):
+        for s in self.internal_solvers:
+            if s.name == name:
+                return  s
+        return None
+
+    def get_entity_type_by_name(self,name: str)->EntityType:
+        for e in self.entity_templates:
+            if e.name == name:
+                return e
+        return None
 
     def add_field(self, field: FieldProblem) -> None:
 
@@ -217,7 +257,7 @@ class SimContainer:
             distplot = self.path + "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
             sol = self.path + "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
             with fcs.HDF5File(fcs.MPI.comm_world, distplot, "w") as f:
-                f.write(i.get_field(), i.fieldName)
+                f.write(i.get_field(), i.field_name)
             with fcs.XDMFFile(fcs.MPI.comm_world, sol) as f:
                 f.write(i.get_field(), n)
             cells = []
@@ -226,5 +266,5 @@ class SimContainer:
                 r_dict = deepcopy(e.p)
                 r_dict.update({"id": e.id})
                 cells.append(r_dict)
-            result[i.fieldName] = (distplot, sol, cells)
+            result[i.field_name] = (distplot, sol, cells)
         return result

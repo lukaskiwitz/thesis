@@ -87,11 +87,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mesh</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">boundary_markers</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantity</span><span class="p">,</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">,</span>
                 <span class="s2">&quot;p&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span>
                 <span class="p">}</span>
     <span class="k">def</span> <span class="nf">compileSolver</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -127,7 +127,7 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subdomains</span><span class="p">:</span>
             <span class="n">e</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;entity&quot;</span><span class="p">]</span>
             <span class="n">patch</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;patch&quot;</span><span class="p">]</span>
-            <span class="n">bc</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantity</span><span class="p">)</span>
+            <span class="n">bc</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">OuterBC</span><span class="p">):</span>
                 <span class="k">pass</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">bc</span><span class="p">)</span> <span class="o">==</span> <span class="n">BC</span><span class="o">.</span><span class="n">DirichletBC</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">bc</span><span class="p">)</span> <span class="o">==</span> <span class="n">BC</span><span class="o">.</span><span class="n">OuterDirichletBC</span><span class="p">:</span>
@@ -163,7 +163,7 @@
         <span class="c1">#calls fenics solver; renames u for proper vtk output and returns solution u</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
     <span class="c1">#        u,c  = self.m.split()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantity</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">)</span>
     <span class="c1">#        self.u = u</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span>
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

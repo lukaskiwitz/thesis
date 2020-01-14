@@ -118,7 +118,7 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">solver</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span></div>
 
 <div class="viewcode-block" id="FieldProblem.set_outer_domain"><a class="viewcode-back" href="../index.html#FieldProblem.FieldProblem.set_outer_domain">[docs]</a>    <span class="k">def</span> <span class="nf">set_outer_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">DomainEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -129,7 +129,7 @@
 
     <span class="c1"># def log(self):</span>
     <span class="c1">#     di = {&quot;type&quot;: str(type(self)),</span>
-    <span class="c1">#           &quot;fieldName&quot;: self.field_name,</span>
+    <span class="c1">#           &quot;field_name&quot;: self.field_name,</span>
     <span class="c1">#           &quot;res&quot;: self.res,</span>
     <span class="c1">#           &quot;meshCache&quot;: self.mesh_cached,</span>
     <span class="c1">#           &quot;registered_entities&quot;: [i[&quot;entity&quot;].id for i in self.registered_entities],</span>
@@ -172,11 +172,11 @@
 <span class="sd">        updates boundary conditions for all child objects</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outer_domain</span><span class="o">.</span><span class="n">update_bcs</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered_entities</span><span class="p">:</span>
             <span class="n">i</span><span class="p">[</span><span class="s2">&quot;entity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update_bcs</span><span class="p">()</span>
-        <span class="n">subdomains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outer_domain</span><span class="o">.</span><span class="n">getSubDomains</span><span class="p">(</span><span class="n">fieldQuantity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">)</span>
+        <span class="n">subdomains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outer_domain</span><span class="o">.</span><span class="n">getSubDomains</span><span class="p">(</span><span class="n">field_quantity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field_quantity</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered_entities</span><span class="p">:</span>
             <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">subdomains</span> <span class="o">=</span> <span class="n">subdomains</span></div>

@@ -9,7 +9,7 @@ Created on Mon Aug 12 14:58:01 2019
 import FieldProblem as fp
 import Entity
 import MySolver
-
+import numpy as np
 import BC as bc
 import SimContainer as SC
 from bcFunctions import cellBC_il2,cellBC_il6, cellBC_infg
@@ -17,35 +17,52 @@ from copy import deepcopy
 import time
 import random
 import StateManager
-
-import cell_types
-
+from InternalSolver import InternalSolver
 import mpi4py.MPI as MPI
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+class RuleBasedSolver(InternalSolver):
+
+    name = "RuleBasedSolver"
+
+    def __init__(self):
+        self.transition = (False, 0, "Tn")
+    def step(self,t,dt,p,entity=None):
+
+        if entity.type_name == "Tn":
+            if self.transition[0]:
+                if self.transition[1] <= 0:
+                    entity.change_type = self.transition[2]
+                else:
+                    self.transition = (True,self.transition[1]-dt,self.transition[2])
+            elif np.random.rand(1) > 0.5:  # chance for type change; uniform distribution
+                draw = np.random.normal(1,0.2)  # time to type change; normal distribution
+
+                if p["surf_c_il2"]*10e9 < 0.7 and p["surf_c_il6"]*10e9 > 0.35:  # il2neg and il6pos
+                    self.transition = (True, draw, "Tfh")
+                elif p["surf_c_infg"]*10e9 > 0.15:  #infg pos
+                        self.transition = (True, draw, "Th1")
+
+        return p
+
+
 
 def updateState(p,sc,t):
 
-
-
     ran = random.Random()
     ran.seed(t)
+
     for i,e in enumerate(sc.entity_list):
 
         draw = ran.random()
-        e.set_cell_type(cell_types.Tn)
+        e.set_cell_type(sc.get_entity_type_by_name("Tn"))
         if draw > 1-p["fraction"]:
-            #e.p["q_il2"] = p["q_h"]
-            #e.p["R_il2"] = p["R_h"]
-            e.set_cell_type(cell_types.Tfh)
+            e.set_cell_type(sc.get_entity_type_by_name("Tfh"))
         elif draw > 1-2*p["fraction"]:
-            #e.p["q_infg"] = p["q_h"]
-            #e.p["R_infg"] = p["R_l"]
-            e.set_cell_type(cell_types.Th1)
-
+            e.set_cell_type(sc.get_entity_type_by_name("Th1"))
         e.p["id"] = e.id
         
 def makeCellListGrid(p,xLine,yLine,zLine):
@@ -59,12 +76,12 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 p_temp = deepcopy(p)
                 cell = Entity.Cell([x,y,z],p_temp["rho"],
                [
-                bc.Integral(cellBC_il2,fieldQuantity="il2"),
-                bc.Integral(cellBC_il6,fieldQuantity="il6"),
-                bc.Integral(cellBC_infg, fieldQuantity="infg")
+                bc.Integral(cellBC_il2,field_quantity="il2"),
+                bc.Integral(cellBC_il6,field_quantity="il6"),
+                bc.Integral(cellBC_infg, field_quantity="infg")
                 ])
                 cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
-                # cell.p = p_temp
+                cell.p = p_temp
                 cellList.append(cell)
     return cellList
 
@@ -97,8 +114,8 @@ def run(p, T, dt, domainBC, path, **kwargs):
     solver_il2 = MySolver.PoissonSolver()
     
     fieldProblem_il2 = fp.FieldProblem()
-    fieldProblem_il2.fieldName = "il2"
-    fieldProblem_il2.fieldQuantity = "il2"
+    fieldProblem_il2.field_name = "il2"
+    fieldProblem_il2.field_quantity = "il2"
     
     
     fieldProblem_il2.set_solver(solver_il2)
@@ -113,8 +130,8 @@ def run(p, T, dt, domainBC, path, **kwargs):
     solver_il6 = MySolver.PoissonSolver()
     
     fieldProblem_il6 = fp.FieldProblem()
-    fieldProblem_il6.fieldName = "il6"
-    fieldProblem_il6.fieldQuantity = "il6"
+    fieldProblem_il6.field_name = "il6"
+    fieldProblem_il6.field_quantity = "il6"
     
     
     fieldProblem_il6.set_solver(solver_il6)
@@ -128,8 +145,8 @@ def run(p, T, dt, domainBC, path, **kwargs):
     solver_infg = MySolver.PoissonSolver()
 
     fieldProblem_infg = fp.FieldProblem()
-    fieldProblem_infg.fieldName = "infg"
-    fieldProblem_infg.fieldQuantity = "infg"
+    fieldProblem_infg.field_name = "infg"
+    fieldProblem_infg.field_quantity = "infg"
 
     fieldProblem_infg.set_solver(solver_infg)
     fieldProblem_infg.p = deepcopy(p)
@@ -149,7 +166,9 @@ def run(p, T, dt, domainBC, path, **kwargs):
     sc.add_field(fieldProblem_il6)
     sc.add_field(fieldProblem_infg)
 
-    updateState(p, sc, 0)
+    sc.add_internal_solver(RuleBasedSolver)
+
+
     if "extCache" in kwargs:
         sc.initialize(load_subdomain=kwargs["extCache"]+"cache/boundary_markers_il2.h5")
     else:
@@ -173,8 +192,9 @@ def run(p, T, dt, domainBC, path, **kwargs):
             updateState(p,sc,0)
             sc.init_xdmf_files()
 #            sc.saveSubdomains()
-                
+            sc.T = 0
             for n in T:
+
                 # updateState(p,sc,t)
                 start = time.process_time()
                 
@@ -184,10 +204,11 @@ def run(p, T, dt, domainBC, path, **kwargs):
                 resultPaths = sc.save_fields(n)
                 for k,v in resultPaths.items():
                     (distplot, sol,cells) = v
-                    stMan.addTimeStep(0, n, sc.T, displot=distplot, sol=sol, fieldName=k, cell_list=cells)
+                    print(len(cells))
+                    stMan.addTimeStep(number, n, sc.T, displot=distplot, sol=sol, field_name=k, cell_list=cells)
                     stMan.writeElementTree()
 
-    sc.save_subdomains()
-    print("subdomains saved")
-    sc.save_domain()
-    print("domain saved")
+    # sc.save_subdomains()
+    # print("subdomains saved")
+    # sc.save_domain()
+    # print("domain saved")

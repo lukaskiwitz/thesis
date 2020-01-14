@@ -57,8 +57,8 @@ def makeCellListGrid(p,xLine,yLine,zLine):
                 p_temp = deepcopy(p)
                 cell = Entity.Cell([x,y,z],p_temp["rho"],
                [
-                       bc.Integral(cellBC_il2,fieldQuantity="il2"),
-                       bc.Integral(cellBC_il6,fieldQuantity="il6")
+                       bc.Integral(cellBC_il2,field_quantity="il2"),
+                       bc.Integral(cellBC_il6,field_quantity="il6")
                 ])
                 cell.name = "cell_{xCoord}_{yCoord}_{zCoord}".format(xCoord=x,yCoord=y,zCoord=z)
                 cell.p = p_temp
@@ -83,8 +83,8 @@ def run(p,T,domainBC,path,**kwargs):
     solver_il2 = MySolver.PoissonSolver()
     
     fieldProblem_il2 = fp.FieldProblem()
-    fieldProblem_il2.fieldName = "il2"
-    fieldProblem_il2.fieldQuantity = "il2"
+    fieldProblem_il2.field_name = "il2"
+    fieldProblem_il2.field_quantity = "il2"
     
     
     fieldProblem_il2.setSolver(solver_il2)

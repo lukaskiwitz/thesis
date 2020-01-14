@@ -270,9 +270,9 @@ for e in PATH_LIST:
     frame: pd.DataFrame = cast(pd.DataFrame, pd.read_hdf(path + 'global_dataframe.h5', "data"))
     frame = frame.assign(l = e["key"])
     # if e["key"] == "$f$":
-    #     frame = frame.loc[(frame["fieldName"] == "il2") & (frame["scanIndex"] < 49)]
+    #     frame = frame.loc[(frame["field_name"] == "il2") & (frame["scanIndex"] < 49)]
     # else:
-    #     frame = frame.loc[frame["fieldName"] == "il2"]
+    #     frame = frame.loc[frame["field_name"] == "il2"]
     res_global= res_global.append(frame)
 
 o = parameter_plot(res_global, IMG)

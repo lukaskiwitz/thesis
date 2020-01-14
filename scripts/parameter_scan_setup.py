@@ -67,15 +67,15 @@ def execute_scan(scan: List[Dict],p_c: Dict, T:List[float], path:str, ext_cache:
 
     domainBC = [
         bc.outerIntegral(lambda u, p: fcs.Constant(0),
-                         "!near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il2"),
+                         "!near(x[0],-{d_x})".format(d_x=d_x), field_quantity="il2"),
         bc.outerIntegral(lambda u, p: fcs.Constant(0),
-                         "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il2"),
+                         "near(x[0],-{d_x})".format(d_x=d_x), field_quantity="il2"),
         # bc.outerIntegral(outerBC_il2,
-        #                  "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il2"),
+        #                  "near(x[0],-{d_x})".format(d_x=d_x), field_quantity="il2"),
         bc.outerIntegral(lambda u, p: fcs.Constant(0),
-                         "near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il6"),
+                         "near(x[0],-{d_x})".format(d_x=d_x), field_quantity="il6"),
         bc.outerIntegral(lambda u, p: fcs.Constant(0),
-                         "!near(x[0],-{d_x})".format(d_x=d_x), fieldQuantity="il6")
+                         "!near(x[0],-{d_x})".format(d_x=d_x), field_quantity="il6")
     ]
 
     run(

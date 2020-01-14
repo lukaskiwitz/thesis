@@ -96,18 +96,18 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">internalSolvers</span> <span class="o">=</span> <span class="n">solver</span>
 
-    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BC</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_quantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BC</span><span class="p">:</span>
 
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        returns boundary condition for fieldQuantity</span>
+<span class="sd">        returns boundary condition for field_quantity</span>
 
-<span class="sd">        :param fieldQuantity:</span>
+<span class="sd">        :param field_quantity:</span>
 <span class="sd">        :return:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">fieldQuantity</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">==</span> <span class="n">field_quantity</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">i</span>
 
     <span class="k">def</span> <span class="nf">update_bcs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -121,7 +121,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantities</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span><span class="p">:</span>
-            <span class="n">fq</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">fieldQuantity</span>
+            <span class="n">fq</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">field_quantity</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fieldQuantities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fq</span><span class="p">)</span>
             <span class="n">i</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
 
@@ -171,17 +171,17 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bcList</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bc_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        :param center:</span>
 <span class="sd">        :param radius:</span>
-<span class="sd">        :param bcList:</span>
+<span class="sd">        :param bc_list:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">center</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BC</span><span class="p">]</span> <span class="o">=</span> <span class="n">bcList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BC</span><span class="p">]</span> <span class="o">=</span> <span class="n">bc_list</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">getSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CellSubDomain</span><span class="p">:</span>
@@ -281,7 +281,7 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">bc</span><span class="o">.</span><span class="n">OuterBC</span><span class="p">):</span>
                 <span class="n">e</span> <span class="o">=</span> <span class="n">CompiledSphere</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
                 <span class="n">e</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
-                <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">fieldQuantity</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">field_quantity</span>
                 <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">expr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subdomain_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="n">subdomain_dict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -293,7 +293,7 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subdomain_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">if</span> <span class="s2">&quot;field_quantity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
                         <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
@@ -305,22 +305,22 @@
 
 <div class="viewcode-block" id="DomainCube"><a class="viewcode-back" href="../index.html#Entity.DomainCube">[docs]</a><span class="k">class</span> <span class="nc">DomainCube</span><span class="p">(</span><span class="n">DomainEntity</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">bcList</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">bc_list</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p2</span> <span class="o">=</span> <span class="n">p2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">bcList</span> <span class="o">=</span> <span class="n">bcList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span> <span class="o">=</span> <span class="n">bc_list</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compileSubdomains</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__compileSubdomains</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">subdomainDict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bcList</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bc_list</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">bc</span><span class="o">.</span><span class="n">OuterBC</span><span class="p">):</span>
                 <span class="n">e</span> <span class="o">=</span> <span class="n">CompiledCube</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                 <span class="n">e</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
-                <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">fieldQuantity</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">field_quantity</span>
                 <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">expr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subdomainDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="n">subdomainDict</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">expr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -332,7 +332,7 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subdomainDict</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">if</span> <span class="s2">&quot;field_quantity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">fieldQuantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">field_quantity</span> <span class="o">==</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;field_quantity&quot;</span><span class="p">]:</span>
                         <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">subdomains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
@@ -362,7 +362,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;expr &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">fcs</span><span class="o">.</span><span class="n">CompiledSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">+</span> <span class="s2">&quot;&amp;&amp;(&quot;</span> <span class="o">+</span> <span class="n">box</span> <span class="o">+</span> <span class="s2">&quot;) &amp;&amp; on_boundary&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_quantity</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bc</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc</span></div>
 
@@ -379,7 +379,7 @@
                                                                                                    <span class="n">r</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;radius&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">fcs</span><span class="o">.</span><span class="n">CompiledSubDomain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">+</span> <span class="s2">&quot;&amp;&amp;(&quot;</span> <span class="o">+</span> <span class="n">box</span> <span class="o">+</span> <span class="s2">&quot;) &amp;&amp; on_boundary&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fieldQuantity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_BC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_quantity</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bc</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc</span></div>
 </pre></div>

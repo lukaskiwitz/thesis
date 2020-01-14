@@ -13,10 +13,9 @@ class BC:
 
     def __init__(self, **kwargs: Dict) -> None:
 
-        self.fieldQuantity = ""
+        self.field_quantity = ""
         if "field_quantity" in kwargs:
-            print(kwargs["field_quantity"])
-            self.fieldQuantity = kwargs["field_quantity"]
+            self.field_quantity = kwargs["field_quantity"]
 
 
 class Integral(BC):
@@ -26,7 +25,7 @@ class Integral(BC):
         self.q = q
         super().__init__(**kwargs)
 
-    def get_bc(self, u: fcs.Function) -> object:
+    def get_BC(self, u: fcs.Function) -> object:
         return self.q(u, self.p)
 
 
@@ -37,7 +36,7 @@ class DirichletBC(BC):
         self.value = value
         super().__init__(**kwargs)
 
-    def get_bc(self, V: fcs.FunctionSpace, boundary_markers: fcs.MeshFunction, patch: int) -> fcs.DirichletBC:
+    def get_BC(self, V: fcs.FunctionSpace, boundary_markers: fcs.MeshFunction, patch: int) -> fcs.DirichletBC:
         value = fcs.Expression(str(self.value), degree=self.degree)
         bc = fcs.DirichletBC(V, value, boundary_markers, patch)
         return bc
@@ -56,7 +55,7 @@ class OuterDirichletBC(OuterBC):
         self.value = value
         super().__init__(**kwargs)
 
-    def get_bc(self, V: fcs.FunctionSpace, boundary_markers: fcs.MeshFunction, patch: int) -> fcs.DirichletBC:
+    def get_BC(self, V: fcs.FunctionSpace, boundary_markers: fcs.MeshFunction, patch: int) -> fcs.DirichletBC:
         value = fcs.Expression(str(self.value), degree=self.degree)
         bc = fcs.DirichletBC(V, value, boundary_markers, patch)
         return bc

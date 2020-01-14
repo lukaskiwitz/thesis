@@ -1,22 +1,23 @@
 from copy import deepcopy
-from CellType import CellType
+from EntityType import CellType
 from InternalSolver import InternalSolver
 from scipy.integrate import odeint
 from scipy.constants import N_A
 import numpy as np
 
-def make_cell_type(p,update,name):
+def make_cell_type(p,name,solver):
+
     p_temp = deepcopy(p)
-    p_temp.update(update)
-
     p_temp["type_name"]=name
-    return CellType(p_temp,name)
+    cellType = CellType(p_temp,name)
+    cellType.internal_solver = solver
+    return cellType
 
-
+#
 x = [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8,2, 2.2, 2.4, 2.6, 2.8]
 y = [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
 z = y
-
+#
 # x = [-0.4, -0.2, 0, 0.2, 0.4]
 # y = x
 # z = y
@@ -51,7 +52,7 @@ p = {
          }
 
 
-Tn = make_cell_type(p,{
+Tn = {
         "q_il2": p["q_h"],
         "R_il2": p["R_l"],
         "q_il6": 0,#p["q_l"],
@@ -59,9 +60,9 @@ Tn = make_cell_type(p,{
         "R_infg":p["R_l"],
         "q_infg":0,
         "type_int":1
-} ,"Tn")
+}
 
-Tfh = make_cell_type(p,{
+Tfh = {
         "q_il2": p["q_h"],
         "R_il2": p["R_l"],
         "q_il6": p["q_h"],
@@ -69,17 +70,17 @@ Tfh = make_cell_type(p,{
         "R_infg":0,
         "q_infg":0,
         "type_int":2
-}, "Tfh")
+}
 
-Th1 = make_cell_type(p,{
+Th1 = {
         "q_il2": 0,#p["q_h"],
         "R_il2": 0,#p["R_l"],
         "q_il6": 0,#p["q_l"],
         "R_il6": 0,#p["R_l"],
         "q_infg": p["q_h"],
-        "R_infg": p["R_l"],
+        "R_infg": p["R_h"],
         "type_int":3
-}, "Th1")
+}
 
 class ODE_Solver(InternalSolver):
     def __init__(self):
@@ -127,6 +128,3 @@ class RuleBasedSolver(InternalSolver):
 
         return p
 
-Th1.internal_solver = RuleBasedSolver
-Tfh.internal_solver = RuleBasedSolver
-Tn.internal_solver = RuleBasedSolver

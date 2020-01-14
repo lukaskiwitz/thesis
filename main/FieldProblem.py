@@ -85,7 +85,7 @@ class FieldProblem:
 
         """
 
-        solver.fieldQuantity = self.field_quantity
+        solver.field_quantity = self.field_quantity
         self.solver = solver
 
     def set_outer_domain(self, domain: DomainEntity) -> None:
@@ -96,7 +96,7 @@ class FieldProblem:
 
     # def log(self):
     #     di = {"type": str(type(self)),
-    #           "fieldName": self.field_name,
+    #           "field_name": self.field_name,
     #           "res": self.res,
     #           "meshCache": self.mesh_cached,
     #           "registered_entities": [i["entity"].id for i in self.registered_entities],
@@ -139,11 +139,11 @@ class FieldProblem:
         updates boundary conditions for all child objects
 
         """
-        self.solver.fieldQuantity = self.field_quantity
+        self.solver.field_quantity = self.field_quantity
         self.outer_domain.update_bcs()
         for i in self.registered_entities:
             i["entity"].update_bcs()
-        subdomains = self.outer_domain.getSubDomains(fieldQuantity=self.field_quantity)
+        subdomains = self.outer_domain.getSubDomains(field_quantity=self.field_quantity)
         for e in self.registered_entities:
             subdomains.append(e)
         self.solver.subdomains = subdomains

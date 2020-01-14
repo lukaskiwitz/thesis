@@ -94,11 +94,11 @@ p_c = {
 #     }
 #
 #domainBC = [
-#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-##       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-#       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-#       bc.outerIntegral(outerBC_il6,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6"),
-#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
+#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+##       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+#       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+#       bc.outerIntegral(outerBC_il6,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il6"),
+#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il6")
 #        ]
 #
 #run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results_fluxRun/secHigh/",extCache="/extra/kiwitz/extCache/")
@@ -126,11 +126,11 @@ p_c = {
 #     }
 #
 #domainBC = [
-#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-##       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-#       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il2"),
-#       bc.outerIntegral(outerBC_il6,"near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6"),
-#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),fieldQuantity="il6")
+#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+##       bc.outerDirichletBC(0,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+#       bc.outerIntegral(outerBC_il2,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il2"),
+#       bc.outerIntegral(outerBC_il6,"near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il6"),
+#       bc.outerIntegral(lambda u,p: fcs.Constant(0),"!near(x[0],-{d_x})".format(d_x=d_x),field_quantity="il6")
 #        ]
 #
 #run({**p_d,**p_c,**p_il2,**p_il6,**p_sim},T,domainBC,"/extra/kiwitz/results_fluxRun/secLow/",extCache="/extra/kiwitz/extCache/")

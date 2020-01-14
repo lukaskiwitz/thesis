@@ -54,11 +54,11 @@ class PoissonSolver(MySolver):
         self.p: Dict = {}
         self.mesh = None
         self.boundary_markers = None
-        self.fieldQuantity: str = ""
+        self.field_quantity: str = ""
 
         super().__init__()
     def log(self):
-        return {"field_quantity":self.fieldQuantity,
+        return {"field_quantity":self.field_quantity,
                 "p":self.p
                 }
     def compileSolver(self):
@@ -94,7 +94,7 @@ class PoissonSolver(MySolver):
         for i in self.subdomains:
             e = i["entity"]
             patch = i["patch"]
-            bc = e.get_BC(self.fieldQuantity)
+            bc = e.get_BC(self.field_quantity)
             if isinstance(bc, BC.OuterBC):
                 pass
             if type(bc) == BC.DirichletBC or type(bc) == BC.OuterDirichletBC:
@@ -104,10 +104,10 @@ class PoissonSolver(MySolver):
             if type(bc) == BC.Integral or type(bc) == BC.OuterIntegral:
                 self.integralBC.append(bc.get_BC(u) * v * ds(patch))
         
-        #Defines variational form of poisson equation with boundary integrals as sums
+
         F= -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx)  - u*kd*v*fcs.dx + f*v*fcs.dx + D*(sum(self.integralBC))
 
-        #Defines nonlinear variational problem as F == 0 with Dirichlet BC and Jacobian given as the Gateaux derivative of F
+        #Defines variational problem as F == 0 with
         # with respect to u
         # problem = fcs.NonlinearVariationalProblem(F,u, self.dirichlet,J=fcs.derivative(F, u))
         a = fcs.lhs(F)
@@ -115,7 +115,7 @@ class PoissonSolver(MySolver):
         u = fcs.Function(self.V)
         problem = fcs.LinearVariationalProblem(a, L, u, self.dirichlet)
         
-        #instantiates fenics solver class as a field of "PoissonSolver"
+        #instantiates fenics solver
         # self.solver = fcs.NonlinearVariationalSolver(problem)
         self.solver = fcs.LinearVariationalSolver(problem)
         
@@ -130,7 +130,7 @@ class PoissonSolver(MySolver):
         #calls fenics solver; renames u for proper vtk output and returns solution u
         self.solver.solve()
     #        u,c  = self.m.split()
-        self.u.rename(self.fieldQuantity,self.fieldQuantity)
+        self.u.rename(self.field_quantity,self.field_quantity)
     #        self.u = u
         return self.u
     def __del__(self):

@@ -71,17 +71,17 @@ def test1(p_global):
             }
             )
     domain = Entity.DomainSphere([0,0,0],p_global["radius"],p_domain,[
-#           bc.outerDirichletBC(u_exact_1(p_global["radius"],p),"on_boundary",fieldQuantity="il2"),
-            bc.outerDirichletBC("0","on_boundary",fieldQuantity="il2")
-#           bc.outerIntegral(lambda u,p:1*u,"on_boundary",fieldQuantity="il2")
+#           bc.outerDirichletBC(u_exact_1(p_global["radius"],p),"on_boundary",field_quantity="il2"),
+            bc.outerDirichletBC("0","on_boundary",field_quantity="il2")
+#           bc.outerIntegral(lambda u,p:1*u,"on_boundary",field_quantity="il2")
             ])
     
     """IL-2"""
 #    solver_il2 = MySolver.PoissonSolver()
 #    
 #    fieldProblem_il2 = fp.FieldProblem()
-#    fieldProblem_il2.fieldName = "il2"
-#    fieldProblem_il2.fieldQuantity = "il2"
+#    fieldProblem_il2.field_name = "il2"
+#    fieldProblem_il2.field_quantity = "il2"
 ##    fieldProblem_il2.extCache = "/extra/kiwitz/results/unit_test/test1/meshCache_il2"
 #    
 #    
@@ -94,7 +94,7 @@ def test1(p_global):
 #    
 #    cell = Entity.Cell([0,0,0],0.05,
 #       [
-#           bc.Integral(cellBC_il2,fieldQuantity="il2")
+#           bc.Integral(cellBC_il2,field_quantity="il2")
 #       ])
 #    cell.name = "cell"
 #    cell.p = p_cell
@@ -151,16 +151,16 @@ def test3(p_global):
             }
             )
     domain = Entity.DomainSphere([0,0,0],p_global["radius"],p_domain,[
-#           bc.outerDirichletBC("0","on_boundary",fieldQuantity="il2"),
-           bc.outerIntegral(lambda u,p:-u,"on_boundary",fieldQuantity="il2")
+#           bc.outerDirichletBC("0","on_boundary",field_quantity="il2"),
+           bc.outerIntegral(lambda u,p:-u,"on_boundary",field_quantity="il2")
             ])
     
     """IL-2"""
     solver_il2 = MySolver.PoissonSolver()
     
     fieldProblem_il2 = fp.FieldProblem()
-    fieldProblem_il2.fieldName = "il2"
-    fieldProblem_il2.fieldQuantity = "il2"
+    fieldProblem_il2.field_name = "il2"
+    fieldProblem_il2.field_quantity = "il2"
     fieldProblem_il2.extCache = "/extra/kiwitz/results/unit_test/test1/meshCache_il2"
     
     
@@ -173,7 +173,7 @@ def test3(p_global):
     
     cell = Entity.Cell([0,0,0],0.05,
        [
-           bc.Integral(cellBC_il2,fieldQuantity="il2")
+           bc.Integral(cellBC_il2,field_quantity="il2")
        ])
     cell.name = "cell"
     cell.p = p_cell
@@ -228,16 +228,16 @@ def test2(p_global):
              "q_il2":0})
     
     domain = Entity.DomainSphere([0,0,0],p_global["radius"],p_domain,[
-#           bc.outerIntegral(lambda u,p: fcs.Constant(1),"true",fieldQuantity="il2"),
-           bc.outerIntegral(outerBC_il2_unitTest,"1",fieldQuantity="il2")
+#           bc.outerIntegral(lambda u,p: fcs.Constant(1),"true",field_quantity="il2"),
+           bc.outerIntegral(outerBC_il2_unitTest,"1",field_quantity="il2")
             ])
     
     """IL-2"""
 #    solver_il2 = MySolver.PoissonSolver()
 #    
 #    fieldProblem_il2 = fp.FieldProblem()
-#    fieldProblem_il2.fieldName = "il2"
-#    fieldProblem_il2.fieldQuantity = "il2"
+#    fieldProblem_il2.field_name = "il2"
+#    fieldProblem_il2.field_quantity = "il2"
 #    
 #    
 #    fieldProblem_il2.setSolver(solver_il2)
@@ -254,7 +254,7 @@ def test2(p_global):
             )
 #    cell = Entity.Cell([0,0,0],0.05,
 #       [
-#           bc.Integral(cellBC_il2,fieldQuantity="il2")
+#           bc.Integral(cellBC_il2,field_quantity="il2")
 #       ])
 #    cell.name = "cell"
 #    cell.p = p_cell

@@ -11,6 +11,7 @@ import json
 import itertools
 from copy import deepcopy
 import pandas as pd
+from EntityType import CellType
 
 import mpi4py.MPI as MPI
 
@@ -58,6 +59,7 @@ class StateManager:
 
     def output_parameter_dict(self,p,root_name):
         root = ET.Element(root_name)
+
         for k, v in p.items():
             par = ET.SubElement(root, "parameter")
             par.set("type", str(type(v)))
@@ -78,7 +80,15 @@ class StateManager:
             parameters: ET.Element = ET.SubElement(scan, "parameters")
 
             parameters.append(self.output_parameter_dict(p,"constant"))
-            parameters.append(self.output_parameter_dict(s, "dynamic"))
+            parameters.append(self.output_parameter_dict(s["parameters"], "dynamic"))
+
+            entity_types: ET.Element = ET.SubElement(scan,"entity_types")
+            for t in s["entity_types"]:
+                entity_type: ET.Element = ET.SubElement(entity_types,"entity_type")
+
+                entity_type.append(self.output_parameter_dict(t["parameters"],"parameters"))
+                entity_type.set("name", t["name"])
+                entity_type.set("internal_solver",t["internal_solver"])
 
             number = ET.SubElement(scan, "number")
             number.text = str(n)
@@ -96,7 +106,7 @@ class StateManager:
 
         for f in [sc.fields[0]]:
             field = ET.SubElement(cellDump, "field")
-            field.set("name", str(f.fieldName))
+            field.set("name", str(f.field_name))
             extCache = ET.SubElement(field, "ext_cache")
             extCache.text = f.ext_cache
             subdomains = ET.SubElement(field, "subdomains")
@@ -112,16 +122,16 @@ class StateManager:
     def loadCellDump(self):
         self.cellDump = self.elementTree.getroot().find("/cellDump")
 
-    def addTimeStep(self, i, n, t, fieldName="field", displot="", sol="",cell_list=[]):
+    def addTimeStep(self, i, n, t, field_name="field", displot="", sol="",cell_list=[]):
         scans = self.elementTree.getroot().find("scans")
         scan = scans.find("./scan[@i='{i}']".format(i=i))
 
         timeSeries = scan.find("timeSeries")
-        field = timeSeries.find("./field[@name='{f}']".format(f=fieldName))
+        field = timeSeries.find("./field[@name='{f}']".format(f=field_name))
 
         if field == None:
             field = ET.SubElement(timeSeries, "field")
-            field.set("name", str(fieldName))
+            field.set("name", str(field_name))
         step = ET.SubElement(field, "step")
         step.set("n", str(n))
         step.set("t", str(t))
@@ -149,11 +159,17 @@ class StateManager:
             else:
                 p[i.get("name")] = json.loads(i.text)
         return p
-    def get_cell_ts_data_frame(self):
+    def get_cell_ts_data_frame(self, **kwargs):
+
         root = self.elementTree.getroot()
         # result = pd.DataFrame()
         result = []
-        for scan in root.findall("scans/scan"):
+        if "scan_index" in kwargs:
+            scans = root.findall("./scans/scan[@i='{i}']".format(i=kwargs["scan_index"]))
+        else:
+            scans = root.findall("scans/scan")
+
+        for scan in scans:
             for field in scan.findall("timeSeries/field"):
                 for step in field.findall("step"):
                     t = step.get("t")
@@ -181,4 +197,11 @@ class StateManager:
             f.p = deepcopy(p)
             f.solver.p = deepcopy(p)
             f.outer_domain.p.update(s)
+        for entity_type in scan.find("entity_types"):
+            t = CellType(
+                self.getParametersFromElement(entity_type.find("parameters")),
+                entity_type.get("name"),
+                sc.get_internal_solver_by_name(entity_type.get("internal_solver"))
+            )
+            sc.add_entity_type(t)
         return deepcopy(p)

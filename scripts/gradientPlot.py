@@ -31,9 +31,9 @@ def groupByKey(ls,keys):
         l.append(list(e))
     return l
 def gradientPlot(path,xKey,**kwargs):
-    fieldName = "il2"
+    field_name = "il2"
     tree = ET.parse(path+"postProcess.xml")
-    files = tree.findall("/file[@field='{name}']".format(name=fieldName))
+    files = tree.findall("/file[@field='{name}']".format(name=field_name))
     result = []
     for file in files:
         d = {
