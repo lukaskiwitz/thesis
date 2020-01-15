@@ -181,7 +181,10 @@ class Cell(Entity):
 
         """
         self.type_name = cell_type.name
-        self.set_internal_solver(cell_type.internal_solver())
+        if cell_type.internal_solver:
+            self.set_internal_solver(cell_type.internal_solver())
+        else:
+            self.set_internal_solver(None)
         # self.p = deepcopy(p) if (not p == None) else deepcopy(cell_type.p)
         self.p.update(deepcopy(cell_type.p))
         self.p["type_name"] = self.type_name
