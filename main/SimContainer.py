@@ -183,17 +183,25 @@ class SimContainer:
 
         :param template
         """
-        if template not in self.entity_templates:
+        # if template not in self.entity_templates:
+        #     self.entity_templates.append(template)
+        # else:
+        #     i = self.entity_templates.index(template)
+        #     self.entity_templates[i] = template
+
+        if not self.get_entity_type_by_name(template.name):
             self.entity_templates.append(template)
         else:
-            i = self.entity_templates.index(template)
+            i = self.entity_templates.index(self.get_entity_type_by_name(template.name))
             self.entity_templates[i] = template
     def add_internal_solver(self, internal_solver: InternalSolver):
-        if internal_solver not in self.internal_solvers:
+
+        if not self.get_internal_solver_by_name(internal_solver.name):
             self.internal_solvers.append(internal_solver)
         else:
-            i = self.internal_solvers.index(internal_solver)
+            i = self.internal_solvers.index(self.get_internal_solver_by_name(internal_solver.name))
             self.internal_solvers[i] = internal_solver
+
     def get_internal_solver_by_name(self,name: str):
         for s in self.internal_solvers:
             if s.name == name:

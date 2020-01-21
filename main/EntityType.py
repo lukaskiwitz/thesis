@@ -8,7 +8,7 @@ class EntityType():
 
 class CellType(EntityType):
 
-    def __init__(self, p: Dict, name: str, solver_name: type):
+    def __init__(self, p: Dict, name: str, solver_name: str):
 
         self.p = deepcopy(p)
         self.name = name

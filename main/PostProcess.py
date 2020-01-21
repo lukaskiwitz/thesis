@@ -260,7 +260,7 @@ class PostProcessor:
 
         for j in jobs:
             try:
-                j.join(60)
+                j.join(600)
             except Exception:
                 print("Join Timeout")
         print("joined jobs")
