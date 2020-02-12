@@ -25,8 +25,10 @@ class Integral(BC):
         self.q = q
         super().__init__(**kwargs)
 
-    def get_BC(self, u: fcs.Function) -> object:
-        return self.q(u, self.p)
+    def get_BC(self, u: fcs.MeshFunction, p_update: Dict) -> object:
+        p_temp = self.p
+        p_temp.update(p_update)
+        return self.q(u, p_temp)
 
 
 class DirichletBC(BC):
@@ -47,7 +49,7 @@ class OuterBC(BC):
         super().__init__(**kwargs)
 
 
-class OuterDirichletBC(OuterBC):
+class OuterDirichletBC(OuterBC,DirichletBC):
 
     def __init__(self, value: object, expr: str, **kwargs: Dict) -> None:
         self.degree = 1
@@ -61,14 +63,12 @@ class OuterDirichletBC(OuterBC):
         return bc
 
 
-class OuterIntegral(OuterBC):
+class OuterIntegral(Integral, OuterBC):
 
-    def __init__(self, q: Callable, expr: str, **kwargs: Dict) -> None:
+    def __init__(self, q: Callable, expr: str, **kwargs) -> None:
         self.value = None
         self.expr = expr
-
         self.q = q
-        super().__init__(**kwargs)
+        super().__init__(q,**kwargs)
 
-    def get_BC(self, u: fcs.MeshFunction) -> object:
-        return self.q(u, self.p)
+
