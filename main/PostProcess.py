@@ -56,9 +56,6 @@ class ComputeSettings:
         self.dynamic: Dict = {}
         self.scan_index: int = 0
         self.time_index: float = 0
-        self.compute_gradient: bool = False
-        self.compute_concentration: bool = False
-        self.compute_surface_concentration: bool = False
 
     def set_mesh(self,mesh: fcs.Mesh):
         self._mesh = mesh
@@ -101,7 +98,12 @@ class PostProcessor:
         self.pDicts = []
         self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
+    def get_mesh_volume(self, mesh):
 
+        sum = 0
+        for cell in fcs.cells(mesh):
+            sum += cell.volume()
+        return sum
     # noinspection PyPep8Naming
     def compute(self, compute_settings: ComputeSettings) -> str:
 
@@ -124,32 +126,26 @@ class PostProcessor:
         mesh: fcs.Mesh = compute_settings.get_mesh()
         boundary_markers: fcs.MeshFunction = compute_settings.get_boundary_markers()
         u: fcs.Function = compute_settings.get_u()
+        mesh_volume = self.get_mesh_volume(mesh)
+        mesh_volume_element = et.SubElement(global_results,"mesh_volume")
+        mesh_volume_element.text = str(mesh_volume)
 
-        if compute_settings.compute_gradient:
-            V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
-            grad: fcs.Function  = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-            gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * 10 ** 8
-            gradient_result: et.Element = et.SubElement(global_results, "gradient")
-            gradient_result.text = str(gradient)
-        if compute_settings.compute_concentration:
-            concentration: float= fcs.assemble(u * fcs.dX) * 10 ** 9
-            concentration_result: et.Element = et.SubElement(global_results, "concentration")
-            concentration_result.text = str(concentration)
 
-        if compute_settings.compute_surface_concentration:
-            for i, cell in enumerate(compute_settings.cell_data):
-                cell_element: et.Element = et.SubElement(cell_results, "cell")
-                patch: et.Element = et.SubElement(cell_element, "patch")
-                center: et.Element = et.SubElement(cell_element, "center")
-                patch.text = str(cell["patch"])
-                center.text = json.dumps(list(cell["center"]))
+        V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
+        grad: fcs.Function  = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
+        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * 10 ** 8
+        gradient = gradient/mesh_volume
+        gradient_result: et.Element = et.SubElement(global_results, "gradient")
+        gradient_result.text = str(gradient)
 
-                ds: fcs.Measure = fcs.Measure("ds", domain=mesh,
-                                 subdomain_data=boundary_markers)
-                v: float = (fcs.assemble(u * ds(cell["patch"])) / (4 * np.pi * 0.05 ** 2) * 10 ** 9)
+        concentration: float= fcs.assemble(u * fcs.dX) * 10 ** 9
+        concentration = concentration/mesh_volume
+        concentration_result: et.Element = et.SubElement(global_results, "concentration")
+        concentration_result.text = str(concentration)
 
-                surface_concentration: et.Element = et.SubElement(cell_element, "surface_concentration")
-                surface_concentration.text = str(v)
+        sd: float = np.std(np.array(u.vector()))
+        sd_result: et.Element = et.SubElement(global_results,"sd")
+        sd_result.text = str(sd)
 
         return et.tostring(result)
 
@@ -196,8 +192,9 @@ class PostProcessor:
             output.put(result_list)
         except Exception as e:
             print(e)
+            output.put([])
 
-    def dump(self, path, threads,options_dict={},debug=False):
+    def dump(self, path, threads,debug=False):
         # initializes state manager from scan log
         self.stateManager = st.StateManager(path)
         self.stateManager.loadXML()
@@ -236,14 +233,6 @@ class PostProcessor:
                 compute_settings.dynamic = dynamic
                 compute_settings.scan_index = scan.get("i")
                 compute_settings.time_index = step.get("t")
-                if  options_dict == {}:
-                    compute_settings.compute_surface_concentration = False
-                    compute_settings.compute_concentration = True
-                    compute_settings.compute_gradient = True
-                else:
-                    compute_settings.compute_surface_concentration = options_dict["surface_concentration"]
-                    compute_settings.compute_concentration = options_dict["concentration"]
-                    compute_settings.compute_gradient = options_dict["gradient"]
 
                 scatter_list.append(compute_settings)
 
@@ -351,7 +340,7 @@ class PostProcessor:
                     "field_name": file.get("field")
                 }
                 for p in json.loads(file.get("dynamic")):
-                    d[p["name"]] = p["value"]
+                    d[p["name"]] = float(p["value"])
                 for v in g_values.getchildren():
                     d[v.tag] = float(v.text)
                 result.append(d)
