@@ -321,6 +321,10 @@ class DomainCube(DomainEntity):
 
     def getSubDomainGeometry(self):
         return SD.OuterCube(self.p1, self.p2)
+    def update_bcs(self) -> None:
+        for k,v in self.subdomainDict.items():
+            for i in v:
+                i.bc.p.update(self.p)
 
 
 class CompiledCube(Entity):
@@ -340,7 +344,6 @@ class CompiledCube(Entity):
             p1z=self.parent.p1[2],
             p0z=self.parent.p2[2],
         )
-        print("expr " + self.expr)
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):

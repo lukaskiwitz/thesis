@@ -160,6 +160,7 @@ class FieldProblem:
         self.solver.solver.parameters["krylov_solver"]["absolute_tolerance"] = 1e-35
         self.solver.solver.parameters["krylov_solver"]["relative_tolerance"] = 1e-5
 
+
     def get_boundary_concentrations(self) -> None:
 
         """

@@ -102,7 +102,8 @@ class PoissonSolver(MySolver):
                 print("patch"+str(patch))
                 self.dirichlet.append(bc.get_BC(self.V, self.boundary_markers, patch))
             if type(bc) == BC.Integral or type(bc) == BC.OuterIntegral:
-                self.integralBC.append(bc.get_BC(u) * v * ds(patch))
+                p_update = {"kd":self.p["kd"],"D":self.p["D"]}
+                self.integralBC.append(bc.get_BC(u,p_update) * v * ds(patch))
         
 
         F= -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx)  - u*kd*v*fcs.dx + f*v*fcs.dx + D*(sum(self.integralBC))

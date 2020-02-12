@@ -96,7 +96,7 @@ class SimContainer:
                 fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/domain_" + i.field_name + ".xdmf"))
             self.field_files.append("field_" + i.field_name)
 
-    def initialize(self, **kwargs: Dict) -> None:
+    def initialize(self, **kwargs) -> None:
 
         """
 
