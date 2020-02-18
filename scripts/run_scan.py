@@ -41,9 +41,9 @@ class RuleBasedSolver(InternalSolver):
             elif np.random.rand(1) > 0.5:  # chance for type change; uniform distribution
                 draw = np.random.normal(1,0.2)  # time to type change; normal distribution
 
-                if p["surf_c_il2"]*10e9 < 0.7 and p["surf_c_il6"]*10e9 > 0.35:  # il2neg and il6pos
+                if p["surf_c_il2"]*1e9 < 0.7 and p["surf_c_il6"]*1e9 > 0.35:  # il2neg and il6pos
                     self.transition = (True, draw, "Tfh")
-                elif p["surf_c_infg"]*10e9 > 0.15:  #infg pos
+                elif p["surf_c_infg"]*1e9 > 0.05:  #infg pos
                         self.transition = (True, draw, "Th1")
 
         return p

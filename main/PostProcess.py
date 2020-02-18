@@ -17,8 +17,11 @@ from copy import deepcopy, copy
 from math import ceil
 import pandas as pd
 from typing import List, Tuple, Dict
+from scipy.constants import N_A
+import KDEpy
 
 from myDictSorting import groupByKey
+
 
 class ComputeSettings:
     """
@@ -84,13 +87,8 @@ class ComputeSettings:
     def get_V(self) -> fcs.FunctionSpace:
         return self._V
 
-
     def get_boundary_markers(self) -> fcs.MeshFunction:
         return self._boundary_markers
-
-
-
-
 
 class PostProcessor:
 
@@ -98,6 +96,10 @@ class PostProcessor:
         self.pDicts = []
         self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
+        self.path = path
+        self.cell_dataframe: pd.DataFrame = pd.DataFrame()
+        self.global_dataframe: pd.DataFrame = pd.DataFrame()
+
     def get_mesh_volume(self, mesh):
 
         sum = 0
@@ -133,12 +135,12 @@ class PostProcessor:
 
         V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
         grad: fcs.Function  = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * 10 ** 8
+        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * 1e8
         gradient = gradient/mesh_volume
         gradient_result: et.Element = et.SubElement(global_results, "gradient")
         gradient_result.text = str(gradient)
 
-        concentration: float= fcs.assemble(u * fcs.dX) * 10 ** 9
+        concentration: float= fcs.assemble(u * fcs.dX) * 1e9
         concentration = concentration/mesh_volume
         concentration_result: et.Element = et.SubElement(global_results, "concentration")
         concentration_result.text = str(concentration)
@@ -188,15 +190,20 @@ class PostProcessor:
 
                 data_out: str = self.compute(compute_settings)
                 result_list.append(deepcopy(data_out))
-            print("thread no {index}".format(index=thread_index))
+            print("Thread {index} has finished computation".format(index=thread_index))
             output.put(result_list)
         except Exception as e:
             print(e)
             output.put([])
 
-    def dump(self, path, threads,debug=False):
+    def write_post_process_xml(self, threads,debug=False):
+        """
+        runs compute-function for all scans an writes result to xml file
+
+        """
+
         # initializes state manager from scan log
-        self.stateManager = st.StateManager(path)
+        self.stateManager = st.StateManager(self.path)
         self.stateManager.loadXML()
         self.ext_cache = self.stateManager.elementTree.find(
             "/cellDump/field/ext_cache").text
@@ -236,7 +243,7 @@ class PostProcessor:
 
                 scatter_list.append(compute_settings)
 
-        print("scatter")
+        print("distributing to {threads} threads".format(threads=threads))
         if debug:
             scatter_list = scatter_list[0:debug]
         size = ceil(len(scatter_list) / threads)
@@ -252,9 +259,9 @@ class PostProcessor:
                 j.join(600)
             except Exception:
                 print("Join Timeout")
-        print("joined jobs")
+        print("collecting distributed tasks")
         result_list: List[str] = [output.get(True, 60) for j in jobs]
-        print("collected output from threads")
+        print("successfully collected distributed task")
         flattend_list: List[str] = []
 
         for i in result_list:
@@ -283,47 +290,8 @@ class PostProcessor:
         print("writing post process output to {p}".format(p=self.out_tree_path))
         tree.write(self.out_tree_path, pretty_print=True)
 
-    def prep_data(self) -> pd.DataFrame:
-        in_tree = et.parse(self.out_tree_path)
-        frames = []
-        for scan in in_tree.findall("/scan"):
-            scan_index = float(scan.get("i"))
-            time_steps = np.unique([int(i.get("i"))
-                                   for i in scan.findall("./timeStep")])
-
-            for t in time_steps:
-                files = scan.findall("./timeStep[@i='{t}']/file".format(t=t))
-                # Todo get number of fields and cells dynamicly
-                offset = 3  # one file per field
-                cell_results = np.empty((1500, len(files) + offset))
-                # name_list = []
-                for cellIndex, cell in enumerate(
-                        files[0].findall("./cell_results/cell")
-                ):
-
-                    x = json.loads(cell.find("./center").text)[0]
-                    cell_results[cellIndex, 0] = x
-                    cell_results[cellIndex, 1] = t
-                    cell_results[cellIndex, 2] = scan_index
-                    name_list = []
-                    for o, file in enumerate(files):
-                        cell = file.findall("./cell_results/cell")[cellIndex]
-                        field_name = file.get("field")
-                        name_list.append(field_name)
-                        cell_results[cellIndex, o + offset] = float(
-                            cell.find("./surface_concentration").text
-                        )
-
-                cell_frame = pd.DataFrame(cell_results, columns=[
-                                                                  "x", "time", "scanIndex"] + name_list)
-                frames.append(cell_frame)
-        # join dataframes
-        result = frames[0]
-        for i in range(len(frames) - 1):
-            result = result.append(frames[i + 1])
-        return result
-
-    def prep_global_data(self) -> pd.DataFrame:
+    def get_global_dataframe(self) -> pd.DataFrame:
+        print("collecting global dataframe from post_process.xml")
         in_tree = et.parse(self.out_tree_path)
         for scan in in_tree.findall("/scan"):
             time_steps = np.unique([int(i.get("i"))
@@ -345,4 +313,69 @@ class PostProcessor:
                     d[v.tag] = float(v.text)
                 result.append(d)
         return pd.DataFrame(result)
+
+    def get_cell_dataframe(self, kde=False):
+
+        self.stateManager = st.StateManager(self.path)
+        self.stateManager.loadXML()
+
+        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame()
+
+        result["x"] = result["center"].apply(lambda x: x[0])
+        result["y"] = result["center"].apply(lambda x: x[1])
+        result["z"] = result["center"].apply(lambda x: x[2])
+        result = result.drop(columns=["center"])
+
+        result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
+
+        result["R_il2"] = result["R_il2"].div(N_A ** -1 * 1e9)  # to mol/cell
+        result["R_il6"] = result["R_il6"].div(N_A ** -1 * 1e9)  # to mol/cell
+        result["R_infg"] = result["R_infg"].div(N_A ** -1 * 1e9)  # to mol/cell
+
+        result["surf_c_il2"] = result["surf_c_il2"].mul(1e9)  # to nM
+        result["surf_c_il6"] = result["surf_c_il6"].mul(1e9)  # to nM
+        result["surf_c_infg"] = result["surf_c_infg"].mul(1e9)  # to nM
+
+        result["surf_g_il2"] = result["surf_g_il2"].mul(1e8)  # to nM
+        result["surf_g_il6"] = result["surf_g_il6"].mul(1e8)  # to nM
+        result["surf_g_infg"] = result["surf_g_infg"].mul(1e8)  # to nM
+        result["t"] = result["t"].apply(lambda x: float(x))
+
+        """---------------------------"""
+
+        if kde:
+            print("running kernel density estimation")
+            r_grouped = result.groupby(["scan_index"], as_index=False)
+            kde_result = pd.DataFrame()
+            for n, ts in r_grouped:
+                kernels = {}
+                print("computing kde for time series: {n}".format(n=n))
+                for type_name in result["type_name"].unique():
+                    inital_cells = ts.loc[(ts["t"] == 1) & (ts["type_name"] == type_name)]
+                    data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T
+                    kernel = KDEpy.TreeKDE("tri", bw=10e-2).fit(data)
+                    # kernel = KDEpy.TreeKDE(bw='ISJ').fit(data)
+
+                    # grid_points = 100
+                    # grid, points = kernel.evaluate(grid_points)
+                    # x, y, z = np.unique(grid[:, 0]), np.unique(grid[:, 1]), np.unique(grid[:, 2])
+                    # v = points.reshape(grid_points, grid_points, grid_points).T
+                    #
+                    # plt.title(type_name)
+                    # plt.contour(x,y,v[:,:,0])
+                    # sns.scatterplot(x="x",y="y",data=inital_cells)
+                    # plt.show()
+
+                    kernels[type_name] = kernel
+
+                for type_name, kernel in kernels.items():
+                    positions = np.array([ts["x"], ts["y"], ts["z"]]).T
+                    scores = kernel.evaluate(positions).T
+                    ts["{type_name}_score".format(type_name=type_name)] = pd.Series(scores)
+                kde_result = kde_result.append(ts)
+                result = kde_result
+        return result
+    def make_dataframes(self,kde=False):
+        self.cell_dataframe = self.get_cell_dataframe(kde=kde)
+        self.global_dataframe = self.get_global_dataframe()
 

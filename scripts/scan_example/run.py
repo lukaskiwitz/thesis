@@ -179,14 +179,14 @@ p_bc_defaults = {  # default values for boundary functions
 }
 
 p = {
-    "k_on": 10e9 * 111.6 / 60 ** 2,  # 111.6 per hour
+    "k_on": 1e9 * 111.6 / 60 ** 2,  # 111.6 per hour
     "rho": 0.05,  # mu
     "D": (10 ** 0.5 * 0.01) ** 2,  # mu² per s
-    "R_h": 400 * N_A ** -1 * 10e9,
-    "R_l": 10 * N_A ** -1 * 10e9,
+    "R_h": 400 * N_A ** -1 * 1e9,
+    "R_l": 10 * N_A ** -1 * 1e9,
     "kd": 0,#0.1/(60*2),
-    "q_h": 10 * N_A ** -1 * 10e9,
-    "q_l": 1 * N_A ** -1 * 10e9,
+    "q_h": 10 * N_A ** -1 * 1e9,
+    "q_l": 1 * N_A ** -1 * 1e9,
     "fraction": 0.1
 }
 
@@ -198,7 +198,7 @@ p_boundary = {  # outer boundary
 """cell types"""
 Tn = {
         "q_il2": p["q_l"],
-        "R_il2": p["R_h"],
+        "R_il2": p["R_l"],
         "type_int":1
 }
 
@@ -249,13 +249,13 @@ p = {**p,**p_bc_defaults,**p_boundary}
 T = range(1)
 dt = 1
 
-sc = setup(p, path, ext_cache)
-run(sc,p,T,dt,path,scan=scan)
-
-
-pp = PostProcessor(path)
-pp.dump(path, 8)
-pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
+# sc = setup(p, path, ext_cache)
+# run(sc,p,T,dt,path,scan=scan)
+# 
+#
+# pp = PostProcessor(path)
+# pp.dump(path, 8)
+# pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
 
 
 global_df = pd.read_hdf(path+"global_dataframe.h5", mode="r")

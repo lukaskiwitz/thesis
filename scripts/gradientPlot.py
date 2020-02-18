@@ -53,8 +53,8 @@ def gradientPlot(path,xKey,**kwargs):
     for scan in result:
         gradients = [i["gradient"] for i in scan]
         con = [i["con"] for i in scan]
-        x_s = round(scan[0][xKey]/(N_A**-1*10e9))
-        x_tot = round((scan[0]["R_il2_s"]+scan[0]["R_il2_f"])/(N_A**-1*10e9))
+        x_s = round(scan[0][xKey]/(N_A**-1*1e9))
+        x_tot = round((scan[0]["R_il2_s"]+scan[0]["R_il2_f"])/(N_A**-1*1e9))
         x = round(x_s/x_tot*100)
 #        df = pd.DataFrame(
 #                {"x":[x]*len(gradients),"v":gradients,"type":"gradient","Cytokine":field_scan[0]["field"]},
@@ -124,8 +124,8 @@ def gradientPlot(path,xKey,**kwargs):
         
     
 y = []
-path = "/extra/kiwitz/results_parameter_scan_xmlTest/"
-gradientPlot(path,"R_il2_s",plotPath="/home/kiwitz/parameter_scan_plots_xmlTest/")
+path = "/extra/kiwitz/parameter_scan_large/"
+gradientPlot(path,"R_il2_s",plotPath="/home/kiwitz/parameter_scan_large_images/")
 
 #path = "/home/lukas/"
 #gradientPlot(path,plotPath="/home/lukas/")
