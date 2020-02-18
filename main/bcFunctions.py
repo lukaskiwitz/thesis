@@ -49,9 +49,8 @@ def cellBC_infg(u, p):
     Defines the flux boundary conditions for the cell.
     Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
-    R = p["R_infg_b"]
-    q = p["q_infg_b"]
-    #    q = p["q"]
+    R = p["R_infg"]
+    q = p["q_infg"]
     k_on = p["k_on"]
     D = fcs.Constant(p["D"])
     R = fcs.Constant(R)
