@@ -13,6 +13,7 @@ import fenics as fcs
 import MeshGenerator as mshGen
 from Entity import Entity, DomainEntity
 from MySolver import MySolver
+import numpy as np
 
 
 class FieldProblem:
@@ -165,8 +166,8 @@ class FieldProblem:
 
         """
 
-        computes concentration over each entity and stores results in p["surf_c_{field}"]
-        (not averaged over surface area)
+        computes average concentration over each entity and stores results in p["surf_c_{field}"]
+
 
         """
 
@@ -176,14 +177,14 @@ class FieldProblem:
         for i in self.registered_entities:
             i["entity"].p["surf_c_{f}".format(f=self.field_name)] = fcs.assemble(
                 u * ds(i["patch"])
-            )  # /(4 * np.pi * i["entity"].p["rho"] ** 2)
+            )/(4 * np.pi * i["entity"].p["rho"] ** 2)
 
     def get_boundary_gradients(self) -> None:
 
         """
 
-        computes gradient over each entity and stores results in p["surf_g_{field}"]
-        (not averaged over surface area)
+        computes average gradient over each entity and stores results in p["surf_g_{field}"]
+
 
         """
 
@@ -193,7 +194,7 @@ class FieldProblem:
         for i in self.registered_entities:
             i["entity"].p["surf_g_{f}".format(f=self.field_name)] = fcs.assemble(
                 fcs.dot(fcs.grad(u), n) * ds(i["patch"])
-            )  # /(4 * np.pi * i["entity"].p["rho"] ** 2)
+            )/(4 * np.pi * i["entity"].p["rho"] ** 2)
 
     # noinspection PyPep8Naming
     def step(self, dT: float) -> None:
