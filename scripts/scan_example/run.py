@@ -9,6 +9,7 @@ Created on Mon Aug 12 14:58:01 2019
 import random
 import time
 from copy import deepcopy
+import getpass
 
 import fenics as fcs
 import matplotlib.pyplot as plt
@@ -235,22 +236,22 @@ scan_default= [
 scan = list(np.ravel(scan_default))
 
 
+user = getpass.getuser()
+path = "/extra/{u}/scan_example/".format(u=user)
+ext_cache="/extra/{u}/scan_example_ext_cache/".format(u=user)
 
-path = "/extra/kiwitz/scan_example/"
-ext_cache="/extra/kiwitz/scan_example_ext_cache"
-#
-#
-# p = {**p,**p_bc_defaults,**p_boundary}
-#
-# T = range(1)
-# dt = 1
-#
-# sc = setup(p, path, ext_cache)
-# run(sc,p,T,dt,path,scan=scan)
+
+p = {**p,**p_bc_defaults,**p_boundary}
+
+T = range(1)
+dt = 1
+
+sc = setup(p, path, ext_cache)
+run(sc,p,T,dt,path,scan=scan)
 
 
 pp = PostProcessor(path)
-# pp.write_post_process_xml(4)
+pp.write_post_process_xml(4)
 
 pp.make_dataframes(kde=False)
 pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
