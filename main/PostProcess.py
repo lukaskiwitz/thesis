@@ -99,6 +99,7 @@ class PostProcessor:
         self.path = path
         self.cell_dataframe: pd.DataFrame = pd.DataFrame()
         self.global_dataframe: pd.DataFrame = pd.DataFrame()
+        self.cell_stats: pd.DataFrame = pd.DataFrame()
 
     def get_mesh_volume(self, mesh):
 
@@ -298,20 +299,30 @@ class PostProcessor:
                                     for i in scan.findall("./timeStep")
                                     ])
         result = []
+        assert not self.cell_dataframe.empty
+
         for step in in_tree.findall("/scan"):
             files = step.findall("./timeStep/file")
             for file in files:
                 g_values = file.find("./global")
+                scan_index = int(file.get("scanIndex"))
+                timeIndex = int(file.get("timeIndex"))
+                field_name = file.get("field")
+                filter = lambda x: (x["t"] == timeIndex) & \
+                                   (x["scan_index"] == scan_index)
+
                 d = {
-                    "scanIndex": int(file.get("scanIndex")),
-                    "timeIndex": int(file.get("timeIndex")),
-                    "field_name": file.get("field")
+                    "scanIndex": scan_index,
+                    "timeIndex": timeIndex,
+                    "field_name": field_name,
+                    "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)]["surf_c_{field}".format(field=field_name)].mean()
                 }
                 for p in json.loads(file.get("dynamic")):
                     d[p["name"]] = float(p["value"])
                 for v in g_values.getchildren():
                     d[v.tag] = float(v.text)
                 result.append(d)
+
         return pd.DataFrame(result)
 
     def get_cell_dataframe(self, kde=False):
@@ -328,18 +339,14 @@ class PostProcessor:
 
         result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
 
-        result["R_il2"] = result["R_il2"].div(N_A ** -1 * 1e9)  # to mol/cell
-        result["R_il6"] = result["R_il6"].div(N_A ** -1 * 1e9)  # to mol/cell
-        result["R_infg"] = result["R_infg"].div(N_A ** -1 * 1e9)  # to mol/cell
+        for name in self.stateManager.get_field_names():
+            result["R_{f}".format(f=name)] = result["R_il2"].div(N_A ** -1 * 1e9)  # to mol/cell
+            result["surf_c_{f}".format(f=name)] = result["surf_c_{f}".format(f=name)].mul(1e9)  # to nM
+            result["surf_g_{f}".format(f=name)] = result["surf_g_{f}".format(f=name)].mul(1e8)  # to nM
 
-        result["surf_c_il2"] = result["surf_c_il2"].mul(1e9)  # to nM
-        result["surf_c_il6"] = result["surf_c_il6"].mul(1e9)  # to nM
-        result["surf_c_infg"] = result["surf_c_infg"].mul(1e9)  # to nM
 
-        result["surf_g_il2"] = result["surf_g_il2"].mul(1e8)  # to nM
-        result["surf_g_il6"] = result["surf_g_il6"].mul(1e8)  # to nM
-        result["surf_g_infg"] = result["surf_g_infg"].mul(1e8)  # to nM
         result["t"] = result["t"].apply(lambda x: float(x))
+        result["scan_index"] = result["scan_index"].apply(lambda x: float(x))
 
         """---------------------------"""
 
@@ -373,9 +380,48 @@ class PostProcessor:
                     scores = kernel.evaluate(positions).T
                     ts["{type_name}_score".format(type_name=type_name)] = pd.Series(scores)
                 kde_result = kde_result.append(ts)
-                result = kde_result
+                result = self._normalize_cell_score(kde_result)
+
         return result
+
+    def _normalize_cell_score(self, x):
+        ids = x.loc[
+            (x["type_name"] != "Tn") &
+            (x["t"] == 1)
+            ]["id"].unique()
+        x = x.groupby(["t", "scan_index"], as_index=False)
+
+        result = pd.DataFrame()
+        for group in x:
+            i = group[0]
+            group = group[1]
+
+            no_init = group.loc[~group["id"].isin(ids)]
+            # count = group.groupby(["type_name"],as_index=False).count()
+            # count = count.drop(count.columns.drop(["type_name","n"]),axis=1)
+
+            group["Tn_score_norm"] = group["Tn_score"] / float(no_init.mean()["Tn_score"])
+            group["Tfh_score_norm"] = group["Tfh_score"] / float(no_init.mean()["Tfh_score"])
+            group["Th1_score_norm"] = group["Th1_score"] / float(no_init.mean()["Th1_score"])
+            result = result.append(group)
+
+        return result
+
+    def get_stats(self):
+
+        temp_cell_df = self.cell_dataframe.drop(columns = ["x","y","z","id"])
+        grouped = temp_cell_df.groupby(["type_name", "t", "scan_index"], as_index=True)
+
+
+        des = grouped.describe(include = 'all')
+        # des = des.reset_index()
+
+        return des
+
     def make_dataframes(self,kde=False):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde)
         self.global_dataframe = self.get_global_dataframe()
+        self.cell_stats = self.get_stats()
+
+
 
