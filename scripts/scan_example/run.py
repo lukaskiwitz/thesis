@@ -67,10 +67,6 @@ def setup(p, path, ext_cache=""):
     print("setup")
 
     """Domain setup"""
-    # x = [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1]
-    # y = x
-    # z = [0]
-
     x = np.round(np.arange(-0.8,0.8,0.2),2)
     y = x
     z = [0]
@@ -242,23 +238,28 @@ scan = list(np.ravel(scan_default))
 
 path = "/extra/kiwitz/scan_example/"
 ext_cache="/extra/kiwitz/scan_example_ext_cache"
-
-
-p = {**p,**p_bc_defaults,**p_boundary}
-
-T = range(1)
-dt = 1
-
+#
+#
+# p = {**p,**p_bc_defaults,**p_boundary}
+#
+# T = range(1)
+# dt = 1
+#
 # sc = setup(p, path, ext_cache)
 # run(sc,p,T,dt,path,scan=scan)
-# 
-#
-# pp = PostProcessor(path)
-# pp.dump(path, 8)
-# pp.prep_global_data().to_hdf(path + 'global_dataframe.h5', key="data", mode="w")
 
 
-global_df = pd.read_hdf(path+"global_dataframe.h5", mode="r")
+pp = PostProcessor(path)
+# pp.write_post_process_xml(4)
+
+pp.make_dataframes(kde=False)
+pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
+pp.cell_dataframe.to_hdf(path+"cell_df.h5", key="df", mode="w")
+pp.cell_stats.to_hdf(path+"cell_stats_df.h5", key="df", mode="w")
+
+global_df = pd.read_hdf(path+"global_df.h5", mode="r")
+cell_df= pd.read_hdf(path+"cell_df.h5", mode="r")
+cell_stats = pd.read_hdf(path+"cell_stats_df.h5", mode="r")
 
 plt.figure()
 sns.lineplot(x="fraction", y="concentration", data=global_df,hue="D")
