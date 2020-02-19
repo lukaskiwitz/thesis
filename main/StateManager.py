@@ -159,6 +159,12 @@ class StateManager:
             else:
                 p[i.get("name")] = json.loads(i.text)
         return p
+    def get_field_names(self):
+        scans = self.elementTree.getroot().find("scans")
+        fields = scans.findall("./scan/timeSeries/field")
+        names = np.unique(np.array([i.get("name") for i in scans.findall("./scan/timeSeries/field")]))
+        return names
+
     def get_cell_ts_data_frame(self, **kwargs):
 
         root = self.elementTree.getroot()
@@ -169,18 +175,18 @@ class StateManager:
         else:
             scans = root.findall("scans/scan")
 
-        for scan in scans:
+        for n_scans, scan in enumerate(scans):
+            print("collecting cell dataframe for {n} of {total} scans".format(n=n_scans,total=len(scans)))
             for field in scan.findall("timeSeries/field"):
                 for step in field.findall("step"):
                     t = step.get("t")
                     n = step.get("n")
-                    print(t)
+                    print("State Manager: computing timestep {n} for scan {scan_n}".format(n=n,scan_n=n_scans))
                     for cell in step.findall("cells/cell"):
                         p = self.getParametersFromElement(cell.find("properties"))
                         p["t"] = t
                         p["n"] = n
-
-
+                        p["scan_index"] = scan.get("i")
                         result.append(p)
         return pd.DataFrame(result)
 
