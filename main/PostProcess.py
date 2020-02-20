@@ -307,7 +307,7 @@ class PostProcessor:
             for file in files:
                 g_values = file.find("./global")
                 scan_index = int(file.get("scanIndex"))
-                timeIndex = int(file.get("timeIndex"))
+                timeIndex = float(file.get("timeIndex"))
                 field_name = file.get("field")
                 filter = lambda x: (x["t"] == timeIndex) & \
                                    (x["scan_index"] == scan_index)
