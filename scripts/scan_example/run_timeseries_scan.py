@@ -10,25 +10,24 @@ import random
 import time
 from copy import deepcopy
 
-import fenics as fcs
-import mpi4py.MPI as MPI
-import numpy as np
-from scipy.constants import N_A
-
 import BC as bc
 import Entity
 import FieldProblem as fp
 import MySolver
 import SimContainer as SC
 import StateManager
+import fenics as fcs
+import mpi4py.MPI as MPI
+import numpy as np
 from InternalSolver import InternalSolver
 from bcFunctions import cellBC_il2, cellBC_il6, cellBC_infg
 from my_debug import message, total_time
-
+from scipy.constants import N_A
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
+
 
 class RuleBasedSolver(InternalSolver):
 
@@ -353,7 +352,7 @@ ext_cache="/extra/kiwitz/scan_example_small_ext_cache/"
 
 p = {**p,**p_bc_defaults,**p_boundary}
 
-T = range(50)
+T = range(100)
 dt = 1
 
 sc = setup(p, path, ext_cache)
