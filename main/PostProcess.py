@@ -5,22 +5,23 @@ Created on Wed Oct 16 12:56:59 2019
 
 @author: Lukas Kiwitz
 """
-import StateManager as st
-
-import fenics as fcs
-import numpy as np
 import json
+import multiprocessing as mp
+from copy import deepcopy
+from math import ceil
+from typing import List, Dict
+
+import KDEpy
+import fenics as fcs
 import lxml.etree as et
 import mpi4py.MPI as MPI
-import multiprocessing as mp
-from copy import deepcopy, copy
-from math import ceil
+import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict
 from scipy.constants import N_A
-import KDEpy
 
+import StateManager as st
 from myDictSorting import groupByKey
+from my_debug import message
 
 
 class ComputeSettings:
@@ -185,16 +186,16 @@ class PostProcessor:
                 compute_settings.set_boundary_markers(boundary_markers)
                 compute_settings.set_u(u)
 
-                print(
+                message(
                     "reading file {file} ({n}/{tot})".format(file=compute_settings.file_path, n=n, tot=len(compute_settings_list))
                 )
 
                 data_out: str = self.compute(compute_settings)
                 result_list.append(deepcopy(data_out))
-            print("Thread {index} has finished computation".format(index=thread_index))
+            message("Thread {index} has finished computation".format(index=thread_index))
             output.put(result_list)
         except Exception as e:
-            print(e)
+            message(e)
             output.put([])
 
     def write_post_process_xml(self, threads,debug=False):
@@ -244,7 +245,7 @@ class PostProcessor:
 
                 scatter_list.append(compute_settings)
 
-        print("distributing to {threads} threads".format(threads=threads))
+        message("distributing to {threads} threads".format(threads=threads))
         if debug:
             scatter_list = scatter_list[0:debug]
         size = ceil(len(scatter_list) / threads)
@@ -259,10 +260,10 @@ class PostProcessor:
             try:
                 j.join(600)
             except Exception:
-                print("Join Timeout")
-        print("collecting distributed tasks")
+                message("Join Timeout")
+        message("collecting distributed tasks")
         result_list: List[str] = [output.get(True, 60) for j in jobs]
-        print("successfully collected distributed task")
+        message("successfully collected distributed task")
         flattend_list: List[str] = []
 
         for i in result_list:
@@ -281,18 +282,18 @@ class PostProcessor:
         tree = et.ElementTree(element=post_process_result)
         for s in indexed_list:
             scan = et.SubElement(post_process_result, "scan")
-            #            print(s[0])
+            #            message(s[0])
             scan.set("i", str(s[0][0]["scanIndex"]))
             for t in s:
                 for i in t:
                     time = et.SubElement(scan, "timeStep")
                     time.set("i", i["timeIndex"])
                     time.append(i["entry"])
-        print("writing post process output to {p}".format(p=self.out_tree_path))
+        message("writing post process output to {p}".format(p=self.out_tree_path))
         tree.write(self.out_tree_path, pretty_print=True)
 
     def get_global_dataframe(self) -> pd.DataFrame:
-        print("collecting global dataframe from post_process.xml")
+        message("collecting global dataframe from post_process.xml")
         in_tree = et.parse(self.out_tree_path)
         for scan in in_tree.findall("/scan"):
             time_steps = np.unique([int(i.get("i"))
@@ -351,12 +352,12 @@ class PostProcessor:
         """---------------------------"""
 
         if kde:
-            print("running kernel density estimation")
+            message("running kernel density estimation")
             r_grouped = result.groupby(["scan_index"], as_index=False)
             kde_result = pd.DataFrame()
             for n, ts in r_grouped:
                 kernels = {}
-                print("computing kde for time series: {n}".format(n=n))
+                message("computing kde for time series: {n}".format(n=n))
                 for type_name in result["type_name"].unique():
                     inital_cells = ts.loc[(ts["t"] == 1) & (ts["type_name"] == type_name)]
                     data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T

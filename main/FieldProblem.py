@@ -9,11 +9,11 @@ Created on Fri Jun  7 12:48:49 2019
 import os
 
 import fenics as fcs
+import numpy as np
 
 import MeshGenerator as mshGen
 from Entity import Entity, DomainEntity
 from MySolver import MySolver
-import numpy as np
 
 
 class FieldProblem:

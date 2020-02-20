@@ -7,10 +7,14 @@ Created on Tue May 21 13:56:50 2019
 """
 from __future__ import print_function
 
-import fenics as fcs
-import BC
 from typing import List, Dict
+
+import fenics as fcs
+
+import BC
 from MySubDomain import MySubDomain
+from my_debug import message
+
 
 class MySolver:
     pass
@@ -99,7 +103,7 @@ class PoissonSolver(MySolver):
                 pass
             if type(bc) == BC.DirichletBC or type(bc) == BC.OuterDirichletBC:
                 #Dirichlet BC
-                print("patch"+str(patch))
+                message("patch"+str(patch))
                 self.dirichlet.append(bc.get_BC(self.V, self.boundary_markers, patch))
             if type(bc) == BC.Integral or type(bc) == BC.OuterIntegral:
                 p_update = {"kd":self.p["kd"],"D":self.p["D"]}

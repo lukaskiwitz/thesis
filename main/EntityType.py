@@ -1,9 +1,13 @@
-from typing import Dict
 from copy import deepcopy
-import lxml.etree as ET
+from typing import Dict
+
 
 class EntityType():
-    pass
+
+    def __init__(self, p: Dict, name: str):
+
+        self.p = deepcopy(p)
+        self.name = name
 
 
 class CellType(EntityType):

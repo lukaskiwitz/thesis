@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
-import sys
 
 project = 'thesisProject'
 copyright = '2019, Lukas Kiwitz'

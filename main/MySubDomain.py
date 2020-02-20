@@ -5,13 +5,14 @@ Created on Thu May 23 12:06:52 2019
 
 @author: Lukas Kiwitz
 """
-import fenics as fcs
-
-from dolfin import near,Point
-from mshr import Circle,Sphere,Rectangle,Box
-import numpy as np
 from copy import deepcopy
-import pygmsh 
+
+import fenics as fcs
+import numpy as np
+from dolfin import near, Point
+from mshr import Circle, Sphere, Rectangle, Box
+
+
 def insideRectangle(p1,p2,x):
     x1 = p1[0]
     x2 = p2[0]
@@ -80,5 +81,5 @@ class CellSubDomain(MySubDomain):
             return Sphere(Point(self.center[0],self.center[1],self.center[2]),self.radius)
     def inside(self,x,on_boundary):
         tol = 10e-2
-#        print(str(x))
+#        message(str(x))
         return on_boundary and near(np.linalg.norm(x-self.center),self.radius,tol)

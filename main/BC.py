@@ -5,8 +5,9 @@ Created on Sat Jun  8 14:17:07 2019
 
 @author: Lukas Kiwitz
 """
-import fenics as fcs
 from typing import Dict, Callable
+
+import fenics as fcs
 
 
 class BC:
@@ -25,7 +26,7 @@ class Integral(BC):
         self.q = q
         super().__init__(**kwargs)
 
-    def get_BC(self, u: fcs.MeshFunction, p_update: Dict) -> object:
+    def get_BC(self, u: fcs.Function, p_update: Dict) -> object:
         p_temp = self.p
         p_temp.update(p_update)
         return self.q(u, p_temp)

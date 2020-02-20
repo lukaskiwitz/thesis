@@ -8,14 +8,16 @@ Created on Fri Jun  7 12:21:51 2019
 
 import os
 from copy import deepcopy
+from typing import Dict
+
 #
 import fenics as fcs
-from Entity import Entity
-from FieldProblem import FieldProblem
-from typing import Dict
-from EntityType import CellType,EntityType
-from InternalSolver import InternalSolver
 
+from Entity import Entity
+from EntityType import CellType, EntityType
+from FieldProblem import FieldProblem
+from InternalSolver import InternalSolver
+from my_debug import message
 
 
 class SimContainer:
@@ -78,7 +80,7 @@ class SimContainer:
         if os.path.exists(self.path):
             for i in os.listdir(self.path):
                 if i.endswith(".log"):
-                    print("removing old logs {log}".format(log=i))
+                    message("removing old logs {log}".format(log=i))
                     os.remove(self.path + i)
 
     def init_xdmf_files(self) -> None:
@@ -157,7 +159,7 @@ class SimContainer:
         for i, entity in enumerate(self.entity_list):
             entity.step(self.T, dt)
             if not entity.change_type == "":
-                print("changing type for entity {id}".format(id=entity.id))
+                message("changing type for entity {id}".format(id=entity.id))
                 entity.set_cell_type(self.get_entity_type_by_name(entity.change_type))
                 entity.change_type = ""
 
@@ -237,7 +239,7 @@ class SimContainer:
         """
 
         for o, i in enumerate(self.fields):
-            print("writing to {f}".format(f="{path}cache".format(path=self.path)))
+            message("writing to {f}".format(f="{path}cache".format(path=self.path)))
             self.subdomain_files[o].write(i.get_sub_domains_vis(key="type_int"))
 
     def save_domain(self) -> None:

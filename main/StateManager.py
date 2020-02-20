@@ -5,15 +5,18 @@ Created on Mon Oct 14 14:34:19 2019
 
 @author: Lukas Kiwitz
 """
-import lxml.etree as ET
-import numpy as np
-import json
 import itertools
+import json
 from copy import deepcopy
-import pandas as pd
-from EntityType import CellType
+from typing import Dict
 
+import lxml.etree as ET
 import mpi4py.MPI as MPI
+import numpy as np
+import pandas as pd
+
+from EntityType import CellType
+from my_debug import message
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -51,10 +54,10 @@ class StateManager:
 
     def writeElementTree(self):
         if not rank == 0:
-            # print("not rank 0")
+            # message("not rank 0")
             return None
         f = self.path+"log.scan"
-        print("writing element tree to {file}".format(file=f))
+        message("writing element tree to {file}".format(file=f))
         self.elementTree.write(f, pretty_print=True)
 
     def output_parameter_dict(self,p,root_name):
@@ -176,12 +179,12 @@ class StateManager:
             scans = root.findall("scans/scan")
 
         for n_scans, scan in enumerate(scans):
-            print("collecting cell dataframe for {n} of {total} scans".format(n=n_scans,total=len(scans)))
+            message("collecting cell dataframe for {n} of {total} scans".format(n=n_scans,total=len(scans)))
             for field in scan.findall("timeSeries/field"):
                 for step in field.findall("step"):
                     t = step.get("t")
                     n = step.get("n")
-                    print("State Manager: computing timestep {n} for scan {scan_n}".format(n=n,scan_n=n_scans))
+                    message("State Manager: computing timestep {n} for scan {scan_n}".format(n=n,scan_n=n_scans))
                     for cell in step.findall("cells/cell"):
                         p = self.getParametersFromElement(cell.find("properties"))
                         p["t"] = t
@@ -190,7 +193,7 @@ class StateManager:
                         result.append(p)
         return pd.DataFrame(result)
 
-    def updateSimContainer(self, sc, i):
+    def updateSimContainer(self, sc, i) -> Dict:
         scans = self.elementTree.getroot().find("scans")
         scan = next(itertools.islice(scans.iter(tag="scan"), i, i+1, 1))
 
