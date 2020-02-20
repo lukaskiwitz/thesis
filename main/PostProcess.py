@@ -295,10 +295,10 @@ class PostProcessor:
     def get_global_dataframe(self) -> pd.DataFrame:
         message("collecting global dataframe from post_process.xml")
         in_tree = et.parse(self.out_tree_path)
-        for scan in in_tree.findall("/scan"):
-            time_steps = np.unique([int(i.get("i"))
-                                    for i in scan.findall("./timeStep")
-                                    ])
+        # for scan in in_tree.findall("/scan"):
+            # time_steps = np.unique([int(i.get("i"))
+            #                         for i in scan.findall("./timeStep")
+            #                         ])
         result = []
         assert not self.cell_dataframe.empty
 
