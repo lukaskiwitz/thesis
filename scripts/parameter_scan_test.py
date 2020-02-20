@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from scipy.constants import N_A
 import numpy as np
-import matplotlib as mpl
-from parameter_scan_setup import execute_scan
+from scipy.constants import N_A
+
+
 # mpl.use('Agg')
 
 

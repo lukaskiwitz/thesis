@@ -5,19 +5,23 @@ Created on Mon Aug 12 09:29:30 2019
 
 @author: kiwitz
 """
-import FieldProblem as fp
-import Entity
-import MySolver
-import numpy as np
-import matplotlib.pyplot as plt
-import BC as bc
-import SimContainer as SC
-from bcFunctions import cellBC_il2,outerBC_il2, outerBC_il2_unitTest
-from copy import deepcopy
+import math
 import os
 import time
-import math
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.constants import N_A
+
+import BC as bc
+import Entity
+import FieldProblem as fp
+import MySolver
+import SimContainer as SC
+from bcFunctions import cellBC_il2, outerBC_il2_unitTest
+from my_debug import message
+
 def u_exact_1(x,p):
     R = p["R_il2"]
     q = p["q_il2"]
@@ -111,7 +115,7 @@ def test1(p_global):
 #        start = time.process_time()
 #        sc.step(1)
 #        end = time.process_time()
-#        print("time: "+str(end-start)+"s for step number "+str(n))
+#        message("time: "+str(end-start)+"s for step number "+str(n))
 #        sc.saveFields(n)
 #    
 #    u_1 = sc.fields[0].getField()
@@ -190,7 +194,7 @@ def test3(p_global):
         start = time.process_time()
         sc.step(1)
         end = time.process_time()
-        print("time: "+str(end-start)+"s for step number "+str(n))
+        message("time: "+str(end-start)+"s for step number "+str(n))
         sc.saveFields(n)
     
     u_1 = sc.fields[0].getField()
@@ -271,7 +275,7 @@ def test2(p_global):
 #        start = time.process_time()
 #        sc.step(1)
 #        end = time.process_time()
-#        print("time: "+str(end-start)+"s for step number "+str(n))
+#        message("time: "+str(end-start)+"s for step number "+str(n))
 #        sc.saveFields(n)
 #    u_2 = sc.fields[0].getField()
     x_2 = np.linspace(p_global["rho"],p_global["radius"],100)
@@ -298,13 +302,13 @@ def test2(p_global):
 p_global = {
              "R_il2":0,
              "q_il2":0,
-             "k_on": 10e9*111.6/60**2,#111.6 per hour
+             "k_on": 1e9*111.6/60**2,#111.6 per hour
              "rho": 0.05,#mu
              "D":(10**0.5*0.01)**2,#mu² per s
-             "high":100*N_A**-1*10e9,
-             "low":1*N_A**-1*10e9,
+             "high":100*N_A**-1*1e9,
+             "low":1*N_A**-1*1e9,
              "kd":0,#0.1/(60*2),
-             "q_high":10*N_A**-1*10e9,
+             "q_high":10*N_A**-1*1e9,
              "radius":1,
              "N":8,
 #             "x":x,

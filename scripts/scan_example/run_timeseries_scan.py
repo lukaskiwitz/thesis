@@ -21,9 +21,9 @@ import FieldProblem as fp
 import MySolver
 import SimContainer as SC
 import StateManager
-from bcFunctions import cellBC_il2, cellBC_il6, cellBC_infg, outerBC_il2, outerBC_il6
-from sim_parameters import Tn,Th1,Tfh
 from InternalSolver import InternalSolver
+from bcFunctions import cellBC_il2, cellBC_il6, cellBC_infg
+from my_debug import message, total_time
 
 
 comm = MPI.COMM_WORLD
@@ -33,11 +33,12 @@ size = comm.Get_size()
 class RuleBasedSolver(InternalSolver):
 
     name = "RuleBasedSolver"
-    il2_threshold = 0.7
-    il6_threshold = 0.05
-    infg_threshold = 0.05
+
     def __init__(self):
         self.transition = (False, 0, "Tn")
+        self.il2_threshold = 0.71
+        self.il6_threshold = 0.059
+        self.infg_threshold = 0.06
 
     def step(self,t,dt,p,entity=None):
 
@@ -50,9 +51,9 @@ class RuleBasedSolver(InternalSolver):
             elif np.random.rand(1) > 0.5:  # chance for type change; uniform distribution
                 draw = np.random.normal(1,0.2)  # time to type change; normal distribution
 
-                if p["surf_c_il2"]*1e9 < 0.7 and p["surf_c_il6"]*1e9 > 0.06:  # il2neg and il6pos
+                if p["surf_c_il2"]*1e9 < self.il2_threshold and p["surf_c_il6"]*1e9 > self.il6_threshold:  # il2neg and il6pos
                     self.transition = (True, draw, "Tfh")
-                elif p["surf_c_infg"]*1e9 > 0.6:  #infg pos
+                elif p["surf_c_infg"]*1e9 > self.infg_threshold:  #infg pos
                         self.transition = (True, draw, "Th1")
 
         return p
@@ -91,7 +92,7 @@ def makeCellListGrid(p, xLine, yLine, zLine):
 
 def setup(p, path, ext_cache=""):
 
-    print("setup")
+    message("setup")
 
     """Domain setup"""
 
@@ -99,7 +100,7 @@ def setup(p, path, ext_cache=""):
     # y = [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
     # z = [0]
 
-    x = np.arange(-3,3,0.2)
+    x = np.arange(-1,1,0.2)
     y = x
     z = [0]
 
@@ -207,12 +208,12 @@ def setup(p, path, ext_cache=""):
     else:
         sc.initialize()
 
-    print("initialization complete")
+    message("initialization complete")
     return sc
 
 def run(sc, p, T, dt, path, **kwargs):
 
-    start = time.time()
+    start_run = time.time()
 
     if "scan" in kwargs:
         scan = kwargs["scan"]
@@ -220,8 +221,6 @@ def run(sc, p, T, dt, path, **kwargs):
         stMan.scan_log(scan, p)
 
         for number, s in enumerate(scan):
-
-
             stMan.addCellDump(sc, 0)
             stMan.writeElementTree()
 
@@ -237,20 +236,33 @@ def run(sc, p, T, dt, path, **kwargs):
 
                 sc.step(dt)
                 end = time.process_time()
-                print("time: " + str(end - start) + "s for step number " + str(n))
+                total_time(end - start, pre = "total time ", post=" for step number ")
                 resultPaths = sc.save_fields(n)
                 for k, v in resultPaths.items():
                     (distplot, sol, cells) = v
                     stMan.addTimeStep(number, n, sc.T, displot=distplot, sol=sol, field_name=k, cell_list=cells)
                     stMan.writeElementTree()
 
-    end = time.time()
-    print("--------------------- total Time: {t} m ---------------------".format(t=(end - start) / 60))
+
+
+    total_time(time.time() - start_run, pre = "total time ")
 
 def get_update_dict(dict, update):
     dict_copy = deepcopy(dict)
     dict_copy.update(update)
     return dict_copy
+
+p = {
+    "k_on": 1e9 * 111.6 / 60 ** 2,  # 111.6 per hour
+    "rho": 0.05,  # mu
+    "D": (10 ** 0.5 * 0.01) ** 2,  # mu² per s
+    "R_h": 4000 * N_A ** -1 * 1e9,
+    "R_l": 100 * N_A ** -1 * 1e9,
+    "kd": 0,#0.1/(60*2),
+    "q_h": 10 * N_A ** -1 * 1e9,
+    "q_l": 1 * N_A ** -1 * 1e9,
+    "fraction": 0.05
+}
 
 p_bc_defaults = {  # default values for boundary functions
     "R_il2": 0,
@@ -259,18 +271,6 @@ p_bc_defaults = {  # default values for boundary functions
     "q_il6":0,
     "R_infg":0,
     "q_infg":0
-}
-
-p = {
-    "k_on": 1e9 * 111.6 / 60 ** 2,  # 111.6 per hour
-    "rho": 0.05,  # mu
-    "D": (10 ** 0.5 * 0.01) ** 2,  # mu² per s
-    "R_h": 400 * N_A ** -1 * 1e9,
-    "R_l": 10 * N_A ** -1 * 1e9,
-    "kd": 0,#0.1/(60*2),
-    "q_h": 10 * N_A ** -1 * 1e9,
-    "q_l": 1 * N_A ** -1 * 1e9,
-    "fraction": 0.1
 }
 
 p_boundary = {# outer boundary
@@ -282,6 +282,36 @@ p_boundary = {# outer boundary
         "q_infg_b":0,
     }
 
+""" cell types"""
+Tn = {
+        "q_il2": p["q_h"],
+        "R_il2": p["R_h"],
+        "q_il6": 0,#p["q_l"],
+        "R_il6": p["R_l"],
+        "R_infg":p["R_l"],
+        "q_infg":0,
+        "type_int":1
+}
+
+Tfh = {
+        "q_il2": p["q_l"],
+        "R_il2": p["R_h"],
+        "q_il6": p["q_h"],
+        "R_il6": p["R_h"],
+        "R_infg":0,
+        "q_infg":0,
+        "type_int":2
+}
+
+Th1 = {
+        "q_il2": 0,#p["q_h"],
+        "R_il2": 0,#p["R_l"],
+        "q_il6": 0,#p["q_l"],
+        "R_il6": 0,#p["R_l"],
+        "q_infg": p["q_h"],
+        "R_infg": p["R_h"],
+        "type_int":3
+}
 
 """scan list"""
 scan_default= [
@@ -317,8 +347,8 @@ scan = list(np.ravel(scan_default))
 
 
 
-path = "/extra/kiwitz/scan_example_large/"
-ext_cache="/extra/kiwitz/scan_example_large_ext_cache/"
+path = "/extra/kiwitz/scan_example_small/"
+ext_cache="/extra/kiwitz/scan_example_small_ext_cache/"
 
 
 p = {**p,**p_bc_defaults,**p_boundary}

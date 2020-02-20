@@ -7,12 +7,14 @@ Created on Thu Oct 24 11:19:45 2019
 
 """
 import os
-import seaborn as sns
-import pandas as pd
+from typing import cast, List, Tuple
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-from typing import cast, List, Tuple
+import pandas as pd
+import seaborn as sns
+
 
 # import matplotlib as mpl
 # mpl.use('Agg')

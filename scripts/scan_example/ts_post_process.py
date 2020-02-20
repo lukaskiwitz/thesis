@@ -2,8 +2,9 @@ import getpass
 
 from PostProcess import PostProcessor
 
+
 user = getpass.getuser()
-path = "/extra/{u}/scan_example_large/".format(u=user)
+path = "/extra/{u}/scan_example_small/".format(u=user)
 
 pp = PostProcessor(path)
 pp.write_post_process_xml(8)

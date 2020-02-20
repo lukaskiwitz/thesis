@@ -6,10 +6,10 @@ Created on Mon Aug 12 14:58:01 2019
 @author: kiwitz
 """
 
+import getpass
 import random
 import time
 from copy import deepcopy
-import getpass
 
 import fenics as fcs
 import matplotlib.pyplot as plt
@@ -26,7 +26,8 @@ import MySolver
 import SimContainer as SC
 import StateManager
 from PostProcess import PostProcessor
-from bcFunctions import cellBC_il2, cellBC_il6, cellBC_infg, outerBC_il2
+from bcFunctions import cellBC_il2
+from my_debug import message
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -65,7 +66,7 @@ def makeCellListGrid(p, xLine, yLine, zLine):
 
 def setup(p, path, ext_cache=""):
 
-    print("setup")
+    message("setup")
 
     """Domain setup"""
     x = np.round(np.arange(-0.8,0.8,0.2),2)
@@ -125,7 +126,7 @@ def setup(p, path, ext_cache=""):
     else:
         sc.initialize()
 
-    print("initialization complete")
+    message("initialization complete")
     return sc
 
 def run(sc, p, T, dt, path, **kwargs):
@@ -155,7 +156,7 @@ def run(sc, p, T, dt, path, **kwargs):
 
                 sc.step(dt)
                 end = time.process_time()
-                print("time: " + str(end - start) + "s for step number " + str(n))
+                message("time: " + str(end - start) + "s for step number " + str(n))
                 resultPaths = sc.save_fields(n)
                 for k, v in resultPaths.items():
                     (distplot, sol, cells) = v
@@ -163,7 +164,7 @@ def run(sc, p, T, dt, path, **kwargs):
                     stMan.writeElementTree()
 
     end = time.process_time()
-    print("--------------------- total Time: {t} m ---------------------".format(t=(end - start) / 60))
+    message("--------------------- total Time: {t} m ---------------------".format(t=(end - start) / 60))
 
 def get_update_dict(dict, update):
     dict_copy = deepcopy(dict)
@@ -241,14 +242,14 @@ path = "/extra/{u}/scan_example/".format(u=user)
 ext_cache="/extra/{u}/scan_example_ext_cache/".format(u=user)
 
 
-p = {**p,**p_bc_defaults,**p_boundary}
-
-T = range(1)
-dt = 1
-
-sc = setup(p, path, ext_cache)
-run(sc,p,T,dt,path,scan=scan)
-
+# p = {**p,**p_bc_defaults,**p_boundary}
+#
+# T = range(1)
+# dt = 1
+#
+# sc = setup(p, path, ext_cache)
+# run(sc,p,T,dt,path,scan=scan)
+#
 
 pp = PostProcessor(path)
 pp.write_post_process_xml(4)

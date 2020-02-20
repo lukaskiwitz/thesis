@@ -1,13 +1,14 @@
 #from bcFunctions import  outerBC_il2, outerBC_il6
-import mpi4py.MPI as MPI
-from run_scan import run
-import BC as bc
-import numpy as np
-import fenics as fcs
-import matplotlib as mpl
-from typing import List, Dict
 import sys
-from PostProcess import  PostProcessor
+from typing import List, Dict
+
+import fenics as fcs
+import mpi4py.MPI as MPI
+import numpy as np
+
+import BC as bc
+from run_scan import run
+from my_debug import message
 # mpl.use('Agg')
 
 comm = MPI.COMM_WORLD
@@ -17,7 +18,7 @@ size = comm.Get_size()
 
 def execute_scan(scan: List[Dict],p_c: Dict, T:List[float], path:str, ext_cache: str) -> None:
     if len(sys.argv) == 1:
-        print("started with no parameters")
+        message("started with no parameters")
         return
     def bD(n):
         return n/10

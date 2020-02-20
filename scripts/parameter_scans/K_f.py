@@ -1,10 +1,9 @@
 #!/home/kiwitz/anaconda3/envs/fenicsproject/bin/python
 
-from parameter_scan_setup import execute_scan
-from parameter_scan_test import get_parameter_space,T,n, ext_cache,path_prefix,p_c
-
 import numpy as np
-import matplotlib.pyplot as plt
+
+from parameter_scan_test import get_parameter_space, path_prefix
+
 name = "K_f"
 # fraction of receptors on secreting cells
 pList = get_parameter_space("fraction", 1)

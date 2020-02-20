@@ -6,22 +6,17 @@ Created on Mon Aug 12 14:58:01 2019
 @author: kiwitz
 """
 
-import FieldProblem as fp
-import Entity
-import MySolver
-import fenics as fcs
-import numpy as np
-import matplotlib.pyplot as plt
-import BC as bc
-import SimContainer as SC
-from bcFunctions import cellBC_il2,cellBC_il6,outerBC_il2,outerBC_il6,absorbing_il2
-from copy import copy,deepcopy
-import BooleanInternalSolver as intSolver
-import json
-import os
-import time
 import random
-from scipy.constants import N_A
+from copy import deepcopy
+
+import BC as bc
+import Entity
+import FieldProblem as fp
+import MySolver
+import SimContainer as SC
+from bcFunctions import cellBC_il2, cellBC_il6
+from my_debug import message
+
 
 def updateState(p,sc,t):
     ran = random.Random()
@@ -103,11 +98,11 @@ def run(p,T,domainBC,path,**kwargs):
     sc.addField(fieldProblem_il2)
     
     sc.initialize(load_subdomain=kwargs["extCache"]+"cache/boundary_markers_il2.h5")
-    print("init complete")
+    message("init complete")
     
     for t in T:
         updateState(p,sc,t)
         sc.saveSubdomains()
-        print("subdomains saved for timestep {t}".format(t=t))
+        message("subdomains saved for timestep {t}".format(t=t))
 #        sc.saveDomain()
-#        print("domain saved for timestep {t}".format(t=t))
+#        message("domain saved for timestep {t}".format(t=t))

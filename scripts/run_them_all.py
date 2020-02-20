@@ -3,20 +3,22 @@
 @author: kiwitz
 """
 
-import subprocess as sp
-import os
-from glob import glob
-from parameter_scan_test import path_prefix
 import importlib.util
+import os
+import subprocess as sp
+from glob import glob
 
+from parameter_scan_test import path_prefix
+
+from my_debug import message
 def f(script: str) -> None:
-    # print("mpirun -n 4 {c}/{s} run".format(s=script, c=os.getcwd()))
+    # message("mpirun -n 4 {c}/{s} run".format(s=script, c=os.getcwd()))
     # sp.run("mpirun -n 4 {c}/{s} run".format(s=script,c=os.getcwd()),shell=True)
     spec = importlib.util.spec_from_file_location(script,"{c}/{s}".format(s=script,c=os.getcwd()))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.name
-    print("{c}/post_process.py {p}{s}/".format(s=module.name, p=path_prefix, c=os.getcwd()))
+    message("{c}/post_process.py {p}{s}/".format(s=module.name, p=path_prefix, c=os.getcwd()))
     sp.run("{c}/post_process.py {p}{s}/".format(s=module.name,p=path_prefix,c=os.getcwd()),shell=True)
 
 

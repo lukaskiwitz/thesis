@@ -2,8 +2,8 @@
 import glob
 import os
 import shutil
-from typing import List
 import sys
+from typing import List
 
 PATH = sys.argv[1]
 
@@ -14,7 +14,7 @@ def check_dir(path: str, pattern: str) -> List[str]:
 
 def make_copy(path_list: List[str], old_prefix: str, new_prefix: str) -> None:
     for file in path_list:
-        # print(new_prefix+"".join(file.split("/")[0:-1]))
+        # message(new_prefix+"".join(file.split("/")[0:-1]))
         os.makedirs(new_prefix+"".join(file.split("/")[0:-1]), exist_ok=True)
         shutil.copyfile(old_prefix+file, new_prefix+file)
 

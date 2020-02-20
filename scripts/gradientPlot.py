@@ -7,11 +7,8 @@ Created on Thu Sep 19 11:37:32 2019
 """
 import matplotlib as mpl
 mpl.use('Agg')
-import fenics as fcs
-import numpy as np
 import matplotlib.pyplot as plt
 import json
-from copy import deepcopy
 import os
 import pandas as pd
 import seaborn as sns

@@ -6,20 +6,22 @@ Created on Mon Aug 12 14:58:01 2019
 @author: kiwitz
 """
 
-import FieldProblem as fp
-import Entity
-import MySolver
-import numpy as np
-import BC as bc
-import SimContainer as SC
-from bcFunctions import cellBC_il2,cellBC_il6, cellBC_infg
-from copy import deepcopy
-import time
 import random
+import time
+from copy import deepcopy
+
+import mpi4py.MPI as MPI
+import numpy as np
+
+import BC as bc
+import Entity
+import FieldProblem as fp
+import MySolver
+import SimContainer as SC
 import StateManager
 from InternalSolver import InternalSolver
-import mpi4py.MPI as MPI
-
+from bcFunctions import cellBC_il2, cellBC_il6, cellBC_infg
+from my_debug import message
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -174,7 +176,7 @@ def run(p, T, dt, domainBC, path, **kwargs):
     else:
         sc.initialize()
 
-    print("init complete")
+    message("init complete")
     
 
 
@@ -200,15 +202,15 @@ def run(p, T, dt, domainBC, path, **kwargs):
                 
                 sc.step(dt)
                 end = time.process_time()
-                print("time: "+str(end-start)+"s for step number "+str(n))
+                message("time: "+str(end-start)+"s for step number "+str(n))
                 resultPaths = sc.save_fields(n)
                 for k,v in resultPaths.items():
                     (distplot, sol,cells) = v
-                    print(len(cells))
+                    message(len(cells))
                     stMan.addTimeStep(number, n, sc.T, displot=distplot, sol=sol, field_name=k, cell_list=cells)
                     stMan.writeElementTree()
 
     # sc.save_subdomains()
-    # print("subdomains saved")
+    # message("subdomains saved")
     # sc.save_domain()
-    # print("domain saved")
+    # message("domain saved")

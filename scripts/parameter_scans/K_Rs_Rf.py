@@ -1,10 +1,7 @@
 #!/home/kiwitz/anaconda3/envs/fenicsproject/bin/python
 
-from parameter_scan_setup import execute_scan
-from parameter_scan_test import get_parameter_space,T,n, ext_cache,path_prefix,p_c
-
-import numpy as np
-import matplotlib.pyplot as plt
+from parameter_scan_test import get_parameter_space, p_c
+from my_debug import message
 name = "K_f"
 # fraction of receptors on secreting cells
 pList = get_parameter_space("fraction", 1)
@@ -13,7 +10,7 @@ def get_fraction_from_p(p):
         n = 1500
         # st = a*p_c["R_h"]*n + (1- a)*p_c["R_l"]*n
         st = a * 400 * n + (1 - a) * 10 * n
-        print("total {st}".format(st=st))
+        message("total {st}".format(st=st))
         return  {
                 "R_il2_s":(-p*st)/((-1+a)),
                 "R_ils_f":-((-1+p)*st)/(a)
@@ -21,10 +18,10 @@ def get_fraction_from_p(p):
 
 f_list = [get_fraction_from_p(p[0]) for p in pList]
 for i in f_list:
-        print(i)
+        message(i)
         # vs = list(i.values())
-        # print(vs[0]+vs[1])
-# print(f_list)
+        # message(vs[0]+vs[1])
+# message(f_list)
 
 # plt.plot(pList,f_list)
 # plt.show()

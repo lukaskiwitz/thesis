@@ -1,7 +1,7 @@
 #!/home/kiwitz/anaconda3/envs/fenicsproject/bin/python
 
 from parameter_scan_setup import execute_scan
-from parameter_scan_test import get_parameter_space,T,n, ext_cache,path_prefix,p_c
+from parameter_scan_test import get_parameter_space,T, ext_cache,path_prefix,p_c
 
 name = "fraction"
 # fraction

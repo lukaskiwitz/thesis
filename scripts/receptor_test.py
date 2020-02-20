@@ -7,13 +7,10 @@ Created on Fri Nov  1 14:15:09 2019
 """
 
 import fenics as fcs
-import numpy as np
 import matplotlib.pyplot as plt
-from copy import deepcopy
+import numpy as np
 from scipy.integrate import odeint
-
-
-
+from my_debug import message
 
 class Left_boundary(fcs.SubDomain):
     def inside(self, x, on_boundary):
