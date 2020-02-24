@@ -7,6 +7,7 @@ Created on Wed Oct 16 12:56:59 2019
 """
 import json
 import multiprocessing as mp
+import os
 from copy import deepcopy
 from math import ceil
 from typing import List, Dict
@@ -22,6 +23,8 @@ from scipy.constants import N_A
 import StateManager as st
 from myDictSorting import groupByKey
 from my_debug import message
+import random
+import MyError
 
 
 class ComputeSettings:
@@ -60,6 +63,7 @@ class ComputeSettings:
         self.dynamic: Dict = {}
         self.scan_index: int = 0
         self.time_index: float = 0
+        self.tmp_path = ""
 
     def set_mesh(self,mesh: fcs.Mesh):
         self._mesh = mesh
@@ -154,7 +158,7 @@ class PostProcessor:
         return et.tostring(result)
 
     # noinspection PyPep8Naming
-    def job(self, compute_settings_list: List[ComputeSettings], ext_cache: str, sub_domain_cache: str, output,thread_index: int):
+    def job(self, compute_settings_list: List[ComputeSettings], ext_cache: str, sub_domain_cache: str, output,thread_index: int, tmp_path: str):
         try:
             comm = MPI.COMM_WORLD
             local = comm.Dup()
@@ -187,22 +191,32 @@ class PostProcessor:
                 compute_settings.set_u(u)
 
                 message(
-                    "reading file {file} ({n}/{tot})".format(file=compute_settings.file_path, n=n, tot=len(compute_settings_list))
+                    "Process {thread}: Reading file {file} ({n}/{tot})".format(thread=thread_index, file=compute_settings.file_path, n=n, tot=len(compute_settings_list))
                 )
 
                 data_out: str = self.compute(compute_settings)
-                result_list.append(deepcopy(data_out))
-            message("Thread {index} has finished computation".format(index=thread_index))
-            output.put(result_list)
+                result_list.append(str(data_out))
+            message("Process {index} has finished computation".format(index=thread_index))
+            filename = tmp_path + "post_{r}.txt".format(r=str(random.randint(0, 2 ** 32)))
+            while filename in os.listdir(tmp_path):
+                filename  = tmp_path+"post_{r}.txt".format(r=str(random.randint(0,2**32)))
+            message("Process {index} writing results to file {f}".format(index=thread_index,f=filename))
+            f = open(filename,'x')
+            f.write(json.dumps(result_list))
+            f.close()
+            output.put(filename)
+
         except Exception as e:
-            message(e)
-            output.put([])
+            message(str(e))
+            output.put(e)
 
     def write_post_process_xml(self, threads,debug=False):
         """
         runs compute-function for all scans an writes result to xml file
 
         """
+
+        assert type(threads) == int
 
         # initializes state manager from scan log
         self.stateManager = st.StateManager(self.path)
@@ -211,6 +225,8 @@ class PostProcessor:
             "/cellDump/field/ext_cache").text
         self.subdomaincache = self.stateManager.elementTree.find(
             "/cellDump/field/subdomains").text
+        tmp_path = self.path+"tmp/"
+        os.makedirs(tmp_path,exist_ok=True)
 
         for s in self.stateManager.elementTree.findall("/scans/scan"):
             self.pDicts.append(self.stateManager.getParametersFromElement(s))
@@ -252,23 +268,44 @@ class PostProcessor:
         partitioned_list = [scatter_list[x:x + size]
                            for x in range(0, len(scatter_list), size)]
         output = mp.Queue(threads)
-        jobs = [mp.Process(target=self.job, args=(i, self.ext_cache, self.subdomaincache, output, index)) for index, i in enumerate(partitioned_list)]
+        jobs = [mp.Process(target=self.job, args=(i, self.ext_cache, self.subdomaincache, output, index, tmp_path)) for index, i in enumerate(partitioned_list)]
         for j in jobs:
             j.start()
+        from time import time
+        start = time()
+        timeout = 24*60*60
 
-        for j in jobs:
-            try:
-                j.join(600)
-            except Exception:
-                message("Join Timeout")
-        message("collecting distributed tasks")
-        result_list: List[str] = [output.get(True, 60) for j in jobs]
+        while True:
+            if (time() - start) < timeout:
+                running = False
+                for j in jobs:
+                    if j.is_alive():
+                        running = True
+                        break
+                if not running:
+                    message("collecting distributed tasks")
+                    break
+            else:
+                raise MyError.SubProcessTimeout(timeout)
+                break
+
+        file_list: List[str] = [output.get(True, 10) for j in jobs]
+        for file in file_list:
+            if not type(file) == str:
+                message("A Worker fininshed with Error {e}".format(e=file))
+                file_list.remove(file)
+
+        message("Collected results from {l} Processes".format(l=1 + len(file_list)))
+        result_list = []
+        for file in file_list:
+            f = open(file,"r")
+            result_list.append(json.load(f))
         message("successfully collected distributed task")
         flattend_list: List[str] = []
 
         for i in result_list:
             for o in i:
-                flattend_list.append(et.XML(o))
+                flattend_list.append(et.XML(o[2:-1]))
         indexed_list = [
             {"scanIndex": i.get("scanIndex"),
              "timeIndex": i.get("timeIndex"),
@@ -300,7 +337,8 @@ class PostProcessor:
             #                         for i in scan.findall("./timeStep")
             #                         ])
         result = []
-        assert not self.cell_dataframe.empty
+        if self.cell_dataframe.empty:
+            raise MyError.DataframeEmptyError("Post Processor Cell Dataframe")
 
         for step in in_tree.findall("/scan"):
             files = step.findall("./timeStep/file")
@@ -344,6 +382,7 @@ class PostProcessor:
             result["R_{f}".format(f=name)] = result["R_il2"].div(N_A ** -1 * 1e9)  # to mol/cell
             result["surf_c_{f}".format(f=name)] = result["surf_c_{f}".format(f=name)].mul(1e9)  # to nM
             result["surf_g_{f}".format(f=name)] = result["surf_g_{f}".format(f=name)].mul(1e8)  # to nM
+            result["q_{f}".format(f=name)] = result["q_{f}".format(f=name)].mul(N_A * 1e-9)  # to nM
 
 
         result["t"] = result["t"].apply(lambda x: float(x))

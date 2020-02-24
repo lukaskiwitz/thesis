@@ -18,7 +18,7 @@ from my_debug import message
 
 class MySolver:
     pass
-class PoissonSolver(MySolver):
+class MyLinearSoler(MySolver):
     """
     class to solve the stationary diffusion equation in 2D/3D with nonlinear boundary condition
 
@@ -54,17 +54,12 @@ class PoissonSolver(MySolver):
         self.dirichlet: List[BC.DirichletBC] = []
         self.integralBC: List[BC.Integral] = []
         self.subdomains: List[MySubDomain] = []
-        self.dim: int = 2
         self.p: Dict = {}
         self.mesh = None
         self.boundary_markers = None
         self.field_quantity: str = ""
 
         super().__init__()
-    def log(self):
-        return {"field_quantity":self.field_quantity,
-                "p":self.p
-                }
     def compileSolver(self):
 
         self.V = fcs.FunctionSpace(self.mesh,"P",1)
@@ -74,10 +69,7 @@ class PoissonSolver(MySolver):
         u = fcs.TrialFunction(self.V)
         v = fcs.TestFunction(self.V)
 
-        #define constants
-        f = fcs.Constant(0)
-        
-        #checks wether diffusioncoefficient is given as paramenter
+        #checks for parameters
         
         if "D" in self.p:
             D = fcs.Constant(self.p["D"])
@@ -88,10 +80,10 @@ class PoissonSolver(MySolver):
         else:
             pass
 
-        #defines ds as object of fencis class Measure, to give piecwise boundary integral as ds(i) for piece i
+        #defines measure on boundary
         ds = fcs.Measure("ds", domain=self.mesh, subdomain_data=self.boundary_markers)
         
-        # iterates over subdomain list to set boundary condition according "bcDict" field
+        # iterates over subdomain list to set boundary conditions
         
         self.dirichlet = []
         self.integralBC = []
@@ -110,18 +102,16 @@ class PoissonSolver(MySolver):
                 self.integralBC.append(bc.get_BC(u,p_update) * v * ds(patch))
         
 
-        F= -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx)  - u*kd*v*fcs.dx + f*v*fcs.dx + D*(sum(self.integralBC))
+        F= -D*(fcs.dot(fcs.grad(u), fcs.grad(v))*fcs.dx)  - u*kd*v*fcs.dx + D*(sum(self.integralBC))
 
         #Defines variational problem as F == 0 with
         # with respect to u
-        # problem = fcs.NonlinearVariationalProblem(F,u, self.dirichlet,J=fcs.derivative(F, u))
         a = fcs.lhs(F)
         L = fcs.rhs(F)
         u = fcs.Function(self.V)
         problem = fcs.LinearVariationalProblem(a, L, u, self.dirichlet)
         
         #instantiates fenics solver
-        # self.solver = fcs.NonlinearVariationalSolver(problem)
         self.solver = fcs.LinearVariationalSolver(problem)
         
         #sets field u to be trialfunction
@@ -130,7 +120,6 @@ class PoissonSolver(MySolver):
     def solve(self) -> fcs.Function:
         """
         Wrapper around fenics solve()
-
         """
         #calls fenics solver; renames u for proper vtk output and returns solution u
         self.solver.solve()
@@ -138,5 +127,3 @@ class PoissonSolver(MySolver):
         self.u.rename(self.field_quantity,self.field_quantity)
     #        self.u = u
         return self.u
-    def __del__(self):
-        pass

@@ -5,7 +5,7 @@ Created on Mon Aug 12 14:58:01 2019
 
 @author: kiwitz
 """
-
+import getpass
 import random
 import time
 from copy import deepcopy
@@ -35,9 +35,9 @@ class RuleBasedSolver(InternalSolver):
 
     def __init__(self):
         self.transition = (False, 0, "Tn")
-        self.il2_threshold = 0.71
-        self.il6_threshold = 0.059
-        self.infg_threshold = 0.06
+        self.il2_threshold = 0.065
+        self.il6_threshold = 0.042
+        self.infg_threshold = 0.05
 
     def step(self,t,dt,p,entity=None):
 
@@ -99,7 +99,7 @@ def setup(p, path, ext_cache=""):
     # y = [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
     # z = [0]
 
-    x = np.arange(-1,1,0.2)
+    x = np.arange(-2,2,0.2)
     y = x
     z = [0]
 
@@ -142,7 +142,7 @@ def setup(p, path, ext_cache=""):
 
 
     """IL-2"""
-    solver_il2 = MySolver.PoissonSolver()
+    solver_il2 = MySolver.MyLinearSoler()
 
     fieldProblem_il2 = fp.FieldProblem()
     fieldProblem_il2.field_name = "il2"
@@ -157,7 +157,7 @@ def setup(p, path, ext_cache=""):
     fieldProblem_il2.set_outer_domain(domain)
 
     """IL-6"""
-    solver_il6 = MySolver.PoissonSolver()
+    solver_il6 = MySolver.MyLinearSoler()
 
     fieldProblem_il6 = fp.FieldProblem()
     fieldProblem_il6.field_name = "il6"
@@ -171,7 +171,7 @@ def setup(p, path, ext_cache=""):
     fieldProblem_il6.set_outer_domain(domain)
 
     """INFg"""
-    solver_infg = MySolver.PoissonSolver()
+    solver_infg = MySolver.MyLinearSoler()
 
     fieldProblem_infg = fp.FieldProblem()
     fieldProblem_infg.field_name = "infg"
@@ -235,7 +235,7 @@ def run(sc, p, T, dt, path, **kwargs):
 
                 sc.step(dt)
                 end = time.process_time()
-                total_time(end - start, pre = "total time ", post=" for step number ")
+                total_time(end - start, pre = "total time ", post=" for step number {n}".format(n=n))
                 resultPaths = sc.save_fields(n)
                 for k, v in resultPaths.items():
                     (distplot, sol, cells) = v
@@ -332,27 +332,28 @@ scan_default= [
              "internal_solver":"RuleBasedSolver"
              },
             {
-            "parameters":Tfh,
+            "parameters":get_update_dict(Tfh,  {"q_il2":Tfh["q_il2"]*v1}),
              "name":"Tfh",
              "internal_solver":"RuleBasedSolver"
              }
         ]
 
-        } for v1 in [1]
+        } for v1 in np.logspace(-1,1,10)
 ]
 
 """reshapes into 1-d list"""
 scan = list(np.ravel(scan_default))
 
 
+user = getpass.getuser()
+path = "/extra/{u}/scan_example_small/".format(u=user)
+ext_cache="/extra/{u}/scan_example_small_ext_cache/".format(u=user)
 
-path = "/extra/kiwitz/scan_example_small/"
-ext_cache="/extra/kiwitz/scan_example_small_ext_cache/"
 
 
 p = {**p,**p_bc_defaults,**p_boundary}
 
-T = range(100)
+T = range(50)
 dt = 1
 
 sc = setup(p, path, ext_cache)

@@ -27,7 +27,7 @@ import SimContainer as SC
 import StateManager
 from PostProcess import PostProcessor
 from bcFunctions import cellBC_il2
-from my_debug import message
+from my_debug import message, alert, total_time
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -95,7 +95,7 @@ def setup(p, path, ext_cache=""):
 
 
     """IL-2"""
-    solver_il2 = MySolver.PoissonSolver()
+    solver_il2 = MySolver.MyLinearSoler()
 
     fieldProblem_il2 = fp.FieldProblem()
     fieldProblem_il2.field_name = "il2"
@@ -131,7 +131,7 @@ def setup(p, path, ext_cache=""):
 
 def run(sc, p, T, dt, path, **kwargs):
 
-    start = time.process_time()
+    start_run = time.process_time()
 
     if "scan" in kwargs:
         scan = kwargs["scan"]
@@ -156,15 +156,15 @@ def run(sc, p, T, dt, path, **kwargs):
 
                 sc.step(dt)
                 end = time.process_time()
-                message("time: " + str(end - start) + "s for step number " + str(n))
+                total_time(end - start, pre = "total time ", post=" for step number{n}".format(n=n))
                 resultPaths = sc.save_fields(n)
                 for k, v in resultPaths.items():
                     (distplot, sol, cells) = v
                     stMan.addTimeStep(number, n, sc.T, displot=distplot, sol=sol, field_name=k, cell_list=cells)
                     stMan.writeElementTree()
 
-    end = time.process_time()
-    message("--------------------- total Time: {t} m ---------------------".format(t=(end - start) / 60))
+
+    total_time(time.time() - start_run, pre="total time ")
 
 def get_update_dict(dict, update):
     dict_copy = deepcopy(dict)
@@ -180,8 +180,8 @@ p = {
     "k_on": 1e9 * 111.6 / 60 ** 2,  # 111.6 per hour
     "rho": 0.05,  # mu
     "D": (10 ** 0.5 * 0.01) ** 2,  # mu² per s
-    "R_h": 400 * N_A ** -1 * 1e9,
-    "R_l": 10 * N_A ** -1 * 1e9,
+    "R_h": 4000 * N_A ** -1 * 1e9,
+    "R_l": 100 * N_A ** -1 * 1e9,
     "kd": 0,#0.1/(60*2),
     "q_h": 10 * N_A ** -1 * 1e9,
     "q_l": 1 * N_A ** -1 * 1e9,
@@ -242,14 +242,14 @@ path = "/extra/{u}/scan_example/".format(u=user)
 ext_cache="/extra/{u}/scan_example_ext_cache/".format(u=user)
 
 
-# p = {**p,**p_bc_defaults,**p_boundary}
-#
-# T = range(1)
-# dt = 1
-#
-# sc = setup(p, path, ext_cache)
-# run(sc,p,T,dt,path,scan=scan)
-#
+p = {**p,**p_bc_defaults,**p_boundary}
+
+T = range(1)
+dt = 1
+
+sc = setup(p, path, ext_cache)
+run(sc,p,T,dt,path,scan=scan)
+
 
 pp = PostProcessor(path)
 pp.write_post_process_xml(4)

@@ -6,7 +6,7 @@ import seaborn as sns
 from my_debug import message
 
 user = getpass.getuser()
-path = "/extra/{u}/scan_example_small/".format(u=user)
+path = "/extra/{u}/scan_example_small_pp/".format(u=user)
 
 sns.set_context("paper",font_scale=1,rc={
             "lines.markersize":0,
@@ -33,6 +33,11 @@ counts.columns = counts.columns.droplevel(1)
 counts["n"] = counts["n"].apply(lambda x:int(x))
 counts.reset_index(inplace=True)
 
+fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
+sns.lineplot(x="t", y="n", ax= ax[0][0], data=counts.loc[counts["type_name"] == "Tn"],hue="scan_index",legend="full")
+sns.lineplot(x="t", y="n", ax= ax[0][1], data=counts.loc[counts["type_name"] == "Tfh"],hue="scan_index",legend=None)
+sns.lineplot(x="t", y="n", ax= ax[1][0], data=counts.loc[counts["type_name"] == "Th1"],hue="scan_index",legend=None)
+plt.show()
 
 # fig,ax = plt.subplots(2,2,sharex=True,sharey=False)
 # sns.lineplot(x="t", y="surf_c_il2", data=means,hue="type_name",ax=ax[0][0],legend="full")
@@ -46,6 +51,9 @@ counts.reset_index(inplace=True)
 # sns.lineplot(x="timeIndex", y="gradient", data=global_df,hue="field_name",ax=ax[0][1],palette=sns.color_palette(["red","seagreen","navy"]))
 # sns.lineplot(x="timeIndex", y="sd", data=global_df,hue="field_name",ax=ax[1][0],palette=sns.color_palette(["red","seagreen","navy"]))
 # sns.lineplot(x="t", y="n", data=counts,hue="type_name",ax=ax[1][1],legend="full")
+# ax[0][0].set_ylim(0,0.09)
+# ax[0][1].set_ylim(0,0.004)
+
 # plt.show()
 # # #
 # #
@@ -55,32 +63,35 @@ counts.reset_index(inplace=True)
 # sns.lineplot(x="t",y="Tn_score_norm",hue="type_name",data=cell_df,ax=ax[1][0])
 # plt.show()
 
-
-
-fig,ax = plt.subplots(2,2,sharex=False,sharey=False)
-sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_il2"],ax=ax[0][0])
-sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_il6"],ax=ax[0][1])
-sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_infg"],ax=ax[1][0])
-plt.show()
-
+#
+#
+# fig,ax = plt.subplots(2,2,sharex=False,sharey=False)
+# sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_il2"],ax=ax[0][0])
+# sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_il6"],ax=ax[0][1])
+# sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 1)]["surf_c_infg"],ax=ax[1][0])
+# plt.show()
+#
 # fig,ax = plt.subplots(2,2,sharex=False,sharey=False)
 # sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 50)]["surf_c_il2"],ax=ax[0][0])
 # sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 50)]["surf_c_il6"],ax=ax[0][1])
 # sns.distplot(cell_df.loc[(cell_df["type_name"] == "Tn") & (cell_df["t"] == 50)]["surf_c_infg"],ax=ax[1][0])
 # plt.show()
-
-
-tfh = cell_df.loc[
-    (cell_df["surf_c_il6"] > 0.047)&
-    (cell_df["surf_c_il2"] < 0.065)&
-    (cell_df["type_name"] == "Tn")
-            ].groupby(["t","scan_index","type_name"]).count()["n"].reset_index()
-th1 = cell_df.loc[
-    (cell_df["surf_c_infg"] > 0.055)&
-    (cell_df["type_name"] == "Tn")
-            ].groupby(["t","scan_index","type_name"]).count()["n"].reset_index()
-
-fig,ax = plt.subplots(2,2,sharex=True,sharey=False)
-sns.lineplot(x="t",y="n",data=tfh,ax=ax[0][0])
-sns.lineplot(x="t",y="n",data=th1,ax=ax[0][1])
-plt.show()
+#
+# il2_threshold = 0.065
+# il6_threshold = 0.042
+# infg_threshold = 0.050
+#
+# tfh = cell_df.loc[
+#     (cell_df["surf_c_il6"] > il6_threshold)&
+#     (cell_df["surf_c_il2"] < il2_threshold)&
+#     (cell_df["type_name"] == "Tn")
+#             ].groupby(["t","scan_index","type_name"]).count()["n"].reset_index()
+# th1 = cell_df.loc[
+#     (cell_df["surf_c_infg"] > infg_threshold)&
+#     (cell_df["type_name"] == "Tn")
+#             ].groupby(["t","scan_index","type_name"]).count()["n"].reset_index()
+#
+# fig,ax = plt.subplots(2,2,sharex=True,sharey=True)
+# sns.lineplot(x="t",y="n",data=tfh,ax=ax[0][0])
+# sns.lineplot(x="t",y="n",data=th1,ax=ax[0][1])
+# plt.show()

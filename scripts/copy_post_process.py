@@ -1,26 +1,38 @@
-#!/home/kiwitz/anaconda3/envs/fenicsproject/bin/python
+#!/home/kiwitz/anaconda3/envs/fenics/bin/python
 import glob
 import os
 import shutil
 import sys
 from typing import List
+from my_debug import message
 
-PATH = sys.argv[1]
+if len(sys.argv) > 1:
+    PATH = sys.argv[1]
+    if not PATH[-1] == "/":
+        PATH = PATH + "/"
+else:
+    exit(1)
 
-def check_dir(path: str, pattern: str) -> List[str]:
+def check_dir(path: str, patterns: List[str]) -> List[str]:
     os.chdir(path)
-    return glob.glob("**/"+pattern, recursive=True)
+    result = []
+    for pattern in patterns:
+        for g in glob.glob(pattern):
+            result.append(g)
+    return result
 
 
-def make_copy(path_list: List[str], old_prefix: str, new_prefix: str) -> None:
-    for file in path_list:
-        # message(new_prefix+"".join(file.split("/")[0:-1]))
-        os.makedirs(new_prefix+"".join(file.split("/")[0:-1]), exist_ok=True)
-        shutil.copyfile(old_prefix+file, new_prefix+file)
+
+def make_copy(path: str, files: List[str]) -> None:
+
+    path_split = PATH.split("/")
+    new_path = "{top}_{name}".format(top="/".join(path_split[0:-1]),name=path_split[-1]+"pp/")
+    os.makedirs(new_path,exist_ok=True)
+    for file in files:
+        message("coping file {f} from {old} to {new}".format(f=file,old=PATH,new=new_path))
+        shutil.copyfile(PATH+file, new_path+file)
 
 
-NEW_PREFIX = PATH+"result/"
-make_copy(check_dir(PATH, "*.xml"), PATH, NEW_PREFIX)
-make_copy(check_dir(PATH, "global_dataframe.h5"), PATH, NEW_PREFIX)
-make_copy(check_dir(PATH, "dataframe.h5"), PATH, NEW_PREFIX)
-make_copy(check_dir(PATH, "log.scan"), PATH, NEW_PREFIX)
+r = check_dir(PATH, ["*.scan","*.xml","*.h5"])
+make_copy(PATH,r)
+

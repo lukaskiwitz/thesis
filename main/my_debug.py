@@ -21,6 +21,10 @@ def total_time(time: float, pre="", post=""):
     )
     message(pre + text + post)
 
+def debug(text: str):
+    if "DEBUG" in  globals() and globals()["DEBUG"]:
+        message("DEBUG: "+text)
+
 
 def alert(text: str):
     text = str(text)
