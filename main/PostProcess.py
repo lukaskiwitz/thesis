@@ -426,7 +426,7 @@ class PostProcessor:
                 kde_result = kde_result.append(ts)
                 result = self._normalize_cell_score(kde_result)
 
-        return result
+        return result.drop_duplicates()
 
     def _normalize_cell_score(self, x):
         ids = x.loc[
@@ -447,7 +447,7 @@ class PostProcessor:
             for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
                 group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
-                result = result.append(group)
+            result = result.append(group)
 
         return result
 
