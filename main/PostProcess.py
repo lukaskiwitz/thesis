@@ -417,8 +417,12 @@ class PostProcessor:
 
                 for type_name, kernel in kernels.items():
                     positions = np.array([ts["x"], ts["y"], ts["z"]]).T
+
                     scores = kernel.evaluate(positions).T
-                    ts["{type_name}_score".format(type_name=type_name)] = pd.Series(scores)
+                    scores =  pd.Series(scores)
+                    scores.index = ts.index
+
+                    ts.insert(ts.shape[1],"{type_name}_score".format(type_name=type_name),scores)
                 kde_result = kde_result.append(ts)
                 result = self._normalize_cell_score(kde_result)
 
@@ -440,10 +444,10 @@ class PostProcessor:
             # count = group.groupby(["type_name"],as_index=False).count()
             # count = count.drop(count.columns.drop(["type_name","n"]),axis=1)
 
-            group["Tn_score_norm"] = group["Tn_score"] / float(no_init.mean()["Tn_score"])
-            group["Tfh_score_norm"] = group["Tfh_score"] / float(no_init.mean()["Tfh_score"])
-            group["Th1_score_norm"] = group["Th1_score"] / float(no_init.mean()["Th1_score"])
-            result = result.append(group)
+            for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
+                new = "{old}_norm".format(old=old)
+                group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
+                result = result.append(group)
 
         return result
 
