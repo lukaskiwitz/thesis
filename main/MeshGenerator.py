@@ -24,7 +24,7 @@ class DomainTypeError(Exception):
     def __init__(self,text):
         self.text = text
     def __str__(self):
-        return "Uknown Domain Type {t}".format(t=self.text)
+        return "Unknown Domain Type {t}".format(t=self.text)
 class MeshGenerator:
     outerDomain = None
     entityList = []
@@ -33,10 +33,10 @@ class MeshGenerator:
     def __init__(self,**kwargs):
             if "outer_domain" in kwargs:
                 self.outerDomain = kwargs["outer_domain"]
-    def meshGen(self,resolution,**kwargs):
+    def meshGen(self, p, load_subdomain = False,path = "", file_name  = "mesh", load = False, ):
         geom = pygmsh.opencascade.Geometry(
-          characteristic_length_min=kwargs["min_char_length"] if "min_char_length" in kwargs else 0.001,
-          characteristic_length_max=kwargs["max_char_length"]if "min_char_length" in kwargs else 0.05,
+          characteristic_length_min=p.get_misc_parameter("min_char_length","numeric").get_in_sim_unit(),
+          characteristic_length_max=p.get_misc_parameter("max_char_length","numeric").get_in_sim_unit()
           )
 
         if isinstance(self.outerDomain,Entity.DomainCube):
@@ -50,31 +50,37 @@ class MeshGenerator:
         else :
             raise DomainTypeError(type(self.outerDomain))
         entities = []
-        path = kwargs["path"] if "path" in kwargs else ""
+        # path = kwargs["path"]+ if "path" in kwargs else ""
+
+        full_mesh_path = path+file_name+".xdmf"
+
         for i in self.entityList:
             r = i["entity"].radius
             c = i["entity"].center
             ball = geom.add_ball(c,r)
-            geom.add_physical(ball,label=i["entity"].name)
+            geom.add_physical(ball)
             entities.append(ball)
-        if not kwargs["load"] or not os.path.isfile(path+".xdmf"):
+        if not load or not os.path.isfile(full_mesh_path):
             if len(entities) > 0:
                 geom.boolean_difference([domain],entities)
             mesh = pygmsh.generate_mesh(geom)
             message(mesh)
-            meshio.write(path+".xdmf", meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
+            meshio.write(full_mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
         else:
-            message("loading Mesh from:"+path+".xdmf")
+            message("loading Mesh from: "+full_mesh_path)
         mesh = dlf.Mesh()
-        with dlf.XDMFFile(dlf.MPI.comm_world, path+".xdmf") as f:
+        with dlf.XDMFFile(dlf.MPI.comm_world, path+file_name+".xdmf") as f:
             f.read(mesh)
         message("mesh loaded")
-        
-        if "load_subdomain" in kwargs and os.path.isfile(kwargs["load_subdomain"]):
-            subPath = kwargs["load_subdomain"]
-            message("loading subdomain from "+kwargs["load_subdomain"])
+
+        full_subdomain_path = path+"boundary_markers.h5"
+
+        if load_subdomain and os.path.isfile(full_subdomain_path):
+            # subPath = kwargs["load_subdomain"]
+            message("loading subdomain from "+ full_subdomain_path)
+
             boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
-            with fcs.HDF5File(fcs.MPI.comm_world,subPath,"r") as f:
+            with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"r") as f:
                 f.read(boundary_markers,"/boundaries")
             for i,o in enumerate(self.entityList):
                 a = self.outerDomain.getSubDomains()[-1]["patch"]+1
@@ -93,8 +99,7 @@ class MeshGenerator:
                 o["entity"].getCompiledSubDomain().mark(boundary_markers,i+a)
                 o["patch"] = i+a
             message("loop complete")
-            if "load_subdomain" in kwargs:
-                subPath = kwargs["load_subdomain"]
-                with fcs.HDF5File(fcs.MPI.comm_world,subPath,"w") as f:
+            if load_subdomain:
+                with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"w") as f:
                     f.write(boundary_markers,"/boundaries")
         return mesh,boundary_markers

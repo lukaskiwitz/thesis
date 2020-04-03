@@ -47,7 +47,7 @@
 
 <div class="viewcode-block" id="MySolver"><a class="viewcode-back" href="../index.html#MySolver.MySolver">[docs]</a><span class="k">class</span> <span class="nc">MySolver</span><span class="p">:</span>
     <span class="k">pass</span></div>
-<div class="viewcode-block" id="PoissonSolver"><a class="viewcode-back" href="../index.html#MySolver.PoissonSolver">[docs]</a><span class="k">class</span> <span class="nc">PoissonSolver</span><span class="p">(</span><span class="n">MySolver</span><span class="p">):</span>
+<div class="viewcode-block" id="PoissonSolver"><a class="viewcode-back" href="../index.html#MySolver.PoissonSolver">[docs]</a><span class="k">class</span> <span class="nc">MyLinearSoler</span><span class="p">(</span><span class="n">MySolver</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    class to solve the stationary diffusion equation in 2D/3D with nonlinear boundary condition</span>
 
@@ -148,7 +148,7 @@
         <span class="n">u</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">)</span>
         <span class="n">problem</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">LinearVariationalProblem</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirichlet</span><span class="p">)</span>
         
-        <span class="c1">#instantiates fenics solver class as a field of &quot;PoissonSolver&quot;</span>
+        <span class="c1">#instantiates fenics solver class as a field of &quot;MyLinearSoler&quot;</span>
         <span class="c1"># self.solver = fcs.NonlinearVariationalSolver(problem)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">fcs</span><span class="o">.</span><span class="n">LinearVariationalSolver</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
         

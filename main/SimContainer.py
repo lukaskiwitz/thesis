@@ -9,6 +9,7 @@ Created on Fri Jun  7 12:21:51 2019
 import os
 from copy import deepcopy
 from typing import Dict
+import lxml.etree as et
 
 #
 import fenics as fcs
@@ -17,10 +18,14 @@ from Entity import Entity
 from EntityType import CellType, EntityType
 from FieldProblem import FieldProblem
 from InternalSolver import InternalSolver
-from my_debug import message
+from my_debug import message, total_time, debug
+from SimComponent import SimComponent
+from ParameterSet import ParameterSet
+import time
+from MyError import InternalSolverNotFound, EntityTypeNotFound
 
 
-class SimContainer:
+class SimContainer (SimComponent):
     """
 
     Sim container
@@ -58,7 +63,8 @@ class SimContainer:
 
     """
 
-    def __init__(self) -> None:
+    def __init__(self, parameter_set: ParameterSet) -> None:
+        self.p = parameter_set
         self.entity_list = []
         self.fields = []
         self.path = "./"
@@ -69,6 +75,7 @@ class SimContainer:
         self.boundary_markers = []
         self.entity_templates = []
         self.internal_solvers = []
+        #self.unit_length_exponent: int = 1
 
     def init_logs(self) -> None:
 
@@ -110,12 +117,14 @@ class SimContainer:
         self.ext_boundary_markers = kwargs["load_subdomain"] if "load_subdomain" in kwargs else self.path + "cache/"
 
         for field in self.fields:
+            field.update_parameter_set(self.p)
+
             fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
                 if fq in entity.fieldQuantities:
                     field.add_entity(entity)
-            field.generate_mesh(cache=True, path_prefix=self.path + "cache/", **kwargs)
+            field.generate_mesh(cache=True, path= self.path, path_prefix="cache/", **kwargs)
             field.update_solver()
 
     def get_entity_by_name(self, name: str) -> Entity:
@@ -130,6 +139,7 @@ class SimContainer:
         for i in self.entity_list:
             if i.name == name:
                 return i
+
     def get_entity_by_type(self,type: CellType) -> Entity:
 
         """
@@ -141,6 +151,35 @@ class SimContainer:
         """
 
         raise NotImplementedError()
+
+    def run(self,T):
+
+        dt = 1
+
+        for time_index, t in enumerate(T):
+            self._pre_step(self, time_index,t,T) # internal use
+            self.pre_step(self, time_index, t, T)# user defined
+
+            start = time.process_time()
+            self.step(dt)
+            end = time.process_time()
+            total_time(end - start, pre = "Total time ", post=" for step number {n}".format(n=time_index))
+
+            self._post_step(self,time_index,t,T)# internal use
+            self.post_step(self, time_index, t, T)# user defined
+
+    def _pre_step(self,sc,time_index,t,T):
+        return None
+
+    def _post_step(self, sc, time_index,t,T):
+        return None
+
+    def pre_step(self,sc,time_index,t,T):
+        return None
+
+    def post_step(self, sc, time_index,t,T):
+        return None
+
     def step(self, dt: float) -> None:
 
         """
@@ -150,18 +189,23 @@ class SimContainer:
 
         """
 
+        for i, entity in enumerate(self.entity_list):
+            entity.get_surface_area()
+            if not entity.change_type == "":
+                debug("changing type for entity {id}".format(id=entity.id))
+                entity_type = self.get_entity_type_by_name(entity.change_type)
+                internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
+                entity.set_cell_type(entity_type, internal_solver)
+                entity.change_type = ""
+
         for field in self.fields:
-            field.update_solver()
+            # field.unit_length_exponent = self.unit_length_exponent
+            field.update_solver(p = self.p)
             field.step(dt)
-            field.get_boundary_concentrations()
-            field.get_boundary_gradients()
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.T, dt)
-            if not entity.change_type == "":
-                message("changing type for entity {id}".format(id=entity.id))
-                entity.set_cell_type(self.get_entity_type_by_name(entity.change_type))
-                entity.change_type = ""
+
 
 
         self.T = self.T + dt
@@ -174,11 +218,14 @@ class SimContainer:
         :param entity:
         """
 
+        entity.p.update(self.p)
+
         if len(self.entity_list) > 0:
             entity.id = self.entity_list[-1].id + 1
         else:
             entity.id = 0
         self.entity_list.append(entity)
+
     def add_entity_type(self,template: EntityType):
         """
         adds entity template to simulation
@@ -196,6 +243,7 @@ class SimContainer:
         else:
             i = self.entity_templates.index(self.get_entity_type_by_name(template.name))
             self.entity_templates[i] = template
+
     def add_internal_solver(self, internal_solver: InternalSolver):
 
         if not self.get_internal_solver_by_name(internal_solver.name):
@@ -205,15 +253,20 @@ class SimContainer:
             self.internal_solvers[i] = internal_solver
 
     def get_internal_solver_by_name(self,name: str):
+
+
         for s in self.internal_solvers:
             if s.name == name:
                 return  s
+
+        message("could not find internal solver {n}".format(n = name))
         return None
 
     def get_entity_type_by_name(self,name: str)->EntityType:
         for e in self.entity_templates:
             if e.name == name:
                 return e
+        message("could not find entity type {n}".format(n = name))
         return None
 
     def add_field(self, field: FieldProblem) -> None:
@@ -226,6 +279,8 @@ class SimContainer:
 
         """
 
+        field.update_parameter_set(self.p)
+        # field.unit_length_exponent = self.unit_length_exponent
         self.fields.append(field)
 
     def save_subdomains(self) -> None:
@@ -264,17 +319,25 @@ class SimContainer:
         os.makedirs(self.path + "sol/distplot", exist_ok=True)
         result: Dict = {}
         for o, i in enumerate(self.fields):
-            distplot = self.path + "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
-            sol = self.path + "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
-            with fcs.HDF5File(fcs.MPI.comm_world, distplot, "w") as f:
+            distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
+
+            sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
+
+            with fcs.HDF5File(fcs.MPI.comm_world, self.path+distplot, "w") as f:
                 f.write(i.get_field(), i.field_name)
-            with fcs.XDMFFile(fcs.MPI.comm_world, sol) as f:
+            with fcs.XDMFFile(fcs.MPI.comm_world, self.path+sol) as f:
                 f.write(i.get_field(), n)
-            cells = []
-            for e in i.registered_entities:
-                e = e["entity"]
-                r_dict = deepcopy(e.p)
-                r_dict.update({"id": e.id})
-                cells.append(r_dict)
-            result[i.field_name] = (distplot, sol, cells)
+            result[i.field_name] = (distplot, sol, o)
         return result
+
+    def to_xml(self) -> et.Element:
+
+        pass
+
+    def from_xml(self, e: et.Element):
+
+        pass
+
+    def set_parameters(self, set: ParameterSet):
+
+        self.p = set

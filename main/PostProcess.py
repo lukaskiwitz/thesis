@@ -25,6 +25,7 @@ from myDictSorting import groupByKey
 from my_debug import message
 import random
 import MyError
+from ParameterSet import ParameterSet
 
 
 class ComputeSettings:
@@ -59,11 +60,11 @@ class ComputeSettings:
         """file path to volume file
         """
         self.field: str = ""
-        self.cell_data: List[Dict] = []
         self.dynamic: Dict = {}
         self.scan_index: int = 0
         self.time_index: float = 0
         self.tmp_path = ""
+
 
     def set_mesh(self,mesh: fcs.Mesh):
         self._mesh = mesh
@@ -98,13 +99,15 @@ class ComputeSettings:
 class PostProcessor:
 
     def __init__(self, path: str) -> None:
-        self.pDicts = []
+        # self.pDicts = []
         self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
         self.cell_dataframe: pd.DataFrame = pd.DataFrame()
         self.global_dataframe: pd.DataFrame = pd.DataFrame()
         self.cell_stats: pd.DataFrame = pd.DataFrame()
+        self.unit_length_exponent: int = 1
+        self.computations = [c(),grad(),SD()]
 
     def get_mesh_volume(self, mesh):
 
@@ -113,6 +116,7 @@ class PostProcessor:
             sum += cell.volume()
         return sum
     # noinspection PyPep8Naming
+
     def compute(self, compute_settings: ComputeSettings) -> str:
 
         """
@@ -121,73 +125,85 @@ class PostProcessor:
         :param compute_settings:
         :return:
         """
-        result: et.Element = et.Element("file")
-        global_results: et.Element = et.SubElement(result, "global")
-        cell_results: et.Element = et.SubElement(result, "cell_results")
 
-        result.set("field", str(compute_settings.field))
-        result.set("path", str(compute_settings.file_path))
-        result.set("dynamic", json.dumps(compute_settings.dynamic))
-        result.set("scanIndex", str(compute_settings.scan_index))
-        result.set("timeIndex", str(compute_settings.time_index))
+         #converts concentration from nmol/(unit_length**3) to nmol/l
+
+        result: et.Element = et.Element("File")
+        global_results: et.Element = et.SubElement(result, "GlobalResults")
+
+
+        result.set("field_name", str(compute_settings.field))
+        result.set("dist_plot_path", str(compute_settings.file_path))
+
+
+        result.append(compute_settings.parameters)
+        result.set("scan_index", str(compute_settings.scan_index))
+        result.set("time_index", str(compute_settings.time_index))
+        result.set("time", str(compute_settings.time))
 
         mesh: fcs.Mesh = compute_settings.get_mesh()
-        boundary_markers: fcs.MeshFunction = compute_settings.get_boundary_markers()
         u: fcs.Function = compute_settings.get_u()
         mesh_volume = self.get_mesh_volume(mesh)
-        mesh_volume_element = et.SubElement(global_results,"mesh_volume")
+        mesh_volume_element = et.SubElement(global_results,"MeshVolume")
         mesh_volume_element.text = str(mesh_volume)
+
+        p = ParameterSet("dummy",[])
+        p.deserialize_from_xml(compute_settings.parameters)
 
 
         V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
+        V: fcs.FunctionSpace = fcs.FunctionSpace(mesh, "P", 1)
         grad: fcs.Function  = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * 1e8
-        gradient = gradient/mesh_volume
-        gradient_result: et.Element = et.SubElement(global_results, "gradient")
-        gradient_result.text = str(gradient)
 
-        concentration: float= fcs.assemble(u * fcs.dX) * 1e9
-        concentration = concentration/mesh_volume
-        concentration_result: et.Element = et.SubElement(global_results, "concentration")
-        concentration_result.text = str(concentration)
+        for comp in compute_settings.computations:
 
-        sd: float = np.std(np.array(u.vector()))
-        sd_result: et.Element = et.SubElement(global_results,"sd")
-        sd_result.text = str(sd)
+            result_element: et.Element = et.SubElement(global_results, comp.name)
+            result_element.text = str(comp(
+                u,
+                grad,
+                get_concentration_conversion(self.unit_length_exponent),
+                get_gradient_conversion(self.unit_length_exponent),
+                mesh_volume,
+                V=V,
+                V_vec = V)
+            )
+
 
         return et.tostring(result)
 
     # noinspection PyPep8Naming
-    def job(self, compute_settings_list: List[ComputeSettings], ext_cache: str, sub_domain_cache: str, output,thread_index: int, tmp_path: str):
+    def job(self, compute_settings_list: List[ComputeSettings], output, thread_index: int, tmp_path: str):
         try:
             comm = MPI.COMM_WORLD
             local = comm.Dup()
 
-            mesh = fcs.Mesh()
-            with fcs.XDMFFile(ext_cache + ".xdmf") as f:
-                f.read(mesh)
-            mesh = mesh
 
-            # V = fcs.FunctionSpace(mesh, "P", 1)
-            V = fcs.FunctionSpace(mesh, "P", 1)
 
-            boundary_markers = fcs.MeshFunction(
-                "size_t", mesh, mesh.topology().dim() - 1)
-            with fcs.HDF5File(local, sub_domain_cache, "r") as f:
-                f.read(boundary_markers, "/boundaries")
-            boundary_markers = boundary_markers
+            # boundary_markers = fcs.MeshFunction(
+            #     "size_t", mesh, mesh.topology().dim() - 1)
+            # with fcs.HDF5File(local, sub_domain_cache, "r") as f:
+            #     f.read(boundary_markers, "/boundaries")
+            # boundary_markers = boundary_markers
 
             result_list = []
             for n, compute_settings in enumerate(compute_settings_list):
 
+                compute_settings.computations = self.computations
+
+                mesh = fcs.Mesh()
+                with fcs.XDMFFile(compute_settings.path +"/"+ compute_settings.mesh_path) as f:
+                    f.read(mesh)
+                mesh = mesh
+
+                V = fcs.FunctionSpace(mesh, "P", 1)
+
                 u: fcs.Function  = fcs.Function(V)
-                with fcs.HDF5File(local, compute_settings.file_path, "r") as f:
+                with fcs.HDF5File(local, compute_settings.path +"/"+compute_settings.file_path, "r") as f:
                     f.read(u, "/" + compute_settings.field)
                 if not compute_settings:
                     continue
                 compute_settings.set_mesh(mesh)
                 compute_settings.set_V(V)
-                compute_settings.set_boundary_markers(boundary_markers)
                 compute_settings.set_u(u)
 
                 message(
@@ -220,44 +236,31 @@ class PostProcessor:
 
         # initializes state manager from scan log
         self.stateManager = st.StateManager(self.path)
-        self.stateManager.loadXML()
-        self.ext_cache = self.stateManager.elementTree.find(
-            "/cellDump/field/ext_cache").text
-        self.subdomaincache = self.stateManager.elementTree.find(
-            "/cellDump/field/subdomains").text
+        self.stateManager.load_xml()
+
         tmp_path = self.path+"tmp/"
         os.makedirs(tmp_path,exist_ok=True)
 
-        for s in self.stateManager.elementTree.findall("/scans/scan"):
-            self.pDicts.append(self.stateManager.getParametersFromElement(s))
-
-        for s in self.stateManager.elementTree.findall("/cellDump/field/cell"):
-            patch = int(s.find("patch").text)
-            center = json.loads(s.find("center").text)
-            self.cellDump.append({"patch": patch, "center": center})
-
         scatter_list: List[ComputeSettings] = []
 
-        #        for field in fields:
-        cell_data = self.stateManager.elementTree.findall(
-            "/cellDump/field[@name='il2']/cell")
-        cell_data = [{"patch": int(i.find("patch").text), "center": json.loads(
-            i.find("center").text)} for i in cell_data]
-        # loads timestep logs
-        for scan in self.stateManager.elementTree.findall("scans/scan"):
-            dynamic = scan.findall("parameters/dynamic/parameter")
-            dynamic = [{"name": i.get("name"), "value": i.text}
-                       for i in dynamic]
 
-            for step in scan.findall("timeSeries/field/step"):
+        # loads timestep logs
+        for scan_index,scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
+            parameters = scan_sample.find("Parameters")
+
+
+            for field_step in scan_sample.findall("TimeSeries/Step/Fields/Field"):
 
                 compute_settings: ComputeSettings = ComputeSettings()
-                compute_settings.file_path = step.find("distPlotPath").text
-                compute_settings.field = step.getparent().get("name")
-                compute_settings.cell_data = cell_data
-                compute_settings.dynamic = dynamic
-                compute_settings.scan_index = scan.get("i")
-                compute_settings.time_index = step.get("t")
+                compute_settings.path = self.path
+                compute_settings.file_path = field_step.get("dist_plot_path")
+                compute_settings.field = field_step.get("field_name")
+                compute_settings.mesh_path = field_step.get("mesh_path")
+
+                compute_settings.parameters = parameters
+                compute_settings.scan_index = scan_index
+                compute_settings.time_index = field_step.getparent().getparent().get("time_index")
+                compute_settings.time = field_step.getparent().getparent().get("time")
 
                 scatter_list.append(compute_settings)
 
@@ -268,7 +271,7 @@ class PostProcessor:
         partitioned_list = [scatter_list[x:x + size]
                            for x in range(0, len(scatter_list), size)]
         output = mp.Queue(threads)
-        jobs = [mp.Process(target=self.job, args=(i, self.ext_cache, self.subdomaincache, output, index, tmp_path)) for index, i in enumerate(partitioned_list)]
+        jobs = [mp.Process(target=self.job, args=(i, output, index, tmp_path)) for index, i in enumerate(partitioned_list)]
         for j in jobs:
             j.start()
         from time import time
@@ -292,7 +295,7 @@ class PostProcessor:
         file_list: List[str] = [output.get(True, 10) for j in jobs]
         for file in file_list:
             if not type(file) == str:
-                message("A Worker fininshed with Error {e}".format(e=file))
+                message("A Worker fininshed with Error: {e}".format(e=file))
                 file_list.remove(file)
 
         message("Collected results from {l} Processes".format(l=1 + len(file_list)))
@@ -307,24 +310,26 @@ class PostProcessor:
             for o in i:
                 flattend_list.append(et.XML(o[2:-1]))
         indexed_list = [
-            {"scanIndex": i.get("scanIndex"),
-             "timeIndex": i.get("timeIndex"),
+            {"scan_index": i.get("scan_index"),
+             "time_index": i.get("time_index"),
+             "time": i.get("time"),
              "entry": i}
             for i in flattend_list]
-        indexed_list = groupByKey(indexed_list, ["scanIndex"])
+        indexed_list = groupByKey(indexed_list, ["scan_index"])
         for i, e in enumerate(indexed_list):
-            indexed_list[i] = groupByKey(e, ["timeIndex"])
+            indexed_list[i] = groupByKey(e, ["time_index"])
 
-        post_process_result = et.Element("postProcess")
+        post_process_result = et.Element("PostProcess")
         tree = et.ElementTree(element=post_process_result)
         for s in indexed_list:
-            scan = et.SubElement(post_process_result, "scan")
+            scan = et.SubElement(post_process_result, "Scan")
             #            message(s[0])
-            scan.set("i", str(s[0][0]["scanIndex"]))
+            scan.set("i", str(s[0][0]["scan_index"]))
             for t in s:
                 for i in t:
-                    time = et.SubElement(scan, "timeStep")
-                    time.set("i", i["timeIndex"])
+                    time = et.SubElement(scan, "Step")
+                    time.set("i", i["time_index"])
+                    time.set("time",i["time"])
                     time.append(i["entry"])
         message("writing post process output to {p}".format(p=self.out_tree_path))
         tree.write(self.out_tree_path, pretty_print=True)
@@ -332,61 +337,85 @@ class PostProcessor:
     def get_global_dataframe(self) -> pd.DataFrame:
         message("collecting global dataframe from post_process.xml")
         in_tree = et.parse(self.out_tree_path)
-        # for scan in in_tree.findall("/scan"):
-            # time_steps = np.unique([int(i.get("i"))
-            #                         for i in scan.findall("./timeStep")
-            #                         ])
+
         result = []
         if self.cell_dataframe.empty:
             raise MyError.DataframeEmptyError("Post Processor Cell Dataframe")
 
-        for step in in_tree.findall("/scan"):
-            files = step.findall("./timeStep/file")
-            for file in files:
-                g_values = file.find("./global")
-                scan_index = int(file.get("scanIndex"))
-                timeIndex = float(file.get("timeIndex"))
-                field_name = file.get("field")
-                filter = lambda x: (x["t"] == timeIndex) & \
-                                   (x["scan_index"] == scan_index)
+        for scan in in_tree.findall("Scan"):
 
-                d = {
-                    "scanIndex": scan_index,
-                    "timeIndex": timeIndex,
-                    "field_name": field_name,
-                    "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)]["surf_c_{field}".format(field=field_name)].mean()
-                }
-                for p in json.loads(file.get("dynamic")):
-                    d[p["name"]] = float(p["value"])
-                for v in g_values.getchildren():
-                    d[v.tag] = float(v.text)
-                result.append(d)
+            for step in scan.findall("Step"):
+
+                for file in step.findall("File"):
+                    g_values = file.find("./GlobalResults")
+                    scan_index = int(file.get("scan_index"))
+                    time_index = int(file.get("time_index"))
+                    time = float(file.get("time"))
+                    field_name = file.get("field_name")
+                    filter = lambda x: (x["time_index"] == time_index) & \
+                                       (x["scan_index"] == scan_index)
+
+                    d = {
+                        "scan_index": scan_index,
+                        "time_index": time_index,
+                        "time": time,
+                        "field_name": field_name,
+                        "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)]["{field}_surf_c".format(field=field_name)].mean()
+                    }
+                    parameter_set = ParameterSet("dummy_set",[])
+                    parameter_set.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
+                    d.update(parameter_set.get_as_dictionary())
+
+
+                    for v in g_values:
+                        d.update({v.tag:float(v.text)})
+                    result.append(d)
 
         return pd.DataFrame(result)
+
+    def get_kde_estimators(self, n ,ts, time_index, type_names):
+
+        kernels = {}
+        message("computing kde for time series: {n} and timestep {t}".format(n=n, t=time_index))
+        for type_name in type_names:
+            inital_cells = ts.loc[(ts["time_index"] == time_index) & (ts["type_name"] == type_name)]
+            if inital_cells.shape[0] == 0:
+                break
+            elif inital_cells.shape[0] == 1:
+                data = np.array([inital_cells["x"].iloc[0], inital_cells["y"].iloc[0], inital_cells["z"].iloc[0]])
+                kernel = KDEpy.NaiveKDE("tri", bw=10e-2).fit(data)
+            else:
+                data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T
+                kernel = KDEpy.TreeKDE("tri", bw=10e-2).fit(data)
+
+            # kernel = KDEpy.TreeKDE(bw='ISJ').fit(data)
+
+            # grid_points = 100
+            # grid, points = kernel.evaluate(grid_points)
+            # x, y, z = np.unique(grid[:, 0]), np.unique(grid[:, 1]), np.unique(grid[:, 2])
+            # v = points.reshape(grid_points, grid_points, grid_points).T
+            #
+            # plt.title(type_name)
+            # plt.contour(x,y,v[:,:,0])
+            # sns.scatterplot(x="x",y="y",data=inital_cells)
+            # plt.show()
+
+            kernels[type_name] = kernel
+
+        return kernels
 
     def get_cell_dataframe(self, kde=False):
 
         self.stateManager = st.StateManager(self.path)
-        self.stateManager.loadXML()
+        self.stateManager.load_xml()
 
         result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame()
 
-        result["x"] = result["center"].apply(lambda x: x[0])
-        result["y"] = result["center"].apply(lambda x: x[1])
-        result["z"] = result["center"].apply(lambda x: x[2])
-        result = result.drop(columns=["center"])
-
         result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
 
-        for name in self.stateManager.get_field_names():
-            result["R_{f}".format(f=name)] = result["R_il2"].div(N_A ** -1 * 1e9)  # to mol/cell
-            result["surf_c_{f}".format(f=name)] = result["surf_c_{f}".format(f=name)].mul(1e9)  # to nM
-            result["surf_g_{f}".format(f=name)] = result["surf_g_{f}".format(f=name)].mul(1e8)  # to nM
-            result["q_{f}".format(f=name)] = result["q_{f}".format(f=name)].mul(N_A * 1e-9)  # to nM
-
-
-        result["t"] = result["t"].apply(lambda x: float(x))
-        result["scan_index"] = result["scan_index"].apply(lambda x: float(x))
+        result["time_index"] = result["time_index"].apply(lambda x: int(x))
+        result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
+        result["time"] = result["time"].apply(lambda x: float(x))
 
         """---------------------------"""
 
@@ -394,70 +423,73 @@ class PostProcessor:
             message("running kernel density estimation")
             r_grouped = result.groupby(["scan_index"], as_index=False)
             kde_result = pd.DataFrame()
-            for n, ts in r_grouped:
-                kernels = {}
-                message("computing kde for time series: {n}".format(n=n))
-                for type_name in result["type_name"].unique():
-                    inital_cells = ts.loc[(ts["t"] == 1) & (ts["type_name"] == type_name)]
-                    data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T
-                    kernel = KDEpy.TreeKDE("tri", bw=10e-2).fit(data)
-                    # kernel = KDEpy.TreeKDE(bw='ISJ').fit(data)
+            for scan_index, ts in r_grouped:
+                kernels = []
+                for time_index,step in ts.groupby(["time_index"]):
 
-                    # grid_points = 100
-                    # grid, points = kernel.evaluate(grid_points)
-                    # x, y, z = np.unique(grid[:, 0]), np.unique(grid[:, 1]), np.unique(grid[:, 2])
-                    # v = points.reshape(grid_points, grid_points, grid_points).T
-                    #
-                    # plt.title(type_name)
-                    # plt.contour(x,y,v[:,:,0])
-                    # sns.scatterplot(x="x",y="y",data=inital_cells)
-                    # plt.show()
+                    kde_time_index = time_index-1 if time_index > 0 else 0
+                    kernels.append(self.get_kde_estimators(scan_index,ts, kde_time_index, result["type_name"].unique()))
 
-                    kernels[type_name] = kernel
+                for time_index, step in ts.groupby(["time_index"]):
 
-                for type_name, kernel in kernels.items():
-                    positions = np.array([ts["x"], ts["y"], ts["z"]]).T
+                    for type_name, kernel in kernels[time_index].items():
+                        positions = np.array([step["x"], step["y"], step["z"]]).T
 
-                    scores = kernel.evaluate(positions).T
-                    scores =  pd.Series(scores)
-                    scores.index = ts.index
+                        scores = kernel.evaluate(positions).T
+                        scores =  pd.Series(scores)
+                        scores.index = step.index
 
-                    ts.insert(ts.shape[1],"{type_name}_score".format(type_name=type_name),scores)
-                kde_result = kde_result.append(ts)
-                result = self._normalize_cell_score(kde_result)
+                        step.insert(step.shape[1],"{type_name}_score".format(type_name=type_name),scores)
+
+                    for type_name, kernel in kernels[0].items():
+                        positions = np.array([step["x"], step["y"], step["z"]]).T
+
+                        scores = kernel.evaluate(positions).T
+                        scores =  pd.Series(scores)
+                        scores.index = step.index
+
+                        step.insert(step.shape[1],"{type_name}_score_init".format(type_name=type_name),scores)
+
+                    kde_result = kde_result.append(step)
+            result = self._normalize_cell_score(kde_result)
 
         return result.drop_duplicates()
 
     def _normalize_cell_score(self, x):
-        ids = x.loc[
-            (x["type_name"] != "Tn") &
-            (x["t"] == 1)
-            ]["id"].unique()
-        x = x.groupby(["t", "scan_index"], as_index=False)
+
+        x = x.groupby(["time_index", "scan_index"], as_index=False)
 
         result = pd.DataFrame()
         for group in x:
             i = group[0]
             group = group[1]
 
-            no_init = group.loc[~group["id"].isin(ids)]
-            # count = group.groupby(["type_name"],as_index=False).count()
-            # count = count.drop(count.columns.drop(["type_name","n"]),axis=1)
+            # ids = x.loc[
+            #     (x["type_name"] != group["type_name"][0]) &
+            #     (x["time_index"] == 0)
+            #     ]["id"].unique()
+
+            no_init = group#group.loc[~group["id"].isin(ids)]
 
             for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
                 group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
+
+            for old in pd.Series(group.columns).str.extract("(.*_score_init)").dropna()[0].unique():
+                new = "{old}_norm".format(old=old)
+                group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
+
             result = result.append(group)
 
         return result
 
     def get_stats(self):
 
-        temp_cell_df = self.cell_dataframe.drop(columns = ["x","y","z","id"])
-        grouped = temp_cell_df.groupby(["type_name", "t", "scan_index"], as_index=True)
-
+        # temp_cell_df = self.cell_dataframe.drop(columns = ["x","y","z","id"])
+        grouped = self.cell_dataframe.groupby(["type_name", "time_index", "scan_index"], as_index=False)
 
         des = grouped.describe(include = 'all')
+
         # des = des.reset_index()
 
         return des
@@ -465,7 +497,49 @@ class PostProcessor:
     def make_dataframes(self,kde=False):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde)
         self.global_dataframe = self.get_global_dataframe()
-        self.cell_stats = self.get_stats()
+        # self.cell_stats = self.get_stats()
+
+def get_concentration_conversion(unit_length_exponent: int):
+
+    assert isinstance(unit_length_exponent,int)
+    return 10**(-1 * (unit_length_exponent * 3 + 3))
+
+def get_gradient_conversion(unit_length_exponent: int):
+
+    assert isinstance(unit_length_exponent, int)
+    exp = (-1 * (unit_length_exponent * 3 + 3)) -  1
+    exp -= (6 + unit_length_exponent)# to nM/um
+
+    return 10**(exp)
+
+class SD:
+
+    def __init__(self):
+        self.name = "SD"
+
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+
+        sd: float = np.std(np.array(u.vector())) * c_conv
+
+        return sd
+
+class c:
+
+    def __init__(self):
+        self.name = "Concentration"
+
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
 
 
+        concentration: float = (fcs.assemble(u * fcs.dX)/ mesh_volume)*c_conv
+        return  concentration
 
+class grad:
+
+    def __init__(self):
+        self.name = "Gradient"
+
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+
+        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * grad_conv / mesh_volume
+        return gradient

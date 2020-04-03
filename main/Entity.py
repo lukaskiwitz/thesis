@@ -6,10 +6,10 @@ Created on Fri Jun  7 12:22:13 2019
 @author: Lukas Kiwitz
 """
 
-from copy import deepcopy
 from typing import List, Dict
 
 import fenics as fcs
+import numpy as np
 
 import BC as bc
 import MySubDomain as SD
@@ -17,6 +17,7 @@ from BC import BC, OuterBC
 from EntityType import CellType
 from InternalSolver import InternalSolver
 from MySubDomain import CellSubDomain
+from ParameterSet import ParameterSet, ParameterCollection, MiscParameter
 
 
 class Entity:
@@ -47,7 +48,6 @@ class Entity:
         self.fieldQuantities: List[str] = []
         self.internal_solver: InternalSolver = None
         self.bc_list = []
-        self.p: Dict = {}
         self.id: int = 0
         self.change_type = ""
 
@@ -78,7 +78,7 @@ class Entity:
             if i.field_quantity == field_quantity:
                 return i
 
-    def update_bcs(self) -> None:
+    def update_bcs(self, p = None) -> None:
 
         """
 
@@ -86,13 +86,19 @@ class Entity:
         :return:
 
         """
+        if p or hasattr(self,"p"):
+            self.fieldQuantities = []
+            for i in self.bc_list:
+                fq = i.field_quantity
+                self.fieldQuantities.append(fq)
 
-        self.fieldQuantities = []
-        for i in self.bc_list:
-            fq = i.field_quantity
-            self.fieldQuantities.append(fq)
-            i.p = self.p
-
+                if p:
+                    bc.p = p
+                else:
+                    if hasattr(i, "p"):
+                        i.p.update(self.p, override = True)
+                    else:
+                        i.p = self.p
 
     def step(self, t: float, dt: float) -> None:
 
@@ -104,9 +110,6 @@ class Entity:
         """
         if not self.internal_solver == None:
             self.internal_solver.step(t, dt, self.p, entity=self)
-
-    # def log(self):
-    #     return {}
 
     def getState(self, key="q") -> float:
 
@@ -148,12 +151,15 @@ class Cell(Entity):
         :param bc_list:
         """
         super().__init__()
-
+        self.p = ParameterSet("Cell_dummy", [])
         self.center: List[float] = center
         self.radius = radius
         self.bc_list: List[BC] = bc_list
 
+    def get_surface_area(self):
 
+        rho = self.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+        return (4 * np.pi * rho ** 2)
 
     def getSubDomain(self) -> CellSubDomain:
         """
@@ -171,7 +177,8 @@ class Cell(Entity):
         return fcs.CompiledSubDomain(
             "on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
             c0=self.center[0], c1=self.center[1], c2=self.center[2], r=self.radius)
-    def set_cell_type(self, cell_type: CellType) -> None:
+
+    def set_cell_type(self, cell_type: CellType, internal_solver: InternalSolver) -> None:
         """
 
         sets this cells type from template object
@@ -182,35 +189,22 @@ class Cell(Entity):
         """
         self.type_name = cell_type.name
         if cell_type.internal_solver:
-            self.set_internal_solver(cell_type.internal_solver())
+            self.set_internal_solver(internal_solver())
         else:
             self.set_internal_solver(None)
-        # self.p = deepcopy(p) if (not p == None) else deepcopy(cell_type.p)
-        self.p.update(deepcopy(cell_type.p))
-        self.p["type_name"] = self.type_name
-        self.p["center"] = self.center
 
-    def change_entity_type (self,type_name: str):
+        miscs = ParameterCollection("misc", [
+            MiscParameter("type_name", self.type_name),
+            MiscParameter("center", self.center)
+        ])
+        self.p.update(cell_type.p,override=True)
+        self.p.update(ParameterSet("dummy", [miscs]),override=True)
+
+    def change_entity_type(self, type_name: str):
         """
         schedules type change for next timestep
         """
         self.change_type = type_name
-
-    # def log(self):
-    #     p_out = self.p
-    #     for i in p_out.keys():
-    #         if "numpy.float64" == str(type(p_out[i])):
-    #             p_out[i] = float(p_out[i])
-    #         if "ndarray" in str(type(p_out[i])):
-    #             p_out[i] = list(p_out[i])
-    #     di = {"type": str(type(self)),
-    #           "id": self.id,
-    #           "name": self.name,
-    #           "center": self.center,
-    #           "radius": self.radius,
-    #           "p": self.p
-    #           }
-    #     return di
 
 
 class DomainEntity(Entity):
@@ -221,11 +215,7 @@ class DomainEntity(Entity):
     """
 
     def __init__(self, **kwargs):
-        super().__init__()
-
-    # def log(self):
-    #     return {"type": str(type(self))}
-
+        pass
 
 class DomainSphere(DomainEntity):
     """
@@ -286,21 +276,20 @@ class DomainSphere(DomainEntity):
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, p, bc_list):
+    def __init__(self, p1, p2, bc_list, **kwargs):
         self.p1 = p1
         self.p2 = p2
-        self.p = p
+        # self.p = p
 
         self.bc_list = bc_list
         self.subdomainDict = self.__compileSubdomains()
-        super().__init__()
+        super().__init__(**kwargs)
 
     def __compileSubdomains(self):
         subdomainDict = {}
         for i, o in enumerate(self.bc_list):
             if isinstance(o, bc.OuterBC):
                 e = CompiledCube(o.expr, o, self)
-                e.p = self.p
                 e.field_quantity = o.field_quantity
                 if o.expr not in subdomainDict.keys():
                     subdomainDict[o.expr] = [e]
@@ -321,18 +310,39 @@ class DomainCube(DomainEntity):
 
     def getSubDomainGeometry(self):
         return SD.OuterCube(self.p1, self.p2)
-    def update_bcs(self) -> None:
-        for k,v in self.subdomainDict.items():
+
+    def update_bcs(self, p = None) -> None:
+
+        if p or hasattr(self, "p"):
+            for k, v in self.subdomainDict.items():
+                for i in v:
+                    if p:
+                        if hasattr(i.bc, "p"):
+                            i.bc.p.update(p, override = False)
+                        else:
+                            i.bc.p = p
+
+    def apply_sample(self, outer_domain_dict) -> None:
+
+        for k, v in self.subdomainDict.items():
             for i in v:
-                i.bc.p.update(self.p)
+                name = i.bc.name
+                if name in outer_domain_dict.keys():
+
+                    p = outer_domain_dict[name]
+
+                    if hasattr(i.bc, "p"):
+                        i.bc.p.update(p, override = True)
+                    else:
+                        i.bc.p = p
 
 
-class CompiledCube(Entity):
+class CompiledCube(DomainCube, Entity):
 
     def __init__(self, expr, bc, parent):
         self.bc = bc
         self.parent = parent
-        self.p = self.parent.p
+        # self.p = self.bc.p
         self.expr = expr
 
     def getSubDomain(self):
@@ -347,11 +357,18 @@ class CompiledCube(Entity):
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
-        self.bc.p = self.p
+        # self.bc.p = self.p
         return self.bc
 
+    def get_surface_area(self):
+        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        if p:
+            return p.get_in_sim_unit()
+        else:
+            return None
 
-class CompiledSphere(Entity):
+
+class CompiledSphere(DomainSphere, Entity):
 
     def __init__(self, expr, bc, p):
         self.bc = bc

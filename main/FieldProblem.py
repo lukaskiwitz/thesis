@@ -9,11 +9,12 @@ Created on Fri Jun  7 12:48:49 2019
 import os
 
 import fenics as fcs
-import numpy as np
 
 import MeshGenerator as mshGen
 from Entity import Entity, DomainEntity
 from MySolver import MySolver
+from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
+from my_debug import message
 
 
 class FieldProblem:
@@ -48,17 +49,20 @@ class FieldProblem:
 
 
     """
+
     def __init__(self) -> None:
 
+        self.mesh_path = ""
+        self.path_prefix = ""
         self.field_name = ""
-        self.res = 32
         self.mesh_cached = ""
         self.registered_entities = []
         self.outer_domain = None
         self.solver = None
         self.field_quantity = ""
         self.ext_cache = ""
-        self.p = {}
+        self.p: ParameterSet = ParameterSet("field_dummy", [])
+        # self.unit_length_exponent: int = 1
 
     def add_entity(self, entity: Entity) -> None:
         """
@@ -66,6 +70,22 @@ class FieldProblem:
 
         """
         self.registered_entities.append({"entity": entity, "patch": 0})
+
+    def get_mesh_path(self):
+
+        result = ""
+        file = self.file_name.format(field = self.field_name)+".xdmf"
+        if not self.ext_cache == "":
+            result = self.ext_cache
+        else:
+            result = self.path_prefix
+
+        # message(self.path_prefix)
+        # message(self.mesh_cached)
+
+
+
+        return result +file
 
     def remove_entity(self, entity) -> None:
         """
@@ -95,53 +115,61 @@ class FieldProblem:
         """
         self.outer_domain = domain
 
-    # def log(self):
-    #     di = {"type": str(type(self)),
-    #           "field_name": self.field_name,
-    #           "res": self.res,
-    #           "meshCache": self.mesh_cached,
-    #           "registered_entities": [i["entity"].id for i in self.registered_entities],
-    #           "outer_domain": self.outer_domain.log(),
-    #           "solver": self.solver.log(),
-    #           "field_quantity": self.field_quantity,
-    #           "p": self.p
-    #           }
-    #     return di
 
-    def generate_mesh(self, path_prefix: str, **kwargs) -> None:
+    def generate_mesh(self, path = "", path_prefix = "",file_name = "mesh_{field}", **kwargs) -> None:
         """
         generates mesh
 
         :param path_prefix: path to store mesh data
 
         """
-        mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain,**kwargs)
+        mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
-        res = self.res
-        mesh_path = self.ext_cache if not (self.ext_cache == "") else path_prefix
-        if not (self.ext_cache == ""):
-            os.makedirs(self.ext_cache, exist_ok=True)
+        mesh_path = path + self.ext_cache if not (self.ext_cache == "") else path + path_prefix
+        mesh_path += "/"
+        self.mesh_path = mesh_path
+        self.path_prefix = path_prefix
+        self.file_name = file_name
+
+        os.makedirs(mesh_path, exist_ok=True)
+
         if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
 
-            os.makedirs(path_prefix, exist_ok=True)
-            mesh, boundary_markers = mesh_gen.meshGen(res, load=False,
-                                                      path=mesh_path + "meshCache_{field}".format(field=self.field_name),
-                                                      **kwargs)
-            self.mesh_cached = "meshCache_{field}".format(field=self.field_name)
+
+            mesh, boundary_markers = mesh_gen.meshGen(self.p,
+                                                      load=False,
+                                                      path=mesh_path,
+                                                      file_name = file_name.format(field=self.field_name))
+            self.mesh_cached = file_name.format(field=self.field_name)
         else:
-            mesh, boundary_markers = mesh_gen.meshGen(res, path=mesh_path, load=True, **kwargs)
+            mesh, boundary_markers = mesh_gen.meshGen(self.p,
+                                                      load=True,
+                                                      path=mesh_path,
+                                                      file_name=file_name.format(field=self.field_name))
         self.solver.mesh = mesh
         self.solver.boundary_markers = boundary_markers
         self.solver.p = self.p
 
-    def update_bcs(self) -> None:
+    def apply_sample(self, sample):
+
+        self.update_bcs(sample.p)
+
+        self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
+
+    def update_parameter_set(self, p):
+        self.p.update(p)
+        self.solver.p.update(p)
+        self.outer_domain.update_bcs(p)
+
+
+    def update_bcs(self, p = None) -> None:
         """
         updates boundary conditions for all child objects
 
         """
         self.solver.field_quantity = self.field_quantity
-        self.outer_domain.update_bcs()
+        self.outer_domain.update_bcs(p = p)
         for i in self.registered_entities:
             i["entity"].update_bcs()
         subdomains = self.outer_domain.getSubDomains(field_quantity=self.field_quantity)
@@ -149,17 +177,12 @@ class FieldProblem:
             subdomains.append(e)
         self.solver.subdomains = subdomains
 
-    def update_solver(self) -> None:
+    def update_solver(self, p = None) -> None:
         """
         updates solver
         """
-        self.update_bcs()
+        self.update_bcs(p = p)
         self.solver.compileSolver()
-
-        self.solver.solver.parameters["linear_solver"] = "gmres"
-        self.solver.solver.parameters["preconditioner"] = "hypre_amg"
-        self.solver.solver.parameters["krylov_solver"]["absolute_tolerance"] = 1e-35
-        self.solver.solver.parameters["krylov_solver"]["relative_tolerance"] = 1e-5
 
 
     def get_boundary_concentrations(self) -> None:
@@ -174,10 +197,26 @@ class FieldProblem:
         ds = fcs.Measure("ds", domain=self.solver.mesh, subdomain_data=self.solver.boundary_markers)
         u = self.get_field()
 
+        from PostProcess import get_concentration_conversion
+        f = get_concentration_conversion(self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit())
+
         for i in self.registered_entities:
-            i["entity"].p["surf_c_{f}".format(f=self.field_name)] = fcs.assemble(
+            value = fcs.assemble(
                 u * ds(i["patch"])
-            )/(4 * np.pi * i["entity"].p["rho"] ** 2)
+            ) / (i["entity"].get_surface_area())
+
+
+
+            physical = PhysicalParameter("surf_c", 0, to_sim=1/f)
+            physical.set_in_sim_unit(value)
+
+
+
+            i["entity"].p.update(
+                ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
+                    physical
+                ], field_quantity=self.field_quantity)])
+            ,override = True)
 
     def get_boundary_gradients(self) -> None:
 
@@ -191,19 +230,35 @@ class FieldProblem:
         ds = fcs.Measure("ds", domain=self.solver.mesh, subdomain_data=self.solver.boundary_markers)
         u = self.get_field()
         n = fcs.FacetNormal(self.solver.mesh)
+        from PostProcess import get_gradient_conversion
+        f = get_gradient_conversion(self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit())
+
         for i in self.registered_entities:
-            i["entity"].p["surf_g_{f}".format(f=self.field_name)] = fcs.assemble(
+            value = fcs.assemble(
                 fcs.dot(fcs.grad(u), n) * ds(i["patch"])
-            )/(4 * np.pi * i["entity"].p["rho"] ** 2)
+            ) / (i["entity"].get_surface_area())
+
+            physical = PhysicalParameter("surf_g", 0, to_sim=1/f)
+            physical.set_in_sim_unit(value)
+
+            i["entity"].p.update(
+                ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
+                    physical
+                ], field_quantity=self.field_quantity)]),
+            override = True)
 
     # noinspection PyPep8Naming
-    def step(self, dT: float) -> None:
+    def step(self, dt: float) -> None:
         """
         runs timestep
 
         :param dT: delta t for this timestep
         """
-        return self.solver.solve()
+
+        self.solver.solve()
+        self.get_boundary_concentrations()
+        self.get_boundary_gradients()
+
 
     def get_field(self) -> fcs.Function:
         return self.solver.u

@@ -19,7 +19,7 @@ Contents:
 
 .. automodule:: MySolver
 .. autoclass:: MySolver
-.. autoclass:: PoissonSolver
+.. autoclass:: MyLinearSoler
 
 
 .. automodule:: BC

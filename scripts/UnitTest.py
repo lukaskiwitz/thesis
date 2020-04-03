@@ -81,7 +81,7 @@ def test1(p_global):
             ])
     
     """IL-2"""
-#    solver_il2 = MySolver.PoissonSolver()
+#    solver_il2 = MySolver.MyLinearSoler()
 #    
 #    fieldProblem_il2 = fp.FieldProblem()
 #    fieldProblem_il2.field_name = "il2"
@@ -160,7 +160,7 @@ def test3(p_global):
             ])
     
     """IL-2"""
-    solver_il2 = MySolver.PoissonSolver()
+    solver_il2 = MySolver.MyLinearSoler()
     
     fieldProblem_il2 = fp.FieldProblem()
     fieldProblem_il2.field_name = "il2"
@@ -237,7 +237,7 @@ def test2(p_global):
             ])
     
     """IL-2"""
-#    solver_il2 = MySolver.PoissonSolver()
+#    solver_il2 = MySolver.MyLinearSoler()
 #    
 #    fieldProblem_il2 = fp.FieldProblem()
 #    fieldProblem_il2.field_name = "il2"

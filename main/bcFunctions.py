@@ -8,69 +8,39 @@ Created on Mon Jun 10 19:42:20 2019
 
 import fenics as fcs
 import numpy as np
-def cellBC_il2(u,p):
+from my_debug import message
+def cellBC(u,p, field_quantity, area = 1):
     """
     Defines the flux boundary conditions for the cell.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
-    R = p["R_il2"]
-    q = p["q_il2"]
-#    q = p["q"]
-    k_on = p["k_on"]
-    D = fcs.Constant(p["D"])
+
+    R = p.get_physical_parameter_by_field_quantity("R",field_quantity).get_in_sim_unit()
+    q = p.get_physical_parameter_by_field_quantity("q",field_quantity).get_in_sim_unit()
+    k_on = p.get_physical_parameter_by_field_quantity("k_on",field_quantity).get_in_sim_unit()
+
+    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D",field_quantity).get_in_sim_unit())
+
     R = fcs.Constant(R)
     q = fcs.Constant(q)
     k_on = fcs.Constant(k_on)
-    a = fcs.Constant(4*np.pi*p["rho"]**2)
+    a = fcs.Constant(area)
     
     
     return (q-u*k_on*R)/(D*a)
 
-def cellBC_il6(u,p):
-    """
-    Defines the flux boundary conditions for the cell.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
-    """
-    R = p["R_il6"]
-    q = p["q_il6"]
-#    q = p["q"]
-    k_on = p["k_on"]
-    D = fcs.Constant(p["D"])
-    R = fcs.Constant(R)
-    q = fcs.Constant(q)
-    k_on = fcs.Constant(k_on)
-    a = fcs.Constant(4*np.pi*p["rho"]**2)
-    
-    return (q-u*k_on*R)/(D*a)
-
-
-def cellBC_infg(u, p):
-    """
-    Defines the flux boundary conditions for the cell.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
-    """
-    R = p["R_infg"]
-    q = p["q_infg"]
-    k_on = p["k_on"]
-    D = fcs.Constant(p["D"])
-    R = fcs.Constant(R)
-    q = fcs.Constant(q)
-    k_on = fcs.Constant(k_on)
-    a = fcs.Constant(4 * np.pi * p["rho"] ** 2)
-
-    return (q - u * k_on * R) / (D * a)
-
-def outerBC_il2(u,p):
+def outerBC_il2(u,p , area = 1):
     """
     Defines the flux boundary condition on the outer boundary.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
     """
 
-    k_on = fcs.Constant(p["k_on"])
-    D = fcs.Constant(p["D"])
-    R = fcs.Constant(p["R_il2_b"])
-    q = fcs.Constant(p["q_il2_b"])
-    a  = fcs.Constant(4*np.pi*p["rho"]**2)
+    R = p.get_physical_parameter("R", "IL-2").get_in_sim_unit()
+    q = p.get_physical_parameter("q", "IL-2").get_in_sim_unit()
+    k_on = p.get_physical_parameter("k_on", "IL-2").get_in_sim_unit()
+    D = fcs.Constant(p.get_physical_parameter("D", "IL-2").get_in_sim_unit())
+    R = fcs.Constant(R)
+    q = fcs.Constant(q)
+    k_on = fcs.Constant(k_on)
+    a = fcs.Constant(area)
     
     return (q-u*k_on*R)/(D*a)
 
@@ -84,20 +54,4 @@ def outerBC_il2_unitTest(u,p):
     a  = fcs.Constant(4*np.pi*p["radius"]**2)
     
     return (q-u*k_on*R)/(D*a)
-
-def outerBC_il6(u,p):
-    """
-    Defines the flux boundary condition on the outer boundary.
-    Can be passed to the solver in the "Rec" field of the "bcDict" dictionary
-    """
-    k_on = fcs.Constant(p["k_on"])
-    D = fcs.Constant(p["D"])
-
-    R = fcs.Constant(p["R_il6_b"])
-    q = fcs.Constant(p["q_il6_b"])
-    a = fcs.Constant(4*np.pi*p["rho"]**2)
-    
-    
-    return (q-u*k_on*R)/(D*a)
-
     
