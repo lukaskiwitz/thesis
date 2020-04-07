@@ -188,7 +188,12 @@ class StateManager:
                     parameter_set = ParameterSet("dummy",[])
                     parameter_set.deserialize_from_xml(cell.find("ParameterSet"))
 
-                    p = parameter_set.get_as_dictionary()
+                    p_temp = parameter_set.get_as_dictionary()
+                    p = {}
+                    import numbers
+                    for k,v in p_temp.items():
+                        if  (isinstance(v,str) or isinstance(v,numbers.Number)):
+                           p[k] = v
 
                     p["time_index"] = time_index
                     p["time"] = time
