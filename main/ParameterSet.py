@@ -228,6 +228,11 @@ class ParameterCollection:
             p.deserialize_from_xml(physical)
             self.parameters.append(p)
 
+        for misc in element.findall("MiscParameter"):
+            p = MiscParameter("", 0)
+            p.deserialize_from_xml(misc)
+            self.parameters.append(p)
+
 
 class Parameter:
 
