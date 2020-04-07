@@ -28,7 +28,14 @@ def outputParse(v):
     if type(v) == np.ndarray:
         return json.dumps(v.tolist())
     else:
-        return json.dumps(v)
+        result = "null"
+
+        try:
+            result = json.dumps(v)
+        except Exception as e:
+            message("Could not json parse value; {e}".format(e = e))
+
+        return result
 
 
 class StateManager:
@@ -58,7 +65,10 @@ class StateManager:
             return None
         f = self.path+"log.scan"
         message("writing element tree to {file}".format(file=f))
-        self.elementTree.write(f, pretty_print=True)
+        try:
+            self.elementTree.write(f, pretty_print=True)
+        except Exception as e:
+            message("Could not write element try to file: {e}".format(e =e))
 
     def output_parameter_dict(self,p,root_name):
         root = ET.Element(root_name)
