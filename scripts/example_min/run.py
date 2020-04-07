@@ -1,5 +1,6 @@
 import getpass
 import random
+import sys
 
 import numpy as np
 
@@ -19,7 +20,7 @@ class RuleBasedSolver(InternalSolver):
     name = "RuleBasedSolver"
 
     def __init__(self):
-        self.il2_threshold = 0.0048
+        self.il2_threshold = 0.06
 
     def step(self, t, dt, p, entity=None):
 
@@ -31,8 +32,11 @@ class RuleBasedSolver(InternalSolver):
 
         if entity.type_name == "default":
             il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
-            if np.random.uniform(0,1) > 0.9 and il2 > self.il2_threshold:
-                entity.change_type = "sec"
+            if np.random.uniform(0, 1) > 0.5:
+                if il2 > self.il2_threshold:
+                    entity.change_type = "sec"
+                else:
+                    entity.change_type = "abs"
         return p
 
 
@@ -75,31 +79,34 @@ The variable aspects are passed as list "cytokines, cell_types, geometry and num
 These are imported as modules and can be modified in parameters.py """
 from setup import setup
 from parameters import cytokines, cell_types_dict, geometry, numeric
+
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
 
 """Imports the parameter Templates"""
-from parameters import R, q, D
+from parameters import R, q, D, kd
 
 """Sets up Scannable parameters from parameters templates"""
 R = ScannablePhysicalParameter(R(1000), lambda x, v: x * v)
 q = ScannablePhysicalParameter(q(1), lambda x, v: x * v)
 D = ScannablePhysicalParameter(D(10), lambda x, v: x * v)
-kd = ScannablePhysicalParameter(D(0.1), lambda x, v: x * v)
+kd = ScannablePhysicalParameter(kd(0.1), lambda x, v: x * v)
+
+f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 """Retrieves and entity type from sim container for scanning"""
 default = sc.get_entity_type_by_name("default")
 
-for v in [1]:#np.logspace(-1,1,3):
-
+for v in np.linspace(0.05, 0.3, 4):
     """Scans over parameters that are associated with a field"""
     sim_parameters = [
-        ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
-        # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
+        # ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
+        # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
+        ParameterCollection("fractions", [f(v)]),
     ]
 
     """Scans over parameters that are associated with an entity_type"""
     entity_types = [
-        (default.get_updated([ParameterCollection("IL-2",[R(v)])])),
+        # (default.get_updated([ParameterCollection("IL-2",[R(v)])])),
         # (default.get_updated([ParameterCollection("IL-2", [q(v)])]))
     ]
     """Scans over parameters that are associated with the outer domain
@@ -127,7 +134,7 @@ stMan.sim_container = sc
 stMan.scan_container = scan_container
 
 """sets up time range"""
-stMan.T = np.arange(0, 25, 1)
+stMan.T = np.arange(0, 10, 1)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
@@ -140,4 +147,9 @@ def pre_scan(state_manager, scan_index):
 stMan.pre_scan = pre_scan
 
 """Runs the ParameterScan"""
-stMan.run()
+if len(sys.argv) > 1:
+    if not sys.argv[1] == "mesh":
+        stMan.run()
+else:
+
+    stMan.run()

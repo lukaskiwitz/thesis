@@ -6,7 +6,7 @@ from ParameterSet import PhysicalParameter, PhysicalParameterTemplate
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
 R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
 
-k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e9 / 60 ** 2, is_global=True))
+k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
 q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
 D = PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True))
 kd = PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True))
@@ -29,10 +29,15 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 cell_types_dict = [
     {"name": "default",
      "fraction": 1,
-     "il2": [4000, 0],  # [Receptor number per cell, secretion in molecules/s]
+     "il2": [500, 1],  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
+     "fraction": 0.1,
+     "il2": [100, 10],
+     "internal_solver": "RuleBasedSolver"
+     },
+    {"name": "abs",
      "fraction": 0.1,
      "il2": [4000, 1],
      "internal_solver": "RuleBasedSolver"
@@ -58,7 +63,7 @@ numeric = {
     "preconditioner": "hypre_amg",
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,
-    "min_char_length": 0.1,
-    "max_char_length": 3,
-    "unit_length_exponent": -6
+    "min_char_length": 0.1,  # mesh
+    "max_char_length": 3,  # mesh
+    "unit_length_exponent": -6  # for concentration conversion
 }

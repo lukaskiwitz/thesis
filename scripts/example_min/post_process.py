@@ -1,18 +1,20 @@
 import getpass
-from PostProcess import PostProcessor
 import sys
+
 import fenics as fcs
 import numpy as np
 
+from PostProcess import PostProcessor
+
+
 class my_post_process:
     """Defines a custom computation"""
-    def __init__(self):
 
-        """this name will appear output dataframe"""
+    def __init__(self):
+        """this name will appear in output dataframe"""
         self.name = "maxGradient"
 
-
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, V = None, V_vec = None) -> float:
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, V=None, V_vec=None) -> float:
 
         """__call__ must have this call signature.
         returns the maximum gradient
@@ -40,7 +42,7 @@ pp.unit_length_exponent = -6
 """appends a custom calculation.
 default computations are defined in PostProcess.py"""
 
-pp.computations.append(my_post_process())
+# pp.computations.append(my_post_process())
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
 pp.write_post_process_xml(threads)
