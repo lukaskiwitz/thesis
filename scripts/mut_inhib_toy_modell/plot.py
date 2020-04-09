@@ -7,6 +7,8 @@ import pandas as pd
 import seaborn as sns
 
 
+# matplotlib.use('TKAgg')
+
 def plot_7(fig, ax, cell_df, t=None, legend="full"):
     m = 0.99
     cell_df = reduce_df(cell_df, "scan_index")
@@ -166,7 +168,7 @@ def reduce_df(df, index_name):
 
 
 user = getpass.getuser()
-path = "/extra/{u}/example_min_scan/".format(u=user)
+path = "/extra/{u}/mut_inhib_toy_model/".format(u=user)
 IMGPATH = path
 
 os.makedirs(IMGPATH, exist_ok=True)
@@ -260,12 +262,12 @@ plt.savefig(IMGPATH + "score_plot.pdf")
 plt.show()
 
 l = cell_df["scan_index"].unique()
-rows = int(np.ceil(len(l) / 2))
-fig, ax = plt.subplots(rows, 2, figsize=(15, rows * 4), sharey=True, sharex=True)
+rows = int(np.ceil(len(l) / 4))
+fig, ax = plt.subplots(rows, 4, figsize=(15, rows * 4), sharey=True, sharex=True)
 ax = ax.flatten()
 
 for i, v in enumerate(l):
-    ax[i].set_title(str(v))
+    ax[i].set_title("scan_index: {v}".format(v=v))
     legend = "brief" if i == 0 else False
     sns.lineplot(ax=ax[i], x="time", y="IL-2_surf_c", data=cell_df.loc[cell_df["scan_index"] == v], hue="type_name",
                  units="id", estimator=None, linewidth=0.5, legend=legend, palette=color_dict)

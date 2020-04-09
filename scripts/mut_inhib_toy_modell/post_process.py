@@ -33,7 +33,7 @@ else:
 setting filepath to look for sim results. This is setup so that it works on the itb computers.
 """
 user = getpass.getuser()
-path = "/extra/{u}/example_base/".format(u=user)
+path = "/extra/{u}/mut_inhib_toy_model/".format(u=user)
 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6

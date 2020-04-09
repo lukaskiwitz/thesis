@@ -3,7 +3,6 @@ import random
 import sys
 
 import numpy as np
-from parameters import D
 from parameters import cytokines, cell_types_dict, geometry, numeric
 from setup import setup
 
@@ -18,14 +17,16 @@ class RuleBasedSolver(InternalSolver):
     name = "RuleBasedSolver"
 
     def __init__(self):
-        self.il2_threshold = 0.06
+        pass
 
     def step(self, t, dt, p, entity=None):
 
         if entity.type_name == "default":
             il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
+            il2_t = p.get_misc_parameter("threshold", "IL-2").get_in_post_unit()
+
             if np.random.uniform(0, 1) > 0.9:
-                if il2 > self.il2_threshold:
+                if il2 > il2_t:
                     entity.change_type = "sec"
                 else:
                     entity.change_type = "abs"
@@ -53,8 +54,8 @@ def updateState(sc, t):
 """Setup/Simulation"""
 
 user = getpass.getuser()
-path = "/extra/{u}/example_base/".format(u=user)
-ext_cache = "../example_min_ext_cache/"
+path = "/extra/{u}/mut_inhib_toy_model/".format(u=user)
+ext_cache = "../mut_inhib_toy_model_ext_cache/"
 
 scan_container = ScanContainer()
 
@@ -64,20 +65,19 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 # q = ScannablePhysicalParameter(q(1), lambda x, v: x * v)
 # D = ScannablePhysicalParameter(D(10), lambda x, v: x * v)
 # kd = ScannablePhysicalParameter(kd(0.1), lambda x, v: x * v)
-
+th = ScannablePhysicalParameter(MiscParameter("threshold", 0.06), lambda x, v: x * v)
 f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 default = sc.get_entity_type_by_name("default")
 
-for v in np.linspace(0.05, 0.25, 10):
+for v in np.linspace(0.5, 1.5, 10):
     sim_parameters = [
-        ParameterCollection("IL-2", [D(100)], field_quantity="il2"),
-        # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
-        ParameterCollection("fractions", [f(v)]),
+        # ParameterCollection("IL-2", [D(100)], field_quantity="il2"),
+        # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
     ]
 
     entity_types = [
-        # (default.get_updated([ParameterCollection("IL-2",[R(v)])])),
+        (default.get_updated([ParameterCollection("IL-2", [th(v)])])),
         # (default.get_updated([ParameterCollection("IL-2", [q(v)])]))
     ]
 
