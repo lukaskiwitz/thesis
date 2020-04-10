@@ -7,25 +7,23 @@ Created on Fri Jun  7 12:21:51 2019
 """
 
 import os
-from copy import deepcopy
+import time
 from typing import Dict
-import lxml.etree as et
 
 #
 import fenics as fcs
+import lxml.etree as et
 
 from Entity import Entity
 from EntityType import CellType, EntityType
 from FieldProblem import FieldProblem
 from InternalSolver import InternalSolver
-from my_debug import message, total_time, debug
-from SimComponent import SimComponent
 from ParameterSet import ParameterSet
-import time
-from MyError import InternalSolverNotFound, EntityTypeNotFound
+from SimComponent import SimComponent
+from my_debug import message, total_time, debug
 
 
-class SimContainer (SimComponent):
+class SimContainer(SimComponent):
     """
 
     Sim container
@@ -152,13 +150,11 @@ class SimContainer (SimComponent):
 
         raise NotImplementedError()
 
-    def run(self,T):
-
-        dt = 1
+    def run(self, T, dt):
 
         for time_index, t in enumerate(T):
-            self._pre_step(self, time_index,t,T) # internal use
-            self.pre_step(self, time_index, t, T)# user defined
+            self._pre_step(self, time_index, t, T)  # internal use
+            self.pre_step(self, time_index, t, T)  # user defined
 
             start = time.process_time()
             self.step(dt)
