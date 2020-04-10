@@ -6,6 +6,7 @@ Created on Mon Oct 14 14:34:19 2019
 @author: Lukas Kiwitz
 """
 import json
+import time
 from copy import deepcopy
 from typing import Dict
 
@@ -15,10 +16,10 @@ import numpy as np
 import pandas as pd
 
 from Entity import Cell
-from ScanContainer import ScanContainer, ScanSample
-from my_debug import message, total_time,debug
-import time
 from ParameterSet import ParameterSet
+from ScanContainer import ScanContainer, ScanSample
+from my_debug import message, total_time
+
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -48,6 +49,7 @@ class StateManager:
         self.scan_container = None
         self.sim_container = None
         self.T = [0]
+        self.dt = 1
 
 
     def load_xml(self):
@@ -247,7 +249,7 @@ class StateManager:
 
             self.sim_container._post_step = post_step
 
-            self.sim_container.run(self.T)
+            self.sim_container.run(self.T, self.dt)
 
             self.post_scan(self, scan_index)
 
