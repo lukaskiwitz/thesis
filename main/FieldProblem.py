@@ -14,7 +14,6 @@ import MeshGenerator as mshGen
 from Entity import Entity, DomainEntity
 from MySolver import MySolver
 from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
-from my_debug import message
 
 
 class FieldProblem:
@@ -154,7 +153,8 @@ class FieldProblem:
     def apply_sample(self, sample):
 
         self.update_bcs(sample.p)
-
+        self.p.update(sample.p)
+        self.solver.p.update(sample.p)
         self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
 
     def update_parameter_set(self, p):
