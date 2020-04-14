@@ -195,7 +195,7 @@ class Cell(Entity):
 
         miscs = ParameterCollection("misc", [
             MiscParameter("type_name", self.type_name),
-            MiscParameter("center", self.center)
+            # MiscParameter("center", self.center)
         ])
         self.p.update(cell_type.p,override=True)
         self.p.update(ParameterSet("dummy", [miscs]),override=True)
