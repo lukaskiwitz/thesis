@@ -4,10 +4,10 @@ from typing import List
 
 import dill
 import lxml.etree as ET
-import pandas as pd
 
-from MyError import DuplicateParameterError, DuplicateCollectionError, CollectionNotFoundInParameterSet
+from MyError import DuplicateParameterError, DuplicateCollectionError
 from my_debug import debug
+from my_debug import message
 
 
 class ParameterSet:
@@ -248,6 +248,21 @@ class Parameter:
     def get_in_post_unit(self):
         return self.value
 
+    def _get_serializiable_value(self):
+
+        value = "null"
+
+        try:
+            value = json.dumps(self.value)
+        except TypeError as e:
+            message(
+                "Trying to serialize Parameter {n} as float because it was not json serializable".format(n=self.name))
+            try:
+                value = json.dumps(float(self.value))
+            except Exception as e_2:
+                message("Casting to float failed; cannot serialize Parameter {n}".format(n=self.name))
+
+        return value
 
 class PhysicalParameter(Parameter):
 
@@ -321,7 +336,8 @@ class MiscParameter(Parameter):
 
         root.set("name", json.dumps(self.name))
         root.set("is_global", json.dumps(self.is_global))
-        root.set("value", json.dumps(self.value))
+
+        root.set("value", json.dumps(self._get_serializiable_value()))
         root.set("field_quantity", json.dumps(self.field_quantity))
 
         return root
