@@ -17,7 +17,7 @@ from BC import BC, OuterBC
 from EntityType import CellType
 from InternalSolver import InternalSolver
 from MySubDomain import CellSubDomain
-from ParameterSet import ParameterSet, ParameterCollection, MiscParameter
+from ParameterSet import ParameterSet
 
 
 class Entity:
@@ -193,12 +193,12 @@ class Cell(Entity):
         else:
             self.set_internal_solver(None)
 
-        miscs = ParameterCollection("misc", [
-            MiscParameter("type_name", self.type_name),
-            # MiscParameter("center", self.center)
-        ])
-        self.p.update(cell_type.p,override=True)
-        self.p.update(ParameterSet("dummy", [miscs]),override=True)
+        # miscs = ParameterCollection("misc", [
+        #     MiscParameter("type_name", self.type_name),
+        #     # MiscParameter("center", self.center)
+        # ])
+        self.p.update(cell_type.p, override=True)
+        # self.p.update(ParameterSet("dummy", [miscs]),override=True)
 
     def change_entity_type(self, type_name: str):
         """
