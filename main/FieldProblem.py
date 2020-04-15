@@ -138,12 +138,14 @@ class FieldProblem:
 
             mesh, boundary_markers = mesh_gen.meshGen(self.p,
                                                       load=False,
+                                                      load_subdomain=False,
                                                       path=mesh_path,
-                                                      file_name = file_name.format(field=self.field_name))
+                                                      file_name=file_name.format(field=self.field_name))
             self.mesh_cached = file_name.format(field=self.field_name)
         else:
             mesh, boundary_markers = mesh_gen.meshGen(self.p,
                                                       load=True,
+                                                      load_subdomain=True,
                                                       path=mesh_path,
                                                       file_name=file_name.format(field=self.field_name))
         self.solver.mesh = mesh
