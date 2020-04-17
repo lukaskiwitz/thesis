@@ -1,10 +1,10 @@
-import getpass
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from parameters import path
 
 
 def global_plot(fig, ax, global_df, y_name, y_label, legend="brief"):
@@ -112,10 +112,7 @@ def reduce_df(df, index_name):
     return result
 
 
-user = getpass.getuser()
-path = "/extra/{u}/example_min/".format(u=user)
 IMGPATH = path
-
 os.makedirs(IMGPATH, exist_ok=True)
 # scan_index = 0
 sns.set_context("paper", font_scale=1, rc={

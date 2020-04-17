@@ -1,8 +1,8 @@
-import getpass
 import sys
 
 import fenics as fcs
 import numpy as np
+from parameters import path
 
 from PostProcess import PostProcessor
 
@@ -33,8 +33,6 @@ else:
 """
 setting filepath to look for sim results. This is setup so that it works on the itb computers.
 """
-user = getpass.getuser()
-path = "/extra/{u}/example_min/".format(u=user)
 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6
@@ -42,7 +40,7 @@ pp.unit_length_exponent = -6
 """appends a custom calculation.
 default computations are defined in PostProcess.py"""
 
-# pp.computations.append(my_post_process())
+pp.computations.append(my_post_process())
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
 pp.write_post_process_xml(threads)

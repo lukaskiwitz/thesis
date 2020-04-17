@@ -1,15 +1,6 @@
-from scipy.constants import N_A
+import getpass
 
-from ParameterSet import PhysicalParameter, PhysicalParameterTemplate
-
-"""Sets up parameter templates. This are callable object, which return a full copy of themselves 
-with a new value (set in post units). This is so that conversion information has to be specified only one."""
-R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
-
-k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
-q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
-D = PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True))
-kd = PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True))
+import numpy as np
 
 """defines cytokines. Currently their parameters can be changed using the scan sample interface.
 "field_quantity" determines which boundary contitions interact with which fields, 
@@ -18,7 +9,10 @@ the name is only used in IO/post processing."""
 cytokines = [
     {
         "name": "IL-2",
-        "field_quantity": "il2"
+        "field_quantity": "il2",
+        "k_on": 111.6,  # receptor binding constant 1/(nM*h),
+        "D": 10,  # Diffusion constant mu^2
+        "kd": 0.1  # cytokine decay in medium 1/h
     }
 ]
 
@@ -29,17 +23,17 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 cell_types_dict = [
     {"name": "default",
      "fraction": 1,
-     "il2": [500, 1],  # [Receptor number per cell, secretion in molecules/s]
+     "il2": [4000, 1],  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "fraction": 0.1,
-     "il2": [100, 10],
+     "il2": [4000, 30],
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "fraction": 0.1,
-     "il2": [4000, 1],
+     "il2": [20000, 1],
      "internal_solver": "RuleBasedSolver"
      }
 ]
@@ -51,7 +45,8 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 100,  # dimensions of the cell grid
     "y_grid": 100,
-    #"z_grid":100# comment out for single cell layer
+    # "z_grid":100,# comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 **2
 }
 
 """
@@ -67,3 +62,11 @@ numeric = {
     "max_char_length": 3,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
+
+user = getpass.getuser()
+model_name = "example_min_test"
+name = "scan_name"
+
+path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
+ext_cache = "../{mn}_ext_cache/".format(mn=model_name)
+IMGPATH = path + "images/"
