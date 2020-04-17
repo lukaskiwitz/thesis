@@ -1,5 +1,8 @@
 import sys
 
+sys.path.append("/home/lukas/thesis/main/")
+sys.path.append("/home/lukas/thesis/scenarios/")
+
 import fenics as fcs
 import numpy as np
 from parameters import path

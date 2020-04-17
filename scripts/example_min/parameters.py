@@ -23,17 +23,17 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 cell_types_dict = [
     {"name": "default",
      "fraction": 1,
-     "il2": [4000, 1],  # [Receptor number per cell, secretion in molecules/s]
+     "il2": {"R": 4000, "q": 1},  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "fraction": 0.1,
-     "il2": [4000, 30],
+     "il2": {"R": 4000, "q": 30},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "fraction": 0.1,
-     "il2": [20000, 1],
+     "il2": {"R": 20000, "q": 1},
      "internal_solver": "RuleBasedSolver"
      }
 ]
@@ -64,8 +64,8 @@ numeric = {
 }
 
 user = getpass.getuser()
-model_name = "example_min_test"
-name = "scan_name"
+model_name = "example_min"
+name = "test"
 
 path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
 ext_cache = "../{mn}_ext_cache/".format(mn=model_name)

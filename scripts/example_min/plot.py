@@ -1,4 +1,8 @@
 import os
+import sys
+
+sys.path.append("/home/lukas/thesis/main/")
+sys.path.append("/home/lukas/thesis/scenarios/")
 
 import matplotlib.pyplot as plt
 import numpy as np

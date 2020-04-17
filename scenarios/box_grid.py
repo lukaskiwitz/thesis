@@ -181,15 +181,15 @@ def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], Paramete
         cell_p_set = ParameterSet(ct["name"], [])
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
-                p = [
-                    t_R(ct[c["field_quantity"]][0]),
-                    t_q(ct[c["field_quantity"]][1]),
-                ]
+                ct_dict = ct[c["field_quantity"]]
+                p = []
 
-                if len(ct[c["field_quantity"]]) > 2:
-                    p.append(t_threshold(ct[c["field_quantity"]][2]))
-                else:
-                    p.append(t_threshold(0))
+                if "R" in ct_dict.keys():
+                    p.append(t_R(ct_dict["R"]))
+                if "q" in ct_dict.keys():
+                    p.append(t_q(ct_dict["q"]))
+                if "ths" in ct_dict.keys():
+                    p.append(t_threshold(ct_dict["ths"]))
 
                 collection = ParameterCollection(c["name"], p)
                 collection.field_quantity = c["field_quantity"]
