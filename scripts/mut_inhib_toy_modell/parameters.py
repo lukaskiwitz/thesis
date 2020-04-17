@@ -1,15 +1,6 @@
-from scipy.constants import N_A
+import getpass
 
-from ParameterSet import PhysicalParameter, PhysicalParameterTemplate
-
-"""Sets up parameter templates. This are callable object, which return a full copy of themselves 
-with a new value (set in post units). This is so that conversion information has to be specified only one."""
-R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
-
-k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
-q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
-D = PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True))
-kd = PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True))
+import numpy as np
 
 """defines cytokines. Currently their parameters can be changed using the scan sample interface.
 "field_quantity" determines which boundary contitions interact with which fields, 
@@ -51,7 +42,8 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 500,  # dimensions of the cell grid
     "y_grid": 500,
-    # "z_grid":100# comment out for single cell layer
+    # "z_grid":100,# comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2
 }
 
 """
@@ -68,7 +60,11 @@ numeric = {
     "unit_length_exponent": -6  # for concentration conversion
 }
 
-# R = R(1000).get_in_sim_unit()
-# k_on  = k_on(111.6).get_in_sim_unit()
-# q = q(1).get_in_sim_unit()
-# u = 1e-16
+user = getpass.getuser()
+
+model_name = "mut_inhib_toy_model"
+name = "scan_name"
+
+path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
+ext_cache = "../{mn}_ext_cache/".format(mn=model_name)
+IMGPATH = path + "images/""../{n}_ext_cache/".format(n=name)

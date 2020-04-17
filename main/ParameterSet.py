@@ -264,6 +264,7 @@ class Parameter:
 
         return value
 
+
 class PhysicalParameter(Parameter):
 
     def __init__(self, name: str, value: float, to_sim=1, to_post=1, is_global=False) -> None:
@@ -381,6 +382,8 @@ class PhysicalParameterTemplate():
             p.set_in_post_unit(value)
 
         return p
+
+
 def make_collection(parameter_tupel):
     result = ParameterCollection(parameter_tupel[0], list(parameter_tupel[1]))
     if len(parameter_tupel) > 2:

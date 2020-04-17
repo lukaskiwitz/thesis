@@ -1,44 +1,53 @@
-import getpass
 import random
+import sys
 
 import numpy as np
-from parameter_sets import cytokines, cell_types_dict, geometry, numeric
-from setup import setup
+from parameters import cytokines, cell_types_dict, geometry, numeric
+from parameters import path, ext_cache
 
 import StateManager
 from InternalSolver import InternalSolver
-from ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
+from ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter, \
+    PhysicalParameterTemplate
 from ScanContainer import ScanContainer, ScanSample
 from SimContainer import SimContainer
+from box_grid import setup
 
 
 class RuleBasedSolver(InternalSolver):
     name = "RuleBasedSolver"
 
     def __init__(self):
+
         self.transition = (False, 0, "Tn")
-        self.il2_threshold = 0.052
-        self.il6_threshold = 0.015
-        self.infg_threshold = 0.0092
+
+        # self.il2_threshold = ths["il2"]#0.06
+        # self.il6_threshold = ths["il2"]#0.05
+        # self.infg_threshold = ths["il2"]#0.034
 
     def step(self, t, dt, p, entity=None):
 
+        il2_threshold = p.get_physical_parameter("ths", "IL-2").get_in_post_unit()  # 0.06
+        il6_threshold = p.get_physical_parameter("ths", "IL-6").get_in_post_unit()  # 0.05
+        ifng_threshold = p.get_physical_parameter("ths", "IFNg").get_in_post_unit()  # 0.034
+
+        p_diff = p.get_physical_parameter("p", "probs").get_in_post_unit()
         if entity.type_name == "Tn":
             if self.transition[0]:
                 if self.transition[1] <= 0:
                     entity.change_type = self.transition[2]
                 else:
                     self.transition = (True, self.transition[1] - dt, self.transition[2])
-            elif np.random.rand(1) > 0.9:  # chance for type change; uniform distribution
+            elif np.random.rand(1) > p_diff:  # chance for type change; uniform distribution
                 draw = np.random.normal(1, 0.2)  # time to type change; normal distribution
 
                 il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
                 il6 = p.get_physical_parameter("surf_c", "IL-6").get_in_post_unit()
                 ifng = p.get_physical_parameter("surf_c", "IFNg").get_in_post_unit()
 
-                if il2 < self.il2_threshold and il6 > self.il6_threshold:  # il2neg and il6pos
+                if il2 < il2_threshold and il6 > il6_threshold:  # il2neg and il6pos
                     self.transition = (True, draw, "Tfh")
-                elif ifng > self.infg_threshold:  # infg pos
+                elif ifng > ifng_threshold:  # infg pos
                     self.transition = (True, draw, "Th1")
         return p
 
@@ -61,35 +70,35 @@ def updateState(sc, t):
         e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
 
 
-user = getpass.getuser()
-path = "/extra/{u}/dev_testing/".format(u=user)
-ext_cache = "../dev_testing_ext_cache/"
-
 scan_container = ScanContainer()
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
 
-from parameter_sets import R, q, D
+from box_grid import t_R, t_q
 
-R = ScannablePhysicalParameter(R(1000), lambda x, v: x * v)
-q = ScannablePhysicalParameter(q(1), lambda x, v: x * v)
-D = ScannablePhysicalParameter(D(10), lambda x, v: x * v)
+R = ScannablePhysicalParameter(t_R(4000), lambda x, v: x * v)
+q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
+# D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+
+p_diff = PhysicalParameterTemplate(PhysicalParameter("p", 0.1, to_sim=1))
+p = ScannablePhysicalParameter(p_diff(0.1), lambda x, v: v)
 
 Tn = sc.get_entity_type_by_name("Tn")
 
-for v in [1]:  # np.logspace(-1,1,1):
-
+# for v in np.logspace(-1,1,4):
+for v in np.linspace(0.1, 0.9, 10):
     sim_parameters = [
-        ParameterCollection("IL-2", [D(10)], field_quantity="il2"),
-        ParameterCollection("IL-6", [D(10)], field_quantity="il6"),
-        ParameterCollection("IFNg", [D(10)], field_quantity="ifng")
+        ParameterCollection("probs", [p(v)])
     ]
 
     entity_types = [
-        # (Tn.get_updated([ParameterCollection("IL-2",[R(v)])]))
+
     ]
 
     outer_domain_dict = {
-        # "left_boundary": [ParameterCollection("IL-2",[R(v)])]
+        "left_boundary": [
+            # ParameterCollection("IL-2",[R(v)]),
+            # ParameterCollection("IL-6",[q(1)])
+        ]
     }
 
     sample = ScanSample(sim_parameters, entity_types, outer_domain_dict)
@@ -101,6 +110,7 @@ stMan = StateManager.StateManager(path)
 stMan.sim_container = sc
 stMan.scan_container = scan_container
 stMan.T = np.arange(0, 25, 1)
+stMan.dt = 1
 
 
 def pre_scan(state_manager, scan_index):
@@ -108,4 +118,11 @@ def pre_scan(state_manager, scan_index):
 
 
 stMan.pre_scan = pre_scan
-stMan.run()
+
+"""Runs the ParameterScan"""
+if len(sys.argv) > 1:
+    if not sys.argv[1] == "mesh":
+        stMan.run()
+else:
+
+    stMan.run()

@@ -1,9 +1,8 @@
-import getpass
 import random
 import sys
 
 import numpy as np
-from parameters import cytokines, cell_types_dict, geometry, numeric
+from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
 from setup import setup
 
 import StateManager
@@ -52,11 +51,6 @@ def updateState(sc, t):
 
 
 """Setup/Simulation"""
-
-user = getpass.getuser()
-path = "/extra/{u}/mut_inhib_toy_model/".format(u=user)
-ext_cache = "../mut_inhib_toy_model_ext_cache/"
-
 scan_container = ScanContainer()
 
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)

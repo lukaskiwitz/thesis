@@ -1,8 +1,8 @@
-import getpass
 import sys
 
 import fenics as fcs
 import numpy as np
+from parameters import path
 
 from PostProcess import PostProcessor
 
@@ -32,8 +32,6 @@ else:
 """
 setting filepath to look for sim results. This is setup so that it works on the itb computers.
 """
-user = getpass.getuser()
-path = "/extra/{u}/mut_inhib_toy_model/".format(u=user)
 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6

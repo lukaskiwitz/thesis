@@ -1,9 +1,11 @@
 import json
-
-from ParameterSet import ParameterSet, ParameterCollection
-from EntityType import EntityType, CellType
 from typing import List, Dict
+
 import lxml.etree as ET
+
+from EntityType import EntityType, CellType
+from ParameterSet import ParameterSet, ParameterCollection
+
 
 class ScanContainer:
 
@@ -44,6 +46,7 @@ class ScanSample:
         self.entity_types: List[EntityType] = entity_types
         self.outer_domain_parameter_dict = {}
         for k,v in outer_domain_dict.items():
+            # assert isinstance(v,ScannablePhysicalParameter)
             self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",v)
 
     def serialize_to_xml(self, sub_path: str):

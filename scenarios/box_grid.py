@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import List, Dict
 
 import numpy as np
-from parameters import R, q, k_on, D, kd
+from scipy.constants import N_A
 
 import BC as bc
 import Entity
@@ -11,9 +11,17 @@ import FieldProblem as fp
 import MySolver
 import SimContainer as SC
 from EntityType import CellType
-from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter
+from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter, PhysicalParameterTemplate
 from bcFunctions import cellBC
 from my_debug import message
+
+"""Sets up parameter templates. This are callable object, which return a full copy of themselves 
+with a new value (set in post units). This is so that conversion information has to be specified only one."""
+t_R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
+t_k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
+t_q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
+t_D = PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True))
+t_kd = PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True))
 
 
 def makeCellListGrid(global_parameter, cytokines, xLine, yLine, zLine):
@@ -84,18 +92,18 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     margin = geometry_dict["margin"]
 
     global_parameter = make_global_parameters(cytokines, geometry_dict, numeric)
-
-    geometry = ParameterCollection("geometry", [PhysicalParameter("norm_area", 4 * np.pi * 5 ** 2, to_sim=0.01 ** 2)])
+    na = geometry_dict["norm_area"]
+    geometry = ParameterCollection("geometry", [PhysicalParameter("norm_area", na, to_sim=1)])
     domain_parameter_set = deepcopy(global_parameter)
     domain_parameter_set.add_collection(geometry)
     domain_parameter_set.name = "domain"
 
-    cell_type_list, fractions = make_cell_types(cell_types, cytokines)
+    cell_type_list, fractions = make_cell_types(cell_types, cytokines, numeric)
     global_parameter.add_collection(fractions)
 
     domain_bc = make_domain_bc(cytokines, domain_parameter_set, margin, x)
 
-    p1, p2 = get_cuboid_domain(x, y, z, margin)
+    p1, p2 = get_cuboid_domain(x,y,z, margin)
 
     domain = Entity.DomainCube(
         p1,
@@ -119,6 +127,7 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
 
         fieldProblem.set_outer_domain(domain)
         sc.add_field(fieldProblem)
+
 
     """top level path"""
     sc.path = path
@@ -158,9 +167,14 @@ def make_domain_bc(cytokines, domain_parameter_set, margin, x):
     return domainBC
 
 
-def make_cell_types(cell_types, cytokines) -> (List[CellType], ParameterCollection):
+def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], ParameterCollection):
     fractions = ParameterCollection("fractions", [])
     cell_types_list = []
+
+    from PostProcess import get_concentration_conversion as get_cc
+    t_threshold = PhysicalParameterTemplate(
+        PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(numeric["unit_length_exponent"])))
+
     for ct in cell_types:
 
         fractions.set_parameter(PhysicalParameter(ct["name"], ct["fraction"], is_global=True))
@@ -168,9 +182,15 @@ def make_cell_types(cell_types, cytokines) -> (List[CellType], ParameterCollecti
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
                 p = [
-                    R(ct[c["field_quantity"]][0]),
-                    q(ct[c["field_quantity"]][1])
+                    t_R(ct[c["field_quantity"]][0]),
+                    t_q(ct[c["field_quantity"]][1]),
                 ]
+
+                if len(ct[c["field_quantity"]]) > 2:
+                    p.append(t_threshold(ct[c["field_quantity"]][2]))
+                else:
+                    p.append(t_threshold(0))
+
                 collection = ParameterCollection(c["name"], p)
                 collection.field_quantity = c["field_quantity"]
                 cell_p_set.add_collection(collection)
@@ -181,11 +201,13 @@ def make_cell_types(cell_types, cytokines) -> (List[CellType], ParameterCollecti
 
 
 def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict) -> ParameterSet:
+
+
     global_parameter = ParameterSet("global", [])
 
     ule = numeric["unit_length_exponent"]
 
-    rho = ParameterCollection("rho", [PhysicalParameter("rho", geometry["rho"], to_sim=10 ** (-6 - ule))])
+    rho = ParameterCollection("rho", [PhysicalParameter("rho", geometry["rho"], to_sim=10**(-6-ule))])
     global_parameter.add_collection(rho)
 
     numeric_c = ParameterCollection("numeric", [])
@@ -195,14 +217,29 @@ def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict) -> Pa
 
         collection = ParameterCollection(c["name"], [])
         collection.field_quantity = c["field_quantity"]
+        p = [t_R(0), t_q(0)]
 
-        p = [k_on(111.6), R(0), q(0), D(10), kd(0.1)]
+        if "k_on" in c.keys():
+            p.append(t_k_on(c["k_on"]))
+        else:
+            p.append(t_k_on(111.6))
+
+        if "D" in c.keys():
+            p.append(t_D(c["D"]))
+        else:
+            p.append(t_D(10))
+
+        if "kd" in c.keys():
+            p.append(t_kd(c["kd"]))
+        else:
+            p.append(t_kd(0.1))
 
         for p in p:
             collection.set_parameter(p)
         global_parameter.add_collection(collection)
 
-    for k, v in numeric.items():
-        numeric_c.set_misc_parameter(MiscParameter(k, v))
+    for k,v in numeric.items():
+        numeric_c.set_misc_parameter(MiscParameter(k,v))
 
     return global_parameter
+
