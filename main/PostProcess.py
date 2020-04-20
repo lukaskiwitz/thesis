@@ -8,7 +8,7 @@ Created on Wed Oct 16 12:56:59 2019
 import json
 import multiprocessing as mp
 import os
-from copy import deepcopy
+import random
 from math import ceil
 from typing import List, Dict
 
@@ -18,14 +18,12 @@ import lxml.etree as et
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
-from scipy.constants import N_A
 
+import MyError
 import StateManager as st
+from ParameterSet import ParameterSet
 from myDictSorting import groupByKey
 from my_debug import message
-import random
-import MyError
-from ParameterSet import ParameterSet
 
 
 class ComputeSettings:
@@ -292,7 +290,17 @@ class PostProcessor:
                 raise MyError.SubProcessTimeout(timeout)
                 break
 
-        file_list: List[str] = [output.get(True, 10) for j in jobs]
+        # file_list: List[str] = [output.get(True, 10) for j in jobs]
+        file_list: List[str] = []
+        from queue import Empty
+        for job in jobs:
+            try:
+                time_out = 10 * 60
+                result = output.get(True, time_out)
+                file_list.append(result)
+            except Empty as e:
+                message("Could not retrieve result from queue. Machine busy?".format(t=time_out))
+
         for file in file_list:
             if not type(file) == str:
                 message("A Worker fininshed with Error: {e}".format(e=file))
@@ -301,7 +309,7 @@ class PostProcessor:
         message("Collected results from {l} Processes".format(l=1 + len(file_list)))
         result_list = []
         for file in file_list:
-            f = open(file,"r")
+            f = open(file, "r")
             result_list.append(json.load(f))
         message("successfully collected distributed task")
         flattend_list: List[str] = []
