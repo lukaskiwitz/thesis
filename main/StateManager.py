@@ -60,12 +60,13 @@ class StateManager:
         return self.path + self.scan_folder_pattern.format(n=n)
 
     def write_element_tree(self):
-        if not rank == 0:
-            # message("not rank 0")
-            return None
-        f = self.path + "log.scan"
-        message("writing element tree to {file}".format(file=f))
-        self.element_tree.write(f, pretty_print=True)
+        if rank == 0:
+            try:
+                f = self.path + "log.scan"
+                message("writing element tree to {file}".format(file=f))
+                self.element_tree.write(f, pretty_print=True)
+            except Exception as e:
+                message("Could not write element tree to file: {e}".format(e=e))
 
     def serialize_to_element_tree(self):
 
