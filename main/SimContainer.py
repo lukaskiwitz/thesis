@@ -13,6 +13,7 @@ from typing import Dict
 #
 import fenics as fcs
 import lxml.etree as et
+import pandas as pd
 
 from Entity import Entity
 from EntityType import CellType, EntityType
@@ -151,29 +152,53 @@ class SimContainer(SimComponent):
         raise NotImplementedError()
 
     def run(self, T, dt):
-
         for time_index, t in enumerate(T):
+            self.pre_step_timestamp = time.process_time()
+
             self._pre_step(self, time_index, t, T)  # internal use
             self.pre_step(self, time_index, t, T)  # user defined
 
-            start = time.process_time()
             self.step(dt)
-            end = time.process_time()
-            total_time(end - start, pre = "Total time ", post=" for step number {n}".format(n=time_index))
 
-            self._post_step(self,time_index,t,T)# internal use
-            self.post_step(self, time_index, t, T)# user defined
+            self.post_step_timestamp = time.process_time()
 
-    def _pre_step(self,sc,time_index,t,T):
+            # self.time_log(self,time_index,t,T)
+            self._post_step(self, time_index, t, T)  # internal use
+            self.post_step(self, time_index, t, T)  # user defined
+
+            self.total_step_timestamp = time.process_time()
+            self._time_log(self, time_index, t, T)
+
+    def _pre_step(self, sc, time_index, t, T):
         return None
 
-    def _post_step(self, sc, time_index,t,T):
+    def _time_log(self, sc, time_index, t, T):
+
+        start = self.pre_step_timestamp
+        end = self.post_step_timestamp
+        total = self.total_step_timestamp
+        total_time(end - start, pre="Total time ", post=" for step number {n}".format(n=time_index))
+
+        df = pd.DataFrame({
+            "total_step_process_time": [total - start],
+            "time_step_process_time": [end - start],
+            "time_index": [time_index],
+            "t": [t]
+        })
+
+        if not hasattr(self, "_time_log_df"):
+            self._time_log_df = df
+        else:
+            self._time_log_df = self._time_log_df.append(df)
+
+    def _post_step(self, sc, time_index, t, T):
+
         return None
 
-    def pre_step(self,sc,time_index,t,T):
+    def pre_step(self, sc, time_index, t, T):
         return None
 
-    def post_step(self, sc, time_index,t,T):
+    def post_step(self, sc, time_index, t, T):
         return None
 
     def step(self, dt: float) -> None:

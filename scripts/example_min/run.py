@@ -104,7 +104,7 @@ D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 """Retrieves and entity type from sim container for scanning"""
 default = sc.get_entity_type_by_name("default")
 
-for v in np.logspace(-1, 1, 3):
+for v in np.logspace(-1, 1, 50):
     """Scans over parameters that are associated with a field"""
     sim_parameters = [
         ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
@@ -143,7 +143,7 @@ stMan.scan_container = scan_container
 stMan.dt = 1
 """sets up time range"""
 
-stMan.T = np.arange(0, 10, 1)
+stMan.T = np.arange(0, 50, 1)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types

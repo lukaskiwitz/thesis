@@ -11,9 +11,11 @@ from copy import deepcopy
 from typing import Dict
 
 import lxml.etree as ET
+import matplotlib.pyplot as plt
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from Entity import Cell
 from ParameterSet import ParameterSet
@@ -243,7 +245,7 @@ class StateManager:
                 self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
                 self.write_element_tree()
 
-            start = time.process_time()
+            self.pre_scan_timestamp = time.process_time()
 
             self.update_sim_container(self.sim_container, scan_index)
             self.sim_container.init_xdmf_files()
@@ -255,12 +257,64 @@ class StateManager:
 
             self.post_scan(self, scan_index)
 
-            end = time.process_time()
-            total_time(end - start, pre="Total time ", post=" for scan sample {n}".format(n=scan_index))
+            self.total_scan_timestamp = time.process_time()
+
+            self._time_log(scan_index)
+
+        self.write_time_dataframe()
         self.write_element_tree()
+
+    def _time_log(self, scan_index):
+
+        start = self.pre_scan_timestamp
+
+        total = self.total_scan_timestamp
+
+        total_time(total - start, pre="Total time ", post=" for scan sample {n}".format(n=scan_index))
+
+        df = pd.DataFrame({
+            "total_scan_process_time": [total - start],
+            "scan_index": [scan_index],
+        })
+        sc_df = self.sim_container._time_log_df
+        delattr(self.sim_container, "_time_log_df")
+
+        df = df.join(sc_df)
+
+        if not hasattr(self, "_time_log_df"):
+            self._time_log_df = pd.DataFrame(df)
+        else:
+            self._time_log_df = self._time_log_df.append(pd.DataFrame(df))
 
     def pre_scan(self, state_manager, scan_index):
         pass
 
     def post_scan(self, state_manager, scan_index):
         pass
+
+    def write_time_dataframe(self):
+
+        df = self._time_log_df
+        df.to_csv(self.path + "timing.csv")
+
+        fig, ax = plt.subplots(2, 2)
+        sns.lineplot(x="time_index", y="time_step_process_time", data=df, ax=ax[0][0], hue="scan_index", legend=None)
+        ax[0][0].set_ylabel("Time step computation time (s)")
+        ax[0][0].set_xlabel("Time index")
+
+        sns.lineplot(x="time_index", y="total_step_process_time", data=df, ax=ax[0][1], hue="scan_index")
+        ax[0][1].set_ylabel("Total Time step computation time (s)")
+        ax[0][1].set_xlabel("Time index")
+
+        sns.lineplot(x="scan_index", y="total_scan_process_time", data=df, ax=ax[1][0])
+
+        ax[1][0].set_ylabel("Scan computation time (s)")
+        ax[1][0].set_xlabel("Scan index")
+
+        sns.lineplot(x="scan_index", y="total_step_process_time", data=df, ax=ax[1][1])
+
+        ax[1][1].set_ylabel("Average Total Time step computation time (s)")
+        ax[1][1].set_xlabel("Scan index")
+
+        plt.tight_layout()
+        plt.savefig(self.path + "timing.pdf")
