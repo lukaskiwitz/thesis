@@ -277,11 +277,23 @@ class PhysicalParameter(Parameter):
         self.value = None
         self.set_in_post_unit(deepcopy(value))
 
+    def my_cast(self, value):
+
+        if not (isinstance(value, float) or isinstance(value, int)):
+            message(""
+                    "The value of physical parameter "
+                    "{n} was type {t}. Casting to float".format(n=self.name, t=type(self.value))
+                    )
+            value = float(value)
+        return value
+
     def get_in_sim_unit(self) -> float:
 
         return self.value
 
     def set_in_sim_unit(self, value: float) -> None:
+
+        value = self.my_cast(value)
 
         self.value = value
 
@@ -293,6 +305,8 @@ class PhysicalParameter(Parameter):
             return self.to_post(self.value)
 
     def set_in_post_unit(self, value: float):
+
+        value = self.my_cast(value)
 
         if self.factor_conversion:
 
@@ -319,9 +333,9 @@ class PhysicalParameter(Parameter):
         self.name = json.loads(element.get("name"))
         self.factor_conversion = json.loads(element.get("factor_conversion"))
         self.is_global = json.loads(element.get("is_global"))
-        self.set_in_sim_unit(json.loads(element.get("in_sim_units")))
         self.to_sim = dill.loads(bytes.fromhex(element.get("to_sim")))
         self.to_post = dill.loads(bytes.fromhex(element.get("to_post")))
+        self.set_in_sim_unit(json.loads(element.get("in_sim_units")))
 
 
 class MiscParameter(Parameter):

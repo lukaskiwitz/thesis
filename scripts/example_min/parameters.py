@@ -68,5 +68,5 @@ model_name = "example_min"
 name = "test"
 
 path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
-ext_cache = "../{mn}_ext_cache/".format(mn=model_name)
+ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
 IMGPATH = path + "images/"

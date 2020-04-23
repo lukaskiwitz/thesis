@@ -1,3 +1,4 @@
+import os
 import sys
 
 sys.path.append("/home/lukas/thesis/main/")
@@ -12,6 +13,8 @@ import random
 
 import numpy as np
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
+
+os.environ["LOG_PATH"] = path
 
 import StateManager
 from InternalSolver import InternalSolver

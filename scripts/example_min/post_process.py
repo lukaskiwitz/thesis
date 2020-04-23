@@ -1,3 +1,4 @@
+import os
 import sys
 
 sys.path.append("/home/lukas/thesis/main/")
@@ -7,10 +8,12 @@ import fenics as fcs
 import numpy as np
 from parameters import path
 
-from PostProcess import PostProcessor
+os.environ["LOG_PATH"] = path
+
+from PostProcess import PostProcessor, PostProcessComputation
 
 
-class my_post_process:
+class my_post_process(PostProcessComputation):
     """Defines a custom computation"""
 
     def __init__(self):
@@ -18,7 +21,6 @@ class my_post_process:
         self.name = "maxGradient"
 
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, V=None, V_vec=None) -> float:
-
         """__call__ must have this call signature.
         returns the maximum gradient
         """
@@ -42,13 +44,14 @@ pp.unit_length_exponent = -6
 
 """appends a custom calculation.
 default computations are defined in PostProcess.py"""
+pp.cell_colors = "Dark2"
+pp.cell_color_key = "type_name"
+pp.legend_title = "Cell Type"
 
 pp.computations.append(my_post_process())
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.write_post_process_xml(threads)
+pp.run_post_process(threads)
 
-"""collects the post processing result from xml file in dataframes"""
-pp.make_dataframes(kde=True)
 pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
-pp.cell_dataframe.to_hdf(path+"cell_df.h5", key="df", mode="w")
+pp.cell_dataframe.to_hdf(path + "cell_df.h5", key="df", mode="w")

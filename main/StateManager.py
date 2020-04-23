@@ -241,6 +241,7 @@ class StateManager:
             def post_step(sc, time_index, t, T):
                 result_paths = sc.save_fields(time_index)
                 self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
+                self.write_element_tree()
 
             start = time.process_time()
 

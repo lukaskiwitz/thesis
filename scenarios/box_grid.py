@@ -17,6 +17,7 @@ from my_debug import message
 
 """Sets up parameter templates. This are callable object, which return a full copy of themselves 
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
+
 t_R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
 t_k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
 t_q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
@@ -77,7 +78,9 @@ def get_cuboid_domain(x, y, z, margin):
 
 
 def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
-    message("setup")
+    message("---------------------------------------------------------------")
+    message("Setup")
+    message("---------------------------------------------------------------")
 
     def make_grid(gd: Dict, key: str):
         if key in gd.keys():
@@ -100,6 +103,7 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
 
     cell_type_list, fractions = make_cell_types(cell_types, cytokines, numeric)
     global_parameter.add_collection(fractions)
+    # global_parameter.update(make_clustering(clustering,numeric))
 
     domain_bc = make_domain_bc(cytokines, domain_parameter_set, margin, x)
 
@@ -169,16 +173,29 @@ def make_domain_bc(cytokines, domain_parameter_set, margin, x):
 
 def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], ParameterCollection):
     fractions = ParameterCollection("fractions", [])
+    clustering = ParameterCollection("clustering", [])
+
     cell_types_list = []
 
     from PostProcess import get_concentration_conversion as get_cc
-    t_threshold = PhysicalParameterTemplate(
-        PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(numeric["unit_length_exponent"])))
-
+    ule = numeric["unit_length_exponent"]
+    t_threshold = PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule)))
+    t_bw = PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule))))
+    t_cluster_strength = PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1))
     for ct in cell_types:
 
         fractions.set_parameter(PhysicalParameter(ct["name"], ct["fraction"], is_global=True))
+
         cell_p_set = ParameterSet(ct["name"], [])
+        cell_p_set.add_collection(clustering)
+
+        if "bw" in ct.keys():
+            bw = t_bw(ct["bw"])
+            clustering.set_parameter(bw)
+        if "cluster_strength" in ct.keys():
+            s = t_cluster_strength(ct["cluster_strength"])
+            clustering.set_parameter(s)
+
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
                 ct_dict = ct[c["field_quantity"]]
@@ -243,3 +260,11 @@ def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict) -> Pa
 
     return global_parameter
 
+
+def make_clustering(clustering, numeric):
+    p_set = ParameterSet("dummy", [])
+    ule = numeric["unit_length_exponent"]
+    t_bw = PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule))))
+    bw = t_bw(clustering["bw"])
+    p_set.add_collection(ParameterCollection("clustering", [bw]))
+    return p_set
