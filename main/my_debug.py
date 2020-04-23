@@ -22,10 +22,12 @@ def message(text: str):
                     pass
         except Exception as e:
             pass
-
-        with open(file, "a") as f:
-            f.write(text + "\n")
-        print(text)
+        try:
+            with open(file, "a") as f:
+                f.write(text + "\n")
+            print(text)
+        except Exception as e:
+            pass
 
 
 def total_time(time: float, pre="", post=""):
