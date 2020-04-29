@@ -22,7 +22,7 @@ class ParameterSet:
     def add_parameter_with_collection(self, parameter):
 
         dummy = ParameterSet("dummy", [ParameterCollection(parameter.name, [parameter])])
-        self.update(dummy)
+        self.update(dummy, override=True)
 
     def update(self, parameter_set, override = False) -> None:
         debug("updating {n1} with {n2}".format(n1=self.name, n2=parameter_set.name))
@@ -352,7 +352,7 @@ class MiscParameter(Parameter):
         root.set("name", json.dumps(self.name))
         root.set("is_global", json.dumps(self.is_global))
 
-        root.set("value", json.dumps(self._get_serializiable_value()))
+        root.set("value", self._get_serializiable_value())
         root.set("field_quantity", json.dumps(self.field_quantity))
 
         return root
@@ -363,6 +363,9 @@ class MiscParameter(Parameter):
         self.value = json.loads(element.get("value"))
         self.field_quantity = json.loads(element.get("field_quantity"))
 
+    def get_in_sim_unit(self, type=str):
+        value = super().get_in_sim_unit()
+        return type(value)
 
 class ScannablePhysicalParameter:
     def __init__(self,p,f, in_sim = False):
