@@ -127,7 +127,7 @@ class StateManager:
 
     def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict):
         scan = self.element_tree.getroot().find("ScanContainer/ScanSample[@scan_index='{s}']".format(s=scan_index))
-        if scan.find("TimeSeries"):
+        if scan.find("TimeSeries") is not None:
             time_series = scan.find("TimeSeries")
         else:
             time_series = ET.SubElement(scan, "TimeSeries")
@@ -245,7 +245,7 @@ class StateManager:
                 self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
                 self.write_element_tree()
 
-            self.pre_scan_timestamp = time.process_time()
+            self.pre_scan_timestamp = time.time()
 
             self.update_sim_container(self.sim_container, scan_index)
             self.sim_container.init_xdmf_files()
@@ -257,7 +257,7 @@ class StateManager:
 
             self.post_scan(self, scan_index)
 
-            self.total_scan_timestamp = time.process_time()
+            self.total_scan_timestamp = time.time()
 
             self._time_log(scan_index)
 
@@ -273,7 +273,7 @@ class StateManager:
         total_time(total - start, pre="Total time ", post=" for scan sample {n}".format(n=scan_index))
 
         df = pd.DataFrame({
-            "total_scan_process_time": [total - start],
+            "total_scan_time": [total - start],
             "scan_index": [scan_index],
         })
         sc_df = self.sim_container._time_log_df
@@ -298,20 +298,20 @@ class StateManager:
         df.to_csv(self.path + "timing.csv")
 
         fig, ax = plt.subplots(2, 2)
-        sns.lineplot(x="time_index", y="time_step_process_time", data=df, ax=ax[0][0], hue="scan_index", legend=None)
+        sns.lineplot(x="time_index", y="time_step_time", data=df, ax=ax[0][0], hue="scan_index", legend=None)
         ax[0][0].set_ylabel("Time step computation time (s)")
         ax[0][0].set_xlabel("Time index")
 
-        sns.lineplot(x="time_index", y="total_step_process_time", data=df, ax=ax[0][1], hue="scan_index")
+        sns.lineplot(x="time_index", y="total_step_time", data=df, ax=ax[0][1], hue="scan_index")
         ax[0][1].set_ylabel("Total Time step computation time (s)")
         ax[0][1].set_xlabel("Time index")
 
-        sns.lineplot(x="scan_index", y="total_scan_process_time", data=df, ax=ax[1][0])
+        sns.lineplot(x="scan_index", y="total_scan_time", data=df, ax=ax[1][0])
 
         ax[1][0].set_ylabel("Scan computation time (s)")
         ax[1][0].set_xlabel("Scan index")
 
-        sns.lineplot(x="scan_index", y="total_step_process_time", data=df, ax=ax[1][1])
+        sns.lineplot(x="scan_index", y="total_step_time", data=df, ax=ax[1][1])
 
         ax[1][1].set_ylabel("Average Total Time step computation time (s)")
         ax[1][1].set_xlabel("Scan index")
