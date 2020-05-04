@@ -5,16 +5,16 @@ Created on Wed Oct 16 12:56:59 2019
 
 @author: Lukas Kiwitz
 """
-import json
 import multiprocessing as mp
 import os
 import random
-from math import ceil
 from typing import List, Dict
 
 import KDEpy
+import dolfin as dlf
 import fenics as fcs
 import lxml.etree as et
+import matplotlib.pyplot as plt
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
@@ -51,9 +51,7 @@ class ComputeSettings:
 
     # def __init__(self, file_path: str, field: str, mesh: fcs.Mesh, u: fcs.Function, cell_data: List[Dict],
     #              boundary_markers: fcs.MeshFunction, dynamic: Dict, scan_index: int, time_index: float) -> None:
-    def __init__(self)->None:
-
-
+    def __init__(self) -> None:
         self.file_path: str = ""
         """file path to volume file
         """
@@ -63,26 +61,21 @@ class ComputeSettings:
         self.time_index: float = 0
         self.tmp_path = ""
 
-
-    def set_mesh(self,mesh: fcs.Mesh):
+    def set_mesh(self, mesh: fcs.Mesh):
         self._mesh = mesh
 
-
-    def set_u(self,u: fcs.Function):
+    def set_u(self, u: fcs.Function):
         self._u: fcs.Function = u
 
     # noinspection PyPep8Naming,PyPep8Naming
-    def set_V(self,V: fcs.FunctionSpace):
+    def set_V(self, V: fcs.FunctionSpace):
         self._V: fcs.FunctionSpace = V
 
-
-    def set_boundary_markers(self,bm: fcs.MeshFunction):
+    def set_boundary_markers(self, bm: fcs.MeshFunction):
         self._boundary_markers: fcs.MeshFunction = bm
 
-
-    def get_mesh(self) ->fcs.Mesh:
+    def get_mesh(self) -> fcs.Mesh:
         return self._mesh
-
 
     def get_u(self) -> fcs.Function:
         return self._u
@@ -94,10 +87,10 @@ class ComputeSettings:
     def get_boundary_markers(self) -> fcs.MeshFunction:
         return self._boundary_markers
 
+
 class PostProcessor:
 
     def __init__(self, path: str) -> None:
-        # self.pDicts = []
         self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
@@ -105,126 +98,16 @@ class PostProcessor:
         self.global_dataframe: pd.DataFrame = pd.DataFrame()
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
-        self.computations = [c(),grad(),SD()]
+        self.computations = [c(), grad(), SD()]
 
-    def get_mesh_volume(self, mesh):
+        self.image_settings = {
+            "cell_colors": "Dark2",
+            "cell_color_key": "type_name",
+            "legend_title": "",
+            "dpi": 350,
+        }
 
-        sum = 0
-        for cell in fcs.cells(mesh):
-            sum += cell.volume()
-        return sum
-    # noinspection PyPep8Naming
-
-    def compute(self, compute_settings: ComputeSettings) -> str:
-
-        """
-        performs computations according to compute_settings and return result as element tree string
-
-        :param compute_settings:
-        :return:
-        """
-
-         #converts concentration from nmol/(unit_length**3) to nmol/l
-
-        result: et.Element = et.Element("File")
-        global_results: et.Element = et.SubElement(result, "GlobalResults")
-
-
-        result.set("field_name", str(compute_settings.field))
-        result.set("dist_plot_path", str(compute_settings.file_path))
-
-
-        result.append(compute_settings.parameters)
-        result.set("scan_index", str(compute_settings.scan_index))
-        result.set("time_index", str(compute_settings.time_index))
-        result.set("time", str(compute_settings.time))
-
-        mesh: fcs.Mesh = compute_settings.get_mesh()
-        u: fcs.Function = compute_settings.get_u()
-        mesh_volume = self.get_mesh_volume(mesh)
-        mesh_volume_element = et.SubElement(global_results,"MeshVolume")
-        mesh_volume_element.text = str(mesh_volume)
-
-        p = ParameterSet("dummy",[])
-        p.deserialize_from_xml(compute_settings.parameters)
-
-
-        V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
-        V: fcs.FunctionSpace = fcs.FunctionSpace(mesh, "P", 1)
-        grad: fcs.Function  = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-
-        for comp in compute_settings.computations:
-
-            result_element: et.Element = et.SubElement(global_results, comp.name)
-            result_element.text = str(comp(
-                u,
-                grad,
-                get_concentration_conversion(self.unit_length_exponent),
-                get_gradient_conversion(self.unit_length_exponent),
-                mesh_volume,
-                V=V,
-                V_vec = V)
-            )
-
-
-        return et.tostring(result)
-
-    # noinspection PyPep8Naming
-    def job(self, compute_settings_list: List[ComputeSettings], output, thread_index: int, tmp_path: str):
-        try:
-            comm = MPI.COMM_WORLD
-            local = comm.Dup()
-
-
-
-            # boundary_markers = fcs.MeshFunction(
-            #     "size_t", mesh, mesh.topology().dim() - 1)
-            # with fcs.HDF5File(local, sub_domain_cache, "r") as f:
-            #     f.read(boundary_markers, "/boundaries")
-            # boundary_markers = boundary_markers
-
-            result_list = []
-            for n, compute_settings in enumerate(compute_settings_list):
-
-                compute_settings.computations = self.computations
-
-                mesh = fcs.Mesh()
-                with fcs.XDMFFile(compute_settings.path +"/"+ compute_settings.mesh_path) as f:
-                    f.read(mesh)
-                mesh = mesh
-
-                V = fcs.FunctionSpace(mesh, "P", 1)
-
-                u: fcs.Function  = fcs.Function(V)
-                with fcs.HDF5File(local, compute_settings.path +"/"+compute_settings.file_path, "r") as f:
-                    f.read(u, "/" + compute_settings.field)
-                if not compute_settings:
-                    continue
-                compute_settings.set_mesh(mesh)
-                compute_settings.set_V(V)
-                compute_settings.set_u(u)
-
-                message(
-                    "Process {thread}: Reading file {file} ({n}/{tot})".format(thread=thread_index, file=compute_settings.file_path, n=n, tot=len(compute_settings_list))
-                )
-
-                data_out: str = self.compute(compute_settings)
-                result_list.append(str(data_out))
-            message("Process {index} has finished computation".format(index=thread_index))
-            filename = tmp_path + "post_{r}.txt".format(r=str(random.randint(0, 2 ** 32)))
-            while filename in os.listdir(tmp_path):
-                filename  = tmp_path+"post_{r}.txt".format(r=str(random.randint(0,2**32)))
-            message("Process {index} writing results to file {f}".format(index=thread_index,f=filename))
-            f = open(filename,'x')
-            f.write(json.dumps(result_list))
-            f.close()
-            output.put(filename)
-
-        except Exception as e:
-            message(str(e))
-            output.put(e)
-
-    def write_post_process_xml(self, threads,debug=False):
+    def write_post_process_xml(self, threads, debug=False, make_images=False):
         """
         runs compute-function for all scans an writes result to xml file
 
@@ -236,93 +119,56 @@ class PostProcessor:
         self.stateManager = st.StateManager(self.path)
         self.stateManager.load_xml()
 
-        tmp_path = self.path+"tmp/"
-        os.makedirs(tmp_path,exist_ok=True)
+        tmp_path = self.path + "tmp/"
+        os.makedirs(tmp_path, exist_ok=True)
 
         scatter_list: List[ComputeSettings] = []
 
-
         # loads timestep logs
-        for scan_index,scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
+        for scan_index, scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
             parameters = scan_sample.find("Parameters")
 
-
             for field_step in scan_sample.findall("TimeSeries/Step/Fields/Field"):
-
                 compute_settings: ComputeSettings = ComputeSettings()
                 compute_settings.path = self.path
                 compute_settings.file_path = field_step.get("dist_plot_path")
                 compute_settings.field = field_step.get("field_name")
                 compute_settings.mesh_path = field_step.get("mesh_path")
 
-                compute_settings.parameters = parameters
-                compute_settings.scan_index = scan_index
-                compute_settings.time_index = field_step.getparent().getparent().get("time_index")
+                compute_settings.parameters = et.tostring(parameters)
+                compute_settings.scan_index = int(scan_index)
+                compute_settings.time_index = int(field_step.getparent().getparent().get("time_index"))
                 compute_settings.time = field_step.getparent().getparent().get("time")
+                compute_settings.make_images = make_images
+                compute_settings.tmp_path = tmp_path
+                compute_settings.unit_length_exponent = self.unit_length_exponent
+
+                for k, v in self.image_settings.items():
+                    compute_settings.__setattr__(k, v)
+
+                compute_settings.computations = self.computations
 
                 scatter_list.append(compute_settings)
 
+        mesh_path = self.path + "/" + scatter_list[0].mesh_path
+        threads = threads if threads <= os.cpu_count() else os.cpu_count()
         message("distributing to {threads} threads".format(threads=threads))
-        if debug:
-            scatter_list = scatter_list[0:debug]
-        size = ceil(len(scatter_list) / threads)
-        partitioned_list = [scatter_list[x:x + size]
-                           for x in range(0, len(scatter_list), size)]
-        output = mp.Queue(threads)
-        jobs = [mp.Process(target=self.job, args=(i, output, index, tmp_path)) for index, i in enumerate(partitioned_list)]
-        for j in jobs:
-            j.start()
-        from time import time
-        start = time()
-        timeout = 24*60*60
 
-        while True:
-            if (time() - start) < timeout:
-                running = False
-                for j in jobs:
-                    if j.is_alive():
-                        running = True
-                        break
-                if not running:
-                    message("collecting distributed tasks")
-                    break
-            else:
-                raise MyError.SubProcessTimeout(timeout)
-                break
+        with mp.Pool(processes=threads, initializer=initialise(mesh_path, self.cell_dataframe)) as p:
+            result_list = p.map(compute, scatter_list)
 
-        # file_list: List[str] = [output.get(True, 10) for j in jobs]
-        file_list: List[str] = []
-        from queue import Empty
-        for job in jobs:
-            try:
-                time_out = 10 * 60
-                result = output.get(True, time_out)
-                file_list.append(result)
-            except Empty as e:
-                message("Could not retrieve result from queue. Machine busy?".format(t=time_out))
+        element_list = []
+        for file in result_list:
+            with open(file, "rb") as f:
+                element_list.append(et.fromstring(f.read()))
 
-        for file in file_list:
-            if not type(file) == str:
-                message("A Worker fininshed with Error: {e}".format(e=file))
-                file_list.remove(file)
-
-        message("Collected results from {l} Processes".format(l=1 + len(file_list)))
-        result_list = []
-        for file in file_list:
-            f = open(file, "r")
-            result_list.append(json.load(f))
-        message("successfully collected distributed task")
-        flattend_list: List[str] = []
-
-        for i in result_list:
-            for o in i:
-                flattend_list.append(et.XML(o[2:-1]))
         indexed_list = [
             {"scan_index": i.get("scan_index"),
              "time_index": i.get("time_index"),
              "time": i.get("time"),
              "entry": i}
-            for i in flattend_list]
+            for i in element_list]
+
         indexed_list = groupByKey(indexed_list, ["scan_index"])
         for i, e in enumerate(indexed_list):
             indexed_list[i] = groupByKey(e, ["time_index"])
@@ -337,7 +183,7 @@ class PostProcessor:
                 for i in t:
                     time = et.SubElement(scan, "Step")
                     time.set("i", i["time_index"])
-                    time.set("time",i["time"])
+                    time.set("time", i["time"])
                     time.append(i["entry"])
         message("writing post process output to {p}".format(p=self.out_tree_path))
         tree.write(self.out_tree_path, pretty_print=True)
@@ -368,20 +214,20 @@ class PostProcessor:
                         "time_index": time_index,
                         "time": time,
                         "field_name": field_name,
-                        "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)]["{field}_surf_c".format(field=field_name)].mean()
+                        "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                            "{field}_surf_c".format(field=field_name)].mean()
                     }
-                    parameter_set = ParameterSet("dummy_set",[])
+                    parameter_set = ParameterSet("dummy_set", [])
                     parameter_set.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
                     d.update(parameter_set.get_as_dictionary())
 
-
                     for v in g_values:
-                        d.update({v.tag:float(v.text)})
+                        d.update({v.tag: float(v.text)})
                     result.append(d)
 
         return pd.DataFrame(result)
 
-    def get_kde_estimators(self, n ,ts, time_index, type_names):
+    def get_kde_estimators(self, n, ts, time_index, type_names):
 
         kernels = {}
         message("computing kde for time series: {n} and timestep {t}".format(n=n, t=time_index))
@@ -391,10 +237,10 @@ class PostProcessor:
                 break
             elif inital_cells.shape[0] == 1:
                 data = np.array([inital_cells["x"].iloc[0], inital_cells["y"].iloc[0], inital_cells["z"].iloc[0]])
-                kernel = KDEpy.NaiveKDE("tri", bw=10e-2).fit(data)
+                kernel = KDEpy.NaiveKDE("tri", bw=10).fit(data)
             else:
                 data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T
-                kernel = KDEpy.TreeKDE("tri", bw=10e-2).fit(data)
+                kernel = KDEpy.TreeKDE("tri", bw=10).fit(data)
 
             # kernel = KDEpy.TreeKDE(bw='ISJ').fit(data)
 
@@ -425,6 +271,7 @@ class PostProcessor:
         result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
         result["time"] = result["time"].apply(lambda x: float(x))
 
+
         """---------------------------"""
 
         if kde:
@@ -433,10 +280,10 @@ class PostProcessor:
             kde_result = pd.DataFrame()
             for scan_index, ts in r_grouped:
                 kernels = []
-                for time_index,step in ts.groupby(["time_index"]):
-
-                    kde_time_index = time_index-1 if time_index > 0 else 0
-                    kernels.append(self.get_kde_estimators(scan_index,ts, kde_time_index, result["type_name"].unique()))
+                for time_index, step in ts.groupby(["time_index"]):
+                    kde_time_index = time_index - 1 if time_index > 0 else 0
+                    kernels.append(
+                        self.get_kde_estimators(scan_index, ts, kde_time_index, result["type_name"].unique()))
 
                 for time_index, step in ts.groupby(["time_index"]):
 
@@ -444,19 +291,19 @@ class PostProcessor:
                         positions = np.array([step["x"], step["y"], step["z"]]).T
 
                         scores = kernel.evaluate(positions).T
-                        scores =  pd.Series(scores)
+                        scores = pd.Series(scores)
                         scores.index = step.index
 
-                        step.insert(step.shape[1],"{type_name}_score".format(type_name=type_name),scores)
+                        step.insert(step.shape[1], "{type_name}_score".format(type_name=type_name), scores)
 
                     for type_name, kernel in kernels[0].items():
                         positions = np.array([step["x"], step["y"], step["z"]]).T
 
                         scores = kernel.evaluate(positions).T
-                        scores =  pd.Series(scores)
+                        scores = pd.Series(scores)
                         scores.index = step.index
 
-                        step.insert(step.shape[1],"{type_name}_score_init".format(type_name=type_name),scores)
+                        step.insert(step.shape[1], "{type_name}_score_init".format(type_name=type_name), scores)
 
                     kde_result = kde_result.append(step)
             result = self._normalize_cell_score(kde_result)
@@ -477,15 +324,15 @@ class PostProcessor:
             #     (x["time_index"] == 0)
             #     ]["id"].unique()
 
-            no_init = group#group.loc[~group["id"].isin(ids)]
+            no_init = group  # group.loc[~group["id"].isin(ids)]
 
             for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
-                group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
+                group.insert(group.shape[1], new, group[old] / float(no_init.mean()[old]))
 
             for old in pd.Series(group.columns).str.extract("(.*_score_init)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
-                group.insert(group.shape[1],new, group[old] / float(no_init.mean()[old]))
+                group.insert(group.shape[1], new, group[old] / float(no_init.mean()[old]))
 
             result = result.append(group)
 
@@ -496,58 +343,320 @@ class PostProcessor:
         # temp_cell_df = self.cell_dataframe.drop(columns = ["x","y","z","id"])
         grouped = self.cell_dataframe.groupby(["type_name", "time_index", "scan_index"], as_index=False)
 
-        des = grouped.describe(include = 'all')
+        des = grouped.describe(include='all')
 
         # des = des.reset_index()
 
         return des
 
-    def make_dataframes(self,kde=False):
+    def run_post_process(self, threads, kde=False, make_images=False):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde)
+        self.write_post_process_xml(threads, make_images=make_images)
         self.global_dataframe = self.get_global_dataframe()
-        # self.cell_stats = self.get_stats()
+
 
 def get_concentration_conversion(unit_length_exponent: int):
+    assert isinstance(unit_length_exponent, int)
+    return 10 ** (-1 * (unit_length_exponent * 3 + 3))
 
-    assert isinstance(unit_length_exponent,int)
-    return 10**(-1 * (unit_length_exponent * 3 + 3))
 
 def get_gradient_conversion(unit_length_exponent: int):
-
     assert isinstance(unit_length_exponent, int)
-    exp = (-1 * (unit_length_exponent * 3 + 3)) -  1
-    exp -= (6 + unit_length_exponent)# to nM/um
+    exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
+    exp -= (6 + unit_length_exponent)  # to nM/um
 
-    return 10**(exp)
+    return 10 ** (exp)
 
-class SD:
+
+class PostProcessComputation():
+    add_xml_result = True
+
+    def __init__(self):
+        self.name = "PostProcessComputation"
+
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        return 0
+
+
+class SD(PostProcessComputation):
 
     def __init__(self):
         self.name = "SD"
 
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-
         sd: float = np.std(np.array(u.vector())) * c_conv
 
         return sd
 
-class c:
+
+class c(PostProcessComputation):
 
     def __init__(self):
         self.name = "Concentration"
 
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        nodal_values = np.array(u.vector())
+
+        mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])
+        return mean_c * c_conv
 
 
-        concentration: float = (fcs.assemble(u * fcs.dX)/ mesh_volume)*c_conv
-        return  concentration
-
-class grad:
+class grad(PostProcessComputation):
 
     def __init__(self):
         self.name = "Gradient"
 
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        g = np.reshape(grad.vector().vec().array, (u.vector().vec().size, 3))
+        g = np.transpose(g)
 
-        gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * grad_conv / mesh_volume
-        return gradient
+        my_grad = np.sqrt(np.power(g[0], 2) + np.power(g[1], 2) + np.power(g[2], 2))
+        my_grad = np.mean(my_grad) * grad_conv
+
+        return my_grad
+
+
+def get_mesh_volume(mesh):
+    sum = 0
+    for cell in fcs.cells(mesh):
+        sum += cell.volume()
+    return sum
+
+
+def compute(compute_settings: ComputeSettings) -> str:
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    """
+    performs computations according to compute_settings and return result as element tree string
+
+    :param compute_settings:
+    :return:
+    """
+
+    u: fcs.Function = fcs.Function(function_space)
+    with fcs.HDF5File(comm, compute_settings.path + "/" + compute_settings.file_path, "r") as f:
+        f.read(u, "/" + compute_settings.field)
+
+    result: et.Element = et.Element("File")
+    global_results: et.Element = et.SubElement(result, "GlobalResults")
+
+    result.set("field_name", str(compute_settings.field))
+    result.set("dist_plot_path", str(compute_settings.file_path))
+
+    result.append(et.fromstring(compute_settings.parameters))
+
+    scan_index = str(compute_settings.scan_index)
+    result.set("scan_index", scan_index)
+    time_index = str(compute_settings.time_index)
+    result.set("time_index", time_index)
+    result.set("time", str(compute_settings.time))
+
+    message("running global computations for step {t} in scan {s}".format(t=time_index, s=scan_index))
+
+    mesh_volume_element = et.SubElement(global_results, "MeshVolume")
+    mesh_volume_element.text = str(mesh_volume)
+
+    p = ParameterSet("dummy", [])
+    p.deserialize_from_xml(et.fromstring(compute_settings.parameters))
+
+    V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
+
+    grad: fcs.Function = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
+
+    c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
+    g_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
+
+    if compute_settings.make_images:
+        make_images(u, c_conv, compute_settings)
+
+    for comp in compute_settings.computations:
+
+        assert isinstance(comp, PostProcessComputation)
+
+        if comp.add_xml_result:
+            result_element: et.Element = et.SubElement(global_results, comp.name)
+            result_element.text = str(comp(
+                u,
+                grad,
+                c_conv,
+                g_conv,
+                mesh_volume,
+                V=function_space,
+                V_vec=V_vec)
+            )
+        else:
+            comp(
+                u,
+                grad,
+                c_conv,
+                g_conv,
+                mesh_volume,
+                V=function_space,
+                V_vec=V_vec)
+    tmp_path = compute_settings.tmp_path
+
+    filename = tmp_path + "post_{r}.txt".format(r=str(random.randint(0, 2 ** 32)))
+    while filename in os.listdir(tmp_path):
+        filename = tmp_path + "post_{r}.txt".format(r=str(random.randint(0, 2 ** 32)))
+
+    with open(filename, 'wb') as f:
+        f.write(et.tostring(result))
+
+    return filename
+
+
+def initialise(mesh_path, _cell_dataframe):
+    global mesh
+    mesh = fcs.Mesh()
+    with fcs.XDMFFile(mesh_path) as f:
+        f.read(mesh)
+
+    global mesh_volume
+    mesh_volume = get_mesh_volume(mesh)
+
+    global function_space
+    function_space = fcs.FunctionSpace(mesh, "P", 1)
+
+    global cell_dataframe
+    cell_dataframe = _cell_dataframe
+
+
+def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labels=3):
+    cell_color_key = cell_color_key
+
+    if isinstance(cell_colors, Dict):
+        color_dict = cell_colors
+    else:
+        try:
+            cmap = plt.get_cmap(cell_colors)
+        except:
+            message("could not inteperet cell_colors as colormap")
+            cmap = plt.get_cmap("Dark2")
+
+        from numbers import Number
+
+        if not isinstance(cell_df[cell_color_key].iloc[0], Number):
+            categorical = True
+            cell_types = cell_df[cell_color_key].unique()
+        else:
+            categorical = False
+            cell_types = cell_df[cell_color_key].round(round_legend_labels).unique()
+
+        color_dict = {}
+        if cmap.N <= 8:
+            for i, t in enumerate(cell_types):
+                color_dict[t] = cmap(i)
+        else:
+
+            for i, t in enumerate(cell_types):
+                i *= cmap.N / len(cell_types)
+                color_dict[t] = cmap(int(i))
+
+    legend_items = []
+
+    if len(color_dict) > 8:
+        step = int(len(color_dict) / 8)
+        items = list(color_dict.items())[0::step]
+        legend_color_dict = dict(items)
+    else:
+        legend_color_dict = color_dict
+
+    for type, color in legend_color_dict.items():
+        legend_items.append(
+            plt.Line2D([0], [0], marker='o', color='w', label=type,
+                       markerfacecolor=color, markersize=15, markeredgewidth=0, linewidth=0)
+        )
+
+    return color_dict, legend_items, categorical
+
+
+def make_images(u, conv_factor, compute_settings):
+    scan_index = compute_settings.scan_index
+    time_index = compute_settings.time_index
+
+    cell_color_key = compute_settings.cell_color_key
+    legend_title = compute_settings.legend_title
+    cell_colors = compute_settings.cell_colors
+    round_legend_labels = compute_settings.round_legend_labels
+
+    color_dict, legend_items, categorical = get_color_dictionary(cell_dataframe, cell_color_key, cell_colors,
+                                                                 round_legend_labels=round_legend_labels)
+
+    cell_df = cell_dataframe.loc[
+        (cell_dataframe["scan_index"] == scan_index) &
+        (cell_dataframe["time_index"] == time_index)
+        ]
+    u.set_allow_extrapolation(True)
+    fig = plt.figure()
+    for index, cell in cell_df.iterrows():
+        p = [
+            cell["x"],
+            cell["y"]
+        ]
+
+        key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+        if not key in color_dict:
+            color = "black"
+            message("no color provided for key {k}".format(k=key))
+        else:
+            color = color_dict[key]
+
+        c = plt.Circle(p, 5, color=color)
+        fig.gca().add_artist(c)
+
+    coords = u.function_space().mesh().coordinates()
+    coords_t = np.transpose(coords)
+    x_limits = (
+        np.min(coords_t[0]), np.max(coords_t[0])
+    )
+    y_limits = (
+        np.min(coords_t[1]), np.max(coords_t[1])
+    )
+
+    rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), 200, 200)
+    rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
+    u_slice = fcs.interpolate(u, rev_V)
+
+    mesh = u_slice.function_space().mesh()
+    slice_v = u_slice.compute_vertex_values(mesh) * conv_factor
+
+    triang = dlf.common.plotting.mesh2triang(mesh)
+
+    from matplotlib.cm import ScalarMappable
+    from matplotlib.colors import Normalize
+
+    # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
+    fig.gca().tricontourf(triang, slice_v, levels=100)
+
+    vmin = min(slice_v)
+    vmax = max(slice_v)
+
+    norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
+    cb_cytokine = fig.colorbar(ScalarMappable(norm=norm_cytokine, cmap="viridis"))
+    cb_cytokine.set_label("cytokine (nM)")
+
+    fig.gca().set_xlabel(r"x ($\mu m $)")
+    fig.gca().set_ylabel(r"y ($\mu m $)")
+
+    if not categorical:
+        vmin = min(color_dict.keys())
+        vmax = max(color_dict.keys())
+
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        cb = fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors))
+        cb.set_label(cell_color_key)
+    else:
+        plt.legend(handles=legend_items, title=legend_title)
+
+    img_path = "images/scan_{scan_index}/{field}/".format(
+        field=compute_settings.field,
+        scan_index=scan_index
+    )
+    file_name = "{time_index}".format(
+        time_index=time_index
+    )
+    os.makedirs(compute_settings.path + img_path, exist_ok=True)
+
+    fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
