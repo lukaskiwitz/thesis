@@ -123,8 +123,8 @@ class SimContainer(SimComponent):
                 entity.update_bcs()
                 if fq in entity.fieldQuantities:
                     field.add_entity(entity)
-            field.generate_mesh(cache=True, path= self.path, path_prefix="cache/", **kwargs)
-            field.update_solver()
+            field.generate_mesh(cache=True, path=self.path, path_prefix="cache/", **kwargs)
+            field.update_solver(self.path + "solver_tmp/")
 
     def get_entity_by_name(self, name: str) -> Entity:
 
@@ -153,20 +153,20 @@ class SimContainer(SimComponent):
 
     def run(self, T, dt):
         for time_index, t in enumerate(T):
-            self.pre_step_timestamp = time.process_time()
+            self.pre_step_timestamp = time.time()
 
             self._pre_step(self, time_index, t, T)  # internal use
             self.pre_step(self, time_index, t, T)  # user defined
 
             self.step(dt)
 
-            self.post_step_timestamp = time.process_time()
+            self.post_step_timestamp = time.time()
 
             # self.time_log(self,time_index,t,T)
             self._post_step(self, time_index, t, T)  # internal use
             self.post_step(self, time_index, t, T)  # user defined
 
-            self.total_step_timestamp = time.process_time()
+            self.total_step_timestamp = time.time()
             self._time_log(self, time_index, t, T)
 
     def _pre_step(self, sc, time_index, t, T):
@@ -180,8 +180,8 @@ class SimContainer(SimComponent):
         total_time(end - start, pre="Total time ", post=" for step number {n}".format(n=time_index))
 
         df = pd.DataFrame({
-            "total_step_process_time": [total - start],
-            "time_step_process_time": [end - start],
+            "total_step_time": [total - start],
+            "time_step_time": [end - start],
             "time_index": [time_index],
             "t": [t]
         })
@@ -221,8 +221,8 @@ class SimContainer(SimComponent):
 
         for field in self.fields:
             # field.unit_length_exponent = self.unit_length_exponent
-            field.update_solver(p = self.p)
-            field.step(dt)
+            field.update_solver(self.path + "solver_tmp/", p=self.p)
+            field.step(dt, self.path + "solver_tmp/")
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.T, dt)

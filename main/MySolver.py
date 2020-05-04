@@ -7,14 +7,23 @@ Created on Tue May 21 13:56:50 2019
 """
 from __future__ import print_function
 
+import getpass
+import os
+import pickle as pl
 from typing import List
 
 import fenics as fcs
+import lxml.etree as ET
+import mpi4py.MPI as MPI
 
 import BC
 from MySubDomain import MySubDomain
 from ParameterSet import ParameterSet
-from my_debug import message
+from my_debug import message, total_time
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 
 class MySolver:
@@ -63,70 +72,111 @@ class MyLinearSoler(MySolver):
 
         super().__init__()
 
-    def compileSolver(self):
+    def compileSolver(self, tmp_path: str):
 
         self.V = fcs.FunctionSpace(self.mesh, "P", 1)
-
-        # define trialfunction u, testfunction v from functionspace V
-
-        u = fcs.TrialFunction(self.V)
-        v = fcs.TestFunction(self.V)
-
-        # checks for parameters
-        D = fcs.Constant(self.p.get_physical_parameter_by_field_quantity("D",self.field_quantity).get_in_sim_unit())
-        kd = fcs.Constant(self.p.get_physical_parameter_by_field_quantity("kd", self.field_quantity).get_in_sim_unit())
-
-        # defines measure on boundary
-        ds = fcs.Measure("ds", domain=self.mesh, subdomain_data=self.boundary_markers)
-
-        # iterates over subdomain list to set boundary conditions
+        self.u = fcs.Function(self.V)
+        self.tmp_path = tmp_path
 
         self.dirichlet = []
         self.integralBC = []
+
+        dirichlet_bc_test = []
+        integral_bc_test = []
+        patch_list = []
+
         for i in self.subdomains:
             e = i["entity"]
             patch = i["patch"]
             bc = e.get_BC(self.field_quantity)
-            if isinstance(bc, BC.OuterBC):
-                pass
-            if type(bc) == BC.DirichletBC or type(bc) == BC.OuterDirichletBC:
-                # Dirichlet BC
-                message("patch" + str(patch))
-                self.dirichlet.append(bc.get_BC(self.V, self.boundary_markers, patch))
-            if type(bc) == BC.Integral or type(bc) == BC.OuterIntegral:
-                # p_update = {"kd":self.p["kd"],"D":self.p["D"]}
-                self.integralBC.append(bc.get_BC(u,area = e.get_surface_area()) * v * ds(patch))
 
-        F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(self.integralBC))
+            patch_list.append([i["patch"], i["entity"].get_surface_area()])
 
-        # Defines variational problem as F == 0 with
-        # with respect to u
-        a = fcs.lhs(F)
-        L = fcs.rhs(F)
-        u = fcs.Function(self.V)
-        problem = fcs.LinearVariationalProblem(a, L, u, self.dirichlet)
+            if isinstance(bc, BC.DirichletBC) or isinstance(bc, BC.OuterDirichletBC):
+                dirichlet_bc_test.append([bc.value, patch])
 
-        # instantiates fenics solver
-        self.solver = fcs.LinearVariationalSolver(problem)
+            if isinstance(bc, BC.Integral) or isinstance(bc, BC.OuterIntegral):
+                linear, billinear = bc.get_BC(1, area=e.get_surface_area())
 
-        self.solver.parameters["linear_solver"] = self.p.get_misc_parameter(
-            "linear_solver", "numeric").get_in_sim_unit()
-        self.solver.parameters["preconditioner"] = self.p.get_misc_parameter(
-            "preconditioner", "numeric").get_in_sim_unit()
-        self.solver.parameters["krylov_solver"]["absolute_tolerance"] = self.p.get_misc_parameter(
-            "krylov_atol","numeric").get_in_sim_unit()
-        self.solver.parameters["krylov_solver"]["relative_tolerance"] = self.p.get_misc_parameter(
-            "krylov_rtol","numeric").get_in_sim_unit()
+                integral_bc_test.append([linear, billinear, patch])
 
-        # sets field u to be trialfunction
-        self.u = u
+        markers_path = self.tmp_path + "boundary_markers.h5"
+        mesh_file = self.tmp_path + "mesh.xdmf"
+
+        with fcs.HDF5File(fcs.MPI.comm_world, markers_path, "w") as f:
+            f.write(self.boundary_markers, "/boundaries")
+
+        with fcs.XDMFFile(mesh_file) as f:
+            f.write(self.mesh)
+
+        p_xml = ET.ElementTree(self.p.serialize_to_xml())
+
+        pickle_loc = self.tmp_path + "pickle/"
+        os.makedirs(pickle_loc, exist_ok=True)
+
+        with open(pickle_loc + "patch_list", "wb") as f:
+            pl.dump(patch_list, f)
+        with open(pickle_loc + "dirichlet", "wb") as f:
+            pl.dump(dirichlet_bc_test, f)
+        with open(pickle_loc + "integral", "wb") as f:
+            pl.dump(integral_bc_test, f)
+        with open(pickle_loc + "mesh_file", "wb") as f:
+            pl.dump(mesh_file, f)
+        with open(pickle_loc + "markers_path", "wb") as f:
+            pl.dump(markers_path, f)
+        p_xml.write(pickle_loc + "p_xml")
+        with open(pickle_loc + "field_quantity", "wb") as f:
+            pl.dump(self.field_quantity, f)
+        with open(pickle_loc + "result_path", "wb") as f:
+            pl.dump(self.tmp_path, f)
+        import subprocess as sp
+
+        if hasattr(self, "process"):
+            if not self.process == None:
+                self.process.kill()
+
+        max_nodes = self.p.get_misc_parameter("max_mpi_nodes", "numeric").get_in_sim_unit(type=int)
+        dofs_per_node = self.p.get_misc_parameter("dofs_per_node", "numeric").get_in_sim_unit(type=int)
+
+        user = getpass.getuser()
+        dof_n = self.V.dim()
+
+        mpi_nodes = int(dof_n / dofs_per_node)
+
+        if mpi_nodes == 0:
+            mpi_nodes = 1
+
+        mpi_nodes = mpi_nodes if mpi_nodes <= max_nodes else max_nodes
+
+        dofs_per_node = int(dof_n / mpi_nodes)
+
+        message("Launching {n} mpi threads to solve system of {dn} dofs with {dofs_p_n} per node".format(
+            n=mpi_nodes, dn=dof_n, dofs_p_n=dofs_per_node))
+
+        p = sp.Popen(
+            ["mpiexec", "-n", str(mpi_nodes), "python", "/home/{u}/thesis/main/my_external_solver.py".format(u=user),
+             pickle_loc], stdin=sp.PIPE, stdout=sp.PIPE)
+
+        self.process = p
 
     def solve(self) -> fcs.Function:
-        """
-        Wrapper around fenics solve()
-        """
-        # calls fenics solver; renames u for proper vtk output and returns solution u
-        self.solver.solve()
+
+        import time
+
+        signal_out, signal_err = self.process.communicate(b"START")
+        # message(signal_out)
+        for i in signal_out.decode("utf-8").split("\n"):
+            message(i)
+
+        file = str(signal_out).split("\\n")[-1].replace("'", "")
+
+        message("loading solution")
+        start = time.time()
+        with fcs.HDF5File(comm, file + ".h5", "r") as f:
+            f.read(self.u, "field")
+        end = time.time()
+        total_time(end - start, pre="Loading Solution")
+
         self.u.rename(self.field_quantity, self.field_quantity)
 
         return self.u

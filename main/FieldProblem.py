@@ -6,14 +6,19 @@ Created on Fri Jun  7 12:48:49 2019
 @author: Lukas Kiwitz
 """
 
+import multiprocessing as mp
 import os
+import time
 
 import fenics as fcs
+import numpy as np
 
 import MeshGenerator as mshGen
 from Entity import Entity, DomainEntity
 from MySolver import MySolver
 from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
+from PostProcess import get_concentration_conversion
+from my_debug import message
 
 
 class FieldProblem:
@@ -179,46 +184,75 @@ class FieldProblem:
             subdomains.append(e)
         self.solver.subdomains = subdomains
 
-    def update_solver(self, p = None) -> None:
+    def update_solver(self, tmp_path, p=None) -> None:
         """
         updates solver
         """
-        self.update_bcs(p = p)
-        self.solver.compileSolver()
+        self.update_bcs(p=p)
+        self.solver.compileSolver(tmp_path)
 
+    def get_boundary_concentrations(self, tmp_path: str) -> None:
 
-    def get_boundary_concentrations(self) -> None:
+        def init(_mesh, _markers, _solution):
 
-        """
+            global mesh
+            mesh = _mesh
+            global boundary_markers
+            boundary_markers = _markers
+            global u
+            u = _solution
+            global ds
+            ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
 
-        computes average concentration over each entity and stores results in p["surf_c_{field}"]
-
-
-        """
+            global vertex_values
+            vertex_values = u.compute_vertex_values(_mesh)
 
         ds = fcs.Measure("ds", domain=self.solver.mesh, subdomain_data=self.solver.boundary_markers)
-        u = self.get_field()
+        entity_list = [[e["patch"], self.get_entity_surface_area(e)] for e in self.registered_entities]
+        pn = os.cpu_count()
 
-        from PostProcess import get_concentration_conversion
-        f = get_concentration_conversion(self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit())
+        cs = int(len(entity_list) / pn)
 
-        for i in self.registered_entities:
-            value = fcs.assemble(
-                u * ds(i["patch"])
-            ) / (i["entity"].get_surface_area())
+        cells_per_worker = self.p.get_misc_parameter("cells_per_worker", "numeric").get_in_sim_unit(type=int)
+        max_pool_size = self.p.get_misc_parameter("max_pool_size", "numeric").get_in_sim_unit(type=int)
 
+        pool_size = int(len(entity_list) / cells_per_worker)
+        pool_size = pool_size if pool_size >= 1 else 1
+        pool_size = pool_size if pool_size < max_pool_size else max_pool_size
 
+        chunksize = int(len(entity_list) / pool_size)
 
-            physical = PhysicalParameter("surf_c", 0, to_sim=1/f)
+        message("Extracting boundary concentrations. Poolsize: {pool_size}, cell_per_worker: {cells_per_worker}".format(
+            pool_size=pool_size,
+            cells_per_worker=chunksize
+        ))
+        start = time.time()
+        with mp.Pool(processes=pn, initializer=init,
+                     initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
+            result = pool.map(target, entity_list, chunksize=chunksize)
+        f = get_concentration_conversion(
+            self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
+        end = time.time()
+        from my_debug import total_time
+        total_time(end - start, pre="Cell concentration extracted in ")
+
+        for i, (patch, sa, value) in enumerate(result):
+
+            re = self.registered_entities[i]
+            assert re["patch"] == patch
+            if self.get_entity_surface_area(re) == None:
+                re["surface_area"] = sa
+
+            physical = PhysicalParameter("surf_c", 0, to_sim=1 / f)
             physical.set_in_sim_unit(value)
 
-
-
-            i["entity"].p.update(
+            self.registered_entities[i]["entity"].p.update(
                 ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
                     physical
                 ], field_quantity=self.field_quantity)])
-            ,override = True)
+                , override=True)
+
+        message("done pool map with chunksize {}".format(cs))
 
     def get_boundary_gradients(self) -> None:
 
@@ -250,17 +284,19 @@ class FieldProblem:
             override = True)
 
     # noinspection PyPep8Naming
-    def step(self, dt: float) -> None:
+    def step(self, dt: float, tmp_path: str) -> None:
         """
         runs timestep
 
         :param dT: delta t for this timestep
         """
-
+        from my_debug import message
+        message("Solving Field Problem")
         self.solver.solve()
-        self.get_boundary_concentrations()
-        self.get_boundary_gradients()
-
+        message("Computing Boundary Concentrations")
+        self.get_boundary_concentrations(tmp_path)
+        # message("Computing Boundary Gradients")
+        # self.get_boundary_gradients()
 
     def get_field(self) -> fcs.Function:
         return self.solver.u
@@ -292,6 +328,12 @@ class FieldProblem:
 
         return boundary_markers
 
+    def get_entity_surface_area(self, e):
+
+        if not "surface_area" in e.keys():
+            return None
+        return e["surface_area"]
+
     def get_outer_domain_vis(self, key="q") -> fcs.MeshFunction:
         """
 
@@ -307,3 +349,25 @@ class FieldProblem:
         for o in e.getSubDomains():
             o["entity"].getSubDomain().mark(boundary_markers, e.getState(key=key))
         return self.solver.boundary_markers
+
+
+def target(entity):
+    patch_index = entity[0]
+    sa = entity[1]
+    if sa == None:
+        sa = fcs.assemble(1 * ds(patch_index))
+
+    log = fcs.get_log_level()
+    fcs.set_log_level(50)
+
+    facets = np.array([i for i in fcs.SubsetIterator(boundary_markers, patch_index)])
+
+    fcs.set_log_level(log)
+
+    verts = np.unique(np.array(list(map(lambda x: x.entities(0), facets))))
+
+    vertex_sum = vertex_values.take(verts).sum() / len(verts)
+
+    result = [patch_index, sa, vertex_sum]
+
+    return result
