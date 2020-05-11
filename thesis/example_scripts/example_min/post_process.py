@@ -4,13 +4,12 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-import fenics as fcs
 import numpy as np
 from parameters import path
 
 os.environ["LOG_PATH"] = path
 
-from PostProcess import PostProcessor, PostProcessComputation
+from thesis.main.PostProcess import PostProcessor, PostProcessComputation
 
 
 class my_post_process(PostProcessComputation):
@@ -18,15 +17,18 @@ class my_post_process(PostProcessComputation):
 
     def __init__(self):
         """this name will appear in output dataframe"""
-        self.name = "maxGradient"
+        self.name = "fast_grad"
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, V=None, V_vec=None) -> float:
-        """__call__ must have this call signature.
-        returns the maximum gradient
-        """
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        # gradient: float = fcs.assemble(fcs.sqrt(fcs.dot(grad, grad)) * fcs.dX) * grad_conv / mesh_volume
 
-        gradient = fcs.project(fcs.sqrt(fcs.dot(grad, grad)),V)
-        return np.max(np.array(gradient.vector()))*grad_conv
+        g = np.reshape(grad.vector().vec().array, (u.vector().vec().size, 3))
+        g = np.transpose(g)
+
+        my_grad = np.sqrt(np.power(g[0], 2) + np.power(g[1], 2) + np.power(g[2], 2))
+        my_grad = np.mean(my_grad) * grad_conv
+
+        return my_grad
 
 
 """number of threads can be passed as first cli argument"""
@@ -44,14 +46,17 @@ pp.unit_length_exponent = -6
 
 """appends a custom calculation.
 default computations are defined in PostProcess.py"""
-pp.cell_colors = "Dark2"
-pp.cell_color_key = "type_name"
-pp.legend_title = "Cell Type"
-
-pp.computations.append(my_post_process())
+pp.image_settings = {
+    "cell_colors": "Dark2",
+    "cell_color_key": "type_name",
+    "round_legend_labels": 4,
+    "legend_title": "",
+    "dpi": 350,
+}
+# pp.computations.append(my_post_process())
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.run_post_process(threads)
+pp.run_post_process(threads, make_images=True)
 
 pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
 pp.cell_dataframe.to_hdf(path + "cell_df.h5", key="df", mode="w")

@@ -16,16 +16,20 @@ from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_
 
 os.environ["LOG_PATH"] = path
 
-import StateManager
-from InternalSolver import InternalSolver
-from ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
-from ScanContainer import ScanContainer, ScanSample
-from SimContainer import SimContainer
-from box_grid import setup
+import thesis.main.StateManager as StateManager
+from thesis.main.InternalSolver import InternalSolver
+from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
+from thesis.main.ScanContainer import ScanContainer, ScanSample
+from thesis.main.SimContainer import SimContainer
+from thesis.scenarios.box_grid import setup
+import mpi4py.MPI as MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 
 class RuleBasedSolver(InternalSolver):
-
     """Controls the internal logic of cells. An instance is created for each cell.
     Persistent values should be stored in the cell ParameterSet, values attached to the InternalSolver
     object may get lost."""
@@ -42,7 +46,7 @@ class RuleBasedSolver(InternalSolver):
         Implements cell behaviour. Here cells of type "default" have a 50% transition
         probability if il2 surface concentration is greater than the threshold.
         """
-
+        return p
         if entity.type_name == "default":
             il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
             if np.random.uniform(0, 1) > 0.5:
@@ -91,31 +95,45 @@ These are imported as modules and can be modified in parameters.py """
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
 
 """Imports the parameter Templates"""
-from box_grid import t_D
+from thesis.scenarios.box_grid import get_parameter_templates
+from parameters import numeric
 
+templates = get_parameter_templates(numeric["unit_length_exponent"])
+
+t_D = templates["D"]
+t_R = templates["R"]
 """Sets up Scannable parameters from parameters templates"""
-# R = ScannablePhysicalParameter(t_R(1000), lambda x, v: x * v)
+R = ScannablePhysicalParameter(t_R(40000), lambda x, v: x * v)
 # q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
 D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+
+t_amax = templates["amax"]
+amax = ScannablePhysicalParameter(t_amax(100), lambda x, v: x * v)
+
+bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
 # kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
 
 # f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 """Retrieves and entity type from sim container for scanning"""
 default = sc.get_entity_type_by_name("default")
+abs = sc.get_entity_type_by_name("abs")
+sec = sc.get_entity_type_by_name("sec")
 
-for v in np.logspace(-1, 1, 50):
+# for v in np.logspace(-
+for v in ["linear", "R_saturation"]:
     """Scans over parameters that are associated with a field"""
     sim_parameters = [
-        ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
+        # ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
         # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
         # ParameterCollection("fractions", [f(v)]),
     ]
 
     """Scans over parameters that are associated with an entity_type"""
     entity_types = [
-        # (default.get_updated([ParameterCollection("IL-2",[R(v)])])),
-        # (default.get_updated([ParameterCollection("IL-2", [q(v)])]))
+        default.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
+        abs.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
+        sec.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
     ]
     """Scans over parameters that are associated with the outer domain
     This is a dictionary. If boundary pieces where defined in the setup function, they can be referenced by name. 
@@ -143,7 +161,7 @@ stMan.scan_container = scan_container
 stMan.dt = 1
 """sets up time range"""
 
-stMan.T = np.arange(0, 50, 1)
+stMan.T = np.arange(0, 2, 1)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
@@ -156,6 +174,7 @@ def pre_scan(state_manager, scan_index):
 stMan.pre_scan = pre_scan
 
 """Runs the ParameterScan"""
+
 if len(sys.argv) > 1:
     if not sys.argv[1] == "mesh":
         stMan.run()

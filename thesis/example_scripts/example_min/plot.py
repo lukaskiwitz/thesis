@@ -106,7 +106,7 @@ def format_scan_index(index_column):
 
 def reduce_df(df, index_name):
     indices = df[index_name].unique()
-    if len(indices) <= 1:
+    if len(indices) <= 2:
         return df
     indices = indices[0::int(len(indices) / 3)]
     result = pd.DataFrame()
@@ -135,7 +135,7 @@ means = grouped_cells.mean()
 
 means.reset_index(inplace=True)
 
-std = grouped_cells.std()
+std = means  # grouped_cells.std()
 
 std.reset_index(inplace=True)
 
@@ -168,6 +168,7 @@ for i, k in enumerate(color_dict.keys()):
 fig, ax = plt.subplots(2, 2, sharex=False, sharey=False)
 global_plot(fig, ax[0][0], global_df, "Concentration", "avg. Cytokine ({c})".format(c=c_unit), legend=False)
 global_plot(fig, ax[0][1], global_df, "Gradient", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
+global_plot(fig, ax[0][1], global_df, "fast_grad", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
 global_plot(fig, ax[1][0], global_df, "SD", r"SD of nodal values ({c})".format(c=c_unit))
 count_plot(fig, ax[1][1], counts, "n", r"Number of cells", ylim=[0, cell_max])
 plt.tight_layout()
@@ -191,21 +192,21 @@ if len(global_df["scan_index"].unique()) > 1:
     plt.show()
 
 score_max = 10
-"""Cluster Plot"""
-fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
-scan_score_plot(fig, ax[0][0], cell_df, "abs_score_norm", r"abs score t-1(normalized)", legend=False,
-                ylim=[0, score_max])
-scan_score_plot(fig, ax[1][0], cell_df, "sec_score_norm", r"sec score t-1 (normalized)", legend=False,
-                ylim=[0, score_max])
-
-scan_score_plot(fig, ax[0][1], cell_df, "abs_score_init_norm", r"abs score t=0 (normalized)", legend=False,
-                ylim=[0, score_max])
-scan_score_plot(fig, ax[1][1], cell_df, "sec_score_init_norm", r"sec score t=0 (normalized)", legend="full",
-                ylim=[0, score_max])
-
-plt.tight_layout()
-plt.savefig(IMGPATH + "score_plot.pdf")
-plt.show()
+# """Cluster Plot"""
+# fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
+# scan_score_plot(fig, ax[0][0], cell_df, "abs_score_norm", r"abs score t-1(normalized)", legend=False,
+#                 ylim=[0, score_max])
+# scan_score_plot(fig, ax[1][0], cell_df, "sec_score_norm", r"sec score t-1 (normalized)", legend=False,
+#                 ylim=[0, score_max])
+#
+# scan_score_plot(fig, ax[0][1], cell_df, "abs_score_init_norm", r"abs score t=0 (normalized)", legend=False,
+#                 ylim=[0, score_max])
+# scan_score_plot(fig, ax[1][1], cell_df, "sec_score_init_norm", r"sec score t=0 (normalized)", legend="full",
+#                 ylim=[0, score_max])
+#
+# plt.tight_layout()
+# plt.savefig(IMGPATH + "score_plot.pdf")
+# plt.show()
 
 l = cell_df["scan_index"].unique()
 rows = int(np.ceil(len(l) / 2))
@@ -219,4 +220,25 @@ for i, v in enumerate(l):
                  units="id", estimator=None, linewidth=0.5, legend=legend, palette=color_dict)
 
 plt.savefig(IMGPATH + "trajectory.pdf")
+plt.show()
+
+fig, ax = plt.subplots(2, 2, sharex=True)
+ax_l = ax[0][0]
+sns.barplot(x="scan_index", y="Concentration", data=global_df, ax=ax_l)
+ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
+
+ax_l = ax[0][1]
+sns.barplot(x="scan_index", y="Gradient", data=global_df, ax=ax_l)
+ax_l.set_ylabel(r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit))
+
+ax_l = ax[1][0]
+sns.barplot(x="scan_index", y="SD", data=global_df, ax=ax_l)
+ax_l.set_ylabel(r"SD of nodal values ({c})".format(c=c_unit))
+
+# ax_l = ax[1][1]
+# sns.barplot(x = "scan_index", y = "Concentration", data=global_df ,ax = ax_l)
+# ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
+plt.tight_layout()
+plt.savefig(IMGPATH + "comp.pdf")
+
 plt.show()
