@@ -8,13 +8,13 @@ Created on Sat Jun  8 14:17:07 2019
 from typing import Dict, Callable
 
 import fenics as fcs
-from ParameterSet import ParameterSet
-from my_debug import message
+
+from thesis.main.ParameterSet import ParameterSet
+
 
 class BC:
 
     def __init__(self, **kwargs: Dict) -> None:
-
         self.field_quantity = ""
         if "field_quantity" in kwargs:
             self.field_quantity = kwargs["field_quantity"]

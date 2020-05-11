@@ -3,8 +3,8 @@ from typing import List, Dict
 
 import lxml.etree as ET
 
-from EntityType import EntityType, CellType
-from ParameterSet import ParameterSet, ParameterCollection
+from thesis.main.EntityType import EntityType, CellType
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection
 
 
 class ScanContainer:

@@ -11,13 +11,13 @@ from typing import List, Dict
 import fenics as fcs
 import numpy as np
 
-import BC as bc
-import MySubDomain as SD
-from BC import BC, OuterBC
-from EntityType import CellType
-from InternalSolver import InternalSolver
-from MySubDomain import CellSubDomain
-from ParameterSet import ParameterSet
+import thesis.main.BC as bc
+import thesis.main.MySubDomain as SD
+from thesis.main.BC import BC, OuterBC
+from thesis.main.EntityType import CellType
+from thesis.main.InternalSolver import InternalSolver
+from thesis.main.MySubDomain import CellSubDomain
+from thesis.main.ParameterSet import ParameterSet
 
 
 class Entity:

@@ -5,9 +5,9 @@ from typing import List
 import dill
 import lxml.etree as ET
 
-from MyError import DuplicateParameterError, DuplicateCollectionError
-from my_debug import debug
-from my_debug import message
+from thesis.main.MyError import DuplicateParameterError, DuplicateCollectionError
+from thesis.main.my_debug import debug
+from thesis.main.my_debug import message
 
 
 class ParameterSet:
@@ -119,13 +119,19 @@ class ParameterSet:
             c.deserialize_from_xml(collection)
             self.add_collection(c)
 
-    def get_as_dictionary(self):
+    def get_as_dictionary(self, in_sim=False, with_collection_name=True):
 
         result = {}
         for collection in self:
             for parameter in collection:
-                name = collection.name+"_"+parameter.name
-                result[name] = parameter.get_in_post_unit()
+                if with_collection_name:
+                    name = collection.name + "_" + parameter.name
+                else:
+                    name = parameter.name
+                if in_sim:
+                    result[name] = parameter.get_in_sim_unit()
+                else:
+                    result[name] = parameter.get_in_post_unit()
 
         return result
 

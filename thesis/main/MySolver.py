@@ -12,14 +12,15 @@ import os
 import pickle as pl
 from typing import List
 
+import dill
 import fenics as fcs
 import lxml.etree as ET
 import mpi4py.MPI as MPI
 
-import BC
-from MySubDomain import MySubDomain
-from ParameterSet import ParameterSet
-from my_debug import message, total_time
+import thesis.main.BC as BC
+from thesis.main.MySubDomain import MySubDomain
+from thesis.main.ParameterSet import ParameterSet
+from thesis.main.my_debug import message, total_time
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -96,9 +97,17 @@ class MyLinearSoler(MySolver):
                 dirichlet_bc_test.append([bc.value, patch])
 
             if isinstance(bc, BC.Integral) or isinstance(bc, BC.OuterIntegral):
-                linear, billinear = bc.get_BC(1, area=e.get_surface_area())
+                # linear, billinear = bc.get_BC(1, area=e.get_surface_area())
+                # integral_bc_test.append([linear, billinear, patch])
 
-                integral_bc_test.append([linear, billinear, patch])
+                d = {
+                    "f": dill.dumps(bc.q),
+                    "area": e.get_surface_area(),
+                    "patch": patch,
+                    "field_quantity": self.field_quantity,
+                    "p": bc.p.get_as_dictionary(in_sim=True, with_collection_name=False)
+                }
+                integral_bc_test.append(d)
 
         markers_path = self.tmp_path + "boundary_markers.h5"
         mesh_file = self.tmp_path + "mesh.xdmf"
@@ -153,8 +162,12 @@ class MyLinearSoler(MySolver):
         message("Launching {n} mpi threads to solve system of {dn} dofs with {dofs_p_n} per node".format(
             n=mpi_nodes, dn=dof_n, dofs_p_n=dofs_per_node))
 
+        from thesis.main import __path__ as main_path
+
+        ext_solver_path = main_path._path[0] + "/my_external_solver.py"
+
         p = sp.Popen(
-            ["mpiexec", "-n", str(mpi_nodes), "python", "/home/{u}/thesis/main/my_external_solver.py".format(u=user),
+            ["mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
              pickle_loc], stdin=sp.PIPE, stdout=sp.PIPE)
 
         self.process = p

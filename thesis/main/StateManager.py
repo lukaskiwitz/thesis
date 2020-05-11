@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from Entity import Cell
-from ParameterSet import ParameterSet
-from ScanContainer import ScanContainer, ScanSample
-from my_debug import message, total_time
+from thesis.main.Entity import Cell
+from thesis.main.ParameterSet import ParameterSet
+from thesis.main.ScanContainer import ScanContainer, ScanSample
+from thesis.main.my_debug import message, total_time
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()

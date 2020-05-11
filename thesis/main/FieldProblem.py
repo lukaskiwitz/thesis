@@ -13,12 +13,12 @@ import time
 import fenics as fcs
 import numpy as np
 
-import MeshGenerator as mshGen
-from Entity import Entity, DomainEntity
-from MySolver import MySolver
-from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
-from PostProcess import get_concentration_conversion
-from my_debug import message
+import thesis.main.MeshGenerator as mshGen
+from thesis.main.Entity import Entity, DomainEntity
+from thesis.main.MySolver import MySolver
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
+from thesis.main.PostProcess import get_concentration_conversion
+from thesis.main.my_debug import message, total_time
 
 
 class FieldProblem:
@@ -233,7 +233,7 @@ class FieldProblem:
         f = get_concentration_conversion(
             self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
         end = time.time()
-        from my_debug import total_time
+
         total_time(end - start, pre="Cell concentration extracted in ")
 
         for i, (patch, sa, value) in enumerate(result):
@@ -290,7 +290,7 @@ class FieldProblem:
 
         :param dT: delta t for this timestep
         """
-        from my_debug import message
+
         message("Solving Field Problem")
         self.solver.solve()
         message("Computing Boundary Concentrations")

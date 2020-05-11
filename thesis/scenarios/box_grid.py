@@ -5,24 +5,20 @@ from typing import List, Dict
 import numpy as np
 from scipy.constants import N_A
 
-import BC as bc
-import Entity
-import FieldProblem as fp
-import MySolver
-import SimContainer as SC
-from EntityType import CellType
-from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter, PhysicalParameterTemplate
-from bcFunctions import cellBC
-from my_debug import message
+import thesis.main.BC as bc
+import thesis.main.Entity as Entity
+import thesis.main.FieldProblem as fp
+import thesis.main.MySolver
+import thesis.main.SimContainer as SC
+from thesis.main.EntityType import CellType
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter, \
+    PhysicalParameterTemplate
+from thesis.main.PostProcess import get_concentration_conversion as get_cc
+from thesis.main.bcFunctions import cellBC
+from thesis.main.my_debug import message
 
 """Sets up parameter templates. This are callable object, which return a full copy of themselves 
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
-
-t_R = PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9))
-t_k_on = PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True))
-t_q = PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9))
-t_D = PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True))
-t_kd = PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True))
 
 
 def makeCellListGrid(global_parameter, cytokines, xLine, yLine, zLine):
@@ -82,6 +78,8 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     message("Setup")
     message("---------------------------------------------------------------")
 
+    templates = get_parameter_templates(numeric["unit_length_exponent"])
+
     def make_grid(gd: Dict, key: str):
         if key in gd.keys():
             return np.round(np.arange(gd["margin"], gd[key], gd["distance"]), 2)
@@ -94,22 +92,22 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
 
     margin = geometry_dict["margin"]
 
-    global_parameter = make_global_parameters(cytokines, geometry_dict, numeric)
+    global_parameter = make_global_parameters(cytokines, geometry_dict, numeric, templates)
     na = geometry_dict["norm_area"]
     geometry = ParameterCollection("geometry", [PhysicalParameter("norm_area", na, to_sim=1)])
     domain_parameter_set = deepcopy(global_parameter)
     domain_parameter_set.add_collection(geometry)
     domain_parameter_set.name = "domain"
 
-    cell_type_list, fractions = make_cell_types(cell_types, cytokines, numeric)
+    cell_type_list, fractions = make_cell_types(cell_types, cytokines, templates)
     global_parameter.add_collection(fractions)
-    # global_parameter.update(make_clustering(clustering,numeric))
+
 
     domain_bc = make_domain_bc(cytokines, domain_parameter_set, margin, x)
 
     p1, p2 = get_cuboid_domain(x,y,z, margin)
 
-    domain = Entity.DomainCube(
+    domain = thesis.main.Entity.DomainCube(
         p1,
         p2, domain_bc)
 
@@ -118,7 +116,7 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     """FieldProblems"""
     for c in cytokines:
 
-        solver = MySolver.MyLinearSoler()
+        solver = thesis.main.MySolver.MyLinearSoler()
 
         fieldProblem = fp.FieldProblem()
         fieldProblem.field_name = c["name"]
@@ -171,17 +169,21 @@ def make_domain_bc(cytokines, domain_parameter_set, margin, x):
     return domainBC
 
 
-def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], ParameterCollection):
+def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], ParameterCollection):
     fractions = ParameterCollection("fractions", [])
     clustering = ParameterCollection("clustering", [])
 
     cell_types_list = []
 
-    from PostProcess import get_concentration_conversion as get_cc
-    ule = numeric["unit_length_exponent"]
-    t_threshold = PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule)))
-    t_bw = PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule))))
-    t_cluster_strength = PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1))
+    t_threshold = templates["threshold"]
+    t_Kc = templates["Kc"]
+    t_amax = templates["amax"]
+
+    t_bw = templates["bw"]
+    t_cluster_strength = templates["cluster_strength"]
+    t_q = templates["q"]
+    t_R = templates["R"]
+
     for ct in cell_types:
 
         fractions.set_parameter(PhysicalParameter(ct["name"], ct["fraction"], is_global=True))
@@ -203,10 +205,22 @@ def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], Paramete
 
                 if "R" in ct_dict.keys():
                     p.append(t_R(ct_dict["R"]))
+                    del ct_dict["R"]
                 if "q" in ct_dict.keys():
                     p.append(t_q(ct_dict["q"]))
+                    del ct_dict["q"]
                 if "ths" in ct_dict.keys():
                     p.append(t_threshold(ct_dict["ths"]))
+                    del ct_dict["ths"]
+                if "Kc" in ct_dict.keys():
+                    p.append(t_Kc(ct_dict["Kc"]))
+                    del ct_dict["Kc"]
+                if "amax" in ct_dict.keys():
+                    p.append(t_amax(ct_dict["amax"]))
+                    del ct_dict["amax"]
+
+                for k, v in ct_dict.items():
+                    p.append(MiscParameter(k, v))
 
                 collection = ParameterCollection(c["name"], p)
                 collection.field_quantity = c["field_quantity"]
@@ -217,15 +231,18 @@ def make_cell_types(cell_types, cytokines, numeric) -> (List[CellType], Paramete
     return cell_types_list, fractions
 
 
-def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict) -> ParameterSet:
-
+def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict, templates) -> ParameterSet:
+    t_k_on = templates["k_on"]
+    t_D = templates["D"]
+    t_kd = templates["kd"]
+    t_Kc = templates["Kc"]
+    t_rho = templates["rho"]
+    t_q = templates["q"]
+    t_R = templates["R"]
+    t_amax = templates["amax"]
 
     global_parameter = ParameterSet("global", [])
-
-    ule = numeric["unit_length_exponent"]
-
-    rho = ParameterCollection("rho", [PhysicalParameter("rho", geometry["rho"], to_sim=10**(-6-ule))])
-    global_parameter.add_collection(rho)
+    global_parameter.add_collection(ParameterCollection("rho", [t_rho(geometry["rho"])]))
 
     numeric_c = ParameterCollection("numeric", [])
     global_parameter.add_collection(numeric_c)
@@ -234,37 +251,43 @@ def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict) -> Pa
 
         collection = ParameterCollection(c["name"], [])
         collection.field_quantity = c["field_quantity"]
-        p = [t_R(0), t_q(0)]
+        p = [t_R(0), t_q(0), t_amax(0), t_Kc(0.1)]
 
         if "k_on" in c.keys():
             p.append(t_k_on(c["k_on"]))
         else:
             p.append(t_k_on(111.6))
-
         if "D" in c.keys():
             p.append(t_D(c["D"]))
         else:
             p.append(t_D(10))
-
         if "kd" in c.keys():
             p.append(t_kd(c["kd"]))
         else:
             p.append(t_kd(0.1))
-
         for p in p:
             collection.set_parameter(p)
         global_parameter.add_collection(collection)
 
-    for k,v in numeric.items():
-        numeric_c.set_misc_parameter(MiscParameter(k,v))
+    for k, v in numeric.items():
+        numeric_c.set_misc_parameter(MiscParameter(k, v))
 
     return global_parameter
 
 
-def make_clustering(clustering, numeric):
-    p_set = ParameterSet("dummy", [])
-    ule = numeric["unit_length_exponent"]
-    t_bw = PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule))))
-    bw = t_bw(clustering["bw"])
-    p_set.add_collection(ParameterCollection("clustering", [bw]))
-    return p_set
+def get_parameter_templates(ule):
+    templates = {
+        "R": PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9)),
+        "k_on": PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True)),
+        "q": PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9)),
+        "D": PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True)),
+        "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 * 2), is_global=True)),
+        "threshold": PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule))),
+        "Kc": PhysicalParameterTemplate(PhysicalParameter("Kc", 0.01, to_sim=1 / get_cc(ule))),
+        "bw": PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule)))),
+        "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
+        "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
+        "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9))
+    }
+
+    return templates

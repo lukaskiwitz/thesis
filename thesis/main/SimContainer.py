@@ -15,13 +15,13 @@ import fenics as fcs
 import lxml.etree as et
 import pandas as pd
 
-from Entity import Entity
-from EntityType import CellType, EntityType
-from FieldProblem import FieldProblem
-from InternalSolver import InternalSolver
-from ParameterSet import ParameterSet
-from SimComponent import SimComponent
-from my_debug import message, total_time, debug
+from thesis.main.Entity import Entity
+from thesis.main.EntityType import CellType, EntityType
+from thesis.main.FieldProblem import FieldProblem
+from thesis.main.InternalSolver import InternalSolver
+from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
+from thesis.main.my_debug import message, total_time, debug
 
 
 class SimContainer(SimComponent):

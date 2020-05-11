@@ -16,15 +16,18 @@ import numpy as np
 # import h5py
 import pygmsh
 
-import Entity
-from my_debug import message
+import thesis.main.Entity as Entity
+from thesis.main.my_debug import message
 
 
 class DomainTypeError(Exception):
-    def __init__(self,text):
+    def __init__(self, text):
         self.text = text
+
     def __str__(self):
         return "Unknown Domain Type {t}".format(t=self.text)
+
+
 class MeshGenerator:
     outerDomain = None
     entityList = []
@@ -66,6 +69,7 @@ class MeshGenerator:
             mesh = pygmsh.generate_mesh(geom)
             message(mesh)
             meshio.write(full_mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
+
         else:
             message("loading Mesh from: "+full_mesh_path)
         mesh = dlf.Mesh()

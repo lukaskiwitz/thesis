@@ -19,11 +19,10 @@ import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
 
-import MyError
-import StateManager as st
-from ParameterSet import ParameterSet
-from myDictSorting import groupByKey
-from my_debug import message
+import thesis.main.StateManager as st
+from thesis.main.ParameterSet import ParameterSet
+from thesis.main.myDictSorting import groupByKey
+from thesis.main.my_debug import message
 
 
 class ComputeSettings:

@@ -4,7 +4,7 @@ from typing import List
 
 import lxml.etree as ET
 
-from ParameterSet import ParameterSet
+from thesis.main.ParameterSet import ParameterSet
 
 
 class EntityType:

@@ -1,8 +1,9 @@
 import lxml.etree as et
-from ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
+
+from thesis.main.ParameterSet import ParameterSet
+
 
 class SimComponent:
-
 
     def to_xml(self) -> et.Element:
 
