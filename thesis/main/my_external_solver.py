@@ -77,8 +77,7 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 
         for k, value in p_bc.items():
             try:
-                pass
-                # p_bc[k] = fcs.Constant(value)
+                p_bc[k] = fcs.Constant(value)
             except:
                 pass
 
@@ -133,8 +132,7 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 
         for k, value in p_bc.items():
             try:
-                pass
-                # p_bc[k] = fcs.Constant(value)
+                p_bc[k] = fcs.Constant(value)
             except:
                 pass
 
