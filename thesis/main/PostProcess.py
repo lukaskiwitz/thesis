@@ -214,7 +214,9 @@ class PostProcessor:
                         "time": time,
                         "field_name": field_name,
                         "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].mean()
+                            "{field}_surf_c".format(field=field_name)].mean(),
+                        "surf_c_std":self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                            "{field}_surf_c".format(field=field_name)].std()
                     }
                     parameter_set = ParameterSet("dummy_set", [])
                     parameter_set.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
@@ -627,13 +629,21 @@ def make_images(u, conv_factor, compute_settings):
     from matplotlib.colors import Normalize
 
     # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
-    fig.gca().tricontourf(triang, slice_v, levels=100)
+
 
     vmin = min(slice_v)
     vmax = max(slice_v)
 
     norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
-    cb_cytokine = fig.colorbar(ScalarMappable(norm=norm_cytokine, cmap="viridis"))
+
+    mappable = ScalarMappable(norm=norm_cytokine, cmap="viridis")
+    if hasattr(compute_settings,"colorbar_range"):
+        tpl = compute_settings.colorbar_range
+        mappable.set_clim(tpl[0], tpl[1])
+
+    fig.gca().tricontourf(triang, slice_v, levels=100, norm = norm_cytokine)
+    cb_cytokine = fig.colorbar(mappable)
+
     cb_cytokine.set_label("cytokine (nM)")
 
     fig.gca().set_xlabel(r"x ($\mu m $)")
