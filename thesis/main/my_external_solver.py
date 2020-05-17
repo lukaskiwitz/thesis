@@ -72,11 +72,13 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
         f = dill.loads(bc["f"])
         area = bc["area"]
         patch = bc["patch"]
+        # print(p_bc["q"])
         field_quantity = bc["field_quantity"]
 
         for k, value in p_bc.items():
             try:
-                p_bc[k] = fcs.Constant(value)
+                pass
+                # p_bc[k] = fcs.Constant(value)
             except:
                 pass
 
@@ -114,6 +116,9 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     dirichlet_bc = []
     integral_bc = []
+    v = fcs.TestFunction(V)
+    u = fcs.Function(V)
+    du = fcs.TrialFunction(V)
 
     for bc in dirichlet:
         dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
@@ -123,13 +128,13 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
         f = dill.loads(bc["f"])
         area = bc["area"]
         patch = bc["patch"]
+        # print(p_bc["q"])
         field_quantity = bc["field_quantity"]
 
-        v = fcs.TestFunction(V)
-        u = fcs.Function(V)
         for k, value in p_bc.items():
             try:
-                p_bc[k] = fcs.Constant(value)
+                pass
+                # p_bc[k] = fcs.Constant(value)
             except:
                 pass
 
@@ -141,11 +146,12 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 
     F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(integral_bc))
 
-    problem = fcs.NonlinearVariationalProblem(F, u, dirichlet_bc, J=fcs.derivative(F, u))
+    problem = fcs.NonlinearVariationalProblem(F, u, dirichlet_bc, J=fcs.derivative(F,u,du))
 
     # instantiates fenics solver
     solver = fcs.NonlinearVariationalSolver(problem)
 
+    # solver.parameters['newton_solver']['relaxation_parameter'] = 1.5
     solver.parameters["newton_solver"]["linear_solver"] = p.get_misc_parameter(
         "linear_solver", "numeric").get_in_sim_unit()
 
