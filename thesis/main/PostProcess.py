@@ -470,7 +470,10 @@ def compute(compute_settings: ComputeSettings) -> str:
     g_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
 
     if compute_settings.make_images:
-        make_images(u, c_conv, compute_settings)
+        try:
+            make_images(u, c_conv, compute_settings)
+        except RuntimeError as e:
+            message("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
 
     for comp in compute_settings.computations:
 
