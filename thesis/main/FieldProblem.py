@@ -17,7 +17,7 @@ import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
-from thesis.main.PostProcess import get_concentration_conversion
+from thesis.main.PostProcess import get_concentration_conversion,get_gradient_conversion
 from thesis.main.my_debug import message, total_time
 
 
@@ -263,25 +263,7 @@ class FieldProblem:
 
         """
 
-        ds = fcs.Measure("ds", domain=self.solver.mesh, subdomain_data=self.solver.boundary_markers)
-        u = self.get_field()
-        n = fcs.FacetNormal(self.solver.mesh)
-        from PostProcess import get_gradient_conversion
-        f = get_gradient_conversion(self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit())
 
-        for i in self.registered_entities:
-            value = fcs.assemble(
-                fcs.dot(fcs.grad(u), n) * ds(i["patch"])
-            ) / (i["entity"].get_surface_area())
-
-            physical = PhysicalParameter("surf_g", 0, to_sim=1/f)
-            physical.set_in_sim_unit(value)
-
-            i["entity"].p.update(
-                ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
-                    physical
-                ], field_quantity=self.field_quantity)]),
-            override = True)
 
     # noinspection PyPep8Naming
     def step(self, dt: float, tmp_path: str) -> None:
@@ -295,6 +277,7 @@ class FieldProblem:
         self.solver.solve()
         message("Computing Boundary Concentrations")
         self.get_boundary_concentrations(tmp_path)
+        self.compute_boundary_term()
         # message("Computing Boundary Gradients")
         # self.get_boundary_gradients()
 
@@ -334,7 +317,7 @@ class FieldProblem:
             return None
         return e["surface_area"]
 
-    def get_outer_domain_vis(self, key="q") -> fcs.MeshFunction:
+    def get_outer_domain_vis(self, parameter_name="q") -> fcs.MeshFunction:
         """
 
         gets MeshFunction that has outer domain surfaces labeled by entity.getState(key)
@@ -347,8 +330,28 @@ class FieldProblem:
 
         e = self.outer_domain
         for o in e.getSubDomains():
-            o["entity"].getSubDomain().mark(boundary_markers, e.getState(key=key))
+            o["entity"].getSubDomain().mark(boundary_markers, e.getState(parameter_name=parameter_name, field_quantity=self.field_quantity))
         return self.solver.boundary_markers
+
+    def compute_boundary_term(self):
+
+
+        for e in self.registered_entities:
+            entity =  e["entity"]
+            for bc in entity.bc_list:
+                fq = bc.field_quantity
+                u = entity.p.get_physical_parameter_by_field_quantity("surf_c",fq).get_in_sim_unit()
+                g = bc.q(u,entity.p.get_as_dictionary(in_sim=True,with_collection_name=False),fq,1)*entity.p.get_physical_parameter("D","IL-2").get_in_sim_unit()
+                ule = self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit(type=int)
+
+                rate_conversion = entity.p.get_physical_parameter("q", "IL-2").to_sim
+
+                boundary = PhysicalParameter("boundary",0,to_sim=rate_conversion)
+                boundary.set_in_sim_unit(g)
+
+
+                entity.p.get_collections_by_field_quantity(fq)[0].set_parameter(boundary,override=True)
+
 
 
 def target(entity):
