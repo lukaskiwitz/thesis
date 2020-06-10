@@ -35,7 +35,6 @@ def cellBC(u, p, field_quantity, area=1):
             raise Exception
 
     secretion = q
-
     linear = secretion / (D * area)
     billinear = -uptake / (D * area)
 

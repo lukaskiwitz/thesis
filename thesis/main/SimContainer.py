@@ -326,7 +326,7 @@ class SimContainer(SimComponent):
         :return:
         """
         for o, i in enumerate(self.fields):
-            self.domain_files[o].write(self.fields[0].get_outer_domain_vis("R"))
+            self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
 
     def save_fields(self, n: int) -> Dict:
 

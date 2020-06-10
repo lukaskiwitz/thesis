@@ -115,6 +115,7 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     dirichlet_bc = []
     integral_bc = []
+
     v = fcs.TestFunction(V)
     u = fcs.Function(V)
     du = fcs.TrialFunction(V)
