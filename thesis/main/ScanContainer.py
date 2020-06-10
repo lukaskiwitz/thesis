@@ -4,8 +4,7 @@ from typing import List, Dict
 import lxml.etree as ET
 
 from thesis.main.EntityType import EntityType, CellType
-from thesis.main.ParameterSet import ParameterSet, ParameterCollection
-
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscParameter
 
 class ScanContainer:
 
@@ -41,8 +40,12 @@ class ScanContainer:
 
 class ScanSample:
 
-    def __init__(self,collection_list: List[ParameterCollection], entity_types: List[EntityType], outer_domain_dict: Dict):
+    def __init__(self,collection_list: List[ParameterCollection], entity_types: List[EntityType], outer_domain_dict: Dict, scan_name = None):
         self.p: ParameterSet = ParameterSet("dynamic",collection_list)
+        if not scan_name is None:
+            name = MiscParameter("scan_name",scan_name)
+            self.p.add_parameter_with_collection(name)
+
         self.entity_types: List[EntityType] = entity_types
         self.outer_domain_parameter_dict = {}
         for k,v in outer_domain_dict.items():

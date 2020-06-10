@@ -220,13 +220,21 @@ class StateManager:
         assert i <= len(scan_container.scan_samples) - 1
         sample = scan_container.scan_samples[i]
 
+        assert hasattr(sc,"default_sample")
+
+        sc.p.update(sc.default_sample.p)
         sc.p.update(sample.p)
 
         for f in sc.fields:
+            f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
 
         for e in sc.entity_list:
-            e.p.update(sample.p)
+            e.p.update(sc.default_sample.p, override = True)
+            e.p.update(sample.p, override = True)
+
+        for entity_type in sc.default_sample.entity_types:
+            sc.add_entity_type(entity_type)
 
         for entity_type in sample.entity_types:
             sc.add_entity_type(entity_type)
