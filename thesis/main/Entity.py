@@ -111,8 +111,9 @@ class Entity:
         if not self.internal_solver == None:
             self.internal_solver.step(t, dt, self.p, entity=self)
 
-    def getState(self, key="q") -> float:
+    def getState(self, parameter_name="q", field_quantity = "il2", in_post = True) -> float:
 
+        return 0
         """
 
         returns values of self.p[key]
@@ -121,11 +122,19 @@ class Entity:
         :return:
 
         """
-
-        if key in self.p and (type(self.p[key]) == float):
-            return self.p[key]
-        else:
+        parameter = self.p.get_physical_parameter_by_field_quantity(parameter_name, field_quantity)
+        if parameter is None:
             return float(0)
+        else:
+            if in_post:
+                return parameter.get_in_post_unit()
+            else:
+                return parameter.get_in_sim_unit()
+
+        # if key in self.p and (type(self.p[key]) == float):
+        #     return self.p[key]
+        # else:
+        #     return float(0)
 
 
 class Cell(Entity):
@@ -216,7 +225,8 @@ class DomainEntity(Entity):
 
     def __init__(self, **kwargs):
         pass
-
+    def getState(self, parameter_name="q", field_quantity = "il2", in_post = True) -> float:
+        return 0
 class DomainSphere(DomainEntity):
     """
 
