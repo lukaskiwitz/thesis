@@ -33,7 +33,7 @@ class MySolver:
 
 class MyLinearSoler(MySolver):
     """
-    class to solve the stationary diffusion equation in 2D/3D with nonlinear boundary condition
+    class to solve the stationary diffusion equation in 3D with nonlinear boundary condition
 
     :var solver: instance of fenics linear solver
     :vartype solver: fcs.LinearVariationalSolver
