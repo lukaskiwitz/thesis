@@ -1,5 +1,3 @@
-# thesis project
-
 <h1>
     Requirements
 </h1>
