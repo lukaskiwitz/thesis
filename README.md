@@ -61,6 +61,13 @@ Note: If your are on the itb computers this will work well without a change.
 
 to start the simulation and plot the results.
 
+The first time any model is run it will need to
+- create a mesh
+- mark the boundary parts
+- run the FFC compiler
+
+this may take some time. For large meshes this can be considerable (1h or so), but 
+subsequent runs should be much faster. 
 
  
 
