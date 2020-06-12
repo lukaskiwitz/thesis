@@ -52,7 +52,7 @@ to set up necessary environment variables.
 </h1>
 1.Copy the boxed_static folder to a location of your choice.
 
-2.Open the parameters.py file and edit the path variable at the bottom to change to top level directoy for your simulation result.
+2.Open the parameters.py file and edit the path variable at the bottom to point to the desired top level directoy for your simulation results.
 Note: If your are on the itb computers this will work well without a change.
 
 3.Run
