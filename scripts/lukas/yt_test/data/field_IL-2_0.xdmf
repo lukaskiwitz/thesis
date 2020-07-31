@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Domain>
+    <Grid Name="TimeSeries_il2" GridType="Collection" CollectionType="Temporal">
+      <Grid Name="mesh" GridType="Uniform">
+        <Topology NumberOfElements="553826" TopologyType="Tetrahedron" NodesPerElement="4">
+          <DataItem Dimensions="553826 4" NumberType="UInt" Format="HDF">field_IL-2_0.h5:/Mesh/0/mesh/topology</DataItem>
+        </Topology>
+        <Geometry GeometryType="XYZ">
+          <DataItem Dimensions="99834 3" Format="HDF">field_IL-2_0.h5:/Mesh/0/mesh/geometry</DataItem>
+        </Geometry>
+        <Time Value="0" />
+        <Attribute Name="il2" AttributeType="Scalar" Center="Node">
+          <DataItem Dimensions="99834 1" Format="HDF">field_IL-2_0.h5:/VisualisationVector/0</DataItem>
+        </Attribute>
+      </Grid>
+    </Grid>
+  </Domain>
+</Xdmf>
