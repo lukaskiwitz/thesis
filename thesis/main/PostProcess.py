@@ -141,6 +141,10 @@ class PostProcessor:
                 compute_settings.make_images = make_images
                 compute_settings.tmp_path = tmp_path
                 compute_settings.unit_length_exponent = self.unit_length_exponent
+                compute_settings.cell_df = self.cell_dataframe.loc[
+                    (self.cell_dataframe["time_index"] == compute_settings.time_index)&
+                    (self.cell_dataframe["scan_index"] == compute_settings.scan_index)
+                ]
 
                 for k, v in self.image_settings.items():
                     compute_settings.__setattr__(k, v)
@@ -158,8 +162,9 @@ class PostProcessor:
 
         element_list = []
         for file in result_list:
-            with open(file, "rb") as f:
-                element_list.append(et.fromstring(f.read()))
+            if not file is None:
+                with open(file, "rb") as f:
+                    element_list.append(et.fromstring(f.read()))
 
         indexed_list = [
             {"scan_index": i.get("scan_index"),
@@ -478,27 +483,39 @@ def compute(compute_settings: ComputeSettings) -> str:
     for comp in compute_settings.computations:
 
         assert isinstance(comp, PostProcessComputation)
+        try:
+            if comp.add_xml_result:
 
-        if comp.add_xml_result:
-            result_element: et.Element = et.SubElement(global_results, comp.name)
-            result_element.text = str(comp(
-                u,
-                grad,
-                c_conv,
-                g_conv,
-                mesh_volume,
-                V=function_space,
-                V_vec=V_vec)
-            )
-        else:
-            comp(
-                u,
-                grad,
-                c_conv,
-                g_conv,
-                mesh_volume,
-                V=function_space,
-                V_vec=V_vec)
+                comp_result = comp(
+                    u,
+                    grad,
+                    c_conv,
+                    g_conv,
+                    mesh_volume,
+                    V=function_space,
+                    V_vec=V_vec,
+                    path = compute_settings.path,
+                    scan_index = compute_settings.scan_index,
+                    time_index = compute_settings.time_index,
+                    cell_df = compute_settings.cell_df
+                )
+
+            else:
+                comp(
+                    u,
+                    grad,
+                    c_conv,
+                    g_conv,
+                    mesh_volume,
+                    V=function_space,
+                    V_vec=V_vec)
+        except Exception as e:
+            message("could not perform post process computation: {name}".format(name = comp.name))
+            break
+
+        result_element: et.Element = et.SubElement(global_results, comp.name)
+        result_element.text = str(comp_result)
+
     tmp_path = compute_settings.tmp_path
 
     filename = tmp_path + "post_{r}.txt".format(r=str(random.randint(0, 2 ** 32)))
@@ -576,7 +593,23 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
     return color_dict, legend_items, categorical
 
 
+def get_rectangle_plane_mesh(u, res = (200,200)):
+
+    coords = u.function_space().mesh().coordinates()
+    coords_t = np.transpose(coords)
+
+    x_limits = (
+        np.min(coords_t[0]), np.max(coords_t[0])
+    )
+    y_limits = (
+        np.min(coords_t[1]), np.max(coords_t[1])
+    )
+    rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), res[0], res[1])
+
+    return rec_mesh
+
 def make_images(u, conv_factor, compute_settings):
+
     scan_index = compute_settings.scan_index
     time_index = compute_settings.time_index
 
@@ -610,16 +643,17 @@ def make_images(u, conv_factor, compute_settings):
         c = plt.Circle(p, 5, color=color)
         fig.gca().add_artist(c)
 
-    coords = u.function_space().mesh().coordinates()
-    coords_t = np.transpose(coords)
-    x_limits = (
-        np.min(coords_t[0]), np.max(coords_t[0])
-    )
-    y_limits = (
-        np.min(coords_t[1]), np.max(coords_t[1])
-    )
+    # coords = u.function_space().mesh().coordinates()
+    # coords_t = np.transpose(coords)
+    # x_limits = (
+    #     np.min(coords_t[0]), np.max(coords_t[0])
+    # )
+    # y_limits = (
+    #     np.min(coords_t[1]), np.max(coords_t[1])
+    # )
 
-    rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), 200, 200)
+    # rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), 200, 200)
+    rec_mesh = get_rectangle_plane_mesh(u)
     rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
     u_slice = fcs.interpolate(u, rev_V)
 
