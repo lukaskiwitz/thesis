@@ -114,7 +114,7 @@ path = "/extra/brunner/thesis/kinetic/q_fraction_medium_g_0.1/"
 
 
 plot_D = 0
-stoppingPoint = None
+stoppingPoint = -30
 startingPoint = None
 
 yscale = "linear"
@@ -123,8 +123,8 @@ xscale = "linear"
 yscaleR = "linear"
 
 # ylim = (1.0, 1.55) #(0.01, 0.045)
-ylim = (0.65, 0.99)
-xlim = (-10,200)
+ylim = (None, 33)
+xlim = (-1,50)
 
 ylimR = (None, None) #(1, 23000)
 
@@ -158,23 +158,23 @@ global_df["surf_c"] *= 1e3
 palette = sns.color_palette("bwr", 4)
 
 # ax7 = sns.lineplot(x=x_axis, y="surf_c_std_norm", data=global_df.sort_values(by="time")[startingPoint:stoppingPoint], hue=my_hue, hue_order = hue_order)
-sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$10.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[0])
-sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$2.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[1])
-sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$0.5$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[2])
-sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$0.1$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[3])
+# sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$10.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[0])
+# sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$2.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[1])
+# sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$0.5$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[2])
+# sns.lineplot(ax=ax, x=x_axis, y="surf_c_std_norm", data=global_df.loc[global_df["IL-2_gamma"] == '$0.1$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[3])
 
-plt.hlines(y=global_df.loc[(global_df["time_index"] == 0), "surf_c_std_norm"][0],xmin=0,xmax=600)
-ax.set(xlabel="time (h)", ylabel="coeff. of variation", yscale=yscale, xscale=xscale, ylim=ylim, xlim=xlim, xticks = [0, 50, 100,150,200])
+# plt.hlines(y=global_df.loc[(global_df["time_index"] == 0), "surf_c_std_norm"][0],xmin=0,xmax=600)
+# ax.set(xlabel="time in h", ylabel="std./mean", yscale=yscale, xscale=xscale, ylim=ylim, xlim=xlim, xticks = [0, 50, 100,150,200])
 #
 # ax2 =ax.twinx()
-# sns.lineplot(ax=ax2, x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$10.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[0])
-# sns.lineplot(ax=ax2, x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$2.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[1])
-# sns.lineplot(ax=ax2, x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$0.5$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[2])
-# sns.lineplot(ax=ax2, x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$0.1$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[3])
-# plt.hlines(y=global_df.loc[(global_df["time_index"] == 0), "surf_c"][0],xmin=0,xmax=600, linestyles="dashed")
-# ax2.set(ylabel="surface c. in pM", yscale=yscale, xscale=xscale, ylim=ylim, xlim=xlim, xticks = [0, 50, 100,150,200])
+sns.lineplot(x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$10.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[0])
+sns.lineplot(x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$2.0$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[1])
+sns.lineplot(x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$0.5$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[2])
+sns.lineplot(x=x_axis, y="surf_c", data=global_df.loc[global_df["IL-2_gamma"] == '$0.1$'].sort_values(by="time")[startingPoint:stoppingPoint], color=palette[3])
+plt.hlines(y=global_df.loc[(global_df["time_index"] == 0), "surf_c"][0],xmin=0,xmax=600)
+ax.set(ylabel="surface c. (pM)", xlabel="time (h)", yscale=yscale, xscale=xscale, ylim=ylim, xlim=xlim, xticks = [0, 50, 100,150,200])
 # [ax2.lines[i].set_linestyle("--") for i,line in enumerate(ax2.lines)]
-
+# plt.ylim((None,10))
 # ax2.spines['right'].set_color('white')
 
 
@@ -207,6 +207,6 @@ new_labels = ["neg. feedback", "no feedback", "pos. feedback"]
 
 # new_handles = [three_line, two_line, black_line, one_line, zero_line]
 # new_labels = ["strong negative feedback", "negative feedback", "no feedback", "positive feedback", "strong positive feedback"]
-# plt.legend(handles=new_handles, labels=new_labels, loc='upper right', fancybox=True)
-fig.savefig("plots/" + "kin_q_c_v" + ".svg", bbox_inches='tight')
+plt.legend(handles=new_handles, labels=new_labels, loc='upper right', fancybox=True)
+fig.savefig("plots/" + "kin_q_c" + ".svg", bbox_inches='tight')
 plt.show()
