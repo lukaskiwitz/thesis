@@ -254,6 +254,8 @@ class StateManager:
                 self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
                 self.write_element_tree()
 
+            self.scan_container.t = 0
+
             self.pre_scan_timestamp = time.time()
 
             self.update_sim_container(self.sim_container, scan_index)
