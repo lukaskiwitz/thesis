@@ -67,13 +67,13 @@ class SimContainer(SimComponent):
         self.entity_list = []
         self.fields = []
         self.path = "./"
-        self.T = 0
         self.subdomain_files = []
         self.domain_files = []
         self.field_files = []
         self.boundary_markers = []
         self.entity_templates = []
         self.internal_solvers = []
+        self.t = 0
         #self.unit_length_exponent: int = 1
 
     def init_logs(self) -> None:
@@ -151,14 +151,25 @@ class SimContainer(SimComponent):
 
         raise NotImplementedError()
 
-    def run(self, T, dt):
-        for time_index, t in enumerate(T):
+    def run(self, T):
+
+        self.t = T[0]
+
+        self.apply_type_changes()
+        self._post_step(self, 0,self.t,T)
+        self.post_step(self, 0,self.t,T)
+
+        for time_index, t in enumerate(T[1:]):
+
             self.pre_step_timestamp = time.time()
 
-            self._pre_step(self, time_index, t, T)  # internal use
-            self.pre_step(self, time_index, t, T)  # user defined
+            self._pre_step(self, time_index, T[time_index] , T)  # internal use
+            self.pre_step(self, time_index, T[time_index], T)  # user defined
 
+            dt = t - T[time_index]
             self.step(dt)
+            time_index += 1
+            assert t == self.t
 
             self.post_step_timestamp = time.time()
 
@@ -201,14 +212,7 @@ class SimContainer(SimComponent):
     def post_step(self, sc, time_index, t, T):
         return None
 
-    def step(self, dt: float) -> None:
-
-        """
-        advanches simulation by dt
-
-        :param dt:
-
-        """
+    def apply_type_changes(self):
 
         for i, entity in enumerate(self.entity_list):
             entity.get_surface_area()
@@ -218,6 +222,14 @@ class SimContainer(SimComponent):
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
                 entity.set_cell_type(entity_type, internal_solver)
                 entity.change_type = ""
+    def step(self, dt : float) -> None:
+
+        """
+        advanches simulation
+
+
+        """
+
 
         for field in self.fields:
             # field.unit_length_exponent = self.unit_length_exponent
@@ -225,11 +237,11 @@ class SimContainer(SimComponent):
             field.step(dt, self.path + "solver_tmp/")
 
         for i, entity in enumerate(self.entity_list):
-            entity.step(self.T, dt)
+            entity.step(self.t, dt)
+        self.apply_type_changes()
 
 
-
-        self.T = self.T + dt
+        self.t = self.t + dt
 
     def add_entity(self, entity: Entity) -> None:
 

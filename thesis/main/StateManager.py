@@ -50,8 +50,9 @@ class StateManager:
         self.element_tree = None
         self.scan_container = None
         self.sim_container = None
-        self.T = [0]
+        self.T = None
         self.dt = 1
+        self.N = 10
 
 
     def load_xml(self):
@@ -261,7 +262,11 @@ class StateManager:
 
             self.sim_container._post_step = post_step
 
-            self.sim_container.run(self.T, self.dt)
+            if self.T is None:
+                T = np.arange(0,self.N*self.dt, self.dt)
+                self.sim_container.run(T)
+            else:
+                self.sim_container.run(self.T)
 
             self.post_scan(self, scan_index)
 

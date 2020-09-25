@@ -208,6 +208,8 @@ class PostProcessor:
                     g_values = file.find("./GlobalResults")
                     scan_index = int(file.get("scan_index"))
                     time_index = int(file.get("time_index"))
+                    if time_index == 0:
+                        continue
                     time = float(file.get("time"))
                     field_name = file.get("field_name")
                     filter = lambda x: (x["time_index"] == time_index) & \
