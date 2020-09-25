@@ -121,7 +121,7 @@ abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
 # for v in np.logspace(-
-for v in ["linear", "R_saturation"]:
+for v in ["linear"]:
     """Scans over parameters that are associated with a field"""
     sim_parameters = [
         # ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
@@ -158,10 +158,11 @@ manages the orderly IO of simulation results and metadata for post processing.""
 stMan = StateManager.StateManager(path)
 stMan.sim_container = sc
 stMan.scan_container = scan_container
-stMan.dt = 1
+# stMan.dt = 1
+# stMan.N = 5
 """sets up time range"""
 
-stMan.T = np.arange(0, 2, 1)
+stMan.T = [0,0.2,0.4,0.6,0.8,1,2,3,10]
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types

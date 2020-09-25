@@ -15,8 +15,8 @@ def global_plot(fig, ax, global_df, y_name, y_label, legend="brief"):
     global_df = reduce_df(global_df, "scan_index")
     # global_df["scan_index"] = format_scan_index(global_df["scan_index"])
 
-    sns.lineplot(x="time_index", y=y_name, data=global_df, hue="field_name", style="scan_index", ax=ax, legend=legend,
-                 palette=color_dict)
+    sns.lineplot(x="time", y=y_name, data=global_df, hue="field_name", style="scan_index", ax=ax, legend=legend,
+                 palette=color_dict, marker = "o")
     handles, labels = ax.get_legend_handles_labels()
     if legend:
         ax.legend(handles, labels_replace(labels), loc="upper right")
@@ -120,7 +120,7 @@ IMGPATH = path
 os.makedirs(IMGPATH, exist_ok=True)
 # scan_index = 0
 sns.set_context("paper", font_scale=1, rc={
-    "lines.markersize": 4,
+    "lines.markersize": 5,
     "lines.linewidth": 2
 }
                 )
@@ -144,7 +144,7 @@ counts["n"] = counts["id"]
 counts = counts.drop(columns=counts.columns.drop(["n"]))
 counts.reset_index(inplace=True)
 
-t_max = global_df["time_index"].max()
+t_max = global_df["time"].max()
 
 time_label = "time (a.u.)"
 scan_label = "scan index"
@@ -168,28 +168,28 @@ for i, k in enumerate(color_dict.keys()):
 fig, ax = plt.subplots(2, 2, sharex=False, sharey=False)
 global_plot(fig, ax[0][0], global_df, "Concentration", "avg. Cytokine ({c})".format(c=c_unit), legend=False)
 global_plot(fig, ax[0][1], global_df, "Gradient", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
-global_plot(fig, ax[0][1], global_df, "fast_grad", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
+# global_plot(fig, ax[0][1], global_df, "fast_grad", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
 global_plot(fig, ax[1][0], global_df, "SD", r"SD of nodal values ({c})".format(c=c_unit))
 count_plot(fig, ax[1][1], counts, "n", r"Number of cells", ylim=[0, cell_max])
 plt.tight_layout()
 plt.savefig(IMGPATH + "global_plot.pdf")
 plt.show()
 
-if len(global_df["scan_index"].unique()) > 1:
-    """scan plot """
-    fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
-    steady_state_plot(fig, ax[0][0], global_df, "time_index", "scan_index", "Concentration", scan_label,
-                      "t={t_max}. Cytokine ({c})".format(c=c_unit, t_max=t_max), hue="field_name")
-    steady_state_plot(fig, ax[1][0], global_df, "time_index", "scan_index", "Gradient", scan_label,
-                      "t={t_max} Gradient ({c}/$\mu m$)".format(c=c_unit, t_max=t_max), hue="field_name", legend=False)
-    steady_state_plot(fig, ax[1][1], global_df, "time_index", "scan_index", "SD", scan_label,
-                      "t={t_max} SD of Nodal Values".format(c=c_unit, t_max=t_max), hue="field_name", legend=False)
-    steady_state_plot(fig, ax[0][1], counts, "time", "scan_index", "n", scan_label,
-                      "t={t_max} Number of cells".format(t_max=t_max), leg_loc="upper left")
-
-    plt.tight_layout()
-    plt.savefig(IMGPATH + "maximum_plot.pdf")
-    plt.show()
+# if len(global_df["scan_index"].unique()) > 1:
+#     """scan plot """
+#     fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
+#     steady_state_plot(fig, ax[0][0], global_df, "time_index", "scan_index", "Concentration", scan_label,
+#                       "t={t_max}. Cytokine ({c})".format(c=c_unit, t_max=t_max), hue="field_name")
+#     steady_state_plot(fig, ax[1][0], global_df, "time_index", "scan_index", "Gradient", scan_label,
+#                       "t={t_max} Gradient ({c}/$\mu m$)".format(c=c_unit, t_max=t_max), hue="field_name", legend=False)
+#     steady_state_plot(fig, ax[1][1], global_df, "time_index", "scan_index", "SD", scan_label,
+#                       "t={t_max} SD of Nodal Values".format(c=c_unit, t_max=t_max), hue="field_name", legend=False)
+#     steady_state_plot(fig, ax[0][1], counts, "time", "scan_index", "n", scan_label,
+#                       "t={t_max} Number of cells".format(t_max=t_max), leg_loc="upper left")
+#
+#     plt.tight_layout()
+#     plt.savefig(IMGPATH + "maximum_plot.pdf")
+#     plt.show()
 
 score_max = 10
 # """Cluster Plot"""
@@ -207,38 +207,38 @@ score_max = 10
 # plt.tight_layout()
 # plt.savefig(IMGPATH + "score_plot.pdf")
 # plt.show()
-
-l = cell_df["scan_index"].unique()
-rows = int(np.ceil(len(l) / 2))
-fig, ax = plt.subplots(rows, 2, figsize=(15, rows * 4), sharey=True, sharex=True)
-ax = ax.flatten()
-
-for i, v in enumerate(l):
-    ax[i].set_title("scan_index: {v}".format(v=v))
-    legend = "brief"
-    sns.lineplot(ax=ax[i], x="time", y="IL-2_surf_c", data=cell_df.loc[cell_df["scan_index"] == v], hue="type_name",
-                 units="id", estimator=None, linewidth=0.5, legend=legend, palette=color_dict)
-
-plt.savefig(IMGPATH + "trajectory.pdf")
-plt.show()
-
-fig, ax = plt.subplots(2, 2, sharex=True)
-ax_l = ax[0][0]
-sns.barplot(x="scan_index", y="Concentration", data=global_df, ax=ax_l)
-ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
-
-ax_l = ax[0][1]
-sns.barplot(x="scan_index", y="Gradient", data=global_df, ax=ax_l)
-ax_l.set_ylabel(r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit))
-
-ax_l = ax[1][0]
-sns.barplot(x="scan_index", y="SD", data=global_df, ax=ax_l)
-ax_l.set_ylabel(r"SD of nodal values ({c})".format(c=c_unit))
-
-# ax_l = ax[1][1]
-# sns.barplot(x = "scan_index", y = "Concentration", data=global_df ,ax = ax_l)
+#
+# l = cell_df["scan_index"].unique()
+# rows = int(np.ceil(len(l) / 2))
+# fig, ax = plt.subplots(rows, 2, figsize=(15, rows * 4), sharey=True, sharex=True)
+# ax = ax.flatten()
+#
+# for i, v in enumerate(l):
+#     ax[i].set_title("scan_index: {v}".format(v=v))
+#     legend = "brief"
+#     sns.lineplot(ax=ax[i], x="time", y="IL-2_surf_c", data=cell_df.loc[cell_df["scan_index"] == v], hue="type_name",
+#                  units="id", estimator=None, linewidth=0.5, legend=legend, palette=color_dict)
+#
+# plt.savefig(IMGPATH + "trajectory.pdf")
+# plt.show()
+#
+# fig, ax = plt.subplots(2, 2, sharex=True)
+# ax_l = ax[0][0]
+# sns.barplot(x="scan_index", y="Concentration", data=global_df, ax=ax_l)
 # ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
-plt.tight_layout()
-plt.savefig(IMGPATH + "comp.pdf")
-
-plt.show()
+#
+# ax_l = ax[0][1]
+# sns.barplot(x="scan_index", y="Gradient", data=global_df, ax=ax_l)
+# ax_l.set_ylabel(r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit))
+#
+# ax_l = ax[1][0]
+# sns.barplot(x="scan_index", y="SD", data=global_df, ax=ax_l)
+# ax_l.set_ylabel(r"SD of nodal values ({c})".format(c=c_unit))
+#
+# # ax_l = ax[1][1]
+# # sns.barplot(x = "scan_index", y = "Concentration", data=global_df ,ax = ax_l)
+# # ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
+# plt.tight_layout()
+# plt.savefig(IMGPATH + "comp.pdf")
+#
+# plt.show()

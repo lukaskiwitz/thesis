@@ -66,8 +66,8 @@ numeric = {
     "max_mpi_nodes": os.cpu_count(),
     "cells_per_worker": 50,
     "max_pool_size": os.cpu_count(),
-    "min_char_length": 0.05,  # mesh
-    "max_char_length": 2,  # mesh
+    "min_char_length": 1,  # mesh
+    "max_char_length": 5,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
 
