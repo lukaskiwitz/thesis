@@ -12,6 +12,7 @@ import time
 
 import fenics as fcs
 import numpy as np
+import dolfin as dlf
 
 import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
@@ -67,6 +68,9 @@ class FieldProblem:
         self.ext_cache = ""
         self.p: ParameterSet = ParameterSet("field_dummy", [])
         # self.unit_length_exponent: int = 1
+        self.moving_mesh = False
+        self.ale = False
+        self.remesh = False
 
     def add_entity(self, entity: Entity) -> None:
         """
@@ -75,21 +79,21 @@ class FieldProblem:
         """
         self.registered_entities.append({"entity": entity, "patch": 0})
 
-    def get_mesh_path(self):
+    def get_mesh_path(self,time_index = "", local = False):
 
         result = ""
-        file = self.file_name.format(field = self.field_name)+".xdmf"
-        if not self.ext_cache == "":
+
+        if (not time_index == "") and (self.moving_mesh):
+            file = self.file_name+"_{t}"+".xdmf"
+        else:
+            file = self.file_name + ".xdmf"
+
+        if (not self.ext_cache == "") and ((local == False) or (not self.moving_mesh)):
             result = self.ext_cache
         else:
             result = self.path_prefix
 
-        # message(self.path_prefix)
-        # message(self.mesh_cached)
-
-
-
-        return result +file
+        return (result + file).format(field = self.field_name, t = time_index)
 
     def remove_entity(self, entity) -> None:
         """
@@ -266,20 +270,78 @@ class FieldProblem:
 
 
     # noinspection PyPep8Naming
-    def step(self, dt: float, tmp_path: str) -> None:
+    def step(self, dt: float, time_index: int, tmp_path: str) -> None:
         """
         runs timestep
 
         :param dT: delta t for this timestep
         """
-
         message("Solving Field Problem")
         self.solver.solve()
         message("Computing Boundary Concentrations")
         self.get_boundary_concentrations(tmp_path)
         self.compute_boundary_term()
+
         # message("Computing Boundary Gradients")
         # self.get_boundary_gradients()
+
+    def load_mesh(self, path):
+
+        with dlf.XDMFFile(path) as f:
+            f.read(self.solver.mesh)
+
+    def save_mesh(self,time_index: int, path: str):
+
+        path =  path + self.get_mesh_path(time_index, local = True)
+        with dlf.XDMFFile(path) as f:
+                f.write(self.solver.mesh)
+
+
+
+    def ale(self, dt, tmp_path):
+
+        mesh = self.solver.mesh
+
+        b_mesh = fcs.BoundaryMesh(mesh, "exterior")
+
+        b_map = b_mesh.entity_map(0)
+        b_coords = b_mesh.coordinates()
+
+        for i, entity in enumerate(self.registered_entities):
+
+            patch = entity["patch"]
+            cell = entity["entity"]
+            mc = cell.p.get_physical_parameter("mc","motility")
+            message("mc: {mc}".format(mc = mc))
+            cell.velocity = np.random.normal(0,np.sqrt(2 * 1 * 60 * dt) ,3)
+            cell.move(dt)
+
+            # message("patch {p}".format(p = patch))
+            verts = np.array([], dtype = int)
+            for facet in fcs.SubsetIterator(self.solver.boundary_markers, patch):
+                for vertex_index in facet.entities(0):
+
+                    verts = np.insert(verts,0,b_map.where_equal(vertex_index)[0])
+
+            for i in np.unique(verts):
+
+                x = b_coords[i]
+
+                x[0] += cell.offset[0]
+                x[1] += cell.offset[1]
+                x[2] += cell.offset[2]
+
+
+            # mesh.snap_boundary(cell.getCompiledSubDomain())
+
+        dlf.ALE.move(mesh, b_mesh)
+        # mesh.smooth(10)
+
+
+
+        # with fcs.XDMFFile(tmp_path + "/b_mesh.xdmf") as f:
+        #     f.write(b_mesh)
+
 
     def get_field(self) -> fcs.Function:
         return self.solver.u
@@ -287,29 +349,33 @@ class FieldProblem:
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
-    def get_sub_domains_vis(self, key="q") -> fcs.MeshFunction:
+    def get_sub_domains_vis(self, lookup = None) -> fcs.MeshFunction:
         """
 
-        gets MeshFunction that has subdomains surfaces labeled by entity.getState(key)
-        (gets very slow)
-        :param key: key to pass to getState()
+        save meshfunction that labels cells by type_name
+
+        :param {type_name:label}
+
         """
+        lookup = {} if lookup is None else lookup
 
         mesh = self.solver.mesh
-        boundary_markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
-        boundary_markers.set_all(0)
+        boundary_markers = self.solver.boundary_markers
+        markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
+        markers.set_all(0)
 
         for o in self.registered_entities:
             e = o["entity"]
-            #            if e.getState(key=key) > 0:
-            #            print(e.getState(key=key))
-            st = e.getState(key=key)
-            if st == 0:
-                e.getCompiledSubDomain().mark(boundary_markers, -1)
+            p = o["patch"]
+            if e.type_name in lookup.keys():
+                value = lookup[e.type_name]
             else:
-                e.getCompiledSubDomain().mark(boundary_markers, st)
+                lookup[e.type_name] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
+                value = lookup[e.type_name]
+            for v in boundary_markers.where_equal(p):
+                markers.set_value(v,value)
 
-        return boundary_markers
+        return markers
 
     def get_entity_surface_area(self, e):
 
@@ -340,11 +406,15 @@ class FieldProblem:
             entity =  e["entity"]
             for bc in entity.bc_list:
                 fq = bc.field_quantity
-                u = entity.p.get_physical_parameter_by_field_quantity("surf_c",fq).get_in_sim_unit()
-                g = bc.q(u,entity.p.get_as_dictionary(in_sim=True,with_collection_name=False),fq,1)*entity.p.get_physical_parameter("D","IL-2").get_in_sim_unit()
+                try:
+                    u = entity.p.get_physical_parameter_by_field_quantity("surf_c",fq).get_in_sim_unit()
+                except:
+                    pass
+                    # print("")
+                g = bc.q(u,entity.p.get_as_dictionary(in_sim=True,with_collection_name=False),fq,1)*entity.p.get_physical_parameter_by_field_quantity("D",fq).get_in_sim_unit()
                 ule = self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit(type=int)
 
-                rate_conversion = entity.p.get_physical_parameter("q", "IL-2").to_sim
+                rate_conversion = entity.p.get_physical_parameter_by_field_quantity("q", fq).to_sim
 
                 boundary = PhysicalParameter("boundary",0,to_sim=rate_conversion)
                 boundary.set_in_sim_unit(g)

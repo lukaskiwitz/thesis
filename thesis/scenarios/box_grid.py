@@ -16,7 +16,7 @@ from thesis.main.ParameterSet import ParameterSet, ParameterCollection, Physical
 from thesis.main.PostProcess import get_concentration_conversion as get_cc
 from thesis.main.bcFunctions import cellBC
 from thesis.main.my_debug import message
-
+import fenics as fcs
 """Sets up parameter templates. This are callable object, which return a full copy of themselves 
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
 
@@ -73,7 +73,7 @@ def get_cuboid_domain(x, y, z, margin):
     return p1, p2
 
 
-def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
+def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cache=""):
     message("---------------------------------------------------------------")
     message("Setup")
     message("---------------------------------------------------------------")
@@ -103,7 +103,7 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     global_parameter.add_collection(fractions)
 
 
-    domain_bc = make_domain_bc(cytokines, domain_parameter_set, margin, x)
+    domain_bc = make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x)
 
     p1, p2 = get_cuboid_domain(x,y,z, margin)
 
@@ -157,26 +157,63 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     return sc
 
 
-def make_domain_bc(cytokines, domain_parameter_set, margin, x):
+def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x):
     domainBC = []
-    for c in cytokines:
-        left_boundary = bc.OuterIntegral(
-            cellBC, "near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
-            p=deepcopy(domain_parameter_set), name="left_boundary"
-        )
-        box = bc.OuterIntegral(
-            cellBC, "!near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
-            p=deepcopy(domain_parameter_set), name="box")
+    templates = get_parameter_templates(numeric["unit_length_exponent"])
 
-        domainBC.append(left_boundary)
-        domainBC.append(box)
+
+    for piece in boundary:
+        for key, line in piece.items():
+            if key in [c["field_quantity"] for c in cytokines]:
+                outer_integral = bc.OuterIntegral(
+                    cellBC, piece["expr"].format(d=x[0] - margin), field_quantity=key,
+                    p = deepcopy(domain_parameter_set), name = piece["name"]
+                )
+
+                i = [c["field_quantity"] for c in cytokines].index(key)
+                parameters = []
+                for name, value in line.items():
+                    if name in templates:
+                        parameters.append(templates[name](value))
+                    else:
+                        parameters.append(MiscParameter(name, value))
+
+                s = ParameterSet("update", [ParameterCollection(cytokines[i]["name"], parameters, field_quantity=key)])
+                outer_integral.p.update(s, override=True)
+
+                domainBC.append(outer_integral)
+    if len(domainBC) == 0:
+        c = cytokines[0]
+
+        def dummy_bc(u,p,fq,area = 1):
+            return fcs.Constant(0)
+
+        outer_integral = bc.OuterIntegral(
+                    dummy_bc, "true", field_quantity=c["field_quantity"],
+                    p = deepcopy(domain_parameter_set), name = "box"
+                )
+        domainBC.append(outer_integral)
+
+    # for c in cytokines:
+    #
+    #     left_boundary = bc.OuterIntegral(
+    #         cellBC, "near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
+    #         p=deepcopy(domain_parameter_set), name="left_boundary"
+    #     )
+    #     box = bc.OuterIntegral(
+    #         cellBC, "!near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
+    #         p=deepcopy(domain_parameter_set), name="box")
+    #
+    #     domainBC.append(left_boundary)
+    #     domainBC.append(box)
 
     return domainBC
 
 
 def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], ParameterCollection):
-    fractions = ParameterCollection("fractions", [])
+    fractions = ParameterCollection("fractions", [], is_global=True)
     clustering = ParameterCollection("clustering", [])
+    motility = ParameterCollection("motility", [])
 
     cell_types_list = []
 
@@ -188,6 +225,7 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
     t_cluster_strength = templates["cluster_strength"]
     t_q = templates["q"]
     t_R = templates["R"]
+    t_mc = templates["mc"]
 
     for ct in cell_types:
 
@@ -195,6 +233,7 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
 
         cell_p_set = ParameterSet(ct["name"], [])
         cell_p_set.add_collection(clustering)
+        cell_p_set.add_collection(motility)
 
         if "bw" in ct.keys():
             bw = t_bw(ct["bw"])
@@ -202,6 +241,9 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
         if "cluster_strength" in ct.keys():
             s = t_cluster_strength(ct["cluster_strength"])
             clustering.set_parameter(s)
+        if "mc" in ct.keys():
+            mc = t_mc(ct["mc"])
+            motility.set_parameter(mc)
 
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
@@ -249,7 +291,7 @@ def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict, templ
     global_parameter = ParameterSet("global", [])
     global_parameter.add_collection(ParameterCollection("rho", [t_rho(geometry["rho"])]))
 
-    numeric_c = ParameterCollection("numeric", [])
+    numeric_c = ParameterCollection("numeric", [], is_global=True)
     global_parameter.add_collection(numeric_c)
 
     for c in cytokines:
@@ -289,10 +331,11 @@ def get_parameter_templates(ule):
         "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 ** 2), is_global=True)),
         "threshold": PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule))),
         "Kc": PhysicalParameterTemplate(PhysicalParameter("Kc", 0.01, to_sim=1 / get_cc(ule))),
-        "bw": PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule)))),
+        "bw": PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (6 + ule))),
         "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
         "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
-        "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9))
+        "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9)),
+        "mc":PhysicalParameterTemplate(PhysicalParameter("mc",0,to_sim = 1))
     }
 
     return templates

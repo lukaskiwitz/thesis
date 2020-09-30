@@ -51,6 +51,9 @@ class Entity:
         self.id: int = 0
         self.change_type = ""
 
+    def move(self,dt):
+        pass
+
     def set_internal_solver(self, solver: InternalSolver) -> None:
 
         """
@@ -109,7 +112,7 @@ class Entity:
         :return:
         """
         if not self.internal_solver == None:
-            self.internal_solver.step(t, dt, self.p, entity=self)
+            self.internal_solver.step(t, t+dt, dt, self.p, entity=self)
 
     def getState(self, parameter_name="q", field_quantity = "il2", in_post = True) -> float:
 
@@ -162,8 +165,62 @@ class Cell(Entity):
         super().__init__()
         self.p = ParameterSet("Cell_dummy", [])
         self.center: List[float] = center
+        self.offset = [0,0,0]
+
+        self.velocity = np.zeros(np.shape(center))
+
         self.radius = radius
         self.bc_list: List[BC] = bc_list
+
+    def move(self,dt):
+
+        self.offset[0] += self.velocity[0] * dt
+        self.offset[1] += self.velocity[1] * dt
+        self.offset[2] += self.velocity[1] * dt
+
+
+
+    def move_real(self,dt, bouding_box):
+
+        from thesis.main.my_debug import message
+
+        def inside(p1,p2,i,x,m):
+
+            r = [p1[i],p2[i]]
+            x = x[i]
+
+            if (r[0] + m < x) and (r[1]- m > x):
+                return True
+            else:
+                message("cell outside of bounding box")
+                return False
+
+
+        from copy import deepcopy
+
+        old = deepcopy(self.center)
+
+        p1 = bouding_box.p1
+        p2 = bouding_box.p2
+        m = self.radius * 2
+
+        self.center[0] += self.velocity[0] * dt
+        if not inside(p1,p2,0, self.center, m):
+            message("setting x to " + str(old[0]))
+            self.center[0] = old[0]
+
+        self.center[1] += self.velocity[1] * dt
+        if not inside(p1, p2, 1, self.center, m):
+            message("setting y to " + str(old[1]))
+            self.center[1] = old[1]
+
+        self.center[2] += self.velocity[2] * dt
+        if not inside(p1, p2, 2, self.center, m):
+            message("setting z to " + str(old[2]))
+            self.center[2] = old[2]
+
+
+
 
     def get_surface_area(self):
 
