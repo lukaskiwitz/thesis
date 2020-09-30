@@ -139,7 +139,7 @@ class StateManager:
             time_series = ET.SubElement(scan, "TimeSeries")
 
         if self.compress_log_file:
-            path = ".scan_{i}/timestep_logs/".format(i = scan_index)
+            path = "./scan_{i}/timestep_logs/".format(i = scan_index)
             file_name = "step_{si}_{ti}.xml".format(si = scan_index, ti = time_step)
             os.makedirs(os.path.join(self.path, path),exist_ok=True)
             path = os.path.join(path, file_name)
