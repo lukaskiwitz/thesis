@@ -14,6 +14,9 @@ sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
+from scipy.constants import N_A
+from sympy import symbols, solve
+
 from parameters_q_fraction import cytokines, cell_types_dict, geometry, numeric, path_kinetic, ext_cache
 
 os.environ["LOG_PATH"] = path_kinetic
@@ -44,22 +47,24 @@ class kineticSolver(InternalSolver):
     def step(self,t,dt,p,entity=None):
         # print(p.get_as_dictionary())
         # exit
-        N=3
+        N = p.get_physical_parameter("hill_factor", "IL-2").get_in_post_unit()
         gamma = p.get_physical_parameter("gamma", "IL-2").get_in_sim_unit()
         # gamma = p["gamma"] #10
 
         eta = 1/72000 # 1/s
+        # a = 10
         c_0 = p.get_physical_parameter("c0", "IL-2").get_in_post_unit() #1.90e-12 # M
-
-        k_factor = 2# p.get_physical_parameter("k_factor", "IL-2").get_in_sim_unit()
-        k = k_factor * c_0 # M
+        #
+        # k_factor = 2# p.get_physical_parameter("k_factor", "IL-2").get_in_sim_unit()
+        # k = k_factor * c_0 # M
         R_start = p.get_physical_parameter("R_start", "R_start").get_in_sim_unit()
+        #
+        # if c_0 == 0:
+        #     nenner = 1
+        # else:
+        #     nenner = (gamma * c_0 ** N + k ** N) / (c_0 ** N + k ** N)
+        # alpha = a * R_start * eta / nenner # R/t
 
-        if c_0 == 0:
-            nenner = 1
-        else:
-            nenner = (gamma * c_0 ** N + k ** N) / (c_0 ** N + k ** N)
-        alpha = R_start * eta / nenner # R/t
 
         il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()*1e-9 #post is nM, neeeded in M
 
@@ -67,7 +72,21 @@ class kineticSolver(InternalSolver):
         # K_R_custom = p["K_R"] #* np.random.lognormal(0, 0.3)
         # surf is molar, 1e-9
         # "R_l" is Mol, 1e-13
-        new_R_il2 = R_il2 + dt * (alpha * (gamma * il2 ** N + k ** N) / (il2 ** N + k ** N) - eta * R_il2)
+
+        if gamma > 1:
+            kmin = 1e2*N_A ** -1 * 1e9 * eta
+            kmax = gamma * kmin
+        else:
+            kmin = 1e6*N_A ** -1 * 1e9 * eta
+            kmax = gamma * kmin
+        # kmax = 1e6*N_A ** -1 * 1e9 * eta
+
+
+        k_x = symbols("k_x")
+        k = solve((kmin * k_x ** N + kmax * c_0 ** N) / ((k_x ** N + c_0 ** N) * eta) - R_start)[0]
+        # new_R_il2 = R_il2 + dt * (alpha * (gamma * il2 ** N + k ** N) / (il2 ** N + k ** N) - eta * R_il2)
+        # new_R_il2 = R_il2 + dt * (((kmin+kmax) * (gamma * il2**N + k**N)) / (il2**N + k**N) - eta * R_il2)
+        new_R_il2 = R_il2 + dt * ((kmin * k ** N + kmax * il2 ** N) / ( k ** N + il2 ** N) - eta * R_il2)
         p.get_physical_parameter("R", "IL-2").set_in_sim_unit(new_R_il2)
 
         return p
@@ -76,16 +95,16 @@ class kineticSolver(InternalSolver):
 def updateState(sc, t):
     """sets cell types according to the values given in fractions.
     The pseudo random seed depends on t, so that cell placement is repeatable. """
-    global q_distribution_array
+    global Tsec_distribution_array
     global Treg_distribution_array
-    if len(q_distribution_array) != 0 and 1 == 0:
-        draws = q_distribution_array
+    if len(Tsec_distribution_array) != 0:
+        draws = Tsec_distribution_array
     else:
-        tmp_fraction = sc.entity_list[0].p.get_physical_parameter("fraction", "IL-2").get_in_post_unit()
-        number_of_Tn_changed = int(round(len(sc.entity_list) * tmp_fraction))
+        tmp_fraction = sc.entity_list[0].p.get_physical_parameter("Tsec_fraction", "IL-2").get_in_post_unit()
+        number_of_Tsec = int(round(len(sc.entity_list) * tmp_fraction))
         print("fraction = ", tmp_fraction)
-        draws = np.random.choice(range(len(sc.entity_list)), number_of_Tn_changed, replace=False)
-        q_distribution_array = draws
+        draws = np.random.choice(range(len(sc.entity_list)), number_of_Tsec, replace=False)
+        Tsec_distribution_array = draws
     no_of_secs = 0
     no_of_Treg = 0
 
@@ -93,9 +112,9 @@ def updateState(sc, t):
     q_il2_sum = len(sc.entity_list) * 0.25 * 10 * N_A ** -1 * 1e9
 
     for i, e in enumerate(sc.entity_list):
-        e.change_type = "default"
+        e.change_type = "Tnaive"
         if i in draws:
-            e.change_type = "changed"
+            e.change_type = "Tsec"
             no_of_secs += 1
             # e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(5000)
             # print(e.p.get_physical_parameter("R", "IL-2").get_in_post_unit())
@@ -117,13 +136,13 @@ def updateState(sc, t):
     else:
         print("cells q = 0")
     for i, e in enumerate(sc.entity_list):
-        if no_of_secs != 0 and e.change_type == "changed":
+        if no_of_secs != 0 and e.change_type == "Tsec":
             e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / no_of_secs)
-            e.p.add_parameter_with_collection(t_R_start(5000, in_sim=False))
+            e.p.add_parameter_with_collection(t_R_start(1e4, in_sim=False))
         elif e.change_type == "Treg":
-            e.p.add_parameter_with_collection(t_R_start(27000, in_sim=False))
-        elif e.change_type == "default":
-            e.p.add_parameter_with_collection(t_R_start(0, in_sim=False))
+            e.p.add_parameter_with_collection(t_R_start(1e4, in_sim=False))
+        elif e.change_type == "Tnaive":
+            e.p.add_parameter_with_collection(t_R_start(1e2, in_sim=False))
     # sum = 0
     # for i,e in enumerate(sc.entity_list):
     #     if e.change_type == "sec":
@@ -177,8 +196,8 @@ from parameters_q_fraction import numeric
 
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 t_gamma = templates["gamma"]
-t_k_factor = templates["k_factor"]
-t_fraction = templates["fraction"]
+t_hill_factor = templates["hill_factor"]
+t_Tsec_fraction = templates["Tsec_fraction"]
 t_R = templates["R"]
 t_R_start = templates["R_start"]
 t_D = templates["D"]
@@ -191,54 +210,47 @@ t_c0 = templates["c0"]
 # q = ScannablePhysicalParameter(q(60), lambda x, v: x * v)
 # D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 # kd = ScannablePhysicalParameter(D(0), lambda x, v: x * v)
-fraction2 = ScannablePhysicalParameter(t_fraction(0.0), lambda x, v: v)
+Tsec_fraction = ScannablePhysicalParameter(t_Tsec_fraction(0.0), lambda x, v: v)
 Treg_fraction = ScannablePhysicalParameter(t_Treg_fraction(0.0), lambda x, v: v)
 gamma = ScannablePhysicalParameter(t_gamma(0.0), lambda x, v: v)
-k_factor = ScannablePhysicalParameter(t_k_factor(2), lambda x, v: v)
+hill_factor = ScannablePhysicalParameter(t_hill_factor(2), lambda x, v: v)
 # amax = ScannablePhysicalParameter(t_amax(100), lambda x, v: x * v)
 # bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
 c0 = ScannablePhysicalParameter(t_c0(0.0), lambda x, v: v)
 
-q_distribution_array = np.array([])
+Tsec_distribution_array = np.array([])
 Treg_distribution_array = np.array([])
 
-for v in [0.1]: #np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
-    for frac in np.arange(0.1,0.75,0.1):
-    # for Treg_value in [0.25, 0.5, 0.75]:
-    #     #for c0_value in [20e-12]: 20,11,8
-    #     if Treg_value == 0.25:
-    #         c0_value = 22e-12
-    #     elif Treg_value == 0.5:
-    #         c0_value = 12e-12
-    #     elif Treg_value == 0.75:
-    #         c0_value = 8e-12
+for v in [1e4]: #np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
+    for frac in [0.25]:
+        for hill_fac in [3]:
+            """Scans over parameters that are associated with a field"""
+            sim_parameters = [
+                ParameterCollection("IL-2", [gamma(v)], field_quantity="il2"),
+                ParameterCollection("IL-2", [Treg_fraction(0.75)], field_quantity="il2"),
+                ParameterCollection("IL-2", [c0(8.6e-12)], field_quantity="il2"), #8.637363
+                ParameterCollection("IL-2", [Tsec_fraction(frac)], field_quantity="il2"),
+                ParameterCollection("IL-2", [hill_factor(hill_fac)], field_quantity="il2")
+                # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
+            ]
 
-        """Scans over parameters that are associated with a field"""
-        sim_parameters = [
-            ParameterCollection("IL-2", [gamma(v)], field_quantity="il2"),
-            ParameterCollection("IL-2", [Treg_fraction(0.25)], field_quantity="il2"),
-            ParameterCollection("IL-2", [c0(22e-12)], field_quantity="il2"),
-            ParameterCollection("IL-2", [fraction2(frac)], field_quantity="il2")
-            # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
-        ]
-
-        """Scans over parameters that are associated with an entity_type"""
-        entity_types = [
-            # default.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
-            # abs.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
-            # sec.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
-        ]
-        """Scans over parameters that are associated with the outer domain
-        This is a dictionary. If boundary pieces where defined in the setup function, they can be referenced by name. 
-        Here the pieces "left_boundary" and "box" are defined."""
-        outer_domain_dict = {
-            # "left_boundary": [ParameterCollection("IL-2",[R(v)])],
-            # "box": [ParameterCollection("IL-2",[R(v)])]
-        }
-        """Creates container object for one sample of a the parameter scan. 
-        The Lists/Dicts can be empty for default parameters."""
-        sample = ScanSample(sim_parameters, entity_types, outer_domain_dict)
-        scan_container.add_sample(sample)
+            """Scans over parameters that are associated with an entity_type"""
+            entity_types = [
+                # default.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
+                # abs.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
+                # sec.get_updated([ParameterCollection("IL-2", [bc_type(v)])]),
+            ]
+            """Scans over parameters that are associated with the outer domain
+            This is a dictionary. If boundary pieces where defined in the setup function, they can be referenced by name. 
+            Here the pieces "left_boundary" and "box" are defined."""
+            outer_domain_dict = {
+                # "left_boundary": [ParameterCollection("IL-2",[R(v)])],
+                # "box": [ParameterCollection("IL-2",[R(v)])]
+            }
+            """Creates container object for one sample of a the parameter scan. 
+            The Lists/Dicts can be empty for default parameters."""
+            sample = ScanSample(sim_parameters, entity_types, outer_domain_dict)
+            scan_container.add_sample(sample)
 
 """signs up the internal solver with the sim container. 
 It can be referenced in a cell_type definition by its name field
@@ -253,8 +265,8 @@ stMan.sim_container = sc
 stMan.scan_container = scan_container
 
 """sets up time range"""
-stMan.dt = 3600*10
-stMan.T = np.arange(0, 30, 1)
+stMan.dt = 3600*0.5
+stMan.T = np.arange(0, 15, 1)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
