@@ -18,6 +18,50 @@ class ScanContainer:
 
         self.scan_samples.append(sample)
 
+    def add_single_sim_parameter_scan(self, scanable, collection_name, field_quantity, scan_space, scan_name=None):
+
+
+        for v in scan_space:
+            sim_parameters = [
+                ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity),
+            ]
+
+            sample = ScanSample(sim_parameters, [], {}, scan_name=scan_name)
+            self.scan_samples.append(sample)
+
+    def add_multiple_sim_parameter_scan(self, scanable_collections, field_quantity, scan_space, scan_name=None):
+
+        """
+
+        :param scanable_collections: [(collection_name,field_quantity, [scanbles]), ...]
+        """
+        for v in scan_space:
+            for c_name, fq, scanable in scanable_collections:
+
+                sim_parameters = [
+                    ParameterCollection(c_name,
+                    [s(v) for s in scanable]
+                    , field_quantity=fq),
+                ]
+
+            sample = ScanSample(sim_parameters, [], {}, scan_name=scan_name)
+            self.scan_samples.append(sample)
+
+    def add_single_entity_scan(self, entities,scanable,collection_name,field_quantity,scan_space, scan_name = None):
+
+        for v in scan_space:
+            entity_types = []
+            for e in entities:
+                if not field_quantity is None:
+                    e = e.get_updated([ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity)])
+                else:
+                    e = e.get_updated([ParameterCollection(collection_name, [scanable(v)])])
+                entity_types.append(e)
+
+            sample = ScanSample([], entity_types, {}, scan_name=scan_name)
+            self.scan_samples.append(sample)
+
+
     def serialize_to_xml(self, scan_folder_pattern: str):
 
         root = ET.Element("ScanContainer")
@@ -51,6 +95,7 @@ class ScanSample:
         for k,v in outer_domain_dict.items():
             # assert isinstance(v,ScannablePhysicalParameter)
             self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",v)
+
 
     def serialize_to_xml(self, sub_path: str):
 

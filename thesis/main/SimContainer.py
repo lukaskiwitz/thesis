@@ -14,6 +14,7 @@ from typing import Dict
 import fenics as fcs
 import lxml.etree as et
 import pandas as pd
+import numpy as np
 
 from thesis.main.Entity import Entity
 from thesis.main.EntityType import CellType, EntityType
@@ -72,8 +73,12 @@ class SimContainer(SimComponent):
         self.field_files = []
         self.boundary_markers = []
         self.entity_templates = []
+        self.lookup  = {}
         self.internal_solvers = []
+        self.remesh_every_timestep = False
         self.t = 0
+        self._time_log_df = pd.DataFrame()
+
         #self.unit_length_exponent: int = 1
 
     def init_logs(self) -> None:
@@ -123,7 +128,7 @@ class SimContainer(SimComponent):
                 entity.update_bcs()
                 if fq in entity.fieldQuantities:
                     field.add_entity(entity)
-            field.generate_mesh(cache=True, path=self.path, path_prefix="cache/", **kwargs)
+            field.generate_mesh(cache=True, path=self.path, path_prefix="./cache/", **kwargs)
             field.update_solver(self.path + "solver_tmp/")
 
     def get_entity_by_name(self, name: str) -> Entity:
@@ -154,6 +159,8 @@ class SimContainer(SimComponent):
     def run(self, T):
 
         self.t = T[0]
+        # for field in self.fields:
+        #     field.solver.u = None
 
         self.apply_type_changes()
         self._post_step(self, 0,self.t,T)
@@ -161,13 +168,16 @@ class SimContainer(SimComponent):
 
         for time_index, t in enumerate(T[1:]):
 
+
             self.pre_step_timestamp = time.time()
 
-            self._pre_step(self, time_index, T[time_index] , T)  # internal use
-            self.pre_step(self, time_index, T[time_index], T)  # user defined
+
+            self._pre_step(self, time_index+1 , T[time_index+1] , T)  # internal use
+            self.pre_step(self, time_index+1, T[time_index+1], T)  # user defined
 
             dt = t - T[time_index]
-            self.step(dt)
+            self.move_cells(dt)
+            self.step(dt, time_index)
             time_index += 1
             assert t == self.t
 
@@ -179,6 +189,38 @@ class SimContainer(SimComponent):
 
             self.total_step_timestamp = time.time()
             self._time_log(self, time_index, t, T)
+
+    def move_cells(self, dt):
+        from time import sleep
+        for field in self.fields:
+            tmp_path = self.path + "solver_tmp/"
+
+            if field.moving_mesh == True and field.remesh == True:
+                for i, entity in enumerate(field.registered_entities):
+                    patch = entity["patch"]
+                    cell = entity["entity"]
+
+                    mc = cell.p.get_physical_parameter("mc", "motility")
+                    if mc is None:
+                        mc = 0
+                    else:
+                        mc = mc.get_in_sim_unit()
+
+                    cell.velocity = np.random.normal(0, np.sqrt(2 * mc * dt), 3)
+
+                    cell.move_real(dt, field.outer_domain)
+
+                field.generate_mesh(cache=False, path=self.path, path_prefix="./cache/")
+
+            elif field.moving_mesh == True:
+
+                message("Moving Cells")
+                if field.ale:
+                    field.load_mesh(field.mesh_path + field.file_name + ".xdmf")
+                    field.ale(dt, tmp_path)
+                    sleep(2)
+                    field.solver.compileSolver(tmp_path)
+                # field.save_mesh(time_index, self.path)
 
     def _pre_step(self, sc, time_index, t, T):
         return None
@@ -222,26 +264,32 @@ class SimContainer(SimComponent):
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
                 entity.set_cell_type(entity_type, internal_solver)
                 entity.change_type = ""
-    def step(self, dt : float) -> None:
+
+    def step(self, dt: float, time_index: int) -> None:
 
         """
-        advanches simulation
+        advanches simulation by dt
 
+        :param dt:
 
         """
 
-
-        for field in self.fields:
-            # field.unit_length_exponent = self.unit_length_exponent
-            field.update_solver(self.path + "solver_tmp/", p=self.p)
-            field.step(dt, self.path + "solver_tmp/")
-
-        for i, entity in enumerate(self.entity_list):
-            entity.step(self.t, dt)
         self.apply_type_changes()
 
 
-        self.t = self.t + dt
+        for field in self.fields:
+            tmp_path = self.path + "solver_tmp/"
+            # field.unit_length_exponent = self.unit_length_exponent
+            field.update_solver(tmp_path, p=self.p)
+            field.step(dt,time_index, self.path + "solver_tmp/")
+
+        for i, entity in enumerate(self.entity_list):
+            entity.step(self.t, dt)
+
+
+
+
+        self.t = self.t+ dt
 
     def add_entity(self, entity: Entity) -> None:
 
@@ -351,10 +399,18 @@ class SimContainer(SimComponent):
         """
         os.makedirs(self.path + "sol/distplot", exist_ok=True)
         result: Dict = {}
+
         for o, i in enumerate(self.fields):
+
+            markers = i.get_sub_domains_vis(lookup = self.lookup)
+            with fcs.XDMFFile(fcs.MPI.comm_world, self.path + "markers_{n}.xdmf".format(n=n)) as f:
+                f.write(markers)
+
             distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
 
             sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
+            u = i.get_field()
+            u.rename(i.field_quantity, i.field_quantity)
 
             with fcs.HDF5File(fcs.MPI.comm_world, self.path+distplot, "w") as f:
                 f.write(i.get_field(), i.field_name)

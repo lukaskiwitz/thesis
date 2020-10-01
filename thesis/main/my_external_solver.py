@@ -15,7 +15,10 @@ rank = comm.rank
 
 
 def prepare_solver():
+    global fq
+
     pickle_loc = argv[1]
+
     import lxml.etree as ET
 
     with open(pickle_loc + "dirichlet", "rb") as f:
@@ -27,7 +30,7 @@ def prepare_solver():
     with open(pickle_loc + "markers_path", "rb") as f:
         markers_path = pl.load(f)
     with open(pickle_loc + "field_quantity", "rb") as f:
-        field_quantity = pl.load(f)
+        fq = pl.load(f)
     with open(pickle_loc + "result_path", "rb") as f:
         result_path = pl.load(f)
     with open(pickle_loc + "patch_list", "rb") as f:
@@ -120,16 +123,21 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     u = fcs.Function(V)
     du = fcs.TrialFunction(V)
 
+
     for bc in dirichlet:
         dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
+
+
     for bc in integral:
 
         p_bc = bc["p"]
         f = dill.loads(bc["f"])
         area = bc["area"]
         patch = bc["patch"]
-        # print(p_bc["q"])
+
         field_quantity = bc["field_quantity"]
+
+
 
         for k, value in p_bc.items():
             try:
@@ -188,7 +196,7 @@ if __name__ == "__main__":
 
         os.makedirs(result_path, exist_ok=True)
 
-        file = result_path + "tmp"
+        file = result_path + "tmp_{fq}".format(fq = fq)
 
         with fcs.HDF5File(comm, file + ".h5", "w") as f:
             f.write(u, "field")
