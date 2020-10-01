@@ -9,7 +9,7 @@ import json
 import time
 from copy import deepcopy
 from typing import Dict
-
+import os, sys
 import lxml.etree as ET
 import matplotlib.pyplot as plt
 import mpi4py.MPI as MPI
@@ -18,9 +18,9 @@ import pandas as pd
 import seaborn as sns
 
 from thesis.main.Entity import Cell
-from thesis.main.ParameterSet import ParameterSet
+from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
 from thesis.main.ScanContainer import ScanContainer, ScanSample
-from thesis.main.my_debug import message, total_time
+from thesis.main.my_debug import message, total_time, warning
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -50,8 +50,14 @@ class StateManager:
         self.element_tree = None
         self.scan_container = None
         self.sim_container = None
-        self.T = [0]
+        self.T = None
         self.dt = 1
+        self.N = 10
+        self.compress_log_file = True
+        self.global_collections = GlobalCollections()
+        self.global_parameters = GlobalParameters()
+        self._time_log_df = pd.DataFrame()
+
 
 
     def load_xml(self):
@@ -132,7 +138,18 @@ class StateManager:
         else:
             time_series = ET.SubElement(scan, "TimeSeries")
 
-        step = ET.SubElement(time_series, "Step")
+        if self.compress_log_file:
+            path = "./scan_{i}/timestep_logs/".format(i = scan_index)
+            file_name = "step_{si}_{ti}.xml".format(si = scan_index, ti = time_step)
+            os.makedirs(os.path.join(self.path, path),exist_ok=True)
+            path = os.path.join(path, file_name)
+            substitute_element = ET.SubElement(time_series, "Step")
+            substitute_element.set("path", path)
+            step = ET.Element("Step")
+
+
+        else:
+            step = ET.SubElement(time_series, "Step")
         step.set("time_index", str(time_step))
         step.set("time", str(time))
 
@@ -142,23 +159,53 @@ class StateManager:
             if isinstance(c, Cell):
                 cell = ET.SubElement(cells, "Cell")
 
-                cell.set("x", str(c.center[0]))
-                cell.set("y", str(c.center[1]))
-                cell.set("z", str(c.center[2]))
+                cell.set("x", str(c.center[0] + c.offset[0]))
+                cell.set("y", str(c.center[1] + c.offset[1]))
+                cell.set("z", str(c.center[2] + c.offset[2]))
                 cell.set("name", str(c.name))
                 cell.set("entity_id", str(c.id))
                 cell.set("type_name", str(c.type_name))
-                cell.append(c.p.serialize_to_xml())
+                if self.compress_log_file:
+                    cell.append(c.p.serialize_to_xml(
+                        global_collections = self.global_collections,
+                        global_parameters = self.global_parameters
+                    ))
+                else:
+                    cell.append(c.p.serialize_to_xml())
+
+
+
+        old_e = time_series.find("GlobalCollections")
+        if not old_e is None:
+            time_series.remove(old_e)
+
+        old_e = time_series.find("GlobalParameters")
+        if not old_e is None:
+            time_series.remove(old_e)
+
+        time_series.insert(0,self.global_collections.serialize_to_xml())
+        time_series.insert(0, self.global_parameters.serialize_to_xml())
 
         fields = ET.SubElement(step,"Fields")
         for field_name, (distplot, sol, field_index) in result_path.items():
+            d = os.path.split(os.path.split(sc.path)[0])[1]
+
             field = time_series.find("Field[@field_name='{n}']".format(n=field_name))
             if not field:
                 field = ET.SubElement(fields, "Field")
-                field.set("mesh_path",sc.fields[field_index].get_mesh_path())
+                if sc.fields[field_index].moving_mesh:
+                    field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step, local=True)))
+                else:
+                    field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step, local=True))
+
+                field.set("dynamic_mesh",str(sc.fields[field_index].moving_mesh))
                 field.set("field_name", field_name)
                 field.set("dist_plot_path", "scan_{i}/".format(i = scan_index) + distplot)
                 field.set("solution_path", "scan_{i}/".format(i = scan_index) + sol)
+
+        if self.compress_log_file:
+            tree = ET.ElementTree(step)
+            tree.write(os.path.join(self.path, path),pretty_print = True)
 
     def get_field_names(self):
 
@@ -166,7 +213,15 @@ class StateManager:
         names = np.unique(np.array([i.get("field_name") for i in scans.findall("./ScanSample/TimeSeries/Step/Fields/Field")]))
         return names
 
-    def get_cell_ts_data_frame(self, **kwargs):
+    def rebuild_tree(self,scan):
+        for step in scan.findall("TimeSeries/Step"):
+            path = step.get("path")
+            if not path is None:
+                et = ET.parse(os.path.join(self.path, path))
+                step.getparent().replace(step, et.getroot())
+
+
+    def get_cell_ts_data_frame(self, time_indices = None, **kwargs):
 
         root = self.element_tree.getroot()
         result = []
@@ -182,8 +237,13 @@ class StateManager:
             message("State Manager: Collecting cell dataframe for {n} of {total} scans".format(n=n_scans, total=len(scans)))
 
             #for field in scan.findall("TimeSeries/Field"):
+
+            self.rebuild_tree(scan)
+
             for step in scan.findall("TimeSeries/Step"):
                 time_index = step.get("time_index")
+                if (not time_indices is None) and not (int(time_index) in time_indices):
+                    continue
                 time = step.get("time")
 
                 message("State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
@@ -247,27 +307,41 @@ class StateManager:
         self.serialize_to_element_tree()
 
         for scan_index in range(len(self.scan_container.scan_samples)):
+            try:
+                def post_step(sc, time_index, t, T):
+                    result_paths = sc.save_fields(time_index)
+                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
+                    self.write_element_tree()
 
-            def post_step(sc, time_index, t, T):
-                result_paths = sc.save_fields(time_index)
-                self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
-                self.write_element_tree()
+                self.scan_container.t = 0
 
-            self.pre_scan_timestamp = time.time()
+                self.pre_scan_timestamp = time.time()
 
-            self.update_sim_container(self.sim_container, scan_index)
-            self.sim_container.init_xdmf_files()
-            self.pre_scan(self, scan_index)
+                self.update_sim_container(self.sim_container, scan_index)
+                self.sim_container.init_xdmf_files()
+                self.pre_scan(self, scan_index)
 
-            self.sim_container._post_step = post_step
+                self.sim_container._post_step = post_step
 
-            self.sim_container.run(self.T, self.dt)
+                if self.T is None:
+                    T = np.arange(0,self.N*self.dt, self.dt)
+                    self.sim_container.run(T)
+                else:
+                    self.sim_container.run(self.T)
 
-            self.post_scan(self, scan_index)
+                self.post_scan(self, scan_index)
 
-            self.total_scan_timestamp = time.time()
+                self.total_scan_timestamp = time.time()
 
-            self._time_log(scan_index)
+                self._time_log(scan_index)
+
+            except Exception as e:
+                warning("Scan {i} failed.".format(i = scan_index))
+                warning(e)
+                raise e
+                warning("Continuing to next scan sample")
+
+
 
         self.write_time_dataframe()
         self.write_element_tree()

@@ -77,7 +77,8 @@ class MyLinearSoler(MySolver):
 
         self.V = fcs.FunctionSpace(self.mesh, "P", 1)
         self.u = fcs.Function(self.V)
-        self.tmp_path = tmp_path
+        self.tmp_path = tmp_path + "{fq}/".format(fq = self.field_quantity)
+
 
         self.dirichlet = []
         self.integralBC = []
@@ -105,7 +106,7 @@ class MyLinearSoler(MySolver):
                     "area": e.get_surface_area(),
                     "patch": patch,
                     "field_quantity": self.field_quantity,
-                    "p": bc.p.get_as_dictionary(in_sim=True, with_collection_name=False)
+                    "p": bc.p.get_as_dictionary(in_sim=True, with_collection_name=False, field_quantity=self.field_quantity)
                 }
                 integral_bc_test.append(d)
 
@@ -166,6 +167,9 @@ class MyLinearSoler(MySolver):
 
         ext_solver_path = main_path._path[0] + "/my_external_solver.py"
 
+        if hasattr(self, "process"):
+            self.process.kill()
+
         p = sp.Popen(
             ["mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
              pickle_loc], stdin=sp.PIPE, stdout=sp.PIPE)
@@ -185,8 +189,10 @@ class MyLinearSoler(MySolver):
 
         message("loading solution")
         start = time.time()
+
         with fcs.HDF5File(comm, file + ".h5", "r") as f:
             f.read(self.u, "field")
+
         end = time.time()
         total_time(end - start, pre="Loading Solution")
 

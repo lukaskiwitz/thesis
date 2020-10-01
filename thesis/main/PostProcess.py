@@ -15,6 +15,7 @@ import dolfin as dlf
 import fenics as fcs
 import lxml.etree as et
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
@@ -59,6 +60,10 @@ class ComputeSettings:
         self.scan_index: int = 0
         self.time_index: float = 0
         self.tmp_path = ""
+        self.figure_width = 8.3
+        self.figure_fraction = 1
+
+
 
     def set_mesh(self, mesh: fcs.Mesh):
         self._mesh = mesh
@@ -98,6 +103,7 @@ class PostProcessor:
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
         self.computations = [c(), grad(), SD()]
+        self.rc = {}
 
         self.image_settings = {
             "cell_colors": "Dark2",
@@ -106,17 +112,19 @@ class PostProcessor:
             "dpi": 350,
         }
 
-    def write_post_process_xml(self, threads, debug=False, make_images=False):
+    def write_post_process_xml(self, threads, debug=False, make_images=False, time_indices = None):
         """
         runs compute-function for all scans an writes result to xml file
 
         """
 
+        plt.rcParams.update(self.rc)
         assert type(threads) == int
 
         # initializes state manager from scan log
         self.stateManager = st.StateManager(self.path)
         self.stateManager.load_xml()
+
 
         tmp_path = self.path + "tmp/"
         os.makedirs(tmp_path, exist_ok=True)
@@ -126,17 +134,20 @@ class PostProcessor:
         # loads timestep logs
         for scan_index, scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
             parameters = scan_sample.find("Parameters")
-
+            self.stateManager.rebuild_tree(scan_sample)
             for field_step in scan_sample.findall("TimeSeries/Step/Fields/Field"):
                 compute_settings: ComputeSettings = ComputeSettings()
                 compute_settings.path = self.path
                 compute_settings.file_path = field_step.get("dist_plot_path")
                 compute_settings.field = field_step.get("field_name")
                 compute_settings.mesh_path = field_step.get("mesh_path")
+                compute_settings.dynamic_mesh = True if field_step.get("dynamic_mesh") == 'True' else False
 
                 compute_settings.parameters = et.tostring(parameters)
                 compute_settings.scan_index = int(scan_index)
                 compute_settings.time_index = int(field_step.getparent().getparent().get("time_index"))
+                if (not time_indices is None) and not (compute_settings.time_index in time_indices):
+                    continue
                 compute_settings.time = field_step.getparent().getparent().get("time")
                 compute_settings.make_images = make_images
                 compute_settings.tmp_path = tmp_path
@@ -153,11 +164,11 @@ class PostProcessor:
 
                 scatter_list.append(compute_settings)
 
-        mesh_path = self.path + "/" + scatter_list[0].mesh_path
+        mesh_prefix = self.path + "/"
         threads = threads if threads <= os.cpu_count() else os.cpu_count()
         message("distributing to {threads} threads".format(threads=threads))
 
-        with mp.Pool(processes=threads, initializer=initialise(mesh_path, self.cell_dataframe)) as p:
+        with mp.Pool(processes=threads, initializer=initialise(mesh_prefix,self.cell_dataframe)) as p:
             result_list = p.map(compute, scatter_list)
 
         element_list = []
@@ -202,12 +213,15 @@ class PostProcessor:
 
         for scan in in_tree.findall("Scan"):
 
+
             for step in scan.findall("Step"):
 
                 for file in step.findall("File"):
                     g_values = file.find("./GlobalResults")
                     scan_index = int(file.get("scan_index"))
                     time_index = int(file.get("time_index"))
+                    if time_index == 0:
+                        continue
                     time = float(file.get("time"))
                     field_name = file.get("field_name")
                     filter = lambda x: (x["time_index"] == time_index) & \
@@ -264,12 +278,12 @@ class PostProcessor:
 
         return kernels
 
-    def get_cell_dataframe(self, kde=False):
+    def get_cell_dataframe(self, kde=False, time_indices = None):
 
         self.stateManager = st.StateManager(self.path)
         self.stateManager.load_xml()
 
-        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame()
+        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices = time_indices)
 
         result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
 
@@ -355,9 +369,9 @@ class PostProcessor:
 
         return des
 
-    def run_post_process(self, threads, kde=False, make_images=False):
-        self.cell_dataframe = self.get_cell_dataframe(kde=kde)
-        self.write_post_process_xml(threads, make_images=make_images)
+    def run_post_process(self, threads, kde=False, make_images=False, time_indices = None):
+        self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices)
+        self.write_post_process_xml(threads, make_images=make_images, time_indices = time_indices)
         self.global_dataframe = self.get_global_dataframe()
 
 
@@ -366,12 +380,13 @@ def get_concentration_conversion(unit_length_exponent: int):
     return 10 ** (-1 * (unit_length_exponent * 3 + 3))
 
 
-def get_gradient_conversion(unit_length_exponent: int):
+def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
+    #converts gradient to nM/um for target_exponent = -6.
     assert isinstance(unit_length_exponent, int)
-    exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
-    exp -= (6 + unit_length_exponent)  # to nM/um
+    # exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
+    # exp -= (6 + unit_length_exponent)  # to nM/um
 
-    return 10 ** (exp)
+    return 10 ** (-3-4 * unit_length_exponent + target_exponent)
 
 
 class PostProcessComputation():
@@ -440,6 +455,14 @@ def compute(compute_settings: ComputeSettings) -> str:
     :param compute_settings:
     :return:
     """
+
+    mesh = fcs.Mesh()
+    with fcs.XDMFFile(mesh_prefix + compute_settings.mesh_path) as f:
+        f.read(mesh)
+
+    mesh_volume = get_mesh_volume(mesh)
+
+    function_space = fcs.FunctionSpace(mesh, "P", 1)
 
     u: fcs.Function = fcs.Function(function_space)
     with fcs.HDF5File(comm, compute_settings.path + "/" + compute_settings.file_path, "r") as f:
@@ -528,17 +551,9 @@ def compute(compute_settings: ComputeSettings) -> str:
     return filename
 
 
-def initialise(mesh_path, _cell_dataframe):
-    global mesh
-    mesh = fcs.Mesh()
-    with fcs.XDMFFile(mesh_path) as f:
-        f.read(mesh)
-
-    global mesh_volume
-    mesh_volume = get_mesh_volume(mesh)
-
-    global function_space
-    function_space = fcs.FunctionSpace(mesh, "P", 1)
+def initialise(prefix, _cell_dataframe):
+    global mesh_prefix
+    mesh_prefix = prefix
 
     global cell_dataframe
     cell_dataframe = _cell_dataframe
@@ -547,7 +562,9 @@ def initialise(mesh_path, _cell_dataframe):
 def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labels=3):
     cell_color_key = cell_color_key
 
+
     if isinstance(cell_colors, Dict):
+        categorical = True
         color_dict = cell_colors
     else:
         try:
@@ -576,7 +593,7 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
                 color_dict[t] = cmap(int(i))
 
     legend_items = []
-
+    labels = []
     if len(color_dict) > 8:
         step = int(len(color_dict) / 8)
         items = list(color_dict.items())[0::step]
@@ -584,13 +601,17 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
     else:
         legend_color_dict = color_dict
 
+    ms = plt.rcParams['legend.fontsize']
+    ms = ms if not isinstance(ms,str) else 5
+
     for type, color in legend_color_dict.items():
         legend_items.append(
-            plt.Line2D([0], [0], marker='o', color='w', label=type,
-                       markerfacecolor=color, markersize=15, markeredgewidth=0, linewidth=0)
+            plt.Line2D([0], [0], marker='o', color='w',markersize=ms,
+                       markerfacecolor=color, markeredgewidth=0, linewidth=0)
         )
+        labels.append(type)
 
-    return color_dict, legend_items, categorical
+    return color_dict, legend_items,labels, categorical
 
 
 def get_rectangle_plane_mesh(u, res = (200,200)):
@@ -606,7 +627,7 @@ def get_rectangle_plane_mesh(u, res = (200,200)):
     )
     rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), res[0], res[1])
 
-    return rec_mesh
+    return rec_mesh, [x_limits,y_limits]
 
 def make_images(u, conv_factor, compute_settings):
 
@@ -618,7 +639,7 @@ def make_images(u, conv_factor, compute_settings):
     cell_colors = compute_settings.cell_colors
     round_legend_labels = compute_settings.round_legend_labels
 
-    color_dict, legend_items, categorical = get_color_dictionary(cell_dataframe, cell_color_key, cell_colors,
+    color_dict, legend_items, labels, categorical = get_color_dictionary(cell_dataframe, cell_color_key, cell_colors,
                                                                  round_legend_labels=round_legend_labels)
 
     cell_df = cell_dataframe.loc[
@@ -626,34 +647,40 @@ def make_images(u, conv_factor, compute_settings):
         (cell_dataframe["time_index"] == time_index)
         ]
     u.set_allow_extrapolation(True)
-    fig = plt.figure()
-    for index, cell in cell_df.iterrows():
-        p = [
-            cell["x"],
-            cell["y"]
-        ]
+    rec_mesh, bbox = get_rectangle_plane_mesh(u)
 
-        key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
-        if not key in color_dict:
-            color = "black"
-            message("no color provided for key {k}".format(k=key))
-        else:
-            color = color_dict[key]
+    aspect = abs(bbox[0][0]-bbox[0][1]) / abs(bbox[1][0]-bbox[1][1])
 
-        c = plt.Circle(p, 5, color=color)
-        fig.gca().add_artist(c)
+    w = compute_settings.figure_width * compute_settings.figure_fraction
+    h = w / aspect
 
-    # coords = u.function_space().mesh().coordinates()
-    # coords_t = np.transpose(coords)
-    # x_limits = (
-    #     np.min(coords_t[0]), np.max(coords_t[0])
-    # )
-    # y_limits = (
-    #     np.min(coords_t[1]), np.max(coords_t[1])
-    # )
+    fig = plt.figure(figsize=(w,h))
+    legend_fig = plt.figure(figsize=(w,h))
 
-    # rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), 200, 200)
-    rec_mesh = get_rectangle_plane_mesh(u)
+    legend_gs = GridSpec(1,1, legend_fig)
+    legend_axes = [
+        legend_fig.add_subplot(legend_gs[0]),
+        # legend_fig.add_subplot(legend_gs[1]),
+        # legend_fig.add_subplot(legend_gs[2])
+    ]
+
+    # for index, cell in cell_df.iterrows():
+    #     p = [
+    #         cell["x"],
+    #         cell["y"]
+    #     ]
+    #
+    #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+    #     if not key in color_dict:
+    #         color = "black"
+    #         message("no color provided for key {k}".format(k=key))
+    #     else:
+    #         color = color_dict[key]
+    #
+    #     fig.gca().scatter(p[0],p[1],marker=5, color=color)
+    #     # c = plt.Circle(p, 5, color=color)
+    #     # fig.gca().add_artist(c)
+
     rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
     u_slice = fcs.interpolate(u, rev_V)
 
@@ -679,22 +706,44 @@ def make_images(u, conv_factor, compute_settings):
         mappable.set_clim(tpl[0], tpl[1])
 
     fig.gca().tricontourf(triang, slice_v, levels=100, norm = norm_cytokine)
-    cb_cytokine = fig.colorbar(mappable)
-
-    cb_cytokine.set_label("cytokine (nM)")
-
     fig.gca().set_xlabel(r"x ($\mu m $)")
     fig.gca().set_ylabel(r"y ($\mu m $)")
+
+    for index, cell in cell_df.iterrows():
+        p = [
+            cell["x"],
+            cell["y"]
+        ]
+
+        key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+        if not key in color_dict:
+            color = "black"
+            message("no color provided for key {k}".format(k=key))
+        else:
+            color = color_dict[key]
+
+
+        c = plt.Circle(p, 5, color=color, transform = fig.gca().transData)
+        fig.gca().add_artist(c)
+
+
+
+    if hasattr(compute_settings, "colorbar_range"):
+        cb_cytokine = legend_fig.colorbar(mappable, ax = legend_axes[0],fraction = 0.5, aspect = 10)
+        cb_cytokine.set_label("cytokine (nM)")
+    else:
+        cb_cytokine = fig.colorbar(mappable)
+        cb_cytokine.set_label("cytokine (nM)")
 
     if not categorical:
         vmin = min(color_dict.keys())
         vmax = max(color_dict.keys())
 
         norm = Normalize(vmin=vmin, vmax=vmax)
-        cb = fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors))
+        cb = legend_fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors),ax = legend_axes[0], fraction = 0.5, aspect = 10)
         cb.set_label(cell_color_key)
     else:
-        plt.legend(handles=legend_items, title=legend_title)
+        legend_axes[0].legend(handles=legend_items,labels=labels, title=legend_title )
 
     img_path = "images/scan_{scan_index}/{field}/".format(
         field=compute_settings.field,
@@ -704,5 +753,8 @@ def make_images(u, conv_factor, compute_settings):
         time_index=time_index
     )
     os.makedirs(compute_settings.path + img_path, exist_ok=True)
-
+    os.makedirs(os.path.join(compute_settings.path + img_path +"/legends/"),exist_ok=True)
+    fig.tight_layout()
+    # legend_fig.tight_layout()
+    legend_fig.savefig(compute_settings.path + img_path +"/legends/"+ file_name + ".pdf")
     fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
