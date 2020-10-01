@@ -5,6 +5,7 @@ Created on Mon Jun 10 19:42:20 2019
 
 @author: lukas
 """
+from thesis.main.my_debug import message
 
 
 def cellBC(u, p, field_quantity, area=1):
@@ -33,6 +34,8 @@ def cellBC(u, p, field_quantity, area=1):
             uptake = amax * u / (Kc + u)
         else:
             raise Exception
+    else:
+        message("bc type not in parameters. Using linear boundary condition")
 
     secretion = q
     linear = secretion / (D * area)

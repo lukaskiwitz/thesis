@@ -1,15 +1,13 @@
 import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from parameters import path
-
+import matplotlib.image as mpimg
 
 def global_plot(fig, ax, global_df, y_name, y_label, legend="brief"):
     global_df = reduce_df(global_df, "scan_index")
@@ -86,14 +84,16 @@ def format_x_ticklabels(scan_scale, distance, round_n):
     return my_scale
 
 
-def labels_replace(labels):
-    rep = {
-        "type_name": "Cell Type",
-        "field_name": "Cytokine",
-        "IL-2": "IL-2",
-        "time": time_label,
-        "time_index": time_label
-    }
+def labels_replace(labels,rep = None):
+    if rep is None:
+            rep = {
+            "type_name": "Cell Type",
+            "field_name": "Cytokine",
+            "IL-2": "IL-2",
+            "time": time_label,
+            "time_index": time_label
+            }
+
     for i, l in enumerate(labels):
         if l in list(rep.keys()):
             labels[i] = rep[l]
@@ -157,18 +157,20 @@ color_dict = {
     "abs": "green",
     "IL-2": "yellow",
     "IL-6": "brown",
-    "IFNg": "black"
-
+    "IFNg": "black",
+    0:"red",
+    1:"blue"
 }
 
+
 for i, k in enumerate(color_dict.keys()):
-    color_dict[k] = sns.color_palette("Dark2", len(color_dict))[i]
+    color_dict[k] = sns.color_palette("muted", len(color_dict))[i]
 
 """global plot"""
 fig, ax = plt.subplots(2, 2, sharex=False, sharey=False)
 global_plot(fig, ax[0][0], global_df, "Concentration", "avg. Cytokine ({c})".format(c=c_unit), legend=False)
 global_plot(fig, ax[0][1], global_df, "Gradient", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
-global_plot(fig, ax[0][1], global_df, "fast_grad", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
+# global_plot(fig, ax[0][1], global_df, "fast_grad", r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit), legend=False)
 global_plot(fig, ax[1][0], global_df, "SD", r"SD of nodal values ({c})".format(c=c_unit))
 count_plot(fig, ax[1][1], counts, "n", r"Number of cells", ylim=[0, cell_max])
 plt.tight_layout()
@@ -192,21 +194,21 @@ if len(global_df["scan_index"].unique()) > 1:
     plt.show()
 
 score_max = 10
-# """Cluster Plot"""
-# fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
-# scan_score_plot(fig, ax[0][0], cell_df, "abs_score_norm", r"abs score t-1(normalized)", legend=False,
-#                 ylim=[0, score_max])
-# scan_score_plot(fig, ax[1][0], cell_df, "sec_score_norm", r"sec score t-1 (normalized)", legend=False,
-#                 ylim=[0, score_max])
-#
-# scan_score_plot(fig, ax[0][1], cell_df, "abs_score_init_norm", r"abs score t=0 (normalized)", legend=False,
-#                 ylim=[0, score_max])
-# scan_score_plot(fig, ax[1][1], cell_df, "sec_score_init_norm", r"sec score t=0 (normalized)", legend="full",
-#                 ylim=[0, score_max])
-#
-# plt.tight_layout()
-# plt.savefig(IMGPATH + "score_plot.pdf")
-# plt.show()
+"""Cluster Plot"""
+fig, ax = plt.subplots(2, 2, sharex=True, sharey=False)
+scan_score_plot(fig, ax[0][0], cell_df, "abs_score_norm", r"abs score t-1(normalized)", legend=False,
+                ylim=[0, score_max])
+scan_score_plot(fig, ax[1][0], cell_df, "sec_score_norm", r"sec score t-1 (normalized)", legend=False,
+                ylim=[0, score_max])
+
+scan_score_plot(fig, ax[0][1], cell_df, "abs_score_init_norm", r"abs score t=0 (normalized)", legend=False,
+                ylim=[0, score_max])
+scan_score_plot(fig, ax[1][1], cell_df, "sec_score_init_norm", r"sec score t=0 (normalized)", legend="full",
+                ylim=[0, score_max])
+
+plt.tight_layout()
+plt.savefig(IMGPATH + "score_plot.pdf")
+plt.show()
 
 l = cell_df["scan_index"].unique()
 rows = int(np.ceil(len(l) / 2))
@@ -220,25 +222,4 @@ for i, v in enumerate(l):
                  units="id", estimator=None, linewidth=0.5, legend=legend, palette=color_dict)
 
 plt.savefig(IMGPATH + "trajectory.pdf")
-plt.show()
-
-fig, ax = plt.subplots(2, 2, sharex=True)
-ax_l = ax[0][0]
-sns.barplot(x="scan_index", y="Concentration", data=global_df, ax=ax_l)
-ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
-
-ax_l = ax[0][1]
-sns.barplot(x="scan_index", y="Gradient", data=global_df, ax=ax_l)
-ax_l.set_ylabel(r"avg. Gradient ({c}/$\mu m$)".format(c=c_unit))
-
-ax_l = ax[1][0]
-sns.barplot(x="scan_index", y="SD", data=global_df, ax=ax_l)
-ax_l.set_ylabel(r"SD of nodal values ({c})".format(c=c_unit))
-
-# ax_l = ax[1][1]
-# sns.barplot(x = "scan_index", y = "Concentration", data=global_df ,ax = ax_l)
-# ax_l.set_ylabel("avg. Cytokine ({c})".format(c=c_unit))
-plt.tight_layout()
-plt.savefig(IMGPATH + "comp.pdf")
-
 plt.show()

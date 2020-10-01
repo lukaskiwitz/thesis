@@ -24,7 +24,7 @@ The first entry is the default cell type. There the "fraction" entry is meaningl
 cell_types_dict = [
     {"name": "default",
      "fraction": 0,
-     "il2": {"R": 4000, "q": 0, "Kc": 0.01, "amax": 0, "bc_type": "linear"},
+     "il2": {"R": 4000, "q": 0, "Kc": 0.01, "amax": 0, "ths":0.05, "bc_type": "linear"},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
@@ -44,11 +44,18 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 200,  # dimensions of the cell grid
-    "y_grid": 200,
+    "x_grid": 100,  # dimensions of the cell grid
+    "y_grid": 100,
     # "z_grid":100,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2
 }
+boundary = [
+    {"name": "box",
+     "expr":"true",
+     "il2":{"q":0, "R":0, "bc_type": "linear"},
+     },
+
+]
 
 """
 parameters regarding meshing and fenics. unit_length_exponent is necessary for calculation concentrations. 
@@ -57,7 +64,7 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": False,
+    "linear": True,
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,
     "newton_atol": 1e-35,
@@ -66,8 +73,8 @@ numeric = {
     "max_mpi_nodes": os.cpu_count(),
     "cells_per_worker": 50,
     "max_pool_size": os.cpu_count(),
-    "min_char_length": 0.05,  # mesh
-    "max_char_length": 2,  # mesh
+    "min_char_length": 1,  # mesh
+    "max_char_length": 5,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
 
