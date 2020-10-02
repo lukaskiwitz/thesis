@@ -49,16 +49,14 @@ class kineticSolver(InternalSolver):
         # gamma = p["gamma"] #10
 
         eta = 1/72000 # 1/s
-        c_0 = p.get_physical_parameter("c0", "IL-2").get_in_post_unit() #1.90e-12 # M
+        c_0 = 17.55e-12 # M
 
-        k_factor = 2# p.get_physical_parameter("k_factor", "IL-2").get_in_sim_unit()
+        k_factor = p.get_physical_parameter("k_factor", "IL-2").get_in_sim_unit()
         k = k_factor * c_0 # M
         R_start = p.get_physical_parameter("R_start", "R_start").get_in_sim_unit()
 
-        if c_0 == 0:
-            nenner = 1
-        else:
-            nenner = (gamma * c_0 ** N + k ** N) / (c_0 ** N + k ** N)
+
+        nenner = (gamma * c_0 ** N + k ** N) / (c_0 ** N + k ** N)
         alpha = R_start * eta / nenner # R/t
 
         il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()*1e-9 #post is nM, neeeded in M
@@ -77,75 +75,34 @@ def updateState(sc, t):
     """sets cell types according to the values given in fractions.
     The pseudo random seed depends on t, so that cell placement is repeatable. """
     global q_distribution_array
-    global Treg_distribution_array
-    if len(q_distribution_array) != 0 and 1 == 0:
+    if len(q_distribution_array) != 0:
         draws = q_distribution_array
     else:
-        tmp_fraction = sc.entity_list[0].p.get_physical_parameter("fraction", "IL-2").get_in_post_unit()
-        number_of_Tn_changed = int(round(len(sc.entity_list) * tmp_fraction))
-        print("fraction = ", tmp_fraction)
+        number_of_Tn_changed = int(round(len(sc.entity_list) * t_fraction.p.get_in_sim_unit()))
         draws = np.random.choice(range(len(sc.entity_list)), number_of_Tn_changed, replace=False)
         q_distribution_array = draws
     no_of_secs = 0
-    no_of_Treg = 0
+    # draws = [76, 213]
 
     from scipy.constants import N_A
-    q_il2_sum = len(sc.entity_list) * 0.25 * 10 * N_A ** -1 * 1e9
+    q_il2_sum = len(sc.entity_list) * 60 * N_A ** -1 * 1e9
 
     for i, e in enumerate(sc.entity_list):
         e.change_type = "default"
         if i in draws:
             e.change_type = "changed"
             no_of_secs += 1
-            # e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(5000)
-            # print(e.p.get_physical_parameter("R", "IL-2").get_in_post_unit())
-    if len(Treg_distribution_array) != 0 and 1 == 0:
-        Treg_draws = Treg_distribution_array
-    else:
-        Treg_draws = np.random.choice(np.setdiff1d(range(len(sc.entity_list)), draws),
-                                  int(round(len(sc.entity_list) * e.p.get_physical_parameter("Treg_fraction", "IL-2").get_in_sim_unit(), 0)), replace=False)
-        Treg_distribution_array = Treg_draws
-    for i, e in enumerate(sc.entity_list):
-        if i in Treg_draws:
-            e.change_type = "Treg"
-            no_of_Treg += 1
         e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
+        e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(20000)
     print("Number of secreting cells: ", no_of_secs)
-    print("Number of Tregs: ", no_of_Treg)
     if no_of_secs != 0:
-        print("Cells q:", q_il2_sum / no_of_secs)
+        print("Cells q:", q_il2_sum/no_of_secs)
     else:
         print("cells q = 0")
-    for i, e in enumerate(sc.entity_list):
+    for i,e in enumerate(sc.entity_list):
         if no_of_secs != 0 and e.change_type == "changed":
-            e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / no_of_secs)
-            e.p.add_parameter_with_collection(t_R_start(5000, in_sim=False))
-        elif e.change_type == "Treg":
-            e.p.add_parameter_with_collection(t_R_start(27000, in_sim=False))
-        elif e.change_type == "default":
-            e.p.add_parameter_with_collection(t_R_start(0, in_sim=False))
-    # sum = 0
-    # for i,e in enumerate(sc.entity_list):
-    #     if e.change_type == "sec":
-    #         sum += e.p.get_physical_parameter("q", "IL-2").get_in_post_unit()
-    # print(sum)
-    #
-    # for i, e in enumerate(sc.entity_list):
-    #     e.change_type = "default"
-    #     if i in draws:
-    #         e.change_type = "changed"
-    #         no_of_secs += 1
-    #     e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
-    #     e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(20000)
-    # print("Number of secreting cells: ", no_of_secs)
-    # if no_of_secs != 0:
-    #     print("Cells q:", q_il2_sum/no_of_secs)
-    # else:
-    #     print("cells q = 0")
-    # for i,e in enumerate(sc.entity_list):
-    #     if no_of_secs != 0 and e.change_type == "changed":
-    #         e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum/no_of_secs)
-    #     e.p.add_parameter_with_collection(t_R_start(20000, in_sim=False))
+            e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum/no_of_secs)
+        e.p.add_parameter_with_collection(t_R_start(20000, in_sim=False))
 
 
 """Setup/Simulation"""
@@ -182,43 +139,28 @@ t_fraction = templates["fraction"]
 t_R = templates["R"]
 t_R_start = templates["R_start"]
 t_D = templates["D"]
-t_Treg_fraction = templates["Treg_fraction"]
-t_c0 = templates["c0"]
 # t_amax = templates["amax"]
-
+t_fraction.p.set_in_post_unit(0.25)
 """Sets up Scannable parameters from parameters templates"""
 # R = ScannablePhysicalParameter(R(20000), lambda x, v: x * v)
 # q = ScannablePhysicalParameter(q(60), lambda x, v: x * v)
-# D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 # kd = ScannablePhysicalParameter(D(0), lambda x, v: x * v)
-fraction2 = ScannablePhysicalParameter(t_fraction(0.0), lambda x, v: v)
-Treg_fraction = ScannablePhysicalParameter(t_Treg_fraction(0.0), lambda x, v: v)
+# fraction = ScannablePhysicalParameter(t_fraction(0.0), lambda x, v: v)
 gamma = ScannablePhysicalParameter(t_gamma(0.0), lambda x, v: v)
 k_factor = ScannablePhysicalParameter(t_k_factor(2), lambda x, v: v)
 # amax = ScannablePhysicalParameter(t_amax(100), lambda x, v: x * v)
 # bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
-c0 = ScannablePhysicalParameter(t_c0(0.0), lambda x, v: v)
 
 q_distribution_array = np.array([])
-Treg_distribution_array = np.array([])
 
-for v in [0.1]: #np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
-    for frac in np.arange(0.1,0.75,0.1):
-    # for Treg_value in [0.25, 0.5, 0.75]:
-    #     #for c0_value in [20e-12]: 20,11,8
-    #     if Treg_value == 0.25:
-    #         c0_value = 22e-12
-    #     elif Treg_value == 0.5:
-    #         c0_value = 12e-12
-    #     elif Treg_value == 0.75:
-    #         c0_value = 8e-12
-
+for v in [0.1, 0.5, 2]: #np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
+    for diffusion in [1]:
         """Scans over parameters that are associated with a field"""
         sim_parameters = [
             ParameterCollection("IL-2", [gamma(v)], field_quantity="il2"),
-            ParameterCollection("IL-2", [Treg_fraction(0.25)], field_quantity="il2"),
-            ParameterCollection("IL-2", [c0(22e-12)], field_quantity="il2"),
-            ParameterCollection("IL-2", [fraction2(frac)], field_quantity="il2")
+            ParameterCollection("IL-2", [D(diffusion)], field_quantity="il2"),
+            ParameterCollection("IL-2", [k_factor(2)], field_quantity="il2")
             # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
         ]
 
@@ -254,7 +196,7 @@ stMan.scan_container = scan_container
 
 """sets up time range"""
 stMan.dt = 3600*10
-stMan.T = np.arange(0, 30, 1)
+stMan.T = np.arange(0, 51, 1)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
