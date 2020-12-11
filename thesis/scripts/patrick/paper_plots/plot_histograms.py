@@ -5,6 +5,7 @@ import seaborn as sns
 import random
 from my_debug import message
 from scipy import spatial
+from scipy.optimize import curve_fit
 
 #load the cell_df
 # from parameters_q_fraction import path_kinetic
@@ -17,215 +18,60 @@ from scipy import spatial
 # path = "/extra/brunner/thesis/kinetic/q_fraction_small_gamma_scan_g_0.1/"
 # path = "/extra/brunner/thesis/kinetic/q_fraction_small_g_0.1/"
 
-load_runs_hist_df = True
-save_runs_hist_df = True
-
-save_avg_hist_df = True
 
 verbose = False
+save_avg_hist_df = True
 
-no_of_runs = 6
-timepoints = [0,2,5,10,20]
-# gammas = [0.1, 0.5, 2, 10]
-gammas = [3,4]
+no_of_runs = 1
+dt = 1
+
 cell_cell_distance = 20
-get_dataframes = []
 
-#create multiindex df
-array1 = np.array([[x]*len(gammas) for x in range(no_of_runs)]).flatten()
-array2 = np.array([[g for g in gammas]*no_of_runs]).flatten()
-df_columns = [array1,array2]
+# base_path = "/extra/brunner/thesis/kinetic/q_fraction_medium_pos_g_scan_multi/"
+base_path = "/extra/brunner/thesis/kinetic/kin_large_new_hill_4/"
 
-df_indices = timepoints.copy()
-df_indices.append("sec_dists")
+runs_hist_df = pd.read_hdf(base_path + str(no_of_runs) + '_runs_0.25_f_hist_df.h5', mode="r")
+avg_hist_df = pd.read_hdf(base_path + str(no_of_runs) + '_runs_0.25_f_avg_hist_df.h5', mode="r")
+mean_sec_dist = float(np.loadtxt(base_path + str(no_of_runs) + "_runs_0.25_f_avg_sec_dists.txt"))/cell_cell_distance
 
-runs_hist_df = pd.DataFrame(columns=df_columns, index=df_indices)
-base_path = "/extra/brunner/thesis/kinetic/q_fraction_medium_pos_g_scan_multi/"
-if load_runs_hist_df == True:
-    try:
-        runs_hist_df = pd.read_hdf(base_path + str(no_of_runs) + "_runs_hist_df.h5", mode="r")
-        message("loaded runs_hist_df from " + base_path)
-        df_loaded = True
-    except FileNotFoundError:
-        message("runs_hist_df not found, commencing calculation")
-        df_loaded = False
+global_df = pd.read_hdf(base_path + "global_df.h5", mode="r")
+cell_df = pd.read_hdf(base_path + "cell_df.h5", mode="r")
+fractioned_cell_df = cell_df.loc[(cell_df["IL-2_Tsec_fraction"] == 0.25)]
 
-if load_runs_hist_df == False or df_loaded == False:
-    for run in range(no_of_runs):
-        message("calculating run " + str(run))
-        for gamma in gammas:
-            if verbose == True:
-                message("calculating gamma = " + str(gamma))
-            get_dataframes.append([])
+message("loaded runs_hist_df from " + base_path)
 
-            path = base_path + "run" + str(run) + "/"
-
-            global_df = pd.read_hdf(path + 'global_df.h5', mode="r")
-            cell_df = pd.read_hdf(path + 'cell_df.h5', mode="r")
-
-
-            get_dataframes[run] = [global_df, cell_df]
-
-            variable = "time"
-            cell_df = cell_df.loc[cell_df["IL-2_fraction"] == 0.25]
-            cell_df = cell_df.loc[cell_df["IL-2_gamma"] == gamma]
-
-            #for which timepoints to calculate for
-            points = [cell_df[variable].unique()[i] for i in timepoints]
-
-            #create multiindex dfs
-            hist_df = pd.DataFrame(columns=[str(x) for x in points], index=cell_df.loc[(cell_df[variable] == points[0]) , "id"].values)
-
-            # prepare df's to build kd_tree
-            cell_df_split = cell_df.loc[cell_df[variable] == points[0]].copy()
-            cell_points = np.array([cell_df_split["x"].values, cell_df_split["y"].values, cell_df_split["z"].values]).T
-            kd_tree = spatial.KDTree(cell_points)
-
-            max_distance = 0
-
-            #get the distances from the KDTree at the given time points
-            for entry in points: #cell_df["time"].unique():
-                if verbose == True:
-                    message("calculating KDTree at " + variable + " = " + str(entry))
-                # create containers
-                cell_df_split = cell_df.loc[cell_df[variable] == entry].copy()
-                # iterate over cells
-                for il2cells in cell_df.loc[(cell_df[variable] == points[0]), "id"]:
-
-                    kd_tree_data = kd_tree.query(cell_points[int(il2cells)], len(cell_points))
-                    hist_df[str(entry)][str(il2cells)] = [np.zeros(len(cell_points)), np.zeros(len(cell_points))]
-
-                    #write concentrations
-                    hist_df[str(entry)][str(il2cells)][0][kd_tree_data[1]] = cell_df_split.iloc[kd_tree_data[1]]["IL-2_surf_c"].mul(1e3).values
-                    #write distances
-                    hist_df[str(entry)][str(il2cells)][1][kd_tree_data[1]] = kd_tree_data[0]
-                    #get the max distance between two cells while we are at it
-                    if max_distance < kd_tree_data[0].max():
-                        max_distance = kd_tree_data[0].max()
-
-            #############################################################################################################################################
-
-            # Histogram building
-
-            # build various containers
-            hist_timepoints = [str(x) for x in points]
-            hist_data_array = []
-            c_data_array = []
-            conv_data_array = []
-            auto_corr_data_array = []
-
-            sec_cell_corr_array = []
-
-            niche = []
-
-            #iterate over timepoints:
-            for hist_timepoint in hist_timepoints:
-                if verbose == True:
-                    message("creating hist at time = " + hist_timepoint)
-
-                # calculate necessary bins
-                bins = np.arange(0,(max_distance//cell_cell_distance + 1)*cell_cell_distance, cell_cell_distance)
-                center = bins[:-1]/cell_cell_distance
-
-                # create container for correlation computation
-                c_bin_array = [[] for i in range((len(bins)-1))]
-                multi_cell_corr_array = [[] for i in range(len(hist_df[hist_timepoint][cell_df.loc[(cell_df["type_name"] == "changed") & (cell_df["time"] == float(hist_timepoint)), "id"]]))]
-
-
-                # iterate over all secreting cells in hist_df to average over them
-                # grab the secreting cells average distance from each other while we are at it
-                sec_dists = []
-                cell_tracker = 0
-                no_of_cells = len(hist_df[hist_timepoint][cell_df.loc[(cell_df["type_name"] == "changed") & (cell_df["time"] == float(hist_timepoint)), "id"]])
-                for k,cell in enumerate(hist_df[hist_timepoint][cell_df.loc[(cell_df["type_name"] == "changed") & (cell_df["time"] == float(hist_timepoint)), "id"]]):  #.loc[hist_df[plot_time_point].index == str(2)].dropna():
-                    #sort the arrays and corresponding concentrations by distance via zipping und unzipping
-                    cell_tracker += 1
-
-                    zipped = zip(cell[0], cell[1])
-                    sorted_zipped = sorted(list(zipped), key=lambda x: x[1])
-
-                    c, distances = zip(*sorted_zipped)
-                    c = list(c)
-                    distances = list(distances)
-
-                    # since "c" and "distances" are sorted, we can use np.where's first and last argument as a range for the entries of the bin
-                    # this way we only iterate over the bins, the iteration over the distances is done by numpy.where
-                    for i,bin in enumerate(bins[1:]):
-                        if i == 0:
-                            current_range = np.where(distances < bins[1:][i])[0]
-                        else:
-                            current_range = np.where((distances<bins[1:][i]) & (distances>bins[1:][i-1]))[0]
-
-                        if len(current_range) == 0:
-                            pass
-                        elif len(current_range) == 1:
-                            c_bin_array[i].extend([c[current_range[0]]])
-                        else:
-                            c_bin_array[i].extend(c[current_range[0]:current_range[-1]])
-                            # print(0 + "test")
-
-                    #get distances between secs
-                    ids = [int(x) for x in cell_df.loc[(cell_df["type_name"] == "changed") & (cell_df["time_index"] == 0), "id"].values]
-                    for i in cell[1][ids]:
-                        if i != 0.0:
-                            sec_dists.append(i)
-
-                # calc mean and std of bins
-                hist = [np.mean(k) for k in c_bin_array]
-                # write histogram into df
-                runs_hist_df.loc[:, (run, gamma)][int(float(hist_timepoint))] = hist
-                runs_hist_df.loc[:, (run, gamma)]["sec_dists"] = sec_dists
-
-                #############################################################################################################################################
-
-                # Autocorrelation with space instead of time:
-
-                # auto_corr = []
-                # for r_dash in range(len(hist)-1):
-                #     R = 0
-                #     for r in range(len(hist)):
-                #         try:
-                #             R += hist[r + r_dash]*hist[r]
-                #         except IndexError:
-                #             pass
-                #     auto_corr.append(R)
-                # auto_corr_data_array.append(auto_corr)
-
-    # write runs_hist_df to file
-    if save_runs_hist_df == True:
-        runs_hist_df.to_hdf(base_path + str(no_of_runs) + '_runs_hist_df.h5', key="data", mode="w")
-#############################################################################################################################################
-
-# Avergaging runs. columns = gamma values, indices = timepoints
-# Transpose df for easier handling
-transposed_runs_hist_df = runs_hist_df.transpose().copy()
-avg_hist_df = pd.DataFrame(columns=gammas, index=timepoints)
-
-for timepoint in timepoints:
-    for gamma in gammas:
-        avg_hist = np.zeros(len(transposed_runs_hist_df[timepoint][0][gamma])) # taking the length of the zero run as reference
-        temp_runs_list = []
-        for run in range(transposed_runs_hist_df.index[-1][0]+1):
-            temp_runs_list.append(transposed_runs_hist_df[timepoint][run][gamma])
-        temp_runs_list = np.transpose(temp_runs_list)
-        for j,entry in enumerate(temp_runs_list):
-            avg_hist[j] = np.mean(entry)
-
-            avg_hist_df[gamma][timepoint] = avg_hist
-
-# Averaging secretory cells distances
-temp_sec_dists = []
-for i in range(transposed_runs_hist_df["sec_dists"].index[-1][0]+1):
-    temp_sec_dists.append(transposed_runs_hist_df["sec_dists"][i][gammas[-1]])
-temp_sec_dists = [item for sublist in temp_sec_dists for item in sublist]
-sec_dists = np.mean(temp_sec_dists)
-# Write averaged dfs to file
-if save_avg_hist_df == True:
-    np.savetxt(base_path + str(no_of_runs) + "_runs_avg_sec_dist.txt", [sec_dists])
-    avg_hist_df.to_hdf(base_path + str(no_of_runs) + '_runs_avg_hist_df.h5', key="data", mode="w")
-
+timepoints = list(runs_hist_df.index[:-1])
+timepoints = [timepoints[x] for x in [5]]
+# timepoints = np.array([0])*dt
+# gammas = [runs_hist_df.columns[x][1] for x in range(len(runs_hist_df.columns))]
+gammas = [1/10]
 
 #############################################################################################################################################
+
+def AC_plotting(avg_hist_df, gamma, time, color):
+    hist = avg_hist_df[gamma][time]
+    auto_corr = []
+    for r_dash in range(len(hist) - 1):
+        R = 0
+        for r in range(len(hist)):
+            try:
+                R += hist[r + r_dash] * hist[r]
+            except IndexError:
+                pass
+        auto_corr.append(R)
+    AC_niche = []
+    def func(x, a, b, c):
+        return a * b * np.exp(-x / b) + c
+
+    popt, pcov = curve_fit(func, np.arange(len(auto_corr)), auto_corr, maxfev=10000)
+    AC_niche.append(popt[1])
+
+    # ax1 = sns.lineplot(np.arange(0,len(avg_hist_df[gamma][time])), avg_hist_df[gamma][time], label=variable + "=" + str(time*10) + "h", legend=myLegend, color=palette[i], marker="o")
+    sns.lineplot(np.arange(len(auto_corr)), func(np.arange(len(auto_corr)), *popt), color=color)
+    return AC_niche
+
+def histogram_plotting(avg_hist_df, gamma, time, color):
+    plt.plot(avg_hist_df[gamma][time], label=str(round(time/3600,1)) + "h", color=color, marker="o")
 
 
 # Niche
@@ -264,30 +110,30 @@ if save_avg_hist_df == True:
 
 # Plotting
 
-# sns.set(rc={'figure.figsize':(12,10)})
-# sns.set(palette="Greens")
-# sns.set_style("ticks")
-# sns.set_context("talk", font_scale=1, rc={"lines.linewidth": 3})
 
-fig = plt.figure(figsize=(8,8))
-# plt.figure(figsize=(12,10))
-# sns.set_context("talk", font_scale=1.1, rc={"lines.linewidth": 2.5})
-# sns.set(rc={'figure.figsize':(8,8)})
+fig = plt.figure(figsize=(12,12))
 sns.set_style("ticks")
-sns.set_context("talk", font_scale=1, rc={"lines.linewidth": 3, 'lines.markersize': 5})
+sns.set_context("talk", font_scale=2, rc={"lines.linewidth": 3, 'lines.markersize': 5})
 plt.subplots_adjust(wspace=.4, hspace=0.6)
-a_x = len(gammas)//2
-a_y = len(gammas)//a_x + 1
+from math import ceil
+if len(gammas) > 1:
+    # a_x = ceil(len(slope_thresholds)/3)
+    # a_y = ceil(len(slope_thresholds)/a_x)
+    a_x = ceil(np.sqrt(len(gammas)))
+    a_y = ceil(len(gammas)/a_x)
+else:
+    a_x = 1
+    a_y = 1
+
 
 xscale = "linear"
 yscale = "linear"
 
-mean_sec_dist = np.mean(sec_dists)/cell_cell_distance
-# if np.isnan(mean_sec_dist) == True:
-#     mean_sec_dist = 0
+if np.isnan(mean_sec_dist) == True:
+    mean_sec_dist = 0
 
 variable = "t"
-avg_hist_df = avg_hist_df.drop(20)
+
 for i, gamma in enumerate(gammas):
     if gamma == 0.1:
         gamma_str = "str.neg."
@@ -307,25 +153,91 @@ for i, gamma in enumerate(gammas):
 
     fig.add_subplot(a_x, a_y, i+1)
 
-    # gamma = 10
-    if gamma == 10:
-        avg_hist_df.loc[2, 10] += 0.5
+    palette = sns.color_palette("bwr", len(timepoints)*2)
+    palette = palette[len(timepoints):]
+    palette = ["red"]
 
-    palette = sns.color_palette("bwr", len(avg_hist_df[gamma].index)*2)
-    palette = palette[len(avg_hist_df[gamma].index):]
+    for i,time in enumerate(timepoints):
+        # AC_plotting(avg_hist_df, gamma, time, color=palette[i])
+        histogram_plotting(avg_hist_df,gamma,time,palette[i])
 
-    for i,time in enumerate(avg_hist_df[gamma].index):
-        ax1 = sns.lineplot(np.arange(0,len(avg_hist_df[gamma][time])), avg_hist_df[gamma][time], label=variable + "=" + str(time*10) + "h", legend=myLegend, color=palette[i], marker="o")
     # ax2 = sns.lineplot(center[:len(hist_data_array[1])], hist_data_array[1], label=str(float(time_list[1])*10)+"h", legend=False)
     # ax3 = sns.lineplot(center[:len(hist_data_array[2])], hist_data_array[2], label=str(float(time_list[2])*10)+"h", legend=False)
     plt.axvline(mean_sec_dist, color="black", linestyle="dashed")
-    ax1.set(xlabel="cell-cell-distance", ylabel="Avg. c. in pM", yscale=yscale, xscale=xscale, xticks=[0,5,10], title="g = " + str(gamma)+" , "+gamma_str)
+    if gamma < 1:
+        plt.title("g = 1/" + str(int(1/gamma)))
+    else:
+        plt.title("g = " + str(gamma))
+    # ax1.set(xlabel="cell-cell-distance", ylabel="Avg. c. in pM", yscale=yscale, xscale=xscale, xticks=[0,5,10], title="g = " + str(gamma)+" , "+gamma_str)
     plt.xticks([0,2,4,6,8,10,12])
+    plt.xlabel("c-c-d")
+    plt.ylabel("Concentration (pM)")
+    plt.legend()
+plt.show()
 
+# from scipy.constants import N_A
+# p = {
+#     "kon": 100 * 1e9 / 60 ** 2,  #1e9 *  111.6 / 60 ** 2,  # 111.6 per hour # now 540 per hour per nM
+#     "D": 10,  # mu² per s -> m
+#     "R": 1e4 * N_A ** -1 * 1e9,
+#     "R_Treg": 1e4 * N_A ** -1 * 1e9,
+#     "kd": 0.1/(60**2), # 1/s
+#     "q": 10 * N_A ** -1 * 1e9,
+#     "gamma": 0.01,
+#     "L": 20e-6, #m
+#     "rho": 5e-6, #m
+#     "N": 1000,
+# }
+#
+#
+# def low_density(r, q, rho, kon,R,D):
+#     return q*rho/(r*(kon*R + 4*np.pi*D*rho))*1e12
+#
+# def high_density(r, q, rho, kon, R, D, L, N, Rresp):
+#     c = q*rho/(kon*r) * (4*np.pi*D*r*(L+rho) + kon*(L-r+rho)*N*Rresp)/(kon*L*R*N*Rresp + 4*np.pi*D*rho*(L+rho)*(R+N*Rresp))
+#     c = 4*np.pi*D*r*(L+rho)
+#     return c*1e12
+#
+# def test(r, q, rho, kon, R, D, L, N, Rresp):
+#     c = 4*np.pi*D*r*(L+rho) + kon*(L-r+rho)*N*Rresp
+#     return c*1e12
+#
+# myRange = np.linspace(p["rho"],16*p["L"] + p["rho"], 16)
+# sns.set()
+# # plt.plot(low_density(myRange, p["q"], p["rho"], p["kon"], p["R"], p["D"]), label="low density")
+# # plt.plot(high_density(myRange, p["q"], p["rho"], p["kon"], p["R"], p["D"], p["L"], p["N"], p["R_Treg"]), label="high_density")
+# plt.plot(test(myRange, p["q"], p["rho"], p["kon"], p["R"], p["D"], p["L"], p["N"], p["R_Treg"]), label="high_density")
+# # plt.legend()
+# plt.show()
 # fig.savefig("plots/" + "averaged_histograms" + ".svg", bbox_inches='tight')
 # fig.savefig("plots/" + "averaged_histograms" + ".png", bbox_inches='tight')
-plt.show()
 exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 fig = plt.figure(figsize=(9,8))

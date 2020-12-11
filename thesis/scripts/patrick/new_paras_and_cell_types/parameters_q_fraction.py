@@ -12,7 +12,7 @@ cytokines = [
         "field_quantity": "il2",
         "k_on": 100,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
-        "kd": 0.0  # cytokine decay in medium 1/h
+        "kd": 0.1  # cytokine decay in medium 1/h
     }
 ]
 
@@ -21,19 +21,19 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 """
 
 cell_types_dict = [
-    {"name": "default",
-     "fraction": 1,
-     "il2": {"R": 0, "q": 0, "bc_type": "linear"},  # [Receptor number per cell, secretion in molecules/s]
+    {"name": "Tnaive",
+     "fraction": 0,
+     "il2": {"R": 1e2, "q": 0, "Kc": 8e-12, "bc_type": "linear"},  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "kineticSolver"
      },
-    {"name": "changed",
+    {"name": "Tsec",
      "fraction": 0.25,
-     "il2": {"R": 5000, "bc_type": "linear"},
+     "il2": {"R": 1e4, "Kc": 8e-12, "bc_type": "linear"}, #"R_saturation"
      "internal_solver": "kineticSolver"
      },
     {"name": "Treg",
-     "fraction": 0.25,
-     "il2": {"R": 27000, "q": 0, "bc_type": "linear"},
+     "fraction": 0.75,
+     "il2": {"R": 1e4, "q": 0, "Kc": 8e-12, "bc_type": "linear"},
      "internal_solver": "kineticSolver"
      },
 ]
@@ -43,9 +43,9 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 240,  # dimensions of the cell grid
-    "y_grid": 240,
-    "z_grid": 240,# comment out for single cell layer
+    "x_grid": 220,  # dimensions of the cell grid
+    "y_grid": 220,
+    #"z_grid": 240,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 
@@ -61,7 +61,7 @@ numeric = {
     "krylov_rtol": 1e-5,
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
-    "dofs_per_node": 30000,
+    "dofs_per_node": 15000,
     "max_mpi_nodes": int(os.cpu_count()/4),
     "cells_per_worker": 50,
     "max_pool_size": int(os.cpu_count()/4),
@@ -75,6 +75,7 @@ model_name = "q_fraction"
 name = "scan_name"
 
 path = "/extra2/brunner/thesis/static/q_fraction_new_paras_multi/"
-ext_cache = r"../q_fraction_large_ext_cache/"
-path_kinetic = "/extra2/brunner/thesis/kinetic/q_fraction_medium_qfrac_scan_new_paras/"
+ext_cache = r"../q_fraction_small_ext_cache/"
+hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
+path_kinetic = hdd + "/brunner/thesis/kinetic/kin_large_new_hill_5/"
 IMGPATH = path + "images/"

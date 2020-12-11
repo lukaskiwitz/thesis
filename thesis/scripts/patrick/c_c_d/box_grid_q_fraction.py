@@ -288,7 +288,7 @@ def get_parameter_templates(ule):
         "D": PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True)),
         "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.0, to_sim=1 / (60 * 2), is_global=True)),
         "Tsec_fraction": PhysicalParameterTemplate(PhysicalParameter("Tsec_fraction", 0.15, to_sim=1, is_global=True)),
-        "Th_fraction": PhysicalParameterTemplate(PhysicalParameter("Th_fraction", 0.0, to_sim=1, is_global=True)),
+        "Treg_fraction": PhysicalParameterTemplate(PhysicalParameter("Treg_fraction", 0.0, to_sim=1, is_global=True)),
         "gamma": PhysicalParameterTemplate(PhysicalParameter("gamma", 0.1, to_sim=1, is_global=True)),
         "k_factor": PhysicalParameterTemplate(PhysicalParameter("k_factor", 2, to_sim=1, is_global=True)),
         "hill_factor": PhysicalParameterTemplate(PhysicalParameter("hill_factor", 3, to_sim=1, is_global=True)),

@@ -12,14 +12,14 @@ import os
 
 sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
-# sys.path.append("/home/brunner/thesis/thesis/scripts/patrick/driver/")
 
 import numpy as np
 from scipy.constants import N_A
 # from sympy import symbols, solve
 from scipy.integrate import solve_ivp
 
-from parameters_q_fraction import cytokines, cell_types_dict, geometry, numeric, path_kinetic, ext_cache
+from static_parameters_R_lognorm import cytokines, cell_types_dict, geometry, numeric, path_kinetic, ext_cache
+
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
@@ -40,7 +40,7 @@ os.environ["LOG_PATH"] = path_kinetic
 # logging.basicConfig(level=logging.DEBUG,filemode="w", format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 logging.getLogger('FFC').setLevel(logging.ERROR)
 
-fcs.set_log_level(50)
+
 
 
 """Setup/Simulation"""
@@ -68,7 +68,7 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 
 """Imports the parameter Templates"""
 from box_grid_q_fraction import get_parameter_templates
-from parameters_q_fraction import numeric
+from static_parameters_R_lognorm import numeric
 
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 t_gamma = templates["gamma"]
@@ -82,6 +82,7 @@ t_c0 = templates["c0"]
 t_pSTAT5_signal = templates["pSTAT5_signal"]
 t_pSTAT5 = templates["pSTAT5"]
 t_EC50 = templates["EC50"]
+t_sigma = templates["sigma"]
 
 """Sets up Scannable parameters from parameters templates"""
 
@@ -91,28 +92,29 @@ gamma = ScannablePhysicalParameter(t_gamma(0.0), lambda x, v: v)
 hill_factor = ScannablePhysicalParameter(t_hill_factor(2), lambda x, v: v)
 c0 = ScannablePhysicalParameter(t_c0(0.0), lambda x, v: v)
 pSTAT5_signal = ScannablePhysicalParameter(t_pSTAT5_signal(False), lambda x, v: v)
+sigma = ScannablePhysicalParameter(t_sigma(1e4), lambda x, v: v)
 
 Tsec_distribution_array = np.array([])
 Th_distribution_array = np.array([])
 
-a = [1/x for x in reversed(np.arange(10,110,10))]
-b = [x for x in np.arange(10,110,10)]
-c = np.concatenate([a,b])[5:6]
-# c = [1]
-# counter = 0
+# a = [1/x for x in reversed(np.arange(10,110,10))]
+# b = [x for x in np.arange(10,110,10)]
+# c = np.concatenate([a,b])
+# a = [10]
+
+c = [1]
 for v in c:#np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
-    for frac in [0.25,0.5]:
-        # print(counter, " ", v, frac)
-        # counter += 1
+    for sig in np.arange(0,1.05e4,500):
         for hill_fac in [3]:
             """Scans over parameters that are associated with a field"""
             sim_parameters = [
                 ParameterCollection("IL-2", [gamma(v)], field_quantity="il2"),
-                ParameterCollection("IL-2", [Th_fraction(1-frac)], field_quantity="il2"),
+                ParameterCollection("IL-2", [Th_fraction(0.75)], field_quantity="il2"),
                 ParameterCollection("IL-2", [c0(8.5e-12)], field_quantity="il2"), #8.637363
-                ParameterCollection("IL-2", [Tsec_fraction(frac)], field_quantity="il2"),
+                ParameterCollection("IL-2", [Tsec_fraction(0.25)], field_quantity="il2"),
                 ParameterCollection("IL-2", [hill_factor(hill_fac)], field_quantity="il2"),
-                ParameterCollection("IL-2", [pSTAT5_signal(True)], field_quantity="il2"),
+                ParameterCollection("IL-2", [pSTAT5_signal(False)], field_quantity="il2"),
+                ParameterCollection("IL-2", [sigma(sig)], field_quantity="il2"),
                 # ParameterCollection("IL-2", [kd(v)], field_quantity="il2")
             ]
 
@@ -148,22 +150,7 @@ stMan.scan_container = scan_container
 
 """sets up time range"""
 
-# range_1 = np.arange(0,5*stMan.dt, stMan.dt*0.25)
-# range_2 = np.arange(5*stMan.dt,15*stMan.dt, stMan.dt*0.5)
-# range_3 = np.arange(16*stMan.dt, 30*stMan.dt, stMan.dt*2)
-# range_4 = np.arange(32*stMan.dt, 120*stMan.dt, stMan.dt*5)
-dt = 3600 #1h
-length = 2
-max_T = dt * 300
-
-myRange = np.arange(0,length)
-def exp_func(x,a,b,c):
-    return np.round(a*np.exp(b*x) + c, 4)
-a = 2*dt
-c = -a
-b = np.log((max_T-c)/a)/(length-1)
-
-stMan.T = exp_func(myRange,a,b,c)
+stMan.T = [0,1,2]
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
@@ -172,7 +159,9 @@ Here it is used to assign cell types
 uS = updateState(0,geometry,templates, Tsec_distribution_array, Th_distribution_array, offset=0)
 
 def pre_scan(state_manager, scan_index):
-    uS.step(state_manager.sim_container)
+    uS.step_R_lognorm(state_manager.sim_container)
+
+
 
 def pre_step(sc, time_index, t, T):
     # calculate the average surface concentration for the first solution

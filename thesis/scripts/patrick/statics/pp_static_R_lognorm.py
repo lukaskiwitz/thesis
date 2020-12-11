@@ -6,13 +6,14 @@ sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
-from parameters_q_fraction import path_kinetic
+from static_parameters_R_lognorm import path_kinetic
 path=path_kinetic
 # path = "/extra/brunner/thesis/kinetic/q_fraction_test/"
 
 os.environ["LOG_PATH"] = path
 
 from thesis.main.PostProcess import PostProcessor, PostProcessComputation
+
 
 
 class my_post_process(PostProcessComputation):
@@ -40,6 +41,7 @@ class my_post_process(PostProcessComputation):
         # my_grad = np.mean(my_grad) * grad_conv
         # h1 = 0
         return h1
+
 
 
 """number of threads can be passed as first cli argument"""
@@ -72,7 +74,7 @@ pp.image_settings = {
 pp.computations.append(my_post_process())
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.run_post_process(threads, make_images=False)
+pp.run_post_process(threads, make_images=True)
 
 pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
 pp.cell_dataframe.to_hdf(path+"cell_df.h5", key="df", mode="w")

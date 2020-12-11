@@ -14,7 +14,7 @@ get_dataframes.append([])
 # path = "/extra/brunner/10x10x10/q_fraction_exact/run" + str(j) + "/"
 
 # path = "/extra/brunner/thesis/kinetic/test_new_hill/"
-path = "/extra/brunner/thesis/kinetic/kin_large_new_hill_4/"
+path = "/extra/brunner/thesis/kinetic/halfed_hill/3/"
 # ext_cache="/extra/brunner/para_handling/kinetic/R_lognorm_ext_cache/"
 
 T = np.arange(0, 200, 1)
@@ -101,9 +101,9 @@ R_mean_plotting = R_mean_concat
 
 # global_df[my_hue] /= round(((10 ** 0.5 * 0.01) ** 2 * 0.1),6)
 global_df[my_hue] = ["$%s$" % x for x in global_df[my_hue]]
-# global_df["time"] = global_df["time"].mul(dt/3600)
+global_df["time"] = global_df["time"].mul(1/3600)
 # cell_df["time"] = cell_df["time"].mul(dt/3600)
-# R_mean_plotting["time"] = R_mean_plotting["time"].mul(dt/3600)
+R_mean_plotting["time"] = R_mean_plotting["time"].mul(1/3600)
 
 # cell_df[my_hue] = ["$%s$" % x for x in cell_df[my_hue]]
 
@@ -125,65 +125,9 @@ yscaleR = "log"
 ylim = (None, None)
 ylimR = (None, None) #(1, 23000)
 
-hue_order = [1/100,1/50,50.,100.]
+hue_order = [1/10,10.]
 hue_order = ["$%s$" % x for x in hue_order]
 # hue_order = None
-print(global_df["surf_c"]*1e3)
-# fig = plt.figure()
-# sns.set_style("ticks")
-# plt.figure(figsize=(12,7.5))
-# sns.set_context("talk", font_scale=1, rc={"lines.linewidth": 2.5})
-# sns.set(rc={'figure.figsize':(7,7)})
-# sns.set_style("ticks")
-# sns.set_context("talk", font_scale=1, rc={"lines.linewidth": 5})
-#
-# # fig.add_subplot(a_x,a_y, 8)
-# global_df["surf_c_std_norm"] = global_df["surf_c_std"]/global_df["surf_c"]
-# # global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$2.0$"), "surf_c_std_norm"] = global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$0.5$"), "surf_c_std_norm"].values[0]
-# # global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$0.1$"), "surf_c_std_norm"] = global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$0.5$"), "surf_c_std_norm"].values[0]
-# # global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$10.0$"), "surf_c_std_norm"] = global_df.loc[(global_df["time_index"] == 0) & (global_df["IL-2_gamma"] == "$0.5$"), "surf_c_std_norm"].values[0]
-# # print(global_df["surf_c_std_norm"])
-# global_df["surf_c"] *= 1e3
-# ax7 = sns.lineplot(x=x_axis, y="surf_c_std_norm", data=global_df.sort_values(by="time")[startingPoint:stoppingPoint], hue=my_hue, hue_order = hue_order)
-# ax7.set(xlabel="time in h", ylabel="c$_v$", yscale=yscale, xscale=xscale, ylim=ylim, xticks = [0, 50, 100,150,200])
-# # ax7.set(xlabel="time in h", ylabel="surface concentration in pM", yscale=yscale, xscale=xscale, ylim=ylim, xticks = [0, 50, 100,150,200])
-# # plt.legend(bbox_to_anchor=(1.04,1), loc="upper left")
-# handles, labels = ax7.get_legend_handles_labels()
-# # labels[0] = "$\gamma$"
-# # new_handles = [handles[2+1], handles[0+1], handles[1+1]]
-# # new_labels = ["strong negative feedback", "negative feedback", "positive feedback"]
-# # plt.legend(handles=new_handles, labels=new_labels, loc='upper center', bbox_to_anchor=(0.5, 1.3), fancybox=True)
-# # plt.show()
-# # fig.savefig("/home/brunner/Documents/Current work/26062020/" + "kin_q_c_v_fixed" + ".png", bbox_inches='tight')
-# new_handles = [handles[0+1], handles[1+1]]
-# new_labels = ["negative feedback", "positive feedback"]
-# plt.legend(handles=new_handles, labels=new_labels, loc='upper center', bbox_to_anchor=(0.5, 1.2), fancybox=True)
-# plt.show()
-# # fig.savefig("/home/brunner/Documents/Current work/26062020/" + "kin_q_0.5_2_fixed" + ".png", bbox_inches='tight')
-#
-#
-# # ax7 = sns.lineplot(x=x_axis, y="surf_c", data=global_df.sort_values(by="time")[startingPoint:stoppingPoint], hue=my_hue, hue_order = hue_order)
-# # ax7.set(xlabel="time", ylabel="surface concentration", title="surface concentration", yscale=yscale, xscale=xscale, ylim=ylim, xticks = [0, 50, 100,150,200])
-# # # plt.legend(bbox_to_anchor=(1.04,1), loc="upper left")
-# # handles, labels = ax7.get_legend_handles_labels()
-# # labels[0] = "$\gamma$"
-# # plt.legend(handles=handles, labels=labels, loc='center right')#, bbox_to_anchor=(1, 0.5))
-# # plt.show()
-#
-# exit()
-
-
-# sns.lineplot(x="time", y ="surf_c", data=global_df.sort_values(by="time"))
-# plt.show()
-#
-# sns.lineplot(x="time", y ="IL-2_R", data=cell_df.loc[cell_df["type_name"] == "Tsec"],  estimator=None, units="id", marker="o")
-# plt.show()
-#
-# sns.set()
-# plt.plot(global_df.sort_values(by="time")["time"], global_df.sort_values(by="time")["surf_c"], "-o")
-# plt.show()
-#
-# exit()
 
 fig.add_subplot(a_x,a_y, 1)
 #sns.lineplot(x="fraction", y="mean_surf_c_il2", data=saving_dataframe,hue=group_variables[1])
@@ -231,7 +175,8 @@ ax6.set_xticklabels([])
 fig.add_subplot(a_x,a_y, 8)
 global_df["surf_c_std_norm"] = global_df["surf_c_std"]/global_df["surf_c"]
 ax7 = sns.lineplot(x=x_axis, y="surf_c_std_norm", data=global_df.sort_values(by="time")[startingPoint:stoppingPoint], hue=my_hue, hue_order=hue_order, label="surf_c_std", legend=False)
-ax7.set(xlabel="time in h", ylabel="surf.c. std./mean surf.c.", title="normed surf. std", yscale=yscale, xscale=xscale, ylim=(None, None))
+ax7.set(xlabel="", ylabel="surf.c. std./mean surf.c.", title="normed surf. std", yscale=yscale, xscale=xscale, ylim=(None, None))
+ax7.set_xticklabels([])
 
 # R_mean_plotting = R_mean_plotting.sort_values(by="t")[:stoppingPoint]
 # x_axis = "t"
@@ -251,6 +196,13 @@ fig.add_subplot(a_x,a_y, 9)
 R_mean_plotting["R_std_norm"] = R_mean_plotting["std"]/R_mean_plotting["R_mean"]
 ax10 = sns.lineplot(x=x_axis, y="R_std_norm", data=R_mean_plotting.sort_values(by=x_axis)[startingPoint:stoppingPoint], hue=my_hue, hue_order=hue_order, label="R_std", legend=False)
 ax10.set(xlabel="time in h", ylabel="std./mean", title="normed R std", xscale="linear", yscale=yscaleR, ylim = ylimR)
+
+fig.add_subplot(a_x,a_y, 11)
+# R_mean_plotting["R_std_norm"] = R_mean_plotting["std"]/R_mean_plotting["R_mean"]
+global_df["h1_norm"] = global_df["h1_norm"]*1e5
+ax11 = sns.lineplot(x=x_axis, y="h1_norm", data=global_df.sort_values(by="time")[startingPoint:stoppingPoint], hue=my_hue, hue_order=hue_order, label="R_std", legend=False)
+ax11.set(xlabel="time", ylabel="H1 norm", title="H1 norm", xscale="linear", yscale=yscale, ylim = ylim)
+
 plt.show()
 
 
@@ -261,7 +213,7 @@ sns.set(font_scale=2, rc={"lines.linewidth":0.1})
 cell_df_1["time"] = cell_df_1["time"].div(3600)
 
 Tsec_fraction = 0.25
-gamma = 1/50
+gamma = 1/10
 tmp_df = cell_df_1.loc[(cell_df_1["IL-2_gamma"] == gamma) & (cell_df_1["IL-2_Tsec_fraction"] == Tsec_fraction)]
 
 fig = plt.figure()

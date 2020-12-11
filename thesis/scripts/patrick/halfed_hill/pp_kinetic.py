@@ -1,14 +1,19 @@
 import os
 import sys
 import fenics as fcs
+import shutil
 
 sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
-from parameters_q_fraction import path_kinetic
-path=path_kinetic
-# path = "/extra/brunner/thesis/kinetic/q_fraction_test/"
+from parameters import path_kinetic, ext_cache
+# path=path_kinetic
+path = path_kinetic
+
+print(path)
+
+# path = "/extra2/brunner/thesis/kinetic/q_fraction_wave/"
 
 os.environ["LOG_PATH"] = path
 
@@ -49,7 +54,6 @@ else:
     threads = 6
 
 
-
 # user = getpass.getuser()
 # path = "/extra/brunner/thesis/kinetic/q_fraction_k_factor/"
 
@@ -76,3 +80,17 @@ pp.run_post_process(threads, make_images=False)
 
 pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
 pp.cell_dataframe.to_hdf(path+"cell_df.h5", key="df", mode="w")
+
+# if run >= 1:
+#     for i in range(4): #20 is the number of fractions scanned over
+#         shutil.rmtree(path + "scan_" + str(i), ignore_errors=True)
+#     shutil.rmtree(path + "solver_tmp", ignore_errors=True)
+#     os.remove(path + "log.scan")
+#     try:
+#         os.remove(path + "timing.pdf")
+#     except FileNotFoundError:
+#         pass
+#     try:
+#         os.remove(path + "timing.csv")
+#     except FileNotFoundError:
+#         pass
