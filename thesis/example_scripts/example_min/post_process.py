@@ -35,7 +35,7 @@ class my_post_process(PostProcessComputation):
 if len(sys.argv) > 1:
     threads = int(sys.argv[1])
 else:
-    threads = 4
+    threads = os.cpu_count()
 
 """
 setting filepath to look for sim results. This is setup so that it works on the itb computers.
@@ -57,6 +57,3 @@ pp.image_settings = {
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
 pp.run_post_process(threads, make_images=True, kde=True)
-
-pp.global_dataframe.to_hdf(path + 'global_df.h5', key="data", mode="w")
-pp.cell_dataframe.to_hdf(path + "cell_df.h5", key="df", mode="w")

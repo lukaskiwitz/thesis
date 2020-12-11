@@ -1,7 +1,7 @@
+import hashlib
 import json
 from copy import deepcopy
 from typing import List
-import hashlib
 
 import dill
 import lxml.etree as ET
@@ -9,7 +9,6 @@ import lxml.etree as ET
 from thesis.main.MyError import DuplicateParameterError, DuplicateCollectionError
 from thesis.main.my_debug import debug
 from thesis.main.my_debug import message
-
 
 
 class ParameterSet:
@@ -26,13 +25,29 @@ class ParameterSet:
         dummy = ParameterSet("dummy", [ParameterCollection(parameter.name, [parameter])])
         self.update(dummy, override=True)
 
-    def update(self, parameter_set, override = False) -> None:
-        debug("updating {n1} with {n2}".format(n1=self.name, n2=parameter_set.name))
-        assert isinstance(parameter_set, ParameterSet)
-        for update_c in parameter_set:
+    def update(self, input, override=False) -> None:
+
+        """
+        input can now be a Parameter, ParameterCollection or ParameterSet.
+        When a Parameter object is passed a dummy collection is creted.
+
+        """
+        debug("updating {n1} with {n2}".format(n1=self.name, n2=input.name))
+
+        if isinstance(input, Parameter):
+            dummy = ParameterCollection(input.name, [input])
+            message("Collection {name} created with parameter".format(name=input.name))
+            input = dummy
+
+        if isinstance(input, ParameterCollection):
+            dummy = ParameterSet("dummy", [input])
+            input = dummy
+
+        assert isinstance(input, ParameterSet)
+        for update_c in input:
             if self.get_collection(update_c.name):
 
-                self.get_collection(update_c.name).update(update_c,override=override)
+                self.get_collection(update_c.name).update(update_c, override=override)
 
             else:
                 self.add_collection(deepcopy(update_c))
@@ -105,7 +120,7 @@ class ParameterSet:
 
         return self.get_collection(collection_name).get_misc_parameter(parameter_name)
 
-    def serialize_to_xml(self, global_collections = None, global_parameters = None):
+    def serialize_to_xml(self, global_collections=None, global_parameters=None):
 
         root = ET.Element("ParameterSet")
         root.set("name", self.name)
@@ -113,18 +128,23 @@ class ParameterSet:
             if c.is_global and (not global_collections is None):
                 root.append(global_collections.serialize_collection(c))
             else:
-                root.append(c.serialize_to_xml(global_parameters = global_parameters))
+                root.append(c.serialize_to_xml(global_parameters=global_parameters))
         return root
 
-    def deserialize_from_xml(self, element: ET.Element):
+    @staticmethod
+    def deserialize_from_xml(element: ET.Element):
 
-        self.name = element.get("name")
+        parameter_set = ParameterSet("dummy", [])
+
+        parameter_set.name = element.get("name")
         for collection in element.findall("ParameterCollection"):
             c = ParameterCollection("", [])
             c.deserialize_from_xml(collection)
-            self.add_collection(c)
+            parameter_set.add_collection(c)
 
-    def get_as_dictionary(self, in_sim=False, with_collection_name=True, field_quantity = ""):
+        return parameter_set
+
+    def get_as_dictionary(self, in_sim=False, with_collection_name=True, field_quantity=""):
 
         result = {}
         for collection in self:
@@ -147,7 +167,7 @@ class ParameterSet:
 
 class ParameterCollection:
 
-    def __init__(self, name: str, physical_parameters=[], field_quantity="", is_global = False) -> None:
+    def __init__(self, name: str, physical_parameters=[], field_quantity="", is_global=False) -> None:
 
         self.parameters: List[PhysicalParameter] = physical_parameters
         self.name: str = name
@@ -157,12 +177,13 @@ class ParameterCollection:
     def __iter__(self):
         return self.parameters.__iter__()
 
-    def update(self, update_collection, override = False):
+    def update(self, update_collection, override=False):
+
         for physical in update_collection:
             self.set_parameter(physical, override=override)
             debug("setting  parameter {n} on collection {n2}".format(n=physical.name, n2=self.name))
 
-    def set_parameter(self, parameter, override = False):
+    def set_parameter(self, parameter, override=False):
 
         if self.get_parameter(parameter.name):
 
@@ -211,6 +232,9 @@ class ParameterCollection:
     def get_physical_parameter(self, parameter_name: str):
 
         result = self.get_parameter(parameter_name)
+        if result is None:
+            return None
+
         assert isinstance(result, PhysicalParameter)
         return result
 
@@ -220,7 +244,7 @@ class ParameterCollection:
         assert isinstance(result, MiscParameter)
         return result
 
-    def serialize_to_xml(self, global_parameters = None):
+    def serialize_to_xml(self, global_parameters=None):
 
         root = ET.Element("ParameterCollection")
 
@@ -237,8 +261,6 @@ class ParameterCollection:
 
     def deserialize_from_xml(self, element: ET.Element):
 
-
-
         def replace_global(element, globals):
 
             def get_global_dict(e):
@@ -252,8 +274,8 @@ class ParameterCollection:
             if "global_key" in element.keys():
                 global_collections = get_global_dict(element)
                 element = global_collections.find("{tag}[@key='{key}']".format(
-                    tag = element.tag,
-                    key = element.get("global_key")
+                    tag=element.tag,
+                    key=element.get("global_key")
                 ))
                 return element
             return element
@@ -264,8 +286,6 @@ class ParameterCollection:
         self.field_quantity = json.loads(element.get("field_quantity"))
         self.is_global = json.loads(element.get("is_global"))
 
-
-
         for physical in element.findall("PhysicalParameter"):
             physical = replace_global(physical, "GlobalParameters")
             p = PhysicalParameter("", 0)
@@ -273,13 +293,30 @@ class ParameterCollection:
             self.parameters.append(p)
 
         for misc in element.findall("MiscParameter"):
-            misc = replace_global(misc,"GlobalParameters")
+            misc = replace_global(misc, "GlobalParameters")
             p = MiscParameter("", 0)
             p.deserialize_from_xml(misc)
             self.parameters.append(p)
 
 
 class Parameter:
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __call__(self, *args, in_sim = False):
+        if len(args > 0):
+            if in_sim:
+                self.set_in_sim_unit(args[0])
+            else:
+                self.set_in_post_unit(args[0])
+        else:
+            if in_sim:
+                return self.get_in_sim_unit()
+            else:
+                return self.get_in_post_unit()
+
 
     def set_in_sim_unit(self, value):
         self.value = value
@@ -375,8 +412,6 @@ class PhysicalParameter(Parameter):
 
     def deserialize_from_xml(self, element: ET.Element):
 
-
-
         self.name = json.loads(element.get("name"))
         self.factor_conversion = json.loads(element.get("factor_conversion"))
         self.is_global = json.loads(element.get("is_global"))
@@ -405,9 +440,6 @@ class MiscParameter(Parameter):
         return root
 
     def deserialize_from_xml(self, element: ET.Element):
-
-
-
         self.name = json.loads(element.get("name"))
         self.is_global = json.loads(element.get("is_global"))
         self.value = json.loads(element.get("value"))
@@ -417,8 +449,9 @@ class MiscParameter(Parameter):
         value = super().get_in_sim_unit()
         return type(value)
 
+
 class ScannablePhysicalParameter:
-    def __init__(self,p,f, in_sim = False):
+    def __init__(self, p, f, in_sim=False):
 
         self.p = deepcopy(p)
         self.f = f
@@ -435,7 +468,7 @@ class ScannablePhysicalParameter:
         return p
 
 
-class PhysicalParameterTemplate():
+class PhysicalParameterTemplate:
 
     def __init__(self, parameter):
         self.p = parameter
@@ -450,6 +483,7 @@ class PhysicalParameterTemplate():
 
         return p
 
+
 class GlobalParameters:
 
     def __init__(self):
@@ -459,7 +493,7 @@ class GlobalParameters:
         assert isinstance(p, Parameter)
         self.parameters[self.get_key(p)] = p
 
-    def get_key(self, p:  Parameter):
+    def get_key(self, p: Parameter):
         return hashlib.md5(ET.tostring(p.serialize_to_xml())).hexdigest()
 
     def serialize_to_xml(self):
@@ -486,7 +520,6 @@ class GlobalCollections:
     def __init__(self):
         self.collections = {}
 
-
     def add(self, c: ParameterCollection):
         assert isinstance(c, ParameterCollection)
         self.collections[self.get_key(c)] = c
@@ -496,7 +529,7 @@ class GlobalCollections:
 
     def serialize_to_xml(self):
         root = ET.Element("GlobalCollections")
-        for i,c in self.collections.items():
+        for i, c in self.collections.items():
             e = c.serialize_to_xml()
             e.set("key", self.get_key(c))
             root.append(e)
@@ -513,13 +546,12 @@ class GlobalCollections:
         return root
 
 
-
 def make_collection(parameter_tupel):
     result = ParameterCollection(parameter_tupel[0], list(parameter_tupel[1]))
     if len(parameter_tupel) > 2:
         result.field_quantity = parameter_tupel[2]
     return result
 
-def parse_parameter(collection_list,name):
 
+def parse_parameter(collection_list, name):
     return ParameterSet(name, [make_collection(i) for i in collection_list])

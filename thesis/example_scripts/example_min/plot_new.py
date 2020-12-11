@@ -6,15 +6,16 @@ import seaborn as sns
 from scipy.constants import golden
 plotter = Plotter(path)
 
-l = 8.3 * (1-0.1)#page length x
+l = 8.3#page length x
 n =  4#rows
-m = 3#columns
+m = 3# columns
 
 
-plotter.subplots(n,m, figsize = (l,l))
+# plotter.subplots(n,m, figsize = (l,l*np.sqrt(2)/2))
+plotter.subplots(n,m, figsize = (0.75 * 20.352,0.75 * 12.72))
 # plotter.scan_scale = np.linspace(0.01,0.2,5)
 plotter.scan_scale = np.logspace(-1,1,10)
-
+plotter.tight_layout_settings["pad"] = 1
 plotter.label_replacement.update({
 
     "kd":"$k_d$",
@@ -25,7 +26,7 @@ plotter.label_replacement.update({
     "Concentration":"Concentration (nM)",
     "Gradient": "Gradient (nM$ / \mu m)$",
     "SD": "SD (nM)",
-    "IL-2_surf_c":"IL-2 surface concentration (nM)",
+    "IL-2_surf_c":"IL-2 surface \n concentration (nM)",
 })
 
 plotter.color_dict = {
@@ -47,14 +48,15 @@ plotter.cells_time_series_plot("IL-2_surf_c",hue="type_name")
 # plotter.cell_slice_plot("IL-2_surf_c", hue= "type_name", palette_name = "viridis")
 
 
-plotter.cells_time_series_plot("default_score_init_norm",hue= "type_name")
-plotter.cells_time_series_plot("sec_score_init_norm",hue= "type_name")
-plotter.cells_time_series_plot("abs_score_init_norm",hue= "type_name")
+# plotter.cells_time_series_plot("default_score_init_norm",hue= "type_name")
+# plotter.cells_time_series_plot("sec_score_init_norm",hue= "type_name")
+# plotter.cells_time_series_plot("abs_score_init_norm",hue= "type_name")
 
-plotter.cell_histogramm("IL-2_surf_c",t = [0], hue = "type_name",bins = 10, kde = False, norm_hist = True)
+# plotter.cell_histogramm("IL-2_surf_c",t = [0], hue = "type_name",bins = 10, kde = False, norm_hist = True)
 plotter.global_steady_state_plot("Concentration", hue = "field_name")
 plotter.steady_state_count(hue="type_name",relative=True)
 plotter.cell_steady_state_plot("IL-2_surf_c",hue="type_name")
 
 plotter.make_legend()
+plotter.savefig(IMGPATH + "collections.pdf")
 plotter.show()

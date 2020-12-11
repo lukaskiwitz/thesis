@@ -10,15 +10,15 @@ import multiprocessing as mp
 import os
 import time
 
+import dolfin as dlf
 import fenics as fcs
 import numpy as np
-import dolfin as dlf
 
 import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
-from thesis.main.PostProcess import get_concentration_conversion,get_gradient_conversion
+from thesis.main.PostProcess import get_concentration_conversion
 from thesis.main.my_debug import message, total_time
 
 
@@ -79,21 +79,30 @@ class FieldProblem:
         """
         self.registered_entities.append({"entity": entity, "patch": 0})
 
-    def get_mesh_path(self,time_index = "", local = False):
+    def get_mesh_path(self, time_index=None, local=False, full = True):
 
         result = ""
 
-        if (not time_index == "") and (self.moving_mesh):
-            file = self.file_name+"_{t}"+".xdmf"
+        if (not time_index is None) and (self.moving_mesh):
+            file = self.file_name + "_{t}" + ".xdmf"
         else:
             file = self.file_name + ".xdmf"
 
         if (not self.ext_cache == "") and ((local == False) or (not self.moving_mesh)):
             result = self.ext_cache
+            os.makedirs(os.path.join(self.path,result),exist_ok=True)
         else:
-            result = self.path_prefix
+            if local:
+                result = self.path_prefix
+            else:
+                result = os.path.join(self.path,self.path_prefix)
 
-        return (result + file).format(field = self.field_name, t = time_index)
+        os.makedirs(os.path.join(self.path,self.path_prefix), exist_ok=True)
+
+        if full:
+            return (os.path.join(result,file)).format(field=self.field_name, t=time_index)
+        else:
+            return file.format(field=self.field_name, t=time_index)
 
     def remove_entity(self, entity) -> None:
         """
@@ -123,40 +132,37 @@ class FieldProblem:
         """
         self.outer_domain = domain
 
-
-    def generate_mesh(self, path = "", path_prefix = "",file_name = "mesh_{field}", **kwargs) -> None:
+    def generate_mesh(self, path="", path_prefix="", file_name="mesh_{field}", time_index = None, **kwargs) -> None:
         """
         generates mesh
 
         :param path_prefix: path to store mesh data
 
         """
+        self.file_name = file_name
+        self.path_prefix = path_prefix
+        self.path = path
+
         mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
-        mesh_path = path + self.ext_cache if not (self.ext_cache == "") else path + path_prefix
-        mesh_path += "/"
-        self.mesh_path = mesh_path
-        self.path_prefix = path_prefix
-        self.file_name = file_name
+        mesh_path = os.path.join(path,self.get_mesh_path(time_index=time_index))
 
-        os.makedirs(mesh_path, exist_ok=True)
-
+        # self.mesh_path = mesh_path
         if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
-
 
             mesh, boundary_markers = mesh_gen.meshGen(self.p,
                                                       load=False,
                                                       load_subdomain=False,
                                                       path=mesh_path,
-                                                      file_name=file_name.format(field=self.field_name))
+                                                     )
             self.mesh_cached = file_name.format(field=self.field_name)
         else:
             mesh, boundary_markers = mesh_gen.meshGen(self.p,
                                                       load=True,
                                                       load_subdomain=True,
                                                       path=mesh_path,
-                                                      file_name=file_name.format(field=self.field_name))
+                                                    )
         self.solver.mesh = mesh
         self.solver.boundary_markers = boundary_markers
         self.solver.p = self.p
@@ -164,8 +170,8 @@ class FieldProblem:
     def apply_sample(self, sample):
 
         self.update_bcs(sample.p)
-        self.p.update(sample.p)
-        self.solver.p.update(sample.p)
+        self.p.update(sample.p, override=True)
+        self.solver.p.update(sample.p, override = True)
         self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
 
     def update_parameter_set(self, p):
@@ -173,17 +179,17 @@ class FieldProblem:
         self.solver.p.update(p)
         self.outer_domain.update_bcs(p)
 
-
-    def update_bcs(self, p = None) -> None:
+    def update_bcs(self, p=None) -> None:
         """
         updates boundary conditions for all child objects
 
         """
+
         self.solver.field_quantity = self.field_quantity
-        self.outer_domain.update_bcs(p = p)
+        self.outer_domain.update_bcs(p=p)
         for i in self.registered_entities:
             i["entity"].update_bcs()
-        subdomains = self.outer_domain.getSubDomains(field_quantity=self.field_quantity)
+        subdomains = self.outer_domain.get_subdomains(field_quantity=self.field_quantity)
         for e in self.registered_entities:
             subdomains.append(e)
         self.solver.subdomains = subdomains
@@ -192,6 +198,7 @@ class FieldProblem:
         """
         updates solver
         """
+
         self.update_bcs(p=p)
         self.solver.compileSolver(tmp_path)
 
@@ -267,8 +274,6 @@ class FieldProblem:
 
         """
 
-
-
     # noinspection PyPep8Naming
     def step(self, dt: float, time_index: int, tmp_path: str) -> None:
         """
@@ -276,6 +281,7 @@ class FieldProblem:
 
         :param dT: delta t for this timestep
         """
+
         message("Solving Field Problem")
         self.solver.solve()
         message("Computing Boundary Concentrations")
@@ -290,13 +296,11 @@ class FieldProblem:
         with dlf.XDMFFile(path) as f:
             f.read(self.solver.mesh)
 
-    def save_mesh(self,time_index: int, path: str):
+    def save_mesh(self, time_index: int, path: str):
 
-        path =  path + self.get_mesh_path(time_index, local = True)
+        path = path + self.get_mesh_path(time_index, local=True)
         with dlf.XDMFFile(path) as f:
-                f.write(self.solver.mesh)
-
-
+            f.write(self.solver.mesh)
 
     def ale(self, dt, tmp_path):
 
@@ -311,37 +315,31 @@ class FieldProblem:
 
             patch = entity["patch"]
             cell = entity["entity"]
-            mc = cell.p.get_physical_parameter("mc","motility")
-            message("mc: {mc}".format(mc = mc))
-            cell.velocity = np.random.normal(0,np.sqrt(2 * 1 * 60 * dt) ,3)
+            mc = cell.p.get_physical_parameter("mc", "motility")
+            message("mc: {mc}".format(mc=mc))
+            cell.velocity = np.random.normal(0, np.sqrt(2 * 1 * 60 * dt), 3)
             cell.move(dt)
 
             # message("patch {p}".format(p = patch))
-            verts = np.array([], dtype = int)
+            verts = np.array([], dtype=int)
             for facet in fcs.SubsetIterator(self.solver.boundary_markers, patch):
                 for vertex_index in facet.entities(0):
-
-                    verts = np.insert(verts,0,b_map.where_equal(vertex_index)[0])
+                    verts = np.insert(verts, 0, b_map.where_equal(vertex_index)[0])
 
             for i in np.unique(verts):
-
                 x = b_coords[i]
 
                 x[0] += cell.offset[0]
                 x[1] += cell.offset[1]
                 x[2] += cell.offset[2]
 
-
-            # mesh.snap_boundary(cell.getCompiledSubDomain())
+            # mesh.snap_boundary(cell.get_compiled_subdomain())
 
         dlf.ALE.move(mesh, b_mesh)
         # mesh.smooth(10)
 
-
-
         # with fcs.XDMFFile(tmp_path + "/b_mesh.xdmf") as f:
         #     f.write(b_mesh)
-
 
     def get_field(self) -> fcs.Function:
         return self.solver.u
@@ -349,7 +347,7 @@ class FieldProblem:
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
-    def get_sub_domains_vis(self, lookup = None) -> fcs.MeshFunction:
+    def get_sub_domains_vis(self, lookup=None) -> fcs.MeshFunction:
         """
 
         save meshfunction that labels cells by type_name
@@ -362,20 +360,30 @@ class FieldProblem:
         mesh = self.solver.mesh
         boundary_markers = self.solver.boundary_markers
         markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
+        IL2 = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
+
         markers.set_all(0)
+        IL2.set_all(0)
 
         for o in self.registered_entities:
             e = o["entity"]
             p = o["patch"]
+            if not hasattr(e,"type_name"):
+                continue
+
             if e.type_name in lookup.keys():
                 value = lookup[e.type_name]
             else:
                 lookup[e.type_name] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
                 value = lookup[e.type_name]
-            for v in boundary_markers.where_equal(p):
-                markers.set_value(v,value)
 
-        return markers
+            for v in boundary_markers.where_equal(p):
+                il2 = float(e.p.get_physical_parameter("surf_c", "IL-2").get_in_sim_unit())
+                markers.set_value(v, value)
+                if e.type_name == "abs":
+                    IL2.set_value(v, il2)
+
+        return [markers, IL2]
 
     def get_entity_surface_area(self, e):
 
@@ -395,33 +403,32 @@ class FieldProblem:
         boundary_markers.set_all(0)
 
         e = self.outer_domain
-        for o in e.getSubDomains():
-            o["entity"].getSubDomain().mark(boundary_markers, e.getState(parameter_name=parameter_name, field_quantity=self.field_quantity))
+        for o in e.get_subdomains():
+            o["entity"].get_subdomain().mark(boundary_markers, e.getState(parameter_name=parameter_name,
+                                                                          field_quantity=self.field_quantity))
         return self.solver.boundary_markers
 
     def compute_boundary_term(self):
 
-
         for e in self.registered_entities:
-            entity =  e["entity"]
+            entity = e["entity"]
             for bc in entity.bc_list:
                 fq = bc.field_quantity
                 try:
-                    u = entity.p.get_physical_parameter_by_field_quantity("surf_c",fq).get_in_sim_unit()
+                    u = entity.p.get_physical_parameter_by_field_quantity("surf_c", fq).get_in_sim_unit()
                 except:
                     pass
                     # print("")
-                g = bc.q(u,entity.p.get_as_dictionary(in_sim=True,with_collection_name=False),fq,1)*entity.p.get_physical_parameter_by_field_quantity("D",fq).get_in_sim_unit()
-                ule = self.p.get_misc_parameter("unit_length_exponent","numeric").get_in_sim_unit(type=int)
+                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False), fq,
+                         1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
+                ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)
 
                 rate_conversion = entity.p.get_physical_parameter_by_field_quantity("q", fq).to_sim
 
-                boundary = PhysicalParameter("boundary",0,to_sim=rate_conversion)
+                boundary = PhysicalParameter("boundary", 0, to_sim=rate_conversion)
                 boundary.set_in_sim_unit(g)
 
-
-                entity.p.get_collections_by_field_quantity(fq)[0].set_parameter(boundary,override=True)
-
+                entity.p.get_collections_by_field_quantity(fq)[0].set_parameter(boundary, override=True)
 
 
 def target(entity):
@@ -439,8 +446,13 @@ def target(entity):
 
     verts = np.unique(np.array(list(map(lambda x: x.entities(0), facets))))
 
-    vertex_sum = vertex_values.take(verts).sum() / len(verts)
+    try:
+        values = vertex_values.take(verts)
+    except TypeError as e:
+        message("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
+        raise e
 
+    vertex_sum = values.sum() / len(verts)
     result = [patch_index, sa, vertex_sum]
 
     return result

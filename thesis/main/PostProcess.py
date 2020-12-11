@@ -8,6 +8,7 @@ Created on Wed Oct 16 12:56:59 2019
 import multiprocessing as mp
 import os
 import random
+import json
 from typing import List, Dict
 
 import KDEpy
@@ -24,6 +25,7 @@ import thesis.main.StateManager as st
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.myDictSorting import groupByKey
 from thesis.main.my_debug import message
+import thesis.main.MyError as MyError
 
 
 class ComputeSettings:
@@ -100,9 +102,11 @@ class PostProcessor:
         self.path = path
         self.cell_dataframe: pd.DataFrame = pd.DataFrame()
         self.global_dataframe: pd.DataFrame = pd.DataFrame()
+        self.timing_dataframe: pd.DataFrame = pd.DataFrame()
+
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
-        self.computations = [c(), grad(), SD()]
+        self.computations = [c(), grad(), SD(), CV()]
         self.rc = {}
 
         self.image_settings = {
@@ -112,14 +116,15 @@ class PostProcessor:
             "dpi": 350,
         }
 
-    def write_post_process_xml(self, threads, debug=False, make_images=False, time_indices = None):
+
+    def write_post_process_xml(self, n_processes, debug=False, make_images=False, time_indices = None):
         """
         runs compute-function for all scans an writes result to xml file
 
         """
 
         plt.rcParams.update(self.rc)
-        assert type(threads) == int
+        assert type(n_processes) == int
 
         # initializes state manager from scan log
         self.stateManager = st.StateManager(self.path)
@@ -164,11 +169,11 @@ class PostProcessor:
 
                 scatter_list.append(compute_settings)
 
-        mesh_prefix = self.path + "/"
-        threads = threads if threads <= os.cpu_count() else os.cpu_count()
-        message("distributing to {threads} threads".format(threads=threads))
+        mesh_prefix = self.path
+        n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
+        message("distributing to {n_processes} processes".format(n_processes=n_processes))
 
-        with mp.Pool(processes=threads, initializer=initialise(mesh_prefix,self.cell_dataframe)) as p:
+        with mp.Pool(processes=n_processes, initializer=initialise(mesh_prefix,self.cell_dataframe)) as p:
             result_list = p.map(compute, scatter_list)
 
         element_list = []
@@ -235,10 +240,14 @@ class PostProcessor:
                         "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
                             "{field}_surf_c".format(field=field_name)].mean(),
                         "surf_c_std":self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].std()
+                            "{field}_surf_c".format(field=field_name)].std(),
+                        "surf_c_cv": self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                            "{field}_surf_c".format(field=field_name)].std()/self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                            "{field}_surf_c".format(field=field_name)].mean()
+
                     }
-                    parameter_set = ParameterSet("dummy_set", [])
-                    parameter_set.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
+                    parameter_set = ParameterSet.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
+
                     d.update(parameter_set.get_as_dictionary())
 
                     for v in g_values:
@@ -246,6 +255,39 @@ class PostProcessor:
                     result.append(d)
 
         return pd.DataFrame(result)
+
+    def get_timing_dataframe(self) -> pd.DataFrame:
+
+        records_path = os.path.join(self.path, "records")
+        with open(os.path.join(records_path, "dump.json"), "r") as f:
+            records = json.load(f)
+
+        # df = pd.DataFrame(columns=["task","start","end","info"])
+
+        result = []
+        for group_name, task_group in records.items():
+
+            for task in task_group:
+                entry = {}
+                entry["task"] = group_name
+                entry["start"] = task["start"]
+                entry["end"] = task["end"]
+
+                for info_key, info_value in task["info"].items():
+                    entry[info_key] = info_value
+
+                result.append(entry)
+
+        df = pd.DataFrame(result)
+
+        offset = df["start"].min()
+        df["start"] = df["start"].sub(offset)
+        df["end"] = df["end"].sub(offset)
+        df["duration"] = df["end"] - df["start"]
+        df["name"] = df["task"].map(lambda x: x.split(":")[-1])
+
+
+        return df
 
     def get_kde_estimators(self, n, ts, time_index, type_names):
 
@@ -278,14 +320,17 @@ class PostProcessor:
 
         return kernels
 
-    def get_cell_dataframe(self, kde=False, time_indices = None):
+    def get_cell_dataframe(self, kde=False, time_indices = None, n_processes = 1):
 
         self.stateManager = st.StateManager(self.path)
         self.stateManager.load_xml()
 
-        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices = time_indices)
+        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices = time_indices, n_processes = n_processes)
 
-        result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
+        try:
+            result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
+        except:
+            print("")
 
         result["time_index"] = result["time_index"].apply(lambda x: int(x))
         result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
@@ -307,7 +352,8 @@ class PostProcessor:
 
                 for time_index, step in ts.groupby(["time_index"]):
 
-                    for type_name, kernel in kernels[time_index].items():
+
+                    for type_name, kernel in kernels[time_index-1].items():
                         positions = np.array([step["x"], step["y"], step["z"]]).T
 
                         scores = kernel.evaluate(positions).T
@@ -315,6 +361,7 @@ class PostProcessor:
                         scores.index = step.index
 
                         step.insert(step.shape[1], "{type_name}_score".format(type_name=type_name), scores)
+
 
                     for type_name, kernel in kernels[0].items():
                         positions = np.array([step["x"], step["y"], step["z"]]).T
@@ -369,10 +416,19 @@ class PostProcessor:
 
         return des
 
-    def run_post_process(self, threads, kde=False, make_images=False, time_indices = None):
-        self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices)
-        self.write_post_process_xml(threads, make_images=make_images, time_indices = time_indices)
+    def save_dataframes(self):
+
+        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w")
+        self.cell_dataframe.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+        self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
+
+    def run_post_process(self, n_processes, kde=False, make_images=False, time_indices = None):
+        self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices, n_processes= n_processes)
+        self.write_post_process_xml(n_processes, make_images=make_images, time_indices = time_indices)
         self.global_dataframe = self.get_global_dataframe()
+        self.timing_dataframe = self.get_timing_dataframe()
+
+        self.save_dataframes()
 
 
 def get_concentration_conversion(unit_length_exponent: int):
@@ -436,6 +492,19 @@ class grad(PostProcessComputation):
 
         return my_grad
 
+class CV(PostProcessComputation):
+    """Defines a custom computation"""
+
+    def __init__(self):
+        """this name will appear in output dataframe"""
+        self.name = "CV"
+
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        nodal_values = np.array(u.vector())
+        sd: float = np.std(nodal_values) * c_conv
+        mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])*c_conv
+
+        return sd/mean_c
 
 def get_mesh_volume(mesh):
     sum = 0
@@ -457,7 +526,7 @@ def compute(compute_settings: ComputeSettings) -> str:
     """
 
     mesh = fcs.Mesh()
-    with fcs.XDMFFile(mesh_prefix + compute_settings.mesh_path) as f:
+    with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
         f.read(mesh)
 
     mesh_volume = get_mesh_volume(mesh)
@@ -465,7 +534,7 @@ def compute(compute_settings: ComputeSettings) -> str:
     function_space = fcs.FunctionSpace(mesh, "P", 1)
 
     u: fcs.Function = fcs.Function(function_space)
-    with fcs.HDF5File(comm, compute_settings.path + "/" + compute_settings.file_path, "r") as f:
+    with fcs.HDF5File(comm, os.path.join(compute_settings.path, compute_settings.file_path), "r") as f:
         f.read(u, "/" + compute_settings.field)
 
     result: et.Element = et.Element("File")
@@ -487,8 +556,7 @@ def compute(compute_settings: ComputeSettings) -> str:
     mesh_volume_element = et.SubElement(global_results, "MeshVolume")
     mesh_volume_element.text = str(mesh_volume)
 
-    p = ParameterSet("dummy", [])
-    p.deserialize_from_xml(et.fromstring(compute_settings.parameters))
+    p = ParameterSet.deserialize_from_xml(et.fromstring(compute_settings.parameters))
 
     V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
 
@@ -502,6 +570,7 @@ def compute(compute_settings: ComputeSettings) -> str:
             make_images(u, c_conv, compute_settings)
         except RuntimeError as e:
             message("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
+
 
     for comp in compute_settings.computations:
 
@@ -534,6 +603,7 @@ def compute(compute_settings: ComputeSettings) -> str:
                     V_vec=V_vec)
         except Exception as e:
             message("could not perform post process computation: {name}".format(name = comp.name))
+            raise e
             break
 
         result_element: et.Element = et.SubElement(global_results, comp.name)
