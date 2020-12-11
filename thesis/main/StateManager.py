@@ -6,22 +6,23 @@ Created on Mon Oct 14 14:34:19 2019
 @author: Lukas Kiwitz
 """
 import json
+import os
 import time
 from copy import deepcopy
 from typing import Dict
-import os, sys
+
 import lxml.etree as ET
-import matplotlib.pyplot as plt
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
-import seaborn as sns
+import traceback
 
 from thesis.main.Entity import Cell
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
 from thesis.main.ScanContainer import ScanContainer, ScanSample
-from thesis.main.my_debug import message, total_time, warning
-
+from thesis.main.my_debug import message, warning, critical
+from tqdm import tqdm
+from thesis.main.TaskRecord import TaskRecord, ClassRecord
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -32,7 +33,6 @@ def outputParse(v):
         return json.dumps(v.tolist())
     else:
         return json.dumps(v)
-
 
 class StateManager:
     """
@@ -46,6 +46,8 @@ class StateManager:
         :return None
         """
         self.path = path
+
+
         self.scan_folder_pattern = "scan_{n}/"
         self.element_tree = None
         self.scan_container = None
@@ -56,9 +58,8 @@ class StateManager:
         self.compress_log_file = True
         self.global_collections = GlobalCollections()
         self.global_parameters = GlobalParameters()
-        self._time_log_df = pd.DataFrame()
-
-
+        self.record = ClassRecord("StateManager")
+        self.progress_bar = None
 
     def load_xml(self):
         """loads xml representation from file"""
@@ -68,6 +69,7 @@ class StateManager:
         return self.path + self.scan_folder_pattern.format(n=n)
 
     def write_element_tree(self):
+
         if rank == 0:
             try:
                 f = self.path + "log.scan"
@@ -75,6 +77,7 @@ class StateManager:
                 self.element_tree.write(f, pretty_print=True)
             except Exception as e:
                 message("Could not write element tree to file: {e}".format(e=e))
+
 
     def serialize_to_element_tree(self):
 
@@ -95,6 +98,7 @@ class StateManager:
         root.append(self.scan_container.serialize_to_xml(self.scan_folder_pattern))
 
         self.element_tree = ET.ElementTree(element=root)
+
 
     def deserialize_from_element_tree(self):
 
@@ -194,9 +198,9 @@ class StateManager:
             if not field:
                 field = ET.SubElement(fields, "Field")
                 if sc.fields[field_index].moving_mesh:
-                    field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step, local=True)))
+                    field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
                 else:
-                    field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step, local=True))
+                    field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
 
                 field.set("dynamic_mesh",str(sc.fields[field_index].moving_mesh))
                 field.set("field_name", field_name)
@@ -220,8 +224,13 @@ class StateManager:
                 et = ET.parse(os.path.join(self.path, path))
                 step.getparent().replace(step, et.getroot())
 
+    def get_cell_ts_data_frame(self, time_indices = None,n_processes = 1, **kwargs):
 
-    def get_cell_ts_data_frame(self, time_indices = None, **kwargs):
+
+        def init():
+            global path
+            path = self.path
+
 
         root = self.element_tree.getroot()
         result = []
@@ -232,48 +241,30 @@ class StateManager:
         else:
             scans = root.findall("ScanContainer/ScanSample")
 
+
+        import multiprocessing as mp
+
+        scatter_list = []
         for n_scans, scan in enumerate(scans):
 
-            message("State Manager: Collecting cell dataframe for {n} of {total} scans".format(n=n_scans, total=len(scans)))
-
-            #for field in scan.findall("TimeSeries/Field"):
-
+            # for field in scan.findall("TimeSeries/Field"):
             self.rebuild_tree(scan)
+            scatter_list.append((n_scans,ET.tostring(scan),time_indices))
 
-            for step in scan.findall("TimeSeries/Step"):
-                time_index = step.get("time_index")
-                if (not time_indices is None) and not (int(time_index) in time_indices):
-                    continue
-                time = step.get("time")
+        n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
 
-                message("State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
+        message("State Manager: Distributing {total} scans to {n_processes} processes".format(n_processes=n_processes,total = len(scans)))
+        with mp.Pool(processes=n_processes,initializer = init) as p:
+            result = p.map(target, scatter_list)
+            while [] in result:
+                result.remove([])
 
-                for cell in step.findall("Cells/Cell"):
+            result = list(np.array(result).ravel())
 
-                    parameter_set = ParameterSet("dummy",[])
-                    parameter_set.deserialize_from_xml(cell.find("ParameterSet"))
-
-                    p_temp = parameter_set.get_as_dictionary()
-                    p = {}
-                    import numbers
-                    for k,v in p_temp.items():
-                        if  (isinstance(v,str) or isinstance(v,numbers.Number)):
-                           p[k] = v
-
-                    p["time_index"] = time_index
-                    p["time"] = time
-                    p["scan_index"] = scan.get("scan_index")
-
-                    p["x"] = float(cell.get("x"))
-                    p["y"] = float(cell.get("y"))
-                    p["z"] = float(cell.get("z"))
-                    p["id"] = cell.get("entity_id")
-                    p["type_name"] = cell.get("type_name")
-
-                    result.append(p)
         return pd.DataFrame(result)
 
     def update_sim_container(self, sc, i) -> Dict:
+
 
         scan_container = self.deserialize_from_element_tree()
         sc.path = self.get_scan_folder(i)
@@ -301,72 +292,116 @@ class StateManager:
 
         return deepcopy(sample.p)
 
+    def estimate_time_remaining(self, sc, scan_index, time_index,S,T):
+
+
+        sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
+        time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
+        step_durations = [i["end"] - i["start"] for i in time_step.history]
+        mean_step_duration = np.mean(step_durations)
+
+        n_steps = (len(T) - time_index)
+        n_scans = len(S) - scan_index
+
+        time_series_eta = time.time() + n_steps * mean_step_duration
+        scan_eta = time.time() + (n_scans * len(T) * mean_step_duration + n_steps * mean_step_duration)
+
+        scan_eta = time.strftime("%H:%M:%S",time.localtime(scan_eta))
+        time_series_eta = time.strftime("%H:%M:%S",time.localtime(time_series_eta))
+
+
+        self.time_series_bar.update(1)
+        self.scan_bar.postfix = "ETA: {eta}".format(eta = scan_eta)
+        self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
+        # message("ETA: {eta}".format(eta = eta))
+
     def run(self):
 
+        run_task = self.record.start_child("run")
+        sample_task = run_task.start_child("scan_sample")
+        sample_task.add_child(self.sim_container.record)
 
         self.serialize_to_element_tree()
 
-        for scan_index in range(len(self.scan_container.scan_samples)):
+        n_samples = len(self.scan_container.scan_samples)
+        self.scan_bar = tqdm(desc="Parameter Scan", total=n_samples, dynamic_ncols=True)
+        self.time_series_bar = tqdm(desc="Time Series   ", initial=0, dynamic_ncols=True)
+        self.write_element_tree()
+
+
+        for scan_index in range(n_samples):
+            if not sample_task.running:
+                sample_task.start()
+            self.time_series_bar.reset()
+            sample_task.info.update({"scan_index": scan_index})
+            sample_task.update_child_info()
             try:
                 def post_step(sc, time_index, t, T):
-                    result_paths = sc.save_fields(time_index)
+                    self.estimate_time_remaining(sc, scan_index, time_index, range(n_samples), T)
+                    result_paths = sc.save_fields(int(time_index - 1))
                     self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
                     self.write_element_tree()
 
                 self.scan_container.t = 0
 
-                self.pre_scan_timestamp = time.time()
-
+                sample_task.start_child("update_sim_container")
                 self.update_sim_container(self.sim_container, scan_index)
+                sample_task.stop_child("update_sim_container")
+
+                sample_task.start_child("init_xdmf_files")
                 self.sim_container.init_xdmf_files()
+                sample_task.stop_child("init_xdmf_files")
+
+                sample_task.start_child("pre_scan")
                 self.pre_scan(self, scan_index)
+                sample_task.stop_child("pre_scan")
 
                 self.sim_container._post_step = post_step
 
+
+
                 if self.T is None:
-                    T = np.arange(0,self.N*self.dt, self.dt)
+                    T = np.arange(0, self.N * self.dt, self.dt)
+                    self.time_series_bar.total = len(T)-1
                     self.sim_container.run(T)
                 else:
+                    self.time_series_bar.total = len(self.T)-1
                     self.sim_container.run(self.T)
 
+                sample_task.start_child("post_scan")
                 self.post_scan(self, scan_index)
-
-                self.total_scan_timestamp = time.time()
-
-                self._time_log(scan_index)
+                sample_task.stop_child("post_scan")
+                self.scan_bar.update(1)
 
             except Exception as e:
-                warning("Scan {i} failed.".format(i = scan_index))
-                warning(e)
-                raise e
+
+                warning("Scan {i} failed.".format(i=scan_index))
+                critical(traceback.format_exc())
                 warning("Continuing to next scan sample")
+                self.scan_bar.update(1)
+                sample_task.reset()
 
 
+            sample_task.stop()
+            run_task.start_child("write_element_tree")
+            self.write_element_tree()
+            run_task.stop_child("write_element_tree")
 
-        self.write_time_dataframe()
-        self.write_element_tree()
 
-    def _time_log(self, scan_index):
+        run_task.stop()
+        self.scan_bar.close()
+        self.time_series_bar.close()
 
-        start = self.pre_scan_timestamp
+        self.save_records()
 
-        total = self.total_scan_timestamp
+    def save_records(self):
 
-        total_time(total - start, pre="Total time ", post=" for scan sample {n}".format(n=scan_index))
+        records = self.record.gather_records()
+        records_path = os.path.join(self.path, "records")
+        os.makedirs(records_path, exist_ok=True)
 
-        df = pd.DataFrame({
-            "total_scan_time": [total - start],
-            "scan_index": [scan_index],
-        })
-        sc_df = self.sim_container._time_log_df
-        delattr(self.sim_container, "_time_log_df")
-
-        df = df.join(sc_df)
-
-        if not hasattr(self, "_time_log_df"):
-            self._time_log_df = pd.DataFrame(df)
-        else:
-            self._time_log_df = self._time_log_df.append(pd.DataFrame(df))
+        with open(os.path.join(records_path, "dump.json"), "w") as f:
+            json.dump(records, f)
 
     def pre_scan(self, state_manager, scan_index):
         pass
@@ -374,29 +409,101 @@ class StateManager:
     def post_scan(self, state_manager, scan_index):
         pass
 
-    def write_time_dataframe(self):
 
-        df = self._time_log_df
-        df.to_csv(self.path + "timing.csv")
+def target(mp_input):
 
-        fig, ax = plt.subplots(2, 2)
-        sns.lineplot(x="time_index", y="time_step_time", data=df, ax=ax[0][0], hue="scan_index", legend=None)
-        ax[0][0].set_ylabel("Time step computation time (s)")
-        ax[0][0].set_xlabel("Time index")
+    try:
+        n_scans, scan, time_indices = mp_input
+        scan = ET.fromstring(scan)
 
-        sns.lineplot(x="time_index", y="total_step_time", data=df, ax=ax[0][1], hue="scan_index")
-        ax[0][1].set_ylabel("Total Time step computation time (s)")
-        ax[0][1].set_xlabel("Time index")
+        result = []
 
-        sns.lineplot(x="scan_index", y="total_scan_time", data=df, ax=ax[1][0])
+        for step in scan.findall("TimeSeries/Step"):
 
-        ax[1][0].set_ylabel("Scan computation time (s)")
-        ax[1][0].set_xlabel("Scan index")
+            if "path" in step.attrib.keys():
+                step = ET.parse(os.path.join(path, step.get("path")))
+                step = step.getroot()
 
-        sns.lineplot(x="scan_index", y="total_step_time", data=df, ax=ax[1][1])
+            time_index = step.get("time_index")
+            if (not time_indices is None) and not (int(time_index) in time_indices):
+                continue
+            time = step.get("time")
 
-        ax[1][1].set_ylabel("Average Total Time step computation time (s)")
-        ax[1][1].set_xlabel("Scan index")
+            message("State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
 
-        plt.tight_layout()
-        plt.savefig(self.path + "timing.pdf")
+            for cell in step.findall("Cells/Cell"):
+
+                parameter_set = ParameterSet.deserialize_from_xml(cell.find("ParameterSet"))
+
+                p_temp = parameter_set.get_as_dictionary()
+                p = {}
+                import numbers
+                for k, v in p_temp.items():
+                    if (isinstance(v, str) or isinstance(v, numbers.Number)):
+                        p[k] = v
+
+                p["time_index"] = time_index
+                p["time"] = time
+                p["scan_index"] = scan.get("scan_index")
+
+                p["x"] = float(cell.get("x"))
+                p["y"] = float(cell.get("y"))
+                p["z"] = float(cell.get("z"))
+                p["id"] = cell.get("entity_id")
+                p["type_name"] = cell.get("type_name")
+
+                result.append(p)
+        return result
+    except:
+        import traceback
+        print(traceback.format_exc())
+        return []
+
+class ScanManager:
+
+
+    def __init__(self, path):
+
+        self.path = path
+        self.scan_folder_pattern = "scan_{n}/"
+        self.element_tree = None
+        self.scan_container = None
+        self.sim_container = None
+        self.T = None
+        self.dt = 1
+        self.N = 10
+        self.compress_log_file = True
+        self.global_collections = GlobalCollections()
+        self.global_parameters = GlobalParameters()
+        self.record = ClassRecord("ScanManager")
+        self.progress_bar = None
+
+    def update_sim_container(self, sc, i) -> Dict:
+
+
+        scan_container = self.deserialize_from_element_tree()
+        sc.path = self.get_scan_folder(i)
+        assert i <= len(scan_container.scan_samples) - 1
+        sample = scan_container.scan_samples[i]
+
+        assert hasattr(sc,"default_sample")
+
+        sc.p.update(sc.default_sample.p)
+        sc.p.update(sample.p)
+
+        for f in sc.fields:
+            f.apply_sample(sc.default_sample)
+            f.apply_sample(sample)
+
+        for e in sc.entity_list:
+            e.p.update(sc.default_sample.p, override = True)
+            e.p.update(sample.p, override = True)
+
+        for entity_type in sc.default_sample.entity_types:
+            sc.add_entity_type(entity_type)
+
+        for entity_type in sample.entity_types:
+            sc.add_entity_type(entity_type)
+
+
+        return deepcopy(sample.p)

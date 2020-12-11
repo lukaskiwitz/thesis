@@ -73,7 +73,7 @@ def get_cuboid_domain(x, y, z, margin):
     return p1, p2
 
 
-def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cache=""):
+def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cache="", cell_list = None):
     message("---------------------------------------------------------------")
     message("Setup")
     message("---------------------------------------------------------------")
@@ -107,16 +107,20 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
 
     p1, p2 = get_cuboid_domain(x,y,z, margin)
 
+
     domain = thesis.main.Entity.DomainCube(
         p1,
-        p2, domain_bc)
+        p2, domain_bc, periodic = False)
+
+
 
     sc = SC.SimContainer(global_parameter)
 
     """FieldProblems"""
     for c in cytokines:
 
-        solver = thesis.main.MySolver.MyLinearSoler()
+        solver = thesis.main.MySolver.MyDiffusionSolver()
+        solver.timeout = 60**2
 
         fieldProblem = fp.FieldProblem()
         fieldProblem.field_name = c["name"]
@@ -135,8 +139,22 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
     sc.path = path
 
     """adds cell to simulation"""
-    for i in makeCellListGrid(global_parameter, cytokines, x, y, z):
-        sc.add_entity(i)
+
+    if cell_list is None:
+        for i in makeCellListGrid(global_parameter, cytokines, x, y, z):
+            sc.add_entity(i)
+    else:
+        for i in cell_list:
+            cell_bcs = []
+            for c in cytokines:
+                cell_bcs.append(
+                    bc.Integral(cellBC, field_quantity=c["field_quantity"])
+                )
+            p = [i["x"],i["y"],i["z"]]
+
+            cell = Entity.Cell(p,i["radius"], cell_bcs)
+            cell.name = i["name"]
+            sc.add_entity(cell)
 
     """adds entity types"""
     for ct in cell_type_list:
@@ -160,6 +178,8 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
 def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x):
     domainBC = []
     templates = get_parameter_templates(numeric["unit_length_exponent"])
+
+
 
 
     for piece in boundary:
@@ -194,18 +214,6 @@ def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x
                 )
         domainBC.append(outer_integral)
 
-    # for c in cytokines:
-    #
-    #     left_boundary = bc.OuterIntegral(
-    #         cellBC, "near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
-    #         p=deepcopy(domain_parameter_set), name="left_boundary"
-    #     )
-    #     box = bc.OuterIntegral(
-    #         cellBC, "!near(x[0],{d})".format(d=x[0] - margin), field_quantity=c["field_quantity"],
-    #         p=deepcopy(domain_parameter_set), name="box")
-    #
-    #     domainBC.append(left_boundary)
-    #     domainBC.append(box)
 
     return domainBC
 
