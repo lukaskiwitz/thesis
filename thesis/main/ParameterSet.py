@@ -259,7 +259,8 @@ class ParameterCollection:
                 root.append(p.serialize_to_xml())
         return root
 
-    def deserialize_from_xml(self, element: ET.Element):
+    @staticmethod
+    def deserialize_from_xml(element: ET.Element):
 
         def replace_global(element, globals):
 
