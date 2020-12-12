@@ -149,6 +149,11 @@ def setup(cytokines, cell_types, geometry_dict, numeric, path, ext_cache=""):
     else:
         sc.initialize()
     message("initialization complete")
+
+    from thesis.main.ScanContainer import ScanSample
+    default = deepcopy(ScanSample(global_parameter.collections, cell_type_list, {}))
+    sc.default_sample = default
+
     return sc
 
 
@@ -282,17 +287,25 @@ def get_parameter_templates(ule):
         "q": PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9)),
         "D": PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True)),
         "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.0, to_sim=1 / (60 * 2), is_global=True)),
-        "fraction": PhysicalParameterTemplate(PhysicalParameter("fraction", 0.25, to_sim=1, is_global=True)),
-        "gamma": PhysicalParameterTemplate(PhysicalParameter("gamma", 0, to_sim=1, is_global=True)),
+        "Tsec_fraction": PhysicalParameterTemplate(PhysicalParameter("Tsec_fraction", 0.15, to_sim=1, is_global=True)),
+        "Th_fraction": PhysicalParameterTemplate(PhysicalParameter("Th_fraction", 0.0, to_sim=1, is_global=True)),
+        "gamma": PhysicalParameterTemplate(PhysicalParameter("gamma", 0.1, to_sim=1, is_global=True)),
         "k_factor": PhysicalParameterTemplate(PhysicalParameter("k_factor", 2, to_sim=1, is_global=True)),
+        "hill_factor": PhysicalParameterTemplate(PhysicalParameter("hill_factor", 3, to_sim=1, is_global=True)),
         "R_start": PhysicalParameterTemplate(PhysicalParameter("R_start", 20000, to_sim=N_A ** -1 * 1e9)),
-    
+        "c0": PhysicalParameterTemplate(PhysicalParameter("c0", 1.90e-12, to_sim=1, is_global=True)),
+        "pSTAT5_signal": PhysicalParameterTemplate(PhysicalParameter("pSTAT5_signal", True, to_sim=1, is_global=True)),
+        "pSTAT5": PhysicalParameterTemplate(PhysicalParameter("pSTAT5", 0, to_sim=1)),
+        "EC50": PhysicalParameterTemplate(PhysicalParameter("EC50", 0, to_sim=1)),
+        "sigma": PhysicalParameterTemplate(PhysicalParameter("sigma", 1e4, to_sim=N_A ** -1 * 1e9, is_global=True)),
+
         "threshold": PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule))),
-        "Kc": PhysicalParameterTemplate(PhysicalParameter("Kc", 0.01, to_sim=1 / get_cc(ule))),
+        "Kc": PhysicalParameterTemplate(PhysicalParameter("Kc", 0.0036, to_sim=1 / get_cc(ule))),
         "bw": PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (-1 * (6 + ule)))),
         "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
         "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
-        "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9))
+        "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9)),
+
     }
 
     return templates

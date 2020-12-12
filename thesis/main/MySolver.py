@@ -16,11 +16,11 @@ import dill
 import fenics as fcs
 import lxml.etree as ET
 import mpi4py.MPI as MPI
-
+import subprocess as sp
 import thesis.main.BC as BC
 from thesis.main.MySubDomain import MySubDomain
 from thesis.main.ParameterSet import ParameterSet
-from thesis.main.my_debug import message, total_time
+from thesis.main.my_debug import message, total_time, warning
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -31,7 +31,7 @@ class MySolver:
     pass
 
 
-class MyLinearSoler(MySolver):
+class MyDiffusionSolver(MySolver):
     """
     class to solve the stationary diffusion equation in 3D with nonlinear boundary condition
 
@@ -70,6 +70,7 @@ class MyLinearSoler(MySolver):
         self.mesh = None
         self.boundary_markers = None
         self.field_quantity: str = ""
+        self.timeout = None
 
         super().__init__()
 
@@ -139,7 +140,7 @@ class MyLinearSoler(MySolver):
             pl.dump(self.field_quantity, f)
         with open(pickle_loc + "result_path", "wb") as f:
             pl.dump(self.tmp_path, f)
-        import subprocess as sp
+
 
         if hasattr(self, "process"):
             if not self.process == None:
@@ -160,7 +161,7 @@ class MyLinearSoler(MySolver):
 
         dofs_per_node = int(dof_n / mpi_nodes)
 
-        message("Launching {n} mpi threads to solve system of {dn} dofs with {dofs_p_n} per node".format(
+        message("Launching {n} mpi process(es) to solve system of {dn} dofs with {dofs_p_n} per node".format(
             n=mpi_nodes, dn=dof_n, dofs_p_n=dofs_per_node))
 
         from thesis.main import __path__ as main_path
@@ -169,7 +170,6 @@ class MyLinearSoler(MySolver):
 
         if hasattr(self, "process"):
             self.process.kill()
-
         p = sp.Popen(
             ["mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
              pickle_loc], stdin=sp.PIPE, stdout=sp.PIPE)
@@ -178,24 +178,37 @@ class MyLinearSoler(MySolver):
 
     def solve(self) -> fcs.Function:
 
-        import time
 
-        signal_out, signal_err = self.process.communicate(b"START")
-        # message(signal_out)
-        for i in signal_out.decode("utf-8").split("\n"):
-            message(i)
+        class SolutionFailedError(Exception):
+            pass
 
-        file = str(signal_out).split("\\n")[-1].replace("'", "")
 
-        message("loading solution")
-        start = time.time()
+        for i in range(5):
 
-        with fcs.HDF5File(comm, file + ".h5", "r") as f:
-            f.read(self.u, "field")
+            try:
+                signal_out, signal_err = self.process.communicate(b"START", timeout=self.timeout)
+                for i in signal_out.decode("utf-8").split("\n"):
+                    message(i)
 
-        end = time.time()
-        total_time(end - start, pre="Loading Solution")
+                file = str(signal_out).split("\\n")[-1].replace("'", "")
+                with fcs.HDF5File(comm, file + ".h5", "r") as f:
+                    f.read(self.u, "field")
 
-        self.u.rename(self.field_quantity, self.field_quantity)
+                self.u.rename(self.field_quantity, self.field_quantity)
+                return self.u
 
-        return self.u
+
+            except sp.TimeoutExpired as e:
+                if i < 4:
+                    self.process.kill()
+                    warning("External solver timed out, restarting worker threads")
+                    self.compileSolver(self.tmp_path)
+                    continue
+                else:
+                    raise SolutionFailedError
+
+
+
+
+
+

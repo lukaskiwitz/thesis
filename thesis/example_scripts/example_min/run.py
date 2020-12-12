@@ -4,10 +4,6 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-# if "LD_LIBRARY_PATH" in os.environ:
-#     os.environ['LD_LIBRARY_PATH'] = "/home/lukas/anaconda3/envs/fenics/lib:"+os.environ['LD_LIBRARY_PATH']
-# else:
-#     os.environ['LD_LIBRARY_PATH'] = "/home/lukas/anaconda3/envs/fenics/lib"
 
 import random
 

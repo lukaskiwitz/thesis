@@ -10,9 +10,9 @@ cytokines = [
     {
         "name": "IL-2",
         "field_quantity": "il2",
-        "k_on": 540,  # receptor binding constant 1/(nM*h),
+        "k_on": 100,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
-        "kd": 0.01  # cytokine decay in medium 1/h
+        "kd": 0.1  # cytokine decay in medium 1/h
     }
 ]
 
@@ -21,14 +21,19 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 """
 
 cell_types_dict = [
-    {"name": "default",
-     "fraction": 1,
-     "il2": {"R": 20000, "q": 0, "bc_type": "linear"},  # [Receptor number per cell, secretion in molecules/s]
+    {"name": "Tnaive",
+     "fraction": 0,
+     "il2": {"R": 1e2, "q": 0, "bc_type": "R_saturation"},  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "kineticSolver"
      },
-    {"name": "changed",
-     "fraction": 0.1,
-     "il2": {"R": 20000, "bc_type": "linear"},
+    {"name": "Tsec",
+     "fraction": 0.25,
+     "il2": {"R": 1e2, "bc_type": "R_saturation"}, #"R_saturation"
+     "internal_solver": "kineticSolver"
+     },
+    {"name": "Th",
+     "fraction": 0.75,
+     "il2": {"R": 1e4, "q": 0, "bc_type": "R_saturation"},
      "internal_solver": "kineticSolver"
      },
 ]
@@ -57,11 +62,11 @@ numeric = {
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
     "dofs_per_node": 30000,
-    "max_mpi_nodes": 10, #os.cpu_count(),
+    "max_mpi_nodes": int(os.cpu_count()/2),
     "cells_per_worker": 50,
-    "max_pool_size": 10, #os.cpu_count(),
-    "min_char_length": 0.01,  # mesh
-    "max_char_length": 3,  # mesh
+    "max_pool_size": int(os.cpu_count()/2),
+    "min_char_length": 0.06,  # mesh
+    "max_char_length": 6,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
 
@@ -69,7 +74,8 @@ user = getpass.getuser()
 model_name = "q_fraction"
 name = "scan_name"
 
-path = "/extra/brunner/thesis/static/saturation/q_fraction_large/"
-ext_cache = r"../q_fraction_ext_cache/"
-path_kinetic = "/extra/brunner/thesis/kinetic/saturation/q_fraction_linear/"
+path = "/extra2/brunner/thesis/static/q_fraction_new_paras_multi/"
+ext_cache = r"../small_coarse_ext_cache/"
+hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
+path_kinetic = hdd + "/brunner/thesis/kinetic/saturation/test/"
 IMGPATH = path + "images/"

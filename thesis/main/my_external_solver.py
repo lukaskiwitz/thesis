@@ -7,11 +7,12 @@ import dill
 import dolfin as dlf
 import fenics as fcs
 from mpi4py import MPI
-
+from thesis.main.MySubDomain import PeriodicCubeSubDomain
 from thesis.main.ParameterSet import ParameterSet
 
 comm = MPI.COMM_WORLD
 rank = comm.rank
+
 
 
 def prepare_solver():
@@ -36,10 +37,10 @@ def prepare_solver():
     with open(pickle_loc + "patch_list", "rb") as f:
         patch_list = pl.load(f)
 
-    p = ParameterSet("dummy", [])
-    p_xml = ET.parse(pickle_loc + "p_xml").getroot()
 
-    p.deserialize_from_xml(p_xml)
+    p_xml = ET.parse(pickle_loc + "p_xml").getroot()
+    p = ParameterSet.deserialize_from_xml(p_xml)
+
 
     mesh = dlf.Mesh()
     with dlf.XDMFFile(dlf.MPI.comm_world, mesh_file) as f:
@@ -49,7 +50,9 @@ def prepare_solver():
     with fcs.HDF5File(fcs.MPI.comm_world, markers_path, "r") as f:
         f.read(boundary_markers, "/boundaries")
 
-    V = fcs.FunctionSpace(mesh, "P", 1)
+
+
+    V = fcs.FunctionSpace(mesh, "CG", 1)
     u = fcs.TrialFunction(V)
     v = fcs.TestFunction(V)
 
@@ -123,7 +126,6 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     u = fcs.Function(V)
     du = fcs.TrialFunction(V)
 
-
     for bc in dirichlet:
         dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
 
@@ -190,6 +192,7 @@ if __name__ == "__main__":
 
     signal = comm.bcast(signal, root=0)
 
+
     if signal == "START":
 
         solver.solve()
@@ -200,7 +203,7 @@ if __name__ == "__main__":
 
         with fcs.HDF5File(comm, file + ".h5", "w") as f:
             f.write(u, "field")
-        # comm.Barrier()
+
 
         if not rank == 0:
             exit(0)

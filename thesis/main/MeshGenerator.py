@@ -36,7 +36,7 @@ class MeshGenerator:
     def __init__(self,**kwargs):
             if "outer_domain" in kwargs:
                 self.outerDomain = kwargs["outer_domain"]
-    def meshGen(self, p, load_subdomain = False,path = "", file_name  = "mesh", load = False, ):
+    def meshGen(self, p, load_subdomain = False,path = "", load = False, ):
         geom = pygmsh.opencascade.Geometry(
           characteristic_length_min=p.get_misc_parameter("min_char_length","numeric").get_in_sim_unit(),
           characteristic_length_max=p.get_misc_parameter("max_char_length","numeric").get_in_sim_unit()
@@ -53,9 +53,10 @@ class MeshGenerator:
         else :
             raise DomainTypeError(type(self.outerDomain))
         entities = []
-        # path = kwargs["path"]+ if "path" in kwargs else ""
 
-        full_mesh_path = path+file_name+".xdmf"
+
+        full_mesh_path = path
+
 
         for i in self.entityList:
             r = i["entity"].radius
@@ -73,7 +74,9 @@ class MeshGenerator:
         else:
             message("loading Mesh from: "+full_mesh_path)
         mesh = dlf.Mesh()
-        with dlf.XDMFFile(dlf.MPI.comm_world, path+file_name+".xdmf") as f:
+
+
+        with dlf.XDMFFile(dlf.MPI.comm_world, full_mesh_path) as f:
             f.read(mesh)
         message("mesh loaded")
 
@@ -87,7 +90,7 @@ class MeshGenerator:
             with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"r") as f:
                 f.read(boundary_markers,"/boundaries")
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain.getSubDomains()[-1]["patch"]+1
+                a = self.outerDomain.get_subdomains()[-1]["patch"] + 1
                 o["patch"] = i+a
                 
         else:
@@ -95,12 +98,12 @@ class MeshGenerator:
             boundary_markers.set_all(0)
             message("boundaries marked")
             
-            for i in self.outerDomain.getSubDomains():
-                i["entity"].getSubDomain().mark(boundary_markers,i["patch"])
+            for i in self.outerDomain.get_subdomains():
+                i["entity"].get_subdomain().mark(boundary_markers, i["patch"])
             message("outer domain set")
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain.getSubDomains()[-1]["patch"]+1
-                o["entity"].getCompiledSubDomain().mark(boundary_markers,i+a)
+                a = self.outerDomain.get_subdomains()[-1]["patch"] + 1
+                o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
                 o["patch"] = i+a
             message("loop complete")
             if load_subdomain:

@@ -123,15 +123,12 @@ class ScanSample:
     def deserialize_from_xml(self,root):
 
 
-        self.p = ParameterSet("dummy",[])
-        self.p.deserialize_from_xml(root.find("./Parameters/ParameterSet[@name='dynamic']"))
+        self.p = ParameterSet.deserialize_from_xml(root.find("./Parameters/ParameterSet[@name='dynamic']"))
 
         for patch_element in root.findall("./OuterDomainParameters/PatchParameters"):
             k = patch_element.get("key")
 
-            dummy = ParameterSet("dummy",[])
-            dummy.deserialize_from_xml(patch_element[0])
-
+            dummy = ParameterSet.deserialize_from_xml(patch_element[0])
             self.outer_domain_parameter_dict[k] = dummy
 
 

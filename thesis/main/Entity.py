@@ -16,8 +16,9 @@ import thesis.main.MySubDomain as SD
 from thesis.main.BC import BC, OuterBC
 from thesis.main.EntityType import CellType
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.MySubDomain import CellSubDomain
+from thesis.main.MySubDomain import CellSubDomain, PeriodicCubeSubDomain
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.TaskRecord import TaskRecord
 
 
 class Entity:
@@ -50,8 +51,9 @@ class Entity:
         self.bc_list = []
         self.id: int = 0
         self.change_type = ""
+        self.task_record = TaskRecord("Entity")
 
-    def move(self,dt):
+    def move(self, dt):
         pass
 
     def set_internal_solver(self, solver: InternalSolver) -> None:
@@ -81,7 +83,7 @@ class Entity:
             if i.field_quantity == field_quantity:
                 return i
 
-    def update_bcs(self, p = None) -> None:
+    def update_bcs(self, p=None) -> None:
 
         """
 
@@ -89,7 +91,7 @@ class Entity:
         :return:
 
         """
-        if p or hasattr(self,"p"):
+        if p or hasattr(self, "p"):
             self.fieldQuantities = []
             for i in self.bc_list:
                 fq = i.field_quantity
@@ -99,7 +101,7 @@ class Entity:
                     bc.p = p
                 else:
                     if hasattr(i, "p"):
-                        i.p.update(self.p, override = True)
+                        i.p.update(self.p, override=True)
                     else:
                         i.p = self.p
 
@@ -111,10 +113,11 @@ class Entity:
         :param dt: time step length
         :return:
         """
-        if not self.internal_solver == None:
-            self.internal_solver.step(t, t+dt, dt, self.p, entity=self)
 
-    def getState(self, parameter_name="q", field_quantity = "il2", in_post = True) -> float:
+        if not self.internal_solver == None:
+            self.internal_solver.step(t, t + dt, dt, self.p, entity=self)
+
+    def getState(self, parameter_name="q", field_quantity="il2", in_post=True) -> float:
 
         return 0
         """
@@ -165,36 +168,33 @@ class Cell(Entity):
         super().__init__()
         self.p = ParameterSet("Cell_dummy", [])
         self.center: List[float] = center
-        self.offset = [0,0,0]
+        self.offset = [0, 0, 0]
 
         self.velocity = np.zeros(np.shape(center))
 
         self.radius = radius
         self.bc_list: List[BC] = bc_list
 
-    def move(self,dt):
+    def move(self, dt):
 
         self.offset[0] += self.velocity[0] * dt
         self.offset[1] += self.velocity[1] * dt
         self.offset[2] += self.velocity[1] * dt
 
-
-
-    def move_real(self,dt, bouding_box):
+    def move_real(self, dt, bouding_box):
 
         from thesis.main.my_debug import message
 
-        def inside(p1,p2,i,x,m):
+        def inside(p1, p2, i, x, m):
 
-            r = [p1[i],p2[i]]
+            r = [p1[i], p2[i]]
             x = x[i]
 
-            if (r[0] + m < x) and (r[1]- m > x):
+            if (r[0] + m < x) and (r[1] - m > x):
                 return True
             else:
                 message("cell outside of bounding box")
                 return False
-
 
         from copy import deepcopy
 
@@ -205,7 +205,7 @@ class Cell(Entity):
         m = self.radius * 2
 
         self.center[0] += self.velocity[0] * dt
-        if not inside(p1,p2,0, self.center, m):
+        if not inside(p1, p2, 0, self.center, m):
             message("setting x to " + str(old[0]))
             self.center[0] = old[0]
 
@@ -219,22 +219,19 @@ class Cell(Entity):
             message("setting z to " + str(old[2]))
             self.center[2] = old[2]
 
-
-
-
     def get_surface_area(self):
 
         rho = self.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
         return (4 * np.pi * rho ** 2)
 
-    def getSubDomain(self) -> CellSubDomain:
+    def get_subdomain(self) -> CellSubDomain:
         """
         returns cell subdomain
         :return:
         """
         return SD.CellSubDomain(self.center, self.radius)
 
-    def getCompiledSubDomain(self) -> fcs.CompiledSubDomain:
+    def get_compiled_subdomain(self) -> fcs.CompiledSubDomain:
         """
         gets compiled subdomain
 
@@ -282,8 +279,11 @@ class DomainEntity(Entity):
 
     def __init__(self, **kwargs):
         pass
-    def getState(self, parameter_name="q", field_quantity = "il2", in_post = True) -> float:
+
+    def getState(self, parameter_name="q", field_quantity="il2", in_post=True) -> float:
         return 0
+
+
 class DomainSphere(DomainEntity):
     """
 
@@ -313,7 +313,7 @@ class DomainSphere(DomainEntity):
         self.subdomain_dict = self.__compileSubdomains()
         super().__init__()
 
-    def __compileSubdomains(self) -> Dict:
+    def __compile_subdomains(self) -> Dict:
         subdomain_dict = {}
         for i, o in enumerate(self.bc_list):
             if isinstance(o, bc.OuterBC):
@@ -326,7 +326,7 @@ class DomainSphere(DomainEntity):
                     subdomain_dict[o.expr].append(e)
         return subdomain_dict
 
-    def getSubDomains(self, **kwargs):
+    def get_subdomains(self, **kwargs):
         subdomains = []
         for i, o in enumerate(self.subdomain_dict.values()):
             if "field_quantity" in kwargs:
@@ -337,34 +337,64 @@ class DomainSphere(DomainEntity):
                 subdomains.append({"entity": o[0], "patch": i + 1})
         return subdomains
 
-    def getSubDomain(self):
+    def get_subdomain(self):
         return SD.OuterSphere(self.center, self.radius)
+
+
+class CompiledSphere(DomainSphere, Entity):
+
+    def __init__(self, expr, bc, p):
+        self.bc = bc
+        self.p = p
+        self.expr = expr
+
+    def get_subdomain(self):
+        box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(c0=0, c1=0, c2=0,
+                                                                                                   r=self.p["radius"])
+        return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
+
+    def get_BC(self, field_quantity):
+        self.bc.p = self.p
+        return self.bc
 
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, bc_list, **kwargs):
+    def __init__(self, p1, p2, bc_list, periodic = False, **kwargs):
         self.p1 = p1
         self.p2 = p2
-        # self.p = p
+        self.periodic: bool = periodic
+
 
         self.bc_list = bc_list
-        self.subdomainDict = self.__compileSubdomains()
+        self.subdomainDict = self.__compile_subdomains()
         super().__init__(**kwargs)
 
-    def __compileSubdomains(self):
-        subdomainDict = {}
-        for i, o in enumerate(self.bc_list):
-            if isinstance(o, bc.OuterBC):
-                e = CompiledCube(o.expr, o, self)
-                e.field_quantity = o.field_quantity
-                if o.expr not in subdomainDict.keys():
-                    subdomainDict[o.expr] = [e]
-                else:
-                    subdomainDict[o.expr].append(e)
-        return subdomainDict
+    def __compile_subdomains(self):
+        subdomain_dict = {}
 
-    def getSubDomains(self, **kwargs):
+        if self.periodic:
+            for i, o in enumerate(self.bc_list):
+                s = PeriodicCube(o,self)
+                s.field_quantity = o.field_quantity
+                subdomain_dict["true"] = [s]
+            return subdomain_dict
+
+
+        else:
+            for i, o in enumerate(self.bc_list):
+                if isinstance(o, bc.OuterBC):
+
+                    e = CompiledCube(o.expr, o, self)
+
+                    e.field_quantity = o.field_quantity
+                    if o.expr not in subdomain_dict.keys():
+                        subdomain_dict[o.expr] = [e]
+                    else:
+                        subdomain_dict[o.expr].append(e)
+            return subdomain_dict
+
+    def get_subdomains(self, **kwargs):
         subdomains = []
         for i, o in enumerate(self.subdomainDict.values()):
             if "field_quantity" in kwargs:
@@ -375,17 +405,17 @@ class DomainCube(DomainEntity):
                 subdomains.append({"entity": o[0], "patch": i + 1})
         return subdomains
 
-    def getSubDomainGeometry(self):
+    def get_subdomain_geometry(self):
         return SD.OuterCube(self.p1, self.p2)
 
-    def update_bcs(self, p = None) -> None:
+    def update_bcs(self, p=None) -> None:
 
         if p or hasattr(self, "p"):
             for k, v in self.subdomainDict.items():
                 for i in v:
                     if p:
                         if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, override = False)
+                            i.bc.p.update(p, override=False)
                         else:
                             i.bc.p = p
 
@@ -399,10 +429,32 @@ class DomainCube(DomainEntity):
                     p = outer_domain_dict[name]
 
                     if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, override = True)
+                        i.bc.p.update(p, override=True)
                     else:
                         i.bc.p = p
 
+
+class PeriodicCube(DomainCube, Entity):
+
+    def __init__(self, bc, parent):
+        self.bc = bc
+        self.parent = parent
+
+    def get_subdomain(self):
+
+        sd = PeriodicCubeSubDomain(self.parent.p1,self.parent.p2)
+        return sd
+
+
+    def get_BC(self, field_quantity: str) -> BC:
+        return self.bc
+
+    def get_surface_area(self):
+        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        if p:
+            return p.get_in_sim_unit()
+        else:
+            return None
 
 class CompiledCube(DomainCube, Entity):
 
@@ -412,7 +464,8 @@ class CompiledCube(DomainCube, Entity):
         # self.p = self.bc.p
         self.expr = expr
 
-    def getSubDomain(self):
+    def get_subdomain(self):
+
         box = "near(x[0],{p1x}) || near(x[0],{p0x}) || near(x[1],{p1y}) || near(x[1],{p0y}) || near(x[2],{p1z}) || near(x[2],{p0z})".format(
             p1x=self.parent.p1[0],
             p0x=self.parent.p2[0],
@@ -435,18 +488,3 @@ class CompiledCube(DomainCube, Entity):
             return None
 
 
-class CompiledSphere(DomainSphere, Entity):
-
-    def __init__(self, expr, bc, p):
-        self.bc = bc
-        self.p = p
-        self.expr = expr
-
-    def getSubDomain(self):
-        box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(c0=0, c1=0, c2=0,
-                                                                                                   r=self.p["radius"])
-        return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
-
-    def get_BC(self, field_quantity):
-        self.bc.p = self.p
-        return self.bc

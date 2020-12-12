@@ -4,7 +4,7 @@ from typing import List
 
 import lxml.etree as ET
 
-from thesis.main.ParameterSet import ParameterSet
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection
 
 
 class EntityType:
@@ -17,6 +17,8 @@ class EntityType:
     def get_updated(self, update):
 
         entity_type = deepcopy(self)
+        if isinstance(update, ParameterCollection):
+            update = [update]
 
         if isinstance(update, List):
 
@@ -49,5 +51,5 @@ class CellType(EntityType):
         self.name = json.loads(element.get("name"))
         self.internal_solver = json.loads(element.get("internal_solver_name"))
 
-        self.p = ParameterSet("dummy", [])
-        self.p.deserialize_from_xml(element.find("ParameterSet"))
+        self.p = ParameterSet.deserialize_from_xml(element.find("ParameterSet"))
+

@@ -23,7 +23,7 @@ from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import message, total_time, debug
-
+from thesis.main.TaskRecord import TaskRecord, ClassRecord
 
 class SimContainer(SimComponent):
     """
@@ -68,6 +68,9 @@ class SimContainer(SimComponent):
         self.entity_list = []
         self.fields = []
         self.path = "./"
+        self.scan_path = self.path
+
+        self.worker_sub_path = ""
         self.subdomain_files = []
         self.domain_files = []
         self.field_files = []
@@ -75,9 +78,11 @@ class SimContainer(SimComponent):
         self.entity_templates = []
         self.lookup  = {}
         self.internal_solvers = []
-        self.remesh_every_timestep = False
+        # self.remesh_every_timestep = False
         self.t = 0
         self._time_log_df = pd.DataFrame()
+        self.record = ClassRecord("SimContainer")
+        self.orig_stdout = None
 
         #self.unit_length_exponent: int = 1
 
@@ -88,11 +93,11 @@ class SimContainer(SimComponent):
 
         """
 
-        if os.path.exists(self.path):
-            for i in os.listdir(self.path):
+        if os.path.exists(self.get_current_path()):
+            for i in os.listdir(self.get_current_path()):
                 if i.endswith(".log"):
                     message("removing old logs {log}".format(log=i))
-                    os.remove(self.path + i)
+                    os.remove(self.get_current_path() + i)
 
     def init_xdmf_files(self) -> None:
 
@@ -104,9 +109,9 @@ class SimContainer(SimComponent):
         os.makedirs(self.path, exist_ok=True)
         for i in self.fields:
             self.subdomain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/subdomain_" + i.field_name + ".xdmf"))
+                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/subdomain_" + i.field_name + ".xdmf"))
             self.domain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.path + "cache/domain_" + i.field_name + ".xdmf"))
+                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/domain_" + i.field_name + ".xdmf"))
             self.field_files.append("field_" + i.field_name)
 
     def initialize(self, **kwargs) -> None:
@@ -115,6 +120,7 @@ class SimContainer(SimComponent):
 
         loads subdomain; generates mesh; adds entities to Fields
         """
+
 
         self.init_xdmf_files()
 
@@ -128,8 +134,10 @@ class SimContainer(SimComponent):
                 entity.update_bcs()
                 if fq in entity.fieldQuantities:
                     field.add_entity(entity)
-            field.generate_mesh(cache=True, path=self.path, path_prefix="./cache/", **kwargs)
-            field.update_solver(self.path + "solver_tmp/")
+            field.generate_mesh(cache=True, path=self.path, path_prefix="cache", **kwargs)
+            field.update_solver(self.get_tmp_path())
+
+
 
     def get_entity_by_name(self, name: str) -> Entity:
 
@@ -158,42 +166,47 @@ class SimContainer(SimComponent):
 
     def run(self, T):
 
+        run_task = self.record.start_child("run")
+
+
         self.t = T[0]
-        # for field in self.fields:
-        #     field.solver.u = None
-
-        self.apply_type_changes()
-        self._post_step(self, 0,self.t,T)
-        self.post_step(self, 0,self.t,T)
-
         for time_index, t in enumerate(T[1:]):
 
 
-            self.pre_step_timestamp = time.time()
+            run_task.info.update({"time_index": time_index})
+            run_task.update_child_info()
 
 
             self._pre_step(self, time_index+1 , T[time_index+1] , T)  # internal use
+
+
             self.pre_step(self, time_index+1, T[time_index+1], T)  # user defined
 
+
             dt = t - T[time_index]
-            self.move_cells(dt)
+
+
+            self.move_cells(time_index, dt)
+
+            run_task.start_child("step")
             self.step(dt, time_index)
+            run_task.stop_child("step")
+
             time_index += 1
             assert t == self.t
 
-            self.post_step_timestamp = time.time()
-
-            # self.time_log(self,time_index,t,T)
             self._post_step(self, time_index, t, T)  # internal use
+
             self.post_step(self, time_index, t, T)  # user defined
 
-            self.total_step_timestamp = time.time()
-            self._time_log(self, time_index, t, T)
+        run_task.stop()
 
-    def move_cells(self, dt):
+    def move_cells(self, time_index, dt):
+
+
         from time import sleep
         for field in self.fields:
-            tmp_path = self.path + "solver_tmp/"
+            tmp_path = self.get_tmp_path()
 
             if field.moving_mesh == True and field.remesh == True:
                 for i, entity in enumerate(field.registered_entities):
@@ -210,7 +223,8 @@ class SimContainer(SimComponent):
 
                     cell.move_real(dt, field.outer_domain)
 
-                field.generate_mesh(cache=False, path=self.path, path_prefix="./cache/")
+                field.generate_mesh(cache=False, path=self.get_current_path(), path_prefix="cache", file_name=
+                                    "mesh_{field}",time_index=time_index)
 
             elif field.moving_mesh == True:
 
@@ -222,27 +236,24 @@ class SimContainer(SimComponent):
                     field.solver.compileSolver(tmp_path)
                 # field.save_mesh(time_index, self.path)
 
-    def _pre_step(self, sc, time_index, t, T):
-        return None
+    def get_tmp_path(self):
 
-    def _time_log(self, sc, time_index, t, T):
+        tmp_path = os.path.join(
+            os.path.join(self.path,self.worker_sub_path),
+            "solver_tmp")
 
-        start = self.pre_step_timestamp
-        end = self.post_step_timestamp
-        total = self.total_step_timestamp
-        total_time(end - start, pre="Total time ", post=" for step number {n}".format(n=time_index))
+        return tmp_path
 
-        df = pd.DataFrame({
-            "total_step_time": [total - start],
-            "time_step_time": [end - start],
-            "time_index": [time_index],
-            "t": [t]
-        })
+    def get_current_path(self):
 
-        if not hasattr(self, "_time_log_df"):
-            self._time_log_df = df
+        if self.scan_path == "./":
+            return self.path
         else:
-            self._time_log_df = self._time_log_df.append(df)
+            return self.scan_path
+
+    def _pre_step(self, sc, time_index, t, T):
+
+        return None
 
     def _post_step(self, sc, time_index, t, T):
 
@@ -274,14 +285,14 @@ class SimContainer(SimComponent):
 
         """
 
+
         self.apply_type_changes()
 
-
         for field in self.fields:
-            tmp_path = self.path + "solver_tmp/"
+            tmp_path = self.get_tmp_path()
             # field.unit_length_exponent = self.unit_length_exponent
             field.update_solver(tmp_path, p=self.p)
-            field.step(dt,time_index, self.path + "solver_tmp/")
+            field.step(dt,time_index, tmp_path)
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.t, dt)
@@ -290,6 +301,24 @@ class SimContainer(SimComponent):
 
 
         self.t = self.t+ dt
+
+    def get_number_of_entites(self):
+
+        result = {}
+        for e in self.entity_list:
+
+            if hasattr(e,"type_name"):
+                name = e.change_type if e.type_name == "" else e.type_name
+            elif hasattr(e,"change_type"):
+                name = e.change_type
+            else:
+                name = "none"
+
+            if name in result.keys():
+                result[name] += 1
+            else:
+                result[name] = 1
+        return result
 
     def add_entity(self, entity: Entity) -> None:
 
@@ -340,7 +369,7 @@ class SimContainer(SimComponent):
             if s.name == name:
                 return  s
 
-        message("could not find internal solver {n}".format(n = name))
+        debug("could not find internal solver {n}".format(n = name))
         return None
 
     def get_entity_type_by_name(self,name: str)->EntityType:
@@ -375,8 +404,8 @@ class SimContainer(SimComponent):
         """
 
         for o, i in enumerate(self.fields):
-            message("writing to {f}".format(f="{path}cache".format(path=self.path)))
-            self.subdomain_files[o].write(i.get_sub_domains_vis(key="type_int"))
+            message("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
+            self.subdomain_files[o].write(i.get_sub_domains_vis())
 
     def save_domain(self) -> None:
 
@@ -397,14 +426,17 @@ class SimContainer(SimComponent):
         :param n:
 
         """
-        os.makedirs(self.path + "sol/distplot", exist_ok=True)
+        os.makedirs(self.get_current_path() + "sol/distplot", exist_ok=True)
         result: Dict = {}
 
         for o, i in enumerate(self.fields):
 
             markers = i.get_sub_domains_vis(lookup = self.lookup)
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.path + "markers_{n}.xdmf".format(n=n)) as f:
-                f.write(markers)
+            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "markers_{n}.xdmf".format(n=n)) as f:
+                f.write(markers[0])
+
+            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
+                f.write(markers[1])
 
             distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
 
@@ -412,9 +444,9 @@ class SimContainer(SimComponent):
             u = i.get_field()
             u.rename(i.field_quantity, i.field_quantity)
 
-            with fcs.HDF5File(fcs.MPI.comm_world, self.path+distplot, "w") as f:
+            with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
                 f.write(i.get_field(), i.field_name)
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.path+sol) as f:
+            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
                 f.write(i.get_field(), n)
             result[i.field_name] = (distplot, sol, o)
         return result
