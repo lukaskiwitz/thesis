@@ -19,7 +19,7 @@ from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcess import get_concentration_conversion
-from thesis.main.my_debug import message, total_time
+from thesis.main.my_debug import message, total_time, warning
 
 
 class FieldProblem:
@@ -449,7 +449,7 @@ def target(entity):
     try:
         values = vertex_values.take(verts)
     except TypeError as e:
-        message("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
+        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
         raise e
 
     vertex_sum = values.sum() / len(verts)
