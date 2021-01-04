@@ -69,6 +69,27 @@ The first time any model is run it will need to
 this may take some time. For large meshes this can be considerable (1h or so), but 
 subsequent runs should be much faster. 
 
+<h1>
+    Paraview Integration
+</h1>
+Only works for simulation data generated with the current version
+
+1. Download an omesa build of paraview (necessary to run without X-server)
+2. Set the PARAVIEW_PATH env. variable to your paraview directory. For instance in you conda env. or in the post_process.py
+4. pass the keyword argument "render_paraview=True" to run_post_process() 
+5. various settings can be passed. "example_min" contains a commented example
+   
+
+The cell type markers are floats and will be set according to "SimContainer.marker_lookup".
+SimContainer now has the "markers" attribute, which lists entity 
+properties (parameters or python attributes) for which to export a MeshFunction. 
+Assigment of non numerical values is controlled by marker_lookup.
+
+
+
+
+
+
  
 
  
