@@ -347,7 +347,7 @@ class FieldProblem:
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
-    def get_sub_domains_vis(self, lookup=None) -> fcs.MeshFunction:
+    def get_sub_domains_vis(self, marker_key, lookup=None) -> fcs.MeshFunction:
         """
 
         save meshfunction that labels cells by type_name
@@ -359,31 +359,33 @@ class FieldProblem:
 
         mesh = self.solver.mesh
         boundary_markers = self.solver.boundary_markers
-        markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
-        IL2 = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
-
-        markers.set_all(0)
-        IL2.set_all(0)
+        marker = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
+        marker.set_all(0)
 
         for o in self.registered_entities:
             e = o["entity"]
             p = o["patch"]
-            if not hasattr(e,"type_name"):
+
+            if hasattr(e,marker_key):
+                value = getattr(e,marker_key)
+            elif marker_key in e.p.get_as_dictionary():
+                value = e.p.get_as_dictionary()[marker_key]
+            else:
                 continue
 
-            if e.type_name in lookup.keys():
-                value = lookup[e.type_name]
+            from numbers import Number
+            if isinstance(value,Number):
+                value = float(value)
+            elif value in lookup:
+                value = lookup[value]
             else:
-                lookup[e.type_name] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
+                lookup[value] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
                 value = lookup[e.type_name]
 
             for v in boundary_markers.where_equal(p):
-                il2 = float(e.p.get_physical_parameter("surf_c", "IL-2").get_in_sim_unit())
-                markers.set_value(v, value)
-                if e.type_name == "abs":
-                    IL2.set_value(v, il2)
+                marker.set_value(v, value)
 
-        return [markers, IL2]
+        return marker, lookup
 
     def get_entity_surface_area(self, e):
 

@@ -135,7 +135,7 @@ class StateManager:
     def _loadCellDump(self):
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict):
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict, marker_paths: Dict):
         scan = self.element_tree.getroot().find("ScanContainer/ScanSample[@scan_index='{s}']".format(s=scan_index))
         if scan.find("TimeSeries") is not None:
             time_series = scan.find("TimeSeries")
@@ -156,6 +156,18 @@ class StateManager:
             step = ET.SubElement(time_series, "Step")
         step.set("time_index", str(time_step))
         step.set("time", str(time))
+
+        lookup_table_element = ET.SubElement(step, "MarkerLookupTable")
+        for k,v in self.sim_container.marker_lookup.items():
+            lookup_element = ET.SubElement(lookup_table_element, "MarkerLookup")
+            lookup_element.set("key",str(k))
+            lookup_element.set("value",str(v))
+
+
+        for marker_key, marker_path in marker_paths.items():
+            marker_element = ET.SubElement(step,"Marker")
+            marker_element.set("path",marker_path)
+            marker_element.set("marker_key",marker_key)
 
 
         cells = ET.SubElement(step, "Cells")
@@ -339,7 +351,8 @@ class StateManager:
                 def post_step(sc, time_index, t, T):
                     self.estimate_time_remaining(sc, scan_index, time_index, range(n_samples), T)
                     result_paths = sc.save_fields(int(time_index - 1))
-                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
+                    marker_paths = sc.save_markers(time_index)
+                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths, marker_paths)
                     self.write_element_tree()
 
                 self.scan_container.t = 0

@@ -21,20 +21,24 @@ cytokines = [
 The first entry is the default cell type. There the "fraction" entry is meaningless.
 """
 
+R_h = 1e5
+R_l = 1e3
+q = 10
+
 cell_types_dict = [
     {"name": "default",
      "fraction": 0,
-     "il2": {"R": 4000, "q": 0, "Kc": 0.01, "amax": 0, "ths":0.05, "bc_type": "linear"},
+     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": "R_saturation"},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
-     "fraction": 0.5,
-     "il2": {"R": 4000, "q": 20, "Kc": 0.01, "amax": 1, "bc_type": "linear"},
+     "fraction": 0.1,
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "bc_type": "R_saturation"},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "fraction": 0.5,
-     "il2": {"R": 20000, "q": 0, "Kc": 0.01, "amax": 100, "bc_type": "linear"},
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 100, "bc_type": "R_saturation"},
      "internal_solver": "RuleBasedSolver"
      }
 ]
@@ -44,15 +48,15 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 100,  # dimensions of the cell grid
-    "y_grid": 100,
-    # "z_grid":100,# comment out for single cell layer
+    "x_grid": 200,  # dimensions of the cell grid
+    "y_grid": 200,
+    "z_grid":200,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2
 }
 boundary = [
     {"name": "box",
-     "expr":"true",
-     "il2":{"q":0, "R":0, "bc_type": "linear"},
+     "expr": "true",
+     "il2": {"q": 0, "R": 0, "bc_type": "linear"},
      },
 
 ]
@@ -63,12 +67,12 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 """
 numeric = {
     "linear_solver": "gmres",
-    "preconditioner": "hypre_amg",
-    "linear": True,
+    "preconditioner": "amg",
+    "linear": False,
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,
+    "krylov_rtol": 1e-10,
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,
+    "newton_rtol": 1e-10,
     "dofs_per_node": 30000,
     "max_mpi_nodes": os.cpu_count(),
     "cells_per_worker": 50,
@@ -78,10 +82,15 @@ numeric = {
     "unit_length_exponent": -6  # for concentration conversion
 }
 
+if os.path.isdir("/extra2"):
+    extra = "extra2"
+else:
+    extra = "extra"
+
 user = getpass.getuser()
 model_name = "example_min"
 name = "test"
 
-path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
+path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
 IMGPATH = path + "images/"

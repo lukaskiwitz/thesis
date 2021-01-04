@@ -76,13 +76,15 @@ class SimContainer(SimComponent):
         self.field_files = []
         self.boundary_markers = []
         self.entity_templates = []
-        self.lookup  = {}
+        self.marker_lookup  = {}
         self.internal_solvers = []
         # self.remesh_every_timestep = False
         self.t = 0
         self._time_log_df = pd.DataFrame()
         self.record = ClassRecord("SimContainer")
         self.orig_stdout = None
+        self.markers = ["type_name","IL-2_surf_c"]
+
 
         #self.unit_length_exponent: int = 1
 
@@ -417,6 +419,26 @@ class SimContainer(SimComponent):
         for o, i in enumerate(self.fields):
             self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
 
+    def save_markers(self, time_index):
+
+        path_dict = {}
+        top_dir = os.path.join(self.get_current_path(),"entity_markers")
+        for marker_key in self.markers:
+
+            marker_dir = os.path.join(top_dir,marker_key)
+            os.makedirs(marker_dir, exist_ok=True)
+
+
+            marker,new_lookup = self.fields[0].get_sub_domains_vis(marker_key, lookup = self.marker_lookup)
+            self.marker_lookup.update(new_lookup)
+            marker_path = os.path.join(marker_dir,"marker_{n}.xdmf".format(n=time_index))
+            with fcs.XDMFFile(fcs.MPI.comm_world, marker_path) as f:
+                f.write(marker)
+            path_dict[marker_key] = marker_path
+
+        return path_dict
+
+
     def save_fields(self, n: int) -> Dict:
 
         """
@@ -431,12 +453,12 @@ class SimContainer(SimComponent):
 
         for o, i in enumerate(self.fields):
 
-            markers = i.get_sub_domains_vis(lookup = self.lookup)
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "markers_{n}.xdmf".format(n=n)) as f:
-                f.write(markers[0])
-
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
-                f.write(markers[1])
+            # markers = i.get_sub_domains_vis(marker_lookup = self.marker_lookup)
+            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "markers_{n}.xdmf".format(n=n)) as f:
+            #     f.write(markers[0])
+            #
+            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
+            #     f.write(markers[1])
 
             distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
 

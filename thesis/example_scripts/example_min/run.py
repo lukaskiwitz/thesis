@@ -4,24 +4,25 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-
 import random
 
 import numpy as np
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 
 import logging
+
 os.environ["LOG_PATH"] = path
 LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH,exist_ok=True)
-logging.basicConfig(filename=LOG_PATH+"debug.log",level=logging.DEBUG,filemode="w", format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
+os.makedirs(LOG_PATH, exist_ok=True)
+logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
+                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
 os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter
-from thesis.main.ScanContainer import ScanContainer, ScanSample
+from thesis.main.ParameterSet import MiscParameter, ScannablePhysicalParameter, PhysicalParameter
+from thesis.main.ScanContainer import ScanContainer
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
 import mpi4py.MPI as MPI
@@ -41,8 +42,7 @@ class RuleBasedSolver(InternalSolver):
     def __init__(self):
         pass
 
-    def step(self, t1 ,t2, dt, p, entity=None):
-
+    def step(self, t1, t2, dt, p, entity=None):
 
         """
         Is called for each cell after the PDEs are solved.
@@ -50,14 +50,12 @@ class RuleBasedSolver(InternalSolver):
         probability if il2 surface concentration is greater than the threshold.
         """
 
-
-
         if entity.type_name == "default":
 
             il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
             il2_threshold = p.get_physical_parameter("ths", "IL-2").get_in_post_unit()
 
-            if np.random.uniform(0, 1) > 0.5:
+            if np.random.uniform(0, 1) > 0.95:
                 if il2 > il2_threshold:
                     entity.change_type = "sec"
                 else:
@@ -66,7 +64,6 @@ class RuleBasedSolver(InternalSolver):
 
 
 def updateState(sc, t):
-
     """sets cell types according to the values given in fractions.
     The pseudo random seed depends on t, so that cell placement is repeatable. """
 
@@ -86,6 +83,7 @@ def updateState(sc, t):
 
         e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
 
+
 """Setup/Simulation"""
 
 """
@@ -100,10 +98,11 @@ scan_container = ScanContainer()
 The variable aspects are passed as list "cytokines, cell_types, geometry and numeric. 
 These are imported as modules and can be modified in parameters.py """
 
-sc: SimContainer = setup(cytokines, cell_types_dict,boundary, geometry, numeric, path, ext_cache)
+sc: SimContainer = setup(cytokines, cell_types_dict, boundary, geometry, numeric, path, ext_cache)
 
 """Imports the parameter Templates"""
 from thesis.scenarios.box_grid import get_parameter_templates
+
 # from parameters import numeric
 
 templates = get_parameter_templates(numeric["unit_length_exponent"])
@@ -128,34 +127,34 @@ default = sc.get_entity_type_by_name("default")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-# scan_container.add_single_sim_parameter_scan(f,"fractions", "", [0.01,0.1,0.5], scan_name = "fractions")
+# scan_container.add_single_sim_parameter_scan(f, "fractions", "", [0.01, 0.1, 0.5, 0.9], scan_name="fractions")
 
-for v in np.logspace(-1,1,5):
-
-    """Scans over parameters that are associated with a field"""
-    sim_parameters = [
-        # ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
-        # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
-        # ParameterCollection("fractions", [f(v)]),
-    ]
-
-    """Scans over parameters that are associated with an entity_type"""
-    entity_types = [
-        default.get_updated([
-            ParameterCollection("IL-2", [R(v),q(v)])
-        ]),
-        abs.get_updated([ParameterCollection("IL-2", [])]),
-        sec.get_updated([ParameterCollection("IL-2", [])]),
-    ]
-    """Scans over parameters that are associated with the outer domain
-    This is a dictionary. If boundary pieces where defined in the setup function, they can be referenced by name.
-    Here the pieces "left_boundary" and "box" are defined."""
-    outer_domain_dict = {
-    }
-    """Creates container object for one sample of a the parameter scan.
-    The Lists/Dicts can be empty for default parameters."""
-    sample = ScanSample(sim_parameters, entity_types, outer_domain_dict, scan_name="entity_scan")
-    scan_container.add_sample(sample)
+# for v in np.logspace(-1,1,2):
+#
+#     """Scans over parameters that are associated with a field"""
+#     sim_parameters = [
+#         # ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
+#         # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
+#         # ParameterCollection("fractions", [f(v)]),
+#     ]
+#
+#     """Scans over parameters that are associated with an entity_type"""
+#     entity_types = [
+#         default.get_updated([
+#             ParameterCollection("IL-2", [R(v),q(v)])
+#         ]),
+#         abs.get_updated([ParameterCollection("IL-2", [])]),
+#         sec.get_updated([ParameterCollection("IL-2", [])]),
+#     ]
+#     """Scans over parameters that are associated with the outer domain
+#     This is a dictionary. If boundary pieces where defined in the setup function, they can be referenced by name.
+#     Here the pieces "left_boundary" and "box" are defined."""
+#     outer_domain_dict = {
+#     }
+#     """Creates container object for one sample of a the parameter scan.
+#     The Lists/Dicts can be empty for default parameters."""
+#     sample = ScanSample(sim_parameters, entity_types, outer_domain_dict, scan_name="entity_scan")
+#     scan_container.add_sample(sample)
 
 """signs up the internal solver with the sim container. 
 It can be referenced in a cell_type definition by its name field
@@ -167,19 +166,19 @@ manages the orderly IO of simulation results and metadata for post processing.""
 
 stMan = StateManager.StateManager(path)
 stMan.sim_container = sc
-sc.lookup = {"default":1, "sec":2, "abs":3}#labels to apper in marker function; 0 denotes background
+sc.marker_lookup = {"default": 1, "sec": 2, "abs": 3}  # labels to apper in marker function; 0 denotes background
 stMan.scan_container = scan_container
 stMan.compress_log_file = True
 # stMan.dt = 1
 # stMan.N = 5
 """sets up time range"""
 
-# stMan.T = [0,0.2,0.4,0.6,0.8,1,2,3,10]
-stMan.T = np.linspace(0,10,10)
+stMan.T = np.linspace(0, 4, 10)
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
 """
+
 
 def pre_scan(state_manager, scan_index):
     updateState(state_manager.sim_container, 0)

@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Rectangle
-import matplotlib.ticker as ticker
-from thesis.main.my_debug import message, total_time, debug, warning
+
+from thesis.main.my_debug import warning
+
 
 class Plotter:
 
@@ -195,19 +196,16 @@ class Plotter:
 
         return p
 
-    def calc_cell_activation(self,R_M = 1e5):
-
+    def calc_cell_activation(self, R_M=1e5, max = 0.02, min = 0.001,n = 4):
 
         def rec(R):
-            n = 4
-            max = 0.02
-            min = 0.001
+
             ec50 = (max - min) * (1 - np.power(R, n) / (np.power(R_M, n) + np.power(R, n))) + min
+
 
             return ec50
 
         def activation(c, R):
-            n = 2
 
             ec50 = rec(R)
 
@@ -221,8 +219,8 @@ class Plotter:
 
         # mask = self.cell_df["scan_name_scan_name"] == name
 
-        act = activation(self.cell_df["IL-2_surf_c"], self.cell_df["IL-2_R"])
-        self.cell_df["activation"]= act
+        act = activation(self.cell_df["IL-2_surf_c"], self.cell_df["IL-2_R"] )
+        self.cell_df["activation"] = act
 
     def load(self, path) -> None:
 
@@ -246,7 +244,7 @@ class Plotter:
             timing_df = self.reset_scan_index(timing_df)
             self.timing_df = timing_df
         except FileNotFoundError as e:
-            warning("{df} dataframe was not found".format(df = str(e)))
+            warning("{df} dataframe was not found".format(df=str(e)))
 
         groups = [
 
@@ -308,8 +306,8 @@ class Plotter:
         ticks = range(len(self.scan_scale))
         labels = []  # np.round(self.scan_scale,2)
 
-        if isinstance(scale,Dict):
-            return list(scale.keys()),list(scale.values())
+        if isinstance(scale, Dict):
+            return list(scale.keys()), list(scale.values())
         else:
             # noinspection PyUnusedLocal
             for i, e in enumerate(scale):
@@ -392,20 +390,19 @@ class Plotter:
 
         os.makedirs(os.path.split(path)[0], exist_ok=True)
         self.fig.tight_layout(**self.tight_layout_settings)
-        self.fig.suptitle(self.main_title, fontsize = 16)
-        self.fig.savefig(path, dpi = 300)
+        self.fig.suptitle(self.main_title, fontsize=16)
+        self.fig.savefig(path, dpi=300)
         if self.legend_figure and self.external_legend == "figure":
             s = path.split(".")
-            legend_path = reduce(lambda x,y: x+y,s[0:-1])+"_legend."+s[-1]
+            legend_path = reduce(lambda x, y: x + y, s[0:-1]) + "_legend." + s[-1]
             self.legend_figure.savefig(legend_path)
 
     def show(self) -> None:
         self.fig.tight_layout(**self.tight_layout_settings)
-        self.fig.suptitle(self.main_title, fontsize = 16)
+        self.fig.suptitle(self.main_title, fontsize=16)
         if self.legend_figure and self.external_legend == "figure":
             self.legend_figure.show()
         self.fig.show()
-
 
     def prepare_plot(self, df, hue, reduce=False, **kwargs):
 
@@ -413,7 +410,12 @@ class Plotter:
             try:
                 df = self.filter(df)
             except KeyError as e:
-                warning("Key: {k} was not found in dataframe. Could not apply filter.".format(k = str(e)[1:-1]))
+                warning("Key: {k} was not found in dataframe. Could not apply filter.".format(k=str(e)[1:-1]))
+        if "filter" in kwargs:
+            try:
+                df = kwargs["filter"](df)
+            except KeyError as e:
+                warning("Key: {k} was not found in dataframe. Could not apply filter.".format(k=str(e)[1:-1]))
 
         if "select" in kwargs and isinstance(kwargs["select"], Dict):
             for k, v in kwargs["select"].items():
@@ -474,12 +476,13 @@ class Plotter:
 
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog)
 
-    def global_steady_state_barplot(self, y_names, legend=False, hue=None, ylim=None, bar_spacing = 1.1, cat_spacing=1.2, barwidth = 0.1, **kwargs) -> None:
+    def global_steady_state_barplot(self, y_names, legend=False, hue=None, ylim=None, bar_spacing=1.1, cat_spacing=1.2,
+                                    barwidth=0.1,norm = False, y_ticks = True, **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
         df = df.loc[df[self.time_key] == self.t_max]
 
-        if not isinstance(y_names,List):
+        if not isinstance(y_names, List):
             y_names = [y_names]
 
         x_ticks = []
@@ -491,24 +494,28 @@ class Plotter:
         for y_name in y_names:
 
             spacing = cat_spacing
-            for k,v in self.scan_scale.items():
-
-                x.append(x[-1]+ barwidth*spacing)
+            for k, v in self.scan_scale.items():
+                x.append(x[-1] + barwidth * spacing)
                 scan_ticks.append(v)
                 spacing = bar_spacing
                 w.append(barwidth)
-                m = df[y_name].max()
+                m = df[y_name].max() if norm else 1
                 y.append(
-                    df.loc[df[self.scan_index_key] == k][y_name].iloc[0]/m
+                    df.loc[df[self.scan_index_key] == k][y_name].iloc[0] / m
                 )
 
             t = np.mean(x[-len(self.scan_scale):])
             x_ticks.append(t)
         x = x[1:]
 
-        ax.bar(x,height = y,width = w)
+
+
+        ax.bar(x, height=y, width=w)
         ax.set_xticks(x)
         ax.set_xticklabels(scan_ticks)
+
+        if not y_ticks:
+            ax.set_yticklabels([])
 
         ax2 = ax.twiny()
         ax2.set_xlim(ax.get_xlim())
@@ -519,7 +526,7 @@ class Plotter:
         ax2.xaxis.set_label_position("top")
         ax2.spines["top"].set_position(("axes", 1))
         ax2.set_frame_on(False)
-        ax2.tick_params(length = 0)
+        ax2.tick_params(length=0)
 
         if ylim:
             ax.set_ylim(ylim)
@@ -556,11 +563,11 @@ class Plotter:
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog)
 
     def cell_steady_state_barplot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
-                               ylim=None, ci="sd",y_ticks=False, **kwargs) -> None:
+                                  ylim=None, ci="sd", y_ticks=True, **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
         df = df.loc[df[self.time_key] == self.t_max]
 
-        sns.barplot(x=self.scan_index_key, y=y_name, data=df, ax=ax)
+        sns.barplot(x=self.scan_index_key, y=y_name, data=df, ax=ax, ci=ci)
         ax.set_ylabel("")
         ax.set_title(self.get_label(y_name))
         ticks, labels = self.get_scan_ticks()
@@ -571,6 +578,7 @@ class Plotter:
             ax.set_yticklabels([])
         if ylim:
             ax.set_ylim(ylim)
+
     def single_cell_steady_state_plot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
                                       ylim=None, linewidth=0.1, units="id", **kwargs):
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
@@ -622,7 +630,6 @@ class Plotter:
         ticks, labels = self.get_scan_ticks()
         ax.set_xticks(ticks)
         ax.set_xticklabels(labels)
-
 
     def count_plot(self, legend=None, hue=None, style=None, relative=False, ci="sd", **kwargs) -> None:
 
@@ -816,12 +823,12 @@ class Plotter:
                     distplot_kwargs["bins"] = int(len(x) / 5) if distplot_kwargs["bins"] > len(x) / 5 else \
                         distplot_kwargs["bins"]
 
-                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs ,ax = ax)
+                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs, ax=ax)
         else:
             if "bins" in distplot_kwargs:
                 distplot_kwargs["bins"] = int(len(df) / 5) if distplot_kwargs["bins"] > len(df) / 5 else \
                     distplot_kwargs["bins"]
-            sns.distplot(df[x_name], **distplot_kwargs, ax = ax)
+            sns.distplot(df[x_name], **distplot_kwargs, ax=ax)
 
         self.make_legend_entry(ax)
 
@@ -829,13 +836,13 @@ class Plotter:
         ax.set_ylabel("absolute frequency")
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_heatmap(self,x_name, y_name, z_name, filter = {}, accumulator = lambda groupby: groupby.mean(), **kwargs):
+    def cell_heatmap(self, x_name, y_name, z_name, filter={}, accumulator=lambda groupby: groupby.mean(), **kwargs):
 
         hue = None
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
-        gb = [x_name,y_name] + list(filter.keys())
+        gb = [x_name, y_name] + list(filter.keys())
 
         df = accumulator(df.groupby(gb))
 
@@ -843,9 +850,9 @@ class Plotter:
         for key in filter.keys():
             df = df.loc[df[key].isin(filter[key])]
 
-        piv = df.pivot(y_name,x_name, z_name)
-         # cbar_kws = {"label":self.get_label(z_name)}
-        sns.heatmap(piv, cbar_kws = {"label":self.get_label(z_name)})
+        piv = df.pivot(y_name, x_name, z_name)
+        # cbar_kws = {"label":self.get_label(z_name)}
+        sns.heatmap(piv, cbar_kws={"label": self.get_label(z_name)})
         # cs = ax.contourf(piv.columns, piv.index, piv, levels = 100)
         # if self.external_legend:
         #     plt.colorbar(cs, label= self.get_label(z_name), ax = ax, cax=self.legend_axes)
@@ -853,13 +860,13 @@ class Plotter:
         #     plt.colorbar(cs, ax=ax)
         # ax.contour(piv.columns, piv.index, piv, levels=5)
 
-        ax.set_yticklabels([round(float(i._text),1) for i in ax.get_yticklabels()])
+        ax.set_yticklabels([round(float(i._text), 1) for i in ax.get_yticklabels()])
         ax.set_xticklabels([round(float(i._text), 1) for i in ax.get_xticklabels()])
 
         ax.set_xlabel(self.get_label(x_name))
         ax.set_ylabel(self.get_label(y_name))
 
-    def global_heatmap(self, x_name, y_name, z_name,filter = {},accumulator = lambda groupby: groupby.mean(), **kwargs):
+    def global_heatmap(self, x_name, y_name, z_name, filter={}, accumulator=lambda groupby: groupby.mean(), **kwargs):
 
         hue = None
 
@@ -974,7 +981,7 @@ class Plotter:
 
         hue = y_name
         ax, df, palette, hue = self.prepare_plot(self.timing_df, hue, **kwargs)
-        sns.barplot(y=y_name, x="duration", data=df, ci=ci, hue=hue, orient="h", palette=palette, dodge=False, ax = ax)
+        sns.barplot(y=y_name, x="duration", data=df, ci=ci, hue=hue, orient="h", palette=palette, dodge=False, ax=ax)
         ax.set_xlabel("time(s)")
         ax.set_yticklabels(self.replace_labels([i.get_text() for i in ax.get_yticklabels()]))
 
@@ -986,7 +993,7 @@ class Plotter:
 
         ax, df, palette, hue = self.prepare_plot(self.timing_df, hue, **kwargs)
 
-        sns.lineplot(x="raw_scan_index", y=y_name, data=df, ci=ci, hue=hue, legend=legend, ax= ax, palette=palette)
+        sns.lineplot(x="raw_scan_index", y=y_name, data=df, ci=ci, hue=hue, legend=legend, ax=ax, palette=palette)
 
         ax.set_xlabel("time(s)")
         ax.set_ylabel(self.get_label(y_name))
@@ -1006,7 +1013,7 @@ class Plotter:
         for i, c in cycles.iterrows():
             df["cycle"][(df["start"] > c["start"]) & (df["end"] < c["end"])] = int(i - 1)
 
-        colors = {key:self.get_color(key) for key in df["task"].unique()}
+        colors = {key: self.get_color(key) for key in df["task"].unique()}
 
         for o, c in df.groupby("cycle"):
 
