@@ -15,6 +15,9 @@ class ParameterSet:
 
     def __init__(self, name: str, collections) -> None:
 
+        for s in collections:
+            assert isinstance(s,ParameterCollection)
+
         self.collections: List[ParameterCollection] = collections
         self.name = name
         self.parent: ParameterSet = None
@@ -168,6 +171,9 @@ class ParameterSet:
 class ParameterCollection:
 
     def __init__(self, name: str, physical_parameters=[], field_quantity="", is_global=False) -> None:
+
+        for s in physical_parameters:
+            assert isinstance(s,Parameter)
 
         self.parameters: List[PhysicalParameter] = physical_parameters
         self.name: str = name
