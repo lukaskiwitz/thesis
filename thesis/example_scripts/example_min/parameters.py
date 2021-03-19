@@ -11,7 +11,7 @@ cytokines = [
     {
         "name": "IL-2",
         "field_quantity": "il2",
-        "k_on": 116,  # receptor binding constant 1/(nM*h),
+        "k_on": 111.6,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
         "kd": 0.1  # cytokine decay in medium 1/h
     }
@@ -20,22 +20,42 @@ cytokines = [
 """Sets up cells types. T
 The first entry is the default cell type. There the "fraction" entry is meaningless.
 """
+R_h = 1e4
+R_l = 1e2
+q = 10
+
 
 cell_types_dict = [
     {"name": "default",
+     "mc":0,
      "fraction": 0,
-     "il2": {"R": 4000, "q": 0, "Kc": 0.01, "amax": 0, "ths":0.05, "bc_type": "linear"},
+     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "R_saturation"},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
-     "fraction": 0.5,
-     "il2": {"R": 4000, "q": 20, "Kc": 0.01, "amax": 1, "bc_type": "linear"},
-     "internal_solver": "RuleBasedSolver"
+     "mc":0,
+     "fraction": 0.05,
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "bc_type": "R_saturation"},
+     "internal_solver": ""
      },
     {"name": "abs",
-     "fraction": 0.5,
-     "il2": {"R": 20000, "q": 0, "Kc": 0.01, "amax": 100, "bc_type": "linear"},
-     "internal_solver": "RuleBasedSolver"
+     "mc":0,
+     "fraction": 0.95,
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1, "bc_type": "R_saturation"},
+     "internal_solver": ""
+     }
+]
+
+boundary = [
+    {"name": "box",
+     "expr":"!near(x[0],{d})",
+     "il6":{"q":0, "R":0, "bc_type": "R_saturation"},
+     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
+     },
+    {"name": "left_boundary",
+     "expr":"near(x[0],{d})",
+     "il6":{"q":0, "R":0, "amax":0, "bc_type": "R_saturation"},
+     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
      }
 ]
 
@@ -44,18 +64,11 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 100,  # dimensions of the cell grid
-    "y_grid": 100,
-    # "z_grid":100,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2
+    "x_grid": 150,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 150,
+    "z_grid": 150,# comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
 }
-boundary = [
-    {"name": "box",
-     "expr":"true",
-     "il2":{"q":0, "R":0, "bc_type": "linear"},
-     },
-
-]
 
 """
 parameters regarding meshing and fenics. unit_length_exponent is necessary for calculation concentrations. 
@@ -64,24 +77,37 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": True,
+    "linear": False,# use linear fenics solver
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,
+    "krylov_rtol": 1e-5,# linear solver relative tolerance
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,
-    "dofs_per_node": 30000,
-    "max_mpi_nodes": os.cpu_count(),
+    "newton_rtol": 1e-5,# newton method relative tolerance
+    "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
+    "max_mpi_nodes": os.cpu_count()/2,# max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count(),
-    "min_char_length": 1,  # mesh
-    "max_char_length": 5,  # mesh
+    "max_pool_size": os.cpu_count()/2,#max number of worker to extract boundary conditions at runtime
+    "min_char_length": 1,  # mesh resolution
+    "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion
 }
 
+"""
+absolute paths
+"""
+if os.path.isdir("/extra2"):
+    extra = "extra2"
+else:
+    extra ="extra"
+
+
 user = getpass.getuser()
 model_name = "example_min"
-name = "test"
-
-path = "/extra/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name)
-ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
+name = "new_1"
+path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
+
+"""
+relative to path; best to leave this alone
+"""
+ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
+
