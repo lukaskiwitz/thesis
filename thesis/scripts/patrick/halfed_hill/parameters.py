@@ -23,17 +23,17 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 cell_types_dict = [
     {"name": "Tnaive",
      "fraction": 0,
-     "il2": {"R": 1e2, "q": 0, "bc_type": "R_saturation"},  # [Receptor number per cell, secretion in molecules/s]
+     "il2": {"R": 1e2, "q": 0, "Kc": 8e-12, "bc_type": "linear"},  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "kineticSolver"
      },
     {"name": "Tsec",
      "fraction": 0.25,
-     "il2": {"R": 1e2, "bc_type": "R_saturation"}, #"R_saturation"
+     "il2": {"R": 1e4, "Kc": 8e-12, "bc_type": "linear"}, #"R_saturation"
      "internal_solver": "kineticSolver"
      },
-    {"name": "Th",
+    {"name": "Treg",
      "fraction": 0.75,
-     "il2": {"R": 1e4, "q": 0, "bc_type": "R_saturation"},
+     "il2": {"R": 1e4, "q": 0, "Kc": 8e-12, "bc_type": "linear"},
      "internal_solver": "kineticSolver"
      },
 ]
@@ -43,9 +43,9 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 240,  # dimensions of the cell grid
-    "y_grid": 240,
-    #"z_grid": 240,# comment out for single cell layer
+    "x_grid": 220,  # dimensions of the cell grid
+    "y_grid": 220,
+    "z_grid": 220,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 
@@ -56,17 +56,17 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": False,
+    "linear": True,
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
-    "dofs_per_node": 30000,
-    "max_mpi_nodes": int(os.cpu_count()/2),
+    "dofs_per_node": 15000,
+    "max_mpi_nodes": int(os.cpu_count()/4),
     "cells_per_worker": 50,
-    "max_pool_size": int(os.cpu_count()/2),
-    "min_char_length": 0.06,  # mesh
-    "max_char_length": 6,  # mesh
+    "max_pool_size": int(os.cpu_count()/4),
+    "min_char_length": 0.05,  # mesh
+    "max_char_length": 5,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
 
@@ -75,7 +75,7 @@ model_name = "q_fraction"
 name = "scan_name"
 
 path = "/extra2/brunner/thesis/static/q_fraction_new_paras_multi/"
-ext_cache = r"../small_coarse_ext_cache/"
+ext_cache = r"../3D_ext_cache/"
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
-path_kinetic = hdd + "/brunner/thesis/kinetic/saturation/test/"
+path_kinetic = hdd + "/brunner/thesis/kinetic/halfed_hill/3/"
 IMGPATH = path + "images/"

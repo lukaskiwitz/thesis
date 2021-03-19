@@ -18,7 +18,7 @@ from scipy.constants import N_A
 # from sympy import symbols, solve
 from scipy.integrate import solve_ivp
 
-from parameters_q_fraction import cytokines, cell_types_dict, geometry, numeric, path_kinetic, ext_cache
+from parameters import cytokines, cell_types_dict, geometry, numeric, path_kinetic, ext_cache
 
 import logging
 os.environ["LOG_PATH"] = path_kinetic
@@ -45,52 +45,6 @@ class kineticSolver(InternalSolver):
     object may get lost."""
 
     name = "kineticSolver"
-    #
-    # def __init__(self):
-    #     self.il2_threshold = 0.0048
-
-    def step2(self,t1,t2,dt,p,entity=None):
-
-        from ParameterSet import ParameterSet, ParameterCollection, MiscParameter
-        p.add_parameter_with_collection(MiscParameter("dt", dt))
-        message(dt)
-        N = p.get_physical_parameter("hill_factor", "IL-2").get_in_post_unit()
-        gamma = p.get_physical_parameter("gamma", "IL-2").get_in_sim_unit()
-        # gamma = p["gamma"] #10
-
-
-        # a = 10
-        c_0 = p.get_physical_parameter("c0", "IL-2").get_in_post_unit() #1.90e-12 # M
-        # k_factor = 2# p.get_physical_parameter("k_factor", "IL-2").get_in_sim_unit()
-
-        R_start = p.get_physical_parameter("R_start", "R_start").get_in_sim_unit()
-
-
-        il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()*1e-9 #post is nM, neeeded in M
-
-
-        if p.get_physical_parameter("pSTAT5_signal", "IL-2").get_in_post_unit() == True:
-            il2 = il2/(il2 + 6.5e-12)
-
-        R_il2 = p.get_physical_parameter("R", "IL-2").get_in_sim_unit()
-
-        eta = 1 / 72000  # 1/s
-        R_mean = 1e4 * N_A ** -1 * 1e9
-        kmin = R_mean/gamma * eta
-        kmax = R_mean*gamma * eta
-
-
-        try:
-            # k = solve((kmin * k_x ** N + kmax * c_0 ** N) / ((k_x ** N + c_0 ** N) * eta) - R_mean)[0]
-            k = ((c_0 ** N * (eta * R_mean - kmax)) / (kmin - eta * R_mean)) ** (1 / N)
-        except: # if gamma ~ 1
-            k = 1
-
-        new_R_il2 = R_il2 + dt * ((kmin * k ** N + kmax * il2 ** N) / ( k ** N + il2 ** N) - eta * R_il2)
-        new_R_il2 = float(new_R_il2)
-        p.get_physical_parameter("R", "IL-2").set_in_sim_unit(new_R_il2)
-
-        return p
 
     def step(self, t1, t2, dt, p, entity=None):
         N = p.get_physical_parameter("hill_factor", "IL-2").get_in_post_unit()
@@ -117,7 +71,7 @@ class kineticSolver(InternalSolver):
 
         def func(t,y, p, dummy=0):
             R_il2 = y[0]
-            dR_dt = ((p["kmin"] * p["k"] ** p["N"] + p["kmax"] * p["il2"] ** p["N"]) / (p["k"] ** p["N"] + p["il2"] ** p["N"]) - p["eta"] * R_il2)
+            dR_dt = ((p["kmin"] * p["k"] ** p["N"] + p["kmax"] * p["il2"] ** p["N"]) / (p["k"] ** p["N"] + p["il2"] ** p["N"]) * p["gamma"] - p["eta"] * R_il2)
             return [dR_dt]
 
         y0 = [dict["R_il2"]]
@@ -131,15 +85,55 @@ def updateState(sc, t):
     The pseudo random seed depends on t, so that cell placement is repeatable. """
     global Tsec_distribution_array
     global Treg_distribution_array
-
-    tmp_fraction = sc.entity_list[0].p.get_physical_parameter("Tsec_fraction", "IL-2").get_in_post_unit()
-    if len(Tsec_distribution_array) != 0 and len(Tsec_distribution_array) == int(round(len(sc.entity_list) * tmp_fraction)):
-        draws = Tsec_distribution_array
+    offset = 1
+    no_of_cells = len(sc.entity_list)
+    try:
+        a = geometry["z_grid"]
+        dims = 3
+        del a
+    except KeyError:
+        dims = 2
+    print("dims = ", dims)
+    if dims == 3:
+        cube_size = round(np.cbrt(no_of_cells), 0)
     else:
-        number_of_Tsec = int(round(len(sc.entity_list) * tmp_fraction))
-        print("fraction = ", tmp_fraction)
-        draws = np.random.choice(range(len(sc.entity_list)), number_of_Tsec, replace=False)
-        Tsec_distribution_array = draws
+        cube_size = round(np.sqrt(no_of_cells), 0)
+    xr = np.arange(0, cube_size, 1)
+    yr = np.arange(0, cube_size, 1)
+
+    if dims == 3:
+        zr = np.arange(0, cube_size, 1)
+        z_offset = np.array([zr[:offset], zr[-offset:]]).flatten()
+    else:
+        zr = [None]
+        z_offset = []
+
+    x_offset = np.array([xr[:offset], xr[-offset:]]).flatten()
+    y_offset = np.array([yr[:offset], yr[-offset:]]).flatten()
+
+    anti_draws = []
+
+    counter = 0
+    for x in xr:
+        for y in yr:
+            for z in zr:
+                if x in x_offset or y in y_offset or z in z_offset:
+                    anti_draws.append(counter)
+                counter += 1
+
+    # if len(Tsec_distribution_array) != 0:
+    #     draws = Tsec_distribution_array
+    # else:
+    tmp_fraction = sc.entity_list[0].p.get_physical_parameter("Tsec_fraction", "IL-2").get_in_post_unit()
+    possible_draws = np.setdiff1d(range(len(sc.entity_list)), anti_draws)
+    print("possible draws: ", len(possible_draws))
+    number_of_Tsec = int(round(len(possible_draws) * tmp_fraction))
+    if number_of_Tsec == 0:
+        number_of_Tsec = 1
+        print("set to 1 Tsec")
+    print("fraction = ", tmp_fraction)
+    draws = np.random.choice(possible_draws, number_of_Tsec, replace=False)
+    Tsec_distribution_array = draws
     no_of_secs = 0
     no_of_Treg = 0
 
@@ -153,16 +147,16 @@ def updateState(sc, t):
             no_of_secs += 1
             # e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(5000)
             # print(e.p.get_physical_parameter("R", "IL-2").get_in_post_unit())
-    if len(Treg_distribution_array) != 0 and 1 == 0:
-        Treg_draws = Treg_distribution_array
-    else:
-        try:
-            Treg_draws = np.random.choice(np.setdiff1d(range(len(sc.entity_list)), draws),
-                                  int(round(len(sc.entity_list) * e.p.get_physical_parameter("Treg_fraction", "IL-2").get_in_sim_unit(), 0)), replace=False)
-        except ValueError:
-            Treg_draws = np.random.choice(np.setdiff1d(range(len(sc.entity_list)), draws),
-                                          int(round(len(sc.entity_list) * e.p.get_physical_parameter("Treg_fraction", "IL-2").get_in_sim_unit(),0)-1), replace=False)
-        Treg_distribution_array = Treg_draws
+        if i in anti_draws:
+            e.change_type = "Treg"
+            no_of_Treg += 1
+
+    local_Treg_fraction = e.p.get_physical_parameter("Treg_fraction", "IL-2").get_in_sim_unit()
+    # local_Treg_fraction = 1 - tmp_fraction # rest of cells are tregs
+    Treg_draws = np.random.choice(np.setdiff1d(possible_draws, draws),
+                                  int(round(len(possible_draws) * local_Treg_fraction, 0)), replace=False)
+    Treg_distribution_array = Treg_draws
+
     for i, e in enumerate(sc.entity_list):
         if i in Treg_draws:
             e.change_type = "Treg"
@@ -171,10 +165,13 @@ def updateState(sc, t):
     print("Number of secreting cells: ", no_of_secs)
     print("Number of Tregs: ", no_of_Treg)
     if no_of_secs != 0:
-        print("Cells q:", q_il2_sum / no_of_secs)
+        print("Cells q:", q_il2_sum / no_of_secs / (N_A ** -1 * 1e9))
     else:
         print("cells q = 0")
     for i, e in enumerate(sc.entity_list):
+        if e.p.get_physical_parameter("pSTAT5_signal", "IL-2").get_in_post_unit() == True:
+            e.p.add_parameter_with_collection(t_pSTAT5(0, in_sim=False))
+            e.p.add_parameter_with_collection(t_EC50(0, in_sim=False))
         if no_of_secs != 0 and e.change_type == "Tsec":
             e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / no_of_secs)
             e.p.add_parameter_with_collection(t_R_start(1e4, in_sim=False))
@@ -182,28 +179,9 @@ def updateState(sc, t):
             e.p.add_parameter_with_collection(t_R_start(1e4, in_sim=False))
         elif e.change_type == "Tnaive":
             e.p.add_parameter_with_collection(t_R_start(1e2, in_sim=False))
-    # sum = 0
-    # for i,e in enumerate(sc.entity_list):
-    #     if e.change_type == "sec":
-    #         sum += e.p.get_physical_parameter("q", "IL-2").get_in_post_unit()
-    # print(sum)
-    #
-    # for i, e in enumerate(sc.entity_list):
-    #     e.change_type = "default"
-    #     if i in draws:
-    #         e.change_type = "changed"
-    #         no_of_secs += 1
-    #     e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
-    #     e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(20000)
-    # print("Number of secreting cells: ", no_of_secs)
-    # if no_of_secs != 0:
-    #     print("Cells q:", q_il2_sum/no_of_secs)
-    # else:
-    #     print("cells q = 0")
-    # for i,e in enumerate(sc.entity_list):
-    #     if no_of_secs != 0 and e.change_type == "changed":
-    #         e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum/no_of_secs)
-    #     e.p.add_parameter_with_collection(t_R_start(20000, in_sim=False))
+        elif e.change_type == "blank":
+            e.p.add_parameter_with_collection(t_R_start(0, in_sim=False))
+            # e.p.get_physical_parameter("R", "IL-2").set_in_sim_unit()
 
 
 """Setup/Simulation"""
@@ -231,7 +209,7 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 
 """Imports the parameter Templates"""
 from box_grid_q_fraction import get_parameter_templates
-from parameters_q_fraction import numeric
+from parameters import numeric
 
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 t_gamma = templates["gamma"]
@@ -262,13 +240,14 @@ pSTAT5_signal = ScannablePhysicalParameter(t_pSTAT5_signal(False), lambda x, v: 
 Tsec_distribution_array = np.array([])
 Treg_distribution_array = np.array([])
 
-a = [1/x for x in reversed(np.arange(10,110,10))]
-b = [x for x in np.arange(10,110,10)]
-c = np.concatenate([a,b])
+# a = [1/x for x in reversed(np.arange(10,110,10))]
+# b = [x for x in np.arange(10,110,10)]
+# c = np.concatenate([a,b])
+c = [1/10,10]
 
 for v in c: #np.linspace(0, 20000.0, 1): #np.logspace(-1,1,3):
-    for frac in [0.1,0.15,0.2]: #[0.25,0.5,0.75]
-        for hill_fac in [3]:
+    for frac in [0.25,0.5]: #[0.25,0.5,0.75]
+        for hill_fac in [1]:
             """Scans over parameters that are associated with a field"""
             sim_parameters = [
                 ParameterCollection("IL-2", [gamma(v)], field_quantity="il2"),
@@ -325,7 +304,7 @@ stMan.scan_container = scan_container
 # exit()
 
 dt = 3600 #1h
-length = 50
+length = 60
 max_T = dt * 400
 
 myRange = np.arange(0,length)

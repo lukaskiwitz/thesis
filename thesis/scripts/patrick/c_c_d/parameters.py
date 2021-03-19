@@ -28,12 +28,17 @@ cell_types_dict = [
      },
     {"name": "Tsec",
      "fraction": 0.25,
-     "il2": {"R": 1e2, "bc_type": "R_saturation"}, #"R_saturation"
+     "il2": {"R": 1e4, "bc_type": "R_saturation"}, #"R_saturation"
      "internal_solver": "kineticSolver"
      },
-    {"name": "Th",
+    {"name": "Treg",
      "fraction": 0.75,
      "il2": {"R": 1e4, "q": 0, "bc_type": "R_saturation"},
+     "internal_solver": "kineticSolver"
+     },
+    {"name": "blank",
+     "fraction": 0.75,
+     "il2": {"R": 0, "q": 0, "bc_type": "R_saturation"},
      "internal_solver": "kineticSolver"
      },
 ]
@@ -41,11 +46,11 @@ cell_types_dict = [
 """defines the variable aspects of the geometry. Unit is micro meters"""
 geometry = {
     "margin": 20,  # margin around the cell grid
-    "distance": 20,  # distance between cell centers
+    "distance": 30,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 240,  # dimensions of the cell grid
-    "y_grid": 240,
-    #"z_grid": 240,# comment out for single cell layer
+    "x_grid": 300,  # dimensions of the cell grid
+    "y_grid": 300,
+    #"z_grid": 200,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 
@@ -62,11 +67,11 @@ numeric = {
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
     "dofs_per_node": 30000,
-    "max_mpi_nodes": int(os.cpu_count()/2),
+    "max_mpi_nodes": int(os.cpu_count()/4),
     "cells_per_worker": 50,
-    "max_pool_size": int(os.cpu_count()/2),
-    "min_char_length": 0.06,  # mesh
-    "max_char_length": 6,  # mesh
+    "max_pool_size": int(os.cpu_count()/4),
+    "min_char_length": 0.05,  # mesh
+    "max_char_length": 5,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
 }
 
@@ -75,7 +80,7 @@ model_name = "q_fraction"
 name = "scan_name"
 
 path = "/extra2/brunner/thesis/static/q_fraction_new_paras_multi/"
-ext_cache = r"../small_coarse_ext_cache/"
+ext_cache = r"../c-c-d_" + str(geometry["distance"]) + "/"
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
-path_kinetic = hdd + "/brunner/thesis/kinetic/saturation/test/"
+path_kinetic = hdd + "/brunner/thesis/kinetic/c_c_d/kinetic_c_c_d_" + str(geometry["distance"]) + "/"
 IMGPATH = path + "images/"

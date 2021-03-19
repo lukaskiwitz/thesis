@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xml.etree.ElementTree as ET
 
-# group_variables = ["IL-2_sigma", None]  # hue over the second one
-group_variables = ["IL-2_fraction", "IL-2_D"]
+group_variables = ["IL-2_sigma", None]  # hue over the second one
+# group_variables = ["IL-2_fraction", "IL-2_D"]
 # subplot_style
 # D_to_iter_over = ['$10.0$']  # ['$1.0$', '$10.0$', '$100.0$']
 
 common_y_axis = False
-save_plots = True
+save_plots = False
 
 sns.set(rc={'figure.figsize':(6,5)})
 sns.set_style("ticks")
@@ -44,7 +44,7 @@ saving_dataframe = pd.DataFrame()
 if group_variables[0] == "IL-2_fraction":
     myRangeInt = 5
 else:
-    myRangeInt = 2
+    myRangeInt = 1
 for j in range(myRangeInt):
     get_dataframes.append([])
     print("reading in run", j)
@@ -55,7 +55,7 @@ for j in range(myRangeInt):
         ext_cache = "/extra/brunner/10x10x10/q_fraction/run_ext_cache/"
     elif group_variables[0] == "IL-2_sigma":
         # path = "/extra/brunner/10x10x10/R_lognorm/run" + str(j) + "/"
-        path = "/extra/brunner/para_handling/static/R_lognorm/run" + str(j) + "/"
+        path = "/extra/brunner/thesis/static/saturation/R_lognorm/"
         ext_cache = "/extra/brunner/10x10x10/R_lognorm/run_ext_cache/"
     else:
         print("Unknown grouping variable")
