@@ -16,6 +16,7 @@ import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
 import traceback
+import scipy
 
 from thesis.main.Entity import Cell
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
@@ -60,6 +61,7 @@ class StateManager:
         self.global_parameters = GlobalParameters()
         self.record = ClassRecord("StateManager")
         self.progress_bar = None
+        self.eta_estimates = []
 
     def load_xml(self):
         """loads xml representation from file"""
@@ -88,7 +90,7 @@ class StateManager:
 
         if len(self.scan_container.scan_samples) == 0:
             message("No Scan Sample found. Running one sample with default parmeters")
-            self.scan_container.add_sample(ScanSample([],[],{}))
+            self.scan_container.add_sample(ScanSample([],[],{}, scan_name="default"))
 
 
         root = ET.Element("Run")
@@ -135,7 +137,7 @@ class StateManager:
     def _loadCellDump(self):
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict):
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict, marker_paths: Dict):
         scan = self.element_tree.getroot().find("ScanContainer/ScanSample[@scan_index='{s}']".format(s=scan_index))
         if scan.find("TimeSeries") is not None:
             time_series = scan.find("TimeSeries")
@@ -156,6 +158,18 @@ class StateManager:
             step = ET.SubElement(time_series, "Step")
         step.set("time_index", str(time_step))
         step.set("time", str(time))
+
+        lookup_table_element = ET.SubElement(step, "MarkerLookupTable")
+        for k,v in self.sim_container.marker_lookup.items():
+            lookup_element = ET.SubElement(lookup_table_element, "MarkerLookup")
+            lookup_element.set("key",str(k))
+            lookup_element.set("value",str(v))
+
+
+        for marker_key, marker_path in marker_paths.items():
+            marker_element = ET.SubElement(step,"Marker")
+            marker_element.set("path",marker_path)
+            marker_element.set("marker_key",marker_key)
 
 
         cells = ET.SubElement(step, "Cells")
@@ -197,12 +211,14 @@ class StateManager:
             field = time_series.find("Field[@field_name='{n}']".format(n=field_name))
             if not field:
                 field = ET.SubElement(fields, "Field")
-                if sc.fields[field_index].moving_mesh:
+                dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
+
+                if dynamic_mesh:
                     field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
                 else:
                     field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
 
-                field.set("dynamic_mesh",str(sc.fields[field_index].moving_mesh))
+                field.set("dynamic_mesh",str(dynamic_mesh))
                 field.set("field_name", field_name)
                 field.set("dist_plot_path", "scan_{i}/".format(i = scan_index) + distplot)
                 field.set("solution_path", "scan_{i}/".format(i = scan_index) + sol)
@@ -290,6 +306,16 @@ class StateManager:
         for entity_type in sample.entity_types:
             sc.add_entity_type(entity_type)
 
+        for e in sc.entity_list:
+            for cell_type in sc.default_sample.entity_types:
+                if e.type_name == cell_type.name:
+                    e.change_type = cell_type.name
+
+        for e in sc.entity_list:
+            for cell_type in sample.entity_types:
+                if e.type_name == cell_type.name:
+                    e.change_type = cell_type.name
+
         return deepcopy(sample.p)
 
     def estimate_time_remaining(self, sc, scan_index, time_index,S,T):
@@ -298,16 +324,21 @@ class StateManager:
         sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
         time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
         step_durations = [i["end"] - i["start"] for i in time_step.history]
-        mean_step_duration = np.mean(step_durations)
+        mean_step_duration = scipy.stats.gmean(step_durations)
 
         n_steps = (len(T) - time_index)
         n_scans = len(S) - scan_index
 
         time_series_eta = time.time() + n_steps * mean_step_duration
         scan_eta = time.time() + (n_scans * len(T) * mean_step_duration + n_steps * mean_step_duration)
+        self.eta_estimates.append([time.time(), scan_eta])
 
-        scan_eta = time.strftime("%H:%M:%S",time.localtime(scan_eta))
+
+        np.save(os.path.join(self.get_records_path(), "eta"), np.array(self.eta_estimates))
+
+        scan_eta = time.strftime("%H:%M:%S %m/%d/%y",time.localtime(scan_eta))
         time_series_eta = time.strftime("%H:%M:%S",time.localtime(time_series_eta))
+
 
 
         self.time_series_bar.update(1)
@@ -333,14 +364,17 @@ class StateManager:
             if not sample_task.running:
                 sample_task.start()
             self.time_series_bar.reset()
-            sample_task.info.update({"scan_index": scan_index})
+            scan_name = self.scan_container.scan_samples[scan_index].p.get_misc_parameter("scan_name","scan_name").get_in_sim_unit()
+            sample_task.info.update({"scan_index": scan_index, "scan_name":scan_name})
             sample_task.update_child_info()
             try:
                 def post_step(sc, time_index, t, T):
                     self.estimate_time_remaining(sc, scan_index, time_index, range(n_samples), T)
                     result_paths = sc.save_fields(int(time_index - 1))
-                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths)
+                    marker_paths = sc.save_markers(time_index)
+                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths, marker_paths)
                     self.write_element_tree()
+
 
                 self.scan_container.t = 0
 
@@ -394,14 +428,26 @@ class StateManager:
 
         self.save_records()
 
-    def save_records(self):
+    def get_records_path(self):
 
-        records = self.record.gather_records()
         records_path = os.path.join(self.path, "records")
         os.makedirs(records_path, exist_ok=True)
 
+        return records_path
+
+    def save_records(self):
+
+        records = self.record.gather_records()
+        records_path = self.get_records_path()
+
+
+        for f in os.listdir(records_path):
+            os.remove(os.path.join(records_path,f))
+
         with open(os.path.join(records_path, "dump.json"), "w") as f:
             json.dump(records, f)
+
+        np.save(os.path.join(records_path, "eta"), np.array(self.eta_estimates))
 
     def pre_scan(self, state_manager, scan_index):
         pass

@@ -51,6 +51,7 @@ class Entity:
         self.bc_list = []
         self.id: int = 0
         self.change_type = ""
+        self.type_name = None
         self.task_record = TaskRecord("Entity")
 
     def move(self, dt):
@@ -305,20 +306,20 @@ class DomainSphere(DomainEntity):
     :vartype subdomain_dict: Dict
     """
 
-    def __init__(self, center: List[float], radius: float, p: Dict, bc_list: List[OuterBC]):
+    def __init__(self, center: List[float], radius: float, bc_list: List[OuterBC]):
         self.center = center
         self.radius = radius
-        self.p = p
+
         self.bc_list = bc_list
-        self.subdomain_dict = self.__compileSubdomains()
+        self.subdomain_dict = self.__compile_subdomains()
         super().__init__()
 
     def __compile_subdomains(self) -> Dict:
+
         subdomain_dict = {}
         for i, o in enumerate(self.bc_list):
             if isinstance(o, bc.OuterBC):
-                e = CompiledSphere(o.expr, o, self.p)
-                e.p = self.p
+                e = CompiledSphere(o.expr, o, self)
                 e.field_quantity = o.field_quantity
                 if o.expr not in subdomain_dict.keys():
                     subdomain_dict[o.expr] = [e]
@@ -337,25 +338,61 @@ class DomainSphere(DomainEntity):
                 subdomains.append({"entity": o[0], "patch": i + 1})
         return subdomains
 
-    def get_subdomain(self):
-        return SD.OuterSphere(self.center, self.radius)
+    def update_bcs(self, p=None) -> None:
+
+        if p or hasattr(self, "p"):
+            for k, v in self.subdomain_dict.items():
+                for i in v:
+                    if p:
+                        if hasattr(i.bc, "p"):
+                            i.bc.p.update(p, override=False)
+                        else:
+                            i.bc.p = p
+
+    def apply_sample(self, outer_domain_dict) -> None:
+
+        for k, v in self.subdomain_dict.items():
+            for i in v:
+                name = i.bc.name
+                if name in outer_domain_dict.keys():
+
+                    p = outer_domain_dict[name]
+
+                    if hasattr(i.bc, "p"):
+                        i.bc.p.update(p, override=True)
+                    else:
+                        i.bc.p = p
+
+    # def get_subdomain(self):
+    #     return SD.OuterSphere(self.center, self.radius)
 
 
 class CompiledSphere(DomainSphere, Entity):
 
-    def __init__(self, expr, bc, p):
+    def __init__(self, expr, bc, parent):
         self.bc = bc
-        self.p = p
+        self.parent = parent
         self.expr = expr
 
     def get_subdomain(self):
-        box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(c0=0, c1=0, c2=0,
-                                                                                                   r=self.p["radius"])
+        c = self.parent.center
+
+        box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(
+            c0=c[0], c1=c[1], c2=c[2],
+           r=self.parent.radius)
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
-        self.bc.p = self.p
+
         return self.bc
+
+    def get_surface_area(self):
+
+        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        if p:
+            return p.get_in_sim_unit()
+        else:
+            return None
 
 
 class DomainCube(DomainEntity):
@@ -456,12 +493,12 @@ class PeriodicCube(DomainCube, Entity):
         else:
             return None
 
+
 class CompiledCube(DomainCube, Entity):
 
     def __init__(self, expr, bc, parent):
         self.bc = bc
         self.parent = parent
-        # self.p = self.bc.p
         self.expr = expr
 
     def get_subdomain(self):

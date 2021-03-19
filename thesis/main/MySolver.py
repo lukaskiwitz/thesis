@@ -11,6 +11,7 @@ import getpass
 import os
 import pickle as pl
 from typing import List
+import signal
 
 import dill
 import fenics as fcs
@@ -75,6 +76,14 @@ class MyDiffusionSolver(MySolver):
         super().__init__()
 
     def compileSolver(self, tmp_path: str):
+
+        def sig_handler(signum, frame):
+            if self.process is not None:
+                self.process.kill()
+                exit(0)
+
+        signal.signal(signal.SIGINT, sig_handler)
+        signal.signal(signal.SIGTERM, sig_handler)
 
         self.V = fcs.FunctionSpace(self.mesh, "P", 1)
         self.u = fcs.Function(self.V)
@@ -170,20 +179,36 @@ class MyDiffusionSolver(MySolver):
 
         if hasattr(self, "process"):
             self.process.kill()
+
+        cpu_list = "0-0{e}".format(e = mpi_nodes-1) if mpi_nodes < 11 else "0:{e}".format(e = mpi_nodes-1)
+
         p = sp.Popen(
-            ["mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
+            ["nice", "-n", "19", "mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
              pickle_loc], stdin=sp.PIPE, stdout=sp.PIPE)
 
         self.process = p
 
+
+
     def solve(self) -> fcs.Function:
+
+        def sig_handler(signum, frame):
+            if self.process is not None:
+                self.process.kill()
+                exit(0)
+
+        signal.signal(signal.SIGINT, sig_handler)
+        signal.signal(signal.SIGTERM, sig_handler)
 
 
         class SolutionFailedError(Exception):
             pass
 
+        message(self.timeout)
+        for o in range(5):
 
-        for i in range(5):
+            if o == 5:
+                raise SolutionFailedError
 
             try:
                 signal_out, signal_err = self.process.communicate(b"START", timeout=self.timeout)
@@ -191,21 +216,24 @@ class MyDiffusionSolver(MySolver):
                     message(i)
 
                 file = str(signal_out).split("\\n")[-1].replace("'", "")
-                with fcs.HDF5File(comm, file + ".h5", "r") as f:
-                    f.read(self.u, "field")
-
-                self.u.rename(self.field_quantity, self.field_quantity)
-                return self.u
-
-
-            except sp.TimeoutExpired as e:
-                if i < 4:
-                    self.process.kill()
-                    warning("External solver timed out, restarting worker threads")
-                    self.compileSolver(self.tmp_path)
-                    continue
+                if os.path.exists(file+".h5"):
+                    message("loading solution from {f}".format( f= file))
+                    with fcs.HDF5File(comm, file + ".h5", "r") as f:
+                        f.read(self.u, "field")
+                    self.u.rename(self.field_quantity, self.field_quantity)
+                    return self.u
                 else:
-                    raise SolutionFailedError
+                    message("Something went wrong. Solution file {f}.h5 doesn't exist".format(f = file))
+                    message(o)
+                    continue
+
+
+            except (FileNotFoundError,sp.TimeoutExpired,ValueError) as e:
+                self.process.kill()
+                warning("External solver timed out or crashed, restarting worker threads")
+                self.compileSolver(self.tmp_path)
+
+
 
 
 

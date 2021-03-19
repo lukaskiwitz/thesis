@@ -72,13 +72,14 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
 
     for bc in dirichlet:
         dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
+
     for bc in integral:
 
         p_bc = bc["p"]
         f = dill.loads(bc["f"])
         area = bc["area"]
         patch = bc["patch"]
-        # print(p_bc["q"])
+
         field_quantity = bc["field_quantity"]
 
         for k, value in p_bc.items():
@@ -181,11 +182,29 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     return solver, u
 
 
+import signal as sig
+
+def alarm_handler(signum, frame):
+
+    print("Solver timed out")
+    raise TimeoutError
+
+
+
+timeout = 60**2
+
 if __name__ == "__main__":
 
     solver, result_path, u = prepare_solver()
+
     if rank == 0:
-        signal = sys.stdin.readline()
+        sig.signal(sig.SIGALRM, alarm_handler)
+        sig.alarm(timeout)
+        try:
+            signal = sys.stdin.readline()
+        except TimeoutError as e:
+            signal = "TERMINATE"
+        sig.alarm(0)
 
     else:
         signal = None
@@ -195,18 +214,32 @@ if __name__ == "__main__":
 
     if signal == "START":
 
-        solver.solve()
+        try:
+            solver.solve()
+        except Exception as e:
+            if rank == 0:
+                sys.stdout.write(str(e))
+                exit(0)
 
-        os.makedirs(result_path, exist_ok=True)
+        if rank == 0:
+            os.makedirs(result_path, exist_ok=True)
 
-        file = result_path + "tmp_{fq}".format(fq = fq)
+        file = result_path + "tmp_{fq}".format(fq=fq)
 
         with fcs.HDF5File(comm, file + ".h5", "w") as f:
             f.write(u, "field")
 
-
-        if not rank == 0:
+        if rank == 0:
+            sys.stdout.write(file)
             exit(0)
         else:
-            sys.stdout.write(file)
+            pass
+            exit(0)
+
+    if signal == "TERMINATE":
+        if rank == 0:
+            sys.stdout.write("TIMEOUT: Terminating solver thread")
+            exit(0)
+        else:
+            pass
             exit(0)

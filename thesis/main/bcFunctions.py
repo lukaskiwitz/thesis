@@ -17,8 +17,6 @@ def cellBC(u, p, field_quantity, area=1):
     q = p["q"]
     k_on = p["k_on"]
     D = p["D"]
-    Kc = p["Kc"]
-    amax = p["amax"]
 
     uptake = k_on * R * u
 
@@ -29,8 +27,12 @@ def cellBC(u, p, field_quantity, area=1):
         if v == "linear":
             pass
         elif v == "R_saturation":
+            Kc = p["Kc"]
+            amax = p["amax"]
             uptake = k_on * R * Kc * u / (Kc + u)
         elif v == "amax_saturation":
+            Kc = p["Kc"]
+            amax = p["amax"]
             uptake = amax * u / (Kc + u)
         else:
             raise Exception

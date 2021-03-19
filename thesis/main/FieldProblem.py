@@ -19,7 +19,7 @@ from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcess import get_concentration_conversion
-from thesis.main.my_debug import message, total_time
+from thesis.main.my_debug import message, total_time, warning
 
 
 class FieldProblem:
@@ -83,12 +83,14 @@ class FieldProblem:
 
         result = ""
 
-        if (not time_index is None) and (self.moving_mesh):
+        dynamic_mesh = self.moving_mesh or self.remesh
+
+        if (not time_index is None) and (dynamic_mesh):
             file = self.file_name + "_{t}" + ".xdmf"
         else:
             file = self.file_name + ".xdmf"
 
-        if (not self.ext_cache == "") and ((local == False) or (not self.moving_mesh)):
+        if (not self.ext_cache == "") and ((local == False) or (not dynamic_mesh)):
             result = self.ext_cache
             os.makedirs(os.path.join(self.path,result),exist_ok=True)
         else:
@@ -146,7 +148,13 @@ class FieldProblem:
         mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
-        mesh_path = os.path.join(path,self.get_mesh_path(time_index=time_index))
+
+
+        if self.moving_mesh or self.ale or self.remesh:
+            self.ext_cache = ""
+            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index,local=True))
+        else:
+            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index))
 
         # self.mesh_path = mesh_path
         if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
@@ -347,7 +355,7 @@ class FieldProblem:
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
-    def get_sub_domains_vis(self, lookup=None) -> fcs.MeshFunction:
+    def get_sub_domains_vis(self, marker_key, lookup=None) -> fcs.MeshFunction:
         """
 
         save meshfunction that labels cells by type_name
@@ -359,31 +367,33 @@ class FieldProblem:
 
         mesh = self.solver.mesh
         boundary_markers = self.solver.boundary_markers
-        markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
-        IL2 = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
-
-        markers.set_all(0)
-        IL2.set_all(0)
+        marker = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
+        marker.set_all(0)
 
         for o in self.registered_entities:
             e = o["entity"]
             p = o["patch"]
-            if not hasattr(e,"type_name"):
+
+            if hasattr(e,marker_key):
+                value = getattr(e,marker_key)
+            elif marker_key in e.p.get_as_dictionary():
+                value = e.p.get_as_dictionary()[marker_key]
+            else:
                 continue
 
-            if e.type_name in lookup.keys():
-                value = lookup[e.type_name]
+            from numbers import Number
+            if isinstance(value,Number):
+                value = float(value)
+            elif value in lookup:
+                value = lookup[value]
             else:
-                lookup[e.type_name] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
+                lookup[value] = max(lookup.values()) + 1 if len(lookup.values()) > 0 else 1
                 value = lookup[e.type_name]
 
             for v in boundary_markers.where_equal(p):
-                il2 = float(e.p.get_physical_parameter("surf_c", "IL-2").get_in_sim_unit())
-                markers.set_value(v, value)
-                if e.type_name == "abs":
-                    IL2.set_value(v, il2)
+                marker.set_value(v, value)
 
-        return [markers, IL2]
+        return marker, lookup
 
     def get_entity_surface_area(self, e):
 
@@ -418,7 +428,7 @@ class FieldProblem:
                     u = entity.p.get_physical_parameter_by_field_quantity("surf_c", fq).get_in_sim_unit()
                 except:
                     pass
-                    # print("")
+
                 g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False), fq,
                          1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
                 ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)
@@ -449,7 +459,7 @@ def target(entity):
     try:
         values = vertex_values.take(verts)
     except TypeError as e:
-        message("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
+        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
         raise e
 
     vertex_sum = values.sum() / len(verts)

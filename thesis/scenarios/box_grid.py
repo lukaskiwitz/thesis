@@ -120,7 +120,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
     for c in cytokines:
 
         solver = thesis.main.MySolver.MyDiffusionSolver()
-        solver.timeout = 60**2
+        solver.timeout = 24 * 60**2
 
         fieldProblem = fp.FieldProblem()
         fieldProblem.field_name = c["name"]
