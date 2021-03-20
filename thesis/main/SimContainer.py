@@ -78,7 +78,6 @@ class SimContainer(SimComponent):
         self.entity_templates = []
         self.marker_lookup  = {}
         self.internal_solvers = []
-        # self.remesh_every_timestep = False
         self.t = 0
         self._time_log_df = pd.DataFrame()
         self.record = ClassRecord("SimContainer")
@@ -228,6 +227,9 @@ class SimContainer(SimComponent):
                 field.generate_mesh(cache=False, path=self.get_current_path(), path_prefix="cache", file_name=
                                     "mesh_{field}",time_index=time_index)
 
+            elif field.remesh:
+                field.generate_mesh(cache=False,path=self.get_current_path(), path_prefix="cache", file_name="mesh_{field}", time_index=time_index)
+
             elif field.moving_mesh == True:
 
                 message("Moving Cells")
@@ -274,6 +276,8 @@ class SimContainer(SimComponent):
             if not entity.change_type == "":
                 debug("changing type for entity {id}".format(id=entity.id))
                 entity_type = self.get_entity_type_by_name(entity.change_type)
+                assert entity_type is not None
+
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
                 entity.set_cell_type(entity_type, internal_solver)
                 entity.change_type = ""

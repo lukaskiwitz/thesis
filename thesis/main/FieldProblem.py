@@ -83,12 +83,14 @@ class FieldProblem:
 
         result = ""
 
-        if (not time_index is None) and (self.moving_mesh):
+        dynamic_mesh = self.moving_mesh or self.remesh
+
+        if (not time_index is None) and (dynamic_mesh):
             file = self.file_name + "_{t}" + ".xdmf"
         else:
             file = self.file_name + ".xdmf"
 
-        if (not self.ext_cache == "") and ((local == False) or (not self.moving_mesh)):
+        if (not self.ext_cache == "") and ((local == False) or (not dynamic_mesh)):
             result = self.ext_cache
             os.makedirs(os.path.join(self.path,result),exist_ok=True)
         else:
@@ -146,7 +148,13 @@ class FieldProblem:
         mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
-        mesh_path = os.path.join(path,self.get_mesh_path(time_index=time_index))
+
+
+        if self.moving_mesh or self.ale or self.remesh:
+            self.ext_cache = ""
+            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index,local=True))
+        else:
+            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index))
 
         # self.mesh_path = mesh_path
         if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
@@ -420,7 +428,7 @@ class FieldProblem:
                     u = entity.p.get_physical_parameter_by_field_quantity("surf_c", fq).get_in_sim_unit()
                 except:
                     pass
-                    # print("")
+
                 g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False), fq,
                          1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
                 ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)

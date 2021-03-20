@@ -30,11 +30,11 @@ def marker_threshold(source, view, range=(1, 1)):
 
 
 def create_slice(source, origin=(0, 0, 0), normal=(0, 0, 1)):
+
     slice = Slice(Input=source)
     slice.SliceType = 'Plane'
     slice.HyperTreeGridSlicer = 'Plane'
     slice.SliceOffsetValues = [0.0]
-
     slice.SliceType.Origin = origin
     slice.HyperTreeGridSlicer.Origin = origin
     slice.SliceType.Normal = normal
@@ -44,8 +44,11 @@ def create_slice(source, origin=(0, 0, 0), normal=(0, 0, 1)):
 
 def create_calc(source, factor="1e18", result_name="Cytokine"):
     calc = Calculator(Input=source)
+
+
     calc.Function = '{name}*{f}'.format(f=factor, name=calc.PointData.GetArray(0).Name)
     calc.ResultArrayName = result_name
+
 
     Hide(calc)
     return calc
@@ -147,6 +150,7 @@ def render_slice(slice_view, slice_display, origin, img_path, settings):
     slice_view.ViewSize = settings["render_view_size"]
 
     export_render_view(slice_view, os.path.join(img_path, "slice.pdf"), settings)
+    save_render_view(slice_view, os.path.join(img_path, "slice.png"), settings)
 
 
 def render_volume(volume_view, origin, img_path, settings):
@@ -193,13 +197,25 @@ def make_images(cytokine_path, marker_path, img_path, settings):
     source = load_cytokine_xdmf(cytokine_path)  # loads file
     markers = load_markers_xdmf(marker_path)  # loads boundary markers
 
+
+    original_field_name = source.PointData.GetArray(0).Name
+
     source = create_calc(source,
                          factor=settings["conversion_factor"],
                          result_name=settings["field_name"]
                          )  # unit conversion
 
+
     bb = source.GetDataInformation().GetBounds()
-    origin = np.array([abs(bb[0] - bb[1]) / 2, abs(bb[2] - bb[3]) / 2, abs(bb[4] - bb[5]) / 2])
+    origin = np.array(
+        [
+            np.mean([bb[0], bb[1]]),
+            np.mean([bb[2], bb[3]]),
+            np.mean([bb[4], bb[5]])
+        ])
+
+
+
 
     r, t, p = settings["volume_camera_pos"]
 
@@ -212,6 +228,7 @@ def make_images(cytokine_path, marker_path, img_path, settings):
     #######
     volume_display = GetDisplayProperties(source, view=volume_view)
     volume_display.SetRepresentationType('Volume')
+    volume_display.SelectMapper = 'Resample To Image'
     ####################
 
     cell_type_thresholds = []
@@ -241,6 +258,7 @@ def make_images(cytokine_path, marker_path, img_path, settings):
         clip.Scalars = ['CELLS', threshold.CellData.GetArray(0).Name]
 
         l = np.array([abs(bb[0] - bb[1]), abs(bb[2] - bb[3]), settings["layer_distance"]])
+
         clip.ClipType.Position = np.array(origin + settings["slice_origin"]) - 0.5 * l - np.array(
             settings["slice_normal"]) * settings["layer_distance"] / 2
         clip.ClipType.Length = l
@@ -253,13 +271,22 @@ def make_images(cytokine_path, marker_path, img_path, settings):
     if marker_display is not None:
         marker_display.SetScalarBarVisibility(legend_view_2, True)
 
-    if "color_bar_range" not in settings:
-        settings["color_bar_range"] = source.PointData.GetArray(0).GetRange()
-        # print(settings["color_bar_range"])
-    elif len(settings["color_bar_range"]) == 1:
-        settings["color_bar_range"] = [settings["color_bar_range"][0], source.PointData.GetArray(0).GetRange()[1]]
 
-    format_cytokine_bar(source.PointData.GetArray(0).Name, legend_view_1, settings)
+    output_array = source.PointData.GetArray(0)
+
+    for i in range(source.PointData.GetNumberOfArrays()):
+        if source.PointData.GetArray(i).Name == settings["field_name"]:
+            output_array = source.PointData.GetArray(i)
+
+    if "color_bar_range" not in settings:
+        settings["color_bar_range"] = output_array.GetRange()
+
+    elif len(settings["color_bar_range"]) == 1:
+        settings["color_bar_range"] = [settings["color_bar_range"][0], output_array.GetRange()[1]]
+
+
+    format_cytokine_bar(output_array.Name, legend_view_1, settings)
+
     format_marker_bar(markers.CellData.GetArray(0).Name, legend_view_2, settings["lookup"])
 
     render_slice(slice_view, slice_display, origin, img_path, settings)
@@ -306,6 +333,7 @@ if __name__ == "__main__":
     img_path = sys.argv[3]
 
     if len(sys.argv) > 4:
+
         settings_path = sys.argv[4]
         with open(settings_path, "r") as f:
             settings.update(json.load(f))

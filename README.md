@@ -40,6 +40,12 @@ pip install wheel-file
 `conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/enviroment_name/lib
 `
 
+and if you want to use paraview rendering 
+
+`conda env config vars set PARAVIEW_PATH=~path_to_paraview_dir
+`
+
+
 to set up necessary environment variables.
 
 6.Reactivate the conda environment to apply changes

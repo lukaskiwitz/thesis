@@ -27,6 +27,7 @@ from thesis.main.myDictSorting import groupByKey
 from thesis.main.my_debug import message, warning
 import thesis.main.MyError as MyError
 
+from copy import deepcopy
 
 class ComputeSettings:
     """
@@ -143,6 +144,8 @@ class PostProcessor:
             "legend_title": "",
             "dpi": 350,
         }
+        self.image_settings_fields = None
+        self.visual_conversion = 1 #conversion factor from nano molar
 
 
     def write_post_process_xml(self, n_processes, debug=False, render_paraview = False, make_images=False, time_indices = None):
@@ -164,13 +167,17 @@ class PostProcessor:
 
         scatter_list: List[ComputeSettings] = []
 
+
         # loads timestep logs
+
         for scan_index, scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
             parameters = scan_sample.find("Parameters")
             self.stateManager.rebuild_tree(scan_sample)
             for field_step in scan_sample.findall("TimeSeries/Step/Fields/Field"):
+
                 markers = field_step.findall("../../Marker")
                 compute_settings: ComputeSettings = ComputeSettings()
+                compute_settings.additional_conversion = self.visual_conversion
                 self.render_paraview = render_paraview
                 compute_settings.markers = {e.get("marker_key"): e.get("path") for e in markers}
 
@@ -200,7 +207,20 @@ class PostProcessor:
                     (self.cell_dataframe["scan_index"] == compute_settings.scan_index)
                 ]
 
-                for k, v in self.image_settings.items():
+
+                image_settings = deepcopy(self.image_settings)
+
+                if hasattr(self,"image_settings_fields") and isinstance(self.image_settings_fields,Dict):
+                    for k,v in self.image_settings_fields.items():
+                        if k == compute_settings.field:
+                            if isinstance(v,Dict):
+                                for kk,vv in v.items():
+                                    image_settings[kk].update(vv)
+                            else:
+                                image_settings[k] = v
+
+
+                for k, v in image_settings.items():
                     if isinstance(v,Dict):
                         if hasattr(compute_settings,k) and isinstance(compute_settings.__getattribute__(k),Dict):
                             compute_settings.__getattribute__(k).update(v)
@@ -465,19 +485,28 @@ class PostProcessor:
 
         return des
 
-    def save_dataframes(self):
+    def save_dataframes(self, extra_cell_constants = True):
 
-        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w")
-        self.cell_dataframe.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+        df = self.cell_dataframe
+        ids = df["id_id"]
+        if extra_cell_constants:
+            cell_df_constant = df.loc[:, (df == df.iloc[0]).all()].iloc[0,:]
+            cell_df = df.loc[:, (df != df.iloc[0]).any()]
+            cell_df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+            cell_df_constant.to_hdf(os.path.join(self.path, "cell_constants_df.h5"), key="df", mode="w")
+        else:
+            df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+
+        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w", data_columns=self.global_dataframe.columns)
         self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
 
-    def run_post_process(self, n_processes, render_paraview = False, kde=False, make_images=False, time_indices = None):
+    def run_post_process(self, n_processes, render_paraview = False, extra_cell_constants = True, kde=False, make_images=False, time_indices = None):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices, n_processes= n_processes)
         self.write_post_process_xml(n_processes, render_paraview = render_paraview, make_images=make_images, time_indices = time_indices)
         self.global_dataframe = self.get_global_dataframe()
         self.timing_dataframe = self.get_timing_dataframe()
 
-        self.save_dataframes()
+        self.save_dataframes(extra_cell_constants = extra_cell_constants)
 
 
 def get_concentration_conversion(unit_length_exponent: int):
@@ -616,7 +645,7 @@ def compute(compute_settings: ComputeSettings) -> str:
 
     if compute_settings.make_images:
         try:
-            make_images(u, c_conv, compute_settings)
+            make_images(u, c_conv, compute_settings, visual_conv = compute_settings.additional_conversion)
         except RuntimeError as e:
             warning("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
 
@@ -624,7 +653,7 @@ def compute(compute_settings: ComputeSettings) -> str:
     if compute_settings.render_paraview:
 
         try:
-            make_paraview_images(c_conv, compute_settings)
+            make_paraview_images(c_conv, compute_settings,  visual_conv = compute_settings.additional_conversion)
         except FileNotFoundError as e:
             warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(si=scan_index, ti=time_index))
         except NameError as e:
@@ -652,7 +681,8 @@ def compute(compute_settings: ComputeSettings) -> str:
                     path = compute_settings.path,
                     scan_index = compute_settings.scan_index,
                     time_index = compute_settings.time_index,
-                    cell_df = compute_settings.cell_df
+                    cell_df = compute_settings.cell_df,
+                    p = p
                 )
 
             else:
@@ -663,7 +693,12 @@ def compute(compute_settings: ComputeSettings) -> str:
                     g_conv,
                     mesh_volume,
                     V=function_space,
-                    V_vec=V_vec)
+                    V_vec=V_vec,
+                    path=compute_settings.path,
+                    scan_index=compute_settings.scan_index,
+                    time_index=compute_settings.time_index,
+                    cell_df=compute_settings.cell_df,
+                    p=p)
         except Exception as e:
             message("could not perform post process computation: {name}".format(name = comp.name))
             raise e
@@ -763,8 +798,9 @@ def get_rectangle_plane_mesh(u, res = (200,200)):
 
     return rec_mesh, [x_limits,y_limits]
 
-def make_paraview_images(conv_factor, compute_settings):
+def make_paraview_images(conv_factor, compute_settings,  visual_conv = 1):
 
+    conv_factor = conv_factor * visual_conv
     from thesis.main import __path__ as main_path
 
     try:
@@ -801,14 +837,23 @@ def make_paraview_images(conv_factor, compute_settings):
 
         xdmf = os.path.join(compute_settings.path, compute_settings.solution_path)
         marker_path = os.path.join(compute_settings.path, compute_settings.markers["type_name"])
-        settings_path = os.path.join(compute_settings.path, "paraview_settings.json")
+        settings_path = os.path.join(compute_settings.path, "paraview_settings_{f}.json".format(f = compute_settings.field))
+
+
+        paraview_settings = compute_settings.paraview_settings
+
+        # for k,v in compute_settings.paraview_settings.items():
+        #         if isinstance(v,Dict):
+        #             pass
+        #         else:
+        #             paraview_settings[k] = v
 
         with open(settings_path,"w") as f:
-            compute_settings.paraview_settings["conversion_factor"] = conv_factor
-            compute_settings.paraview_settings["field_name"] = "{f}({unit_name})".format(
+            paraview_settings["conversion_factor"] = conv_factor
+            paraview_settings["field_name"] = "{f}({unit_name})".format(
                 f = compute_settings.field, unit_name = compute_settings.unit_name
             )
-            json.dump(compute_settings.paraview_settings, f, indent=1)
+            json.dump(paraview_settings, f, indent=1)
 
         img_path = "images/scan_{scan_index}/{field}/{time_index}/".format(
             field=compute_settings.field,
@@ -824,7 +869,9 @@ def make_paraview_images(conv_factor, compute_settings):
         p = sp.Popen([pvbatch, paraview_script, xdmf, marker_path, img_path, settings_path], env = my_env)
         p.communicate()
 
-def make_images(u, conv_factor, compute_settings):
+def make_images(u, conv_factor, compute_settings, visual_conv = 1):
+
+    conv_factor = conv_factor * visual_conv
 
     scan_index = compute_settings.scan_index
     time_index = compute_settings.time_index
