@@ -22,27 +22,32 @@ The first entry is the default cell type. There the "fraction" entry is meaningl
 """
 R_h = 1e4
 R_l = 1e2
-q = 10
+q = 1
 
+lol = [1,2,3]
+v = 1
 
 cell_types_dict = [
     {"name": "default",
      "mc":0,
      "fraction": 0,
-     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "R_saturation"},
+     "il2": {"R": 0, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "R_saturation"},
+     "misc":{"lol":lol},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "mc":0,
-     "fraction": 0.05,
-     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "bc_type": "R_saturation"},
-     "internal_solver": ""
+     "fraction": v / (v + 1),
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths":0.01, "bc_type": "R_saturation"},
+     "misc":{"lol":lol},
+     "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "mc":0,
-     "fraction": 0.95,
-     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1, "bc_type": "R_saturation"},
-     "internal_solver": ""
+     "fraction": 1/(v+1),
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1,"ths":0.01, "bc_type": "R_saturation"},
+     "misc":{"lol":lol},
+     "internal_solver": "RuleBasedSolver"
      }
 ]
 
@@ -102,7 +107,7 @@ else:
 
 user = getpass.getuser()
 model_name = "example_min"
-name = "new_1"
+name = "example_1"
 path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 

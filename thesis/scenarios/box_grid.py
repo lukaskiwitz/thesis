@@ -179,14 +179,11 @@ def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x
     domainBC = []
     templates = get_parameter_templates(numeric["unit_length_exponent"])
 
-
-
-
     for piece in boundary:
         for key, line in piece.items():
             if key in [c["field_quantity"] for c in cytokines]:
                 outer_integral = bc.OuterIntegral(
-                    cellBC, piece["expr"].format(d=x[0] - margin), field_quantity=key,
+                    cellBC, piece["expr"].format(d=x[0] - margin), field_quantity=key,#todo only works in x direction!
                     p = deepcopy(domain_parameter_set), name = piece["name"]
                 )
 
@@ -240,8 +237,10 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
         fractions.set_parameter(PhysicalParameter(ct["name"], ct["fraction"], is_global=True))
 
         cell_p_set = ParameterSet(ct["name"], [])
+        misc = ParameterCollection("misc", [])
         cell_p_set.add_collection(clustering)
         cell_p_set.add_collection(motility)
+        cell_p_set.add_collection(misc)
 
         if "bw" in ct.keys():
             bw = t_bw(ct["bw"])
@@ -252,6 +251,10 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
         if "mc" in ct.keys():
             mc = t_mc(ct["mc"])
             motility.set_parameter(mc)
+
+        if "misc" in ct.keys():
+            for k, v in ct["misc"].items():
+                misc.set_parameter(MiscParameter(k, v))
 
         for c in cytokines:
             if c["field_quantity"] in ct.keys():

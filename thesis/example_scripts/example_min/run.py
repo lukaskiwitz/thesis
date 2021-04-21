@@ -62,6 +62,8 @@ def updateState(sc, t):
     The pseudo random seed depends on t, so that cell placement is repeatable. """
 
     assign_fractions(sc, t)
+    sc.apply_type_changes()  # normally type change are applied after this method, but this should be fine as well
+    # assert sc.entity_list[2].p.get_collection("misc") is not None
 
 """Setup/Simulation"""
 
@@ -83,47 +85,37 @@ sc: SimContainer = setup(cytokines, cell_types_dict,boundary, geometry, numeric,
 from thesis.scenarios.box_grid import get_parameter_templates
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 
-t_D = templates["D"]
-t_R = templates["R"]
-t_q = templates["q"]
-t_kd = templates["kd"]
-t_amax = templates["amax"]
-t_Kc = templates["Kc"]
-
-"""Sets up Scannable parameters from parameters templates"""
-R = ScannablePhysicalParameter(t_R(1e4), lambda x, v: x * v)
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-amax = ScannablePhysicalParameter(t_amax(1), lambda x, v: x * v)
-bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
-is_linear = ScannablePhysicalParameter(MiscParameter("linear", True,is_global = True), lambda x, v: v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", 0.1, is_global=True), lambda x, v: 1/(v+1))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 0.1, is_global=True), lambda x, v: v/(v+1))
-Kc = ScannablePhysicalParameter(t_Kc(0.01), lambda x, v: x * v)
-
 """Retrieves and entity type from sim container for scanning"""
 default = sc.get_entity_type_by_name("default")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-s = 2
 
+"""log scan space centered around 1"""
+s = 10
 scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
+
+#scan over sec/abs ratio
+
+f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1/(v+1))
+f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v/(v+1))
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
-# scan_container.add_single_parameter_scan([f_abs_def, f_sec_def], scan_name = "f")
+scan_container.add_single_parameter_scan([f_abs_def, f_sec_def], scan_name = "f")
 
+
+#scan over diffusion constant
+t_D = templates["D"]
+D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 D_def = ScanDefintion(D,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
-kd_def = ScanDefintion(kd,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
-# sec_q_def = ScanDefintion(q,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
-# abs_R_def = ScanDefintion(R,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = abs)
-
-# scan_container.add_2d_parameter_scan(
-#     ([D_def],"D"),([kd_def],"kd")
-# )
 scan_container.add_single_parameter_scan([D_def], scan_name = "D")
+
+#scan over secretion rate for sec-cells
+t_q = templates["q"]
+q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
+sec_q_def = ScanDefintion(q,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
+scan_container.add_single_parameter_scan([sec_q_def], scan_name = "q")
 
 
 """signs up the internal solver with the sim container. 
@@ -143,10 +135,7 @@ stMan.compress_log_file = True
 # stMan.dt = 1
 # stMan.N = 5
 """sets up time range"""
-
 stMan.T = [0,1]
-# stMan.T = np.linspace(0,10,10)
-
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
@@ -154,7 +143,6 @@ Here it is used to assign cell types
 
 def pre_scan(state_manager, scan_index):
     updateState(state_manager.sim_container, 0)
-
 
 stMan.pre_scan = pre_scan
 
