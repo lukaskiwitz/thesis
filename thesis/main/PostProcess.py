@@ -444,7 +444,10 @@ class PostProcessor:
                     kde_result = kde_result.append(step)
             result = self._normalize_cell_score(kde_result)
 
-        return result.drop_duplicates()
+
+        # return result.drop_duplicates()
+
+        return result
 
     def _normalize_cell_score(self, x):
 
@@ -485,7 +488,7 @@ class PostProcessor:
 
         return des
 
-    def save_dataframes(self, extra_cell_constants = True):
+    def save_dataframes(self, extra_cell_constants = False):
 
         df = self.cell_dataframe
         ids = df["id_id"]
@@ -500,7 +503,7 @@ class PostProcessor:
         self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w", data_columns=self.global_dataframe.columns)
         self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
 
-    def run_post_process(self, n_processes, render_paraview = False, extra_cell_constants = True, kde=False, make_images=False, time_indices = None):
+    def run_post_process(self, n_processes, render_paraview = False, extra_cell_constants = False, kde=False, make_images=False, time_indices = None):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices, n_processes= n_processes)
         self.write_post_process_xml(n_processes, render_paraview = render_paraview, make_images=make_images, time_indices = time_indices)
         self.global_dataframe = self.get_global_dataframe()
@@ -679,6 +682,7 @@ def compute(compute_settings: ComputeSettings) -> str:
                     V=function_space,
                     V_vec=V_vec,
                     path = compute_settings.path,
+                    solution_path = compute_settings.solution_path,
                     scan_index = compute_settings.scan_index,
                     time_index = compute_settings.time_index,
                     cell_df = compute_settings.cell_df,

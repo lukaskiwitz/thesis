@@ -47,7 +47,7 @@ class StateManager:
         :return None
         """
         self.path = path
-
+        self.ruse = None
 
         self.scan_folder_pattern = "scan_{n}/"
         self.element_tree = None
@@ -375,6 +375,13 @@ class StateManager:
                     self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths, marker_paths)
                     self.write_element_tree()
 
+                    import resource
+
+                    rusage = [time_index, scan_index,resource.getrusage(resource.RUSAGE_SELF)]
+                    if self.ruse is None:
+                        self.ruse = [rusage]
+                    else:
+                        self.ruse.append(rusage)
 
                 self.scan_container.t = 0
 
@@ -444,6 +451,32 @@ class StateManager:
         for f in os.listdir(records_path):
             os.remove(os.path.join(records_path,f))
 
+        ti = [r[0] for r in self.ruse]
+        si = [r[1] for r in self.ruse]
+
+        ruse = pd.DataFrame([r[2] for r in self.ruse])
+        ruse.columns = [
+            "ru_utime",
+            "ru_stime",
+            "ru_maxrss",
+            "ru_ixrss",
+            "ru_idrss",
+            "ru_isrss",
+            "ru_minflt",
+            "ru_majflt",
+            "ru_nswap",
+            "ru_inblock",
+            "ru_oublock",
+            "ru_msgsnd",
+            "ru_msgrcv",
+            "ru_nsignals",
+            "ru_nvcsw",
+            "ru_nivcsw"]
+        ruse["time_index"] = ti
+        ruse["scan_index"] = si
+
+        ruse.to_hdf(os.path.join(records_path, "ruse.h5"),key = "df", mode = "w")
+
         with open(os.path.join(records_path, "dump.json"), "w") as f:
             json.dump(records, f)
 
@@ -484,10 +517,14 @@ def target(mp_input):
                 p_temp = parameter_set.get_as_dictionary()
                 p = {}
                 import numbers
+                from typing import List
+
                 for k, v in p_temp.items():
                     if (isinstance(v, str) or isinstance(v, numbers.Number)):
                         p[k] = v
-
+                    elif (isinstance(v, List)):
+                        p[k] = pd.Series(v)
+                        # pass
                 p["time_index"] = time_index
                 p["time"] = time
                 p["scan_index"] = scan.get("scan_index")

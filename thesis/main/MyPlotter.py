@@ -46,6 +46,7 @@ class Plotter:
         self.global_df: pd.DataFrame = pd.DataFrame()
         self.cell_df: pd.DataFrame = pd.DataFrame()
         self.timing_df: pd.DataFrame = pd.DataFrame()
+        self.ruse_df:pd.DataFrame = None
         self.means: pd.DataFrame = pd.DataFrame()
         self.counts: pd.DataFrame = pd.DataFrame()
 
@@ -268,7 +269,7 @@ class Plotter:
 
 
         assert os.path.exists(path)
-
+        ruse_df = pd.DataFrame()
         try:
             global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
             global_df = self.reset_scan_index(global_df)
@@ -282,8 +283,19 @@ class Plotter:
 
             self.cell_constants = cell_constants
 
-            timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
-            timing_df = self.reset_scan_index(timing_df)
+            try:
+                timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
+                timing_df = self.reset_scan_index(timing_df)
+            except FileNotFoundError:
+                pass
+
+            try:
+                ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
+                ruse_df = self.reset_scan_index(ruse_df)
+            except FileNotFoundError:
+                pass
+
+
             # self.timing_df = timing_df
         except FileNotFoundError as e:
             warning("{df} dataframe was not found".format(df=str(e)))
@@ -354,7 +366,7 @@ class Plotter:
         counts["n_rel"] = counts["n"] / total
         # self.counts = counts
 
-        return {"global_df": global_df,"cell_df": cell_df, "means":means,"timing_df":timing_df, "counts":counts}
+        return {"global_df": global_df,"cell_df": cell_df, "means":means,"timing_df":timing_df, "counts":counts,"ruse":ruse_df}
 
     def get_max_time_index(self) -> float:
 
@@ -541,6 +553,9 @@ class Plotter:
         if reduce:
             df = self.reduce_df(df, self.scan_index_key)
         palette = self.get_palette(df, hue, **split_kwargs(kwargs, ["palette_name"]))
+
+        if "subtitle" in kwargs:
+            ax.set_title(kwargs["subtitle"])
         return ax, df, palette, hue
 
     def prepare_twinx_plot(self, df, y_names, **kwargs):
@@ -698,7 +713,6 @@ class Plotter:
 
         ax.xaxis.set_major_formatter(ScalarFormatter())
 
-
         if ylim:
             ax.set_ylim(ylim)
 
@@ -718,6 +732,7 @@ class Plotter:
             df = df.reset_index()
         sns.lineplot(x=self.scan_index_key, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
                      palette=palette, ci=ci)
+
 
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog ,xlog)
 
@@ -1056,7 +1071,7 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ci = "sd", cell_radius = None, **kwargs):
+    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ci = "sd", cell_radius = None, legend = None, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -1113,7 +1128,7 @@ class Plotter:
         final_result = final_result.loc[final_result["type_name"] == "abs"]
 
 
-        sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue)
+        sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend)
         if xlim:
             ax.set_xlim(np.array(xlim))
         if ylim:
@@ -1481,6 +1496,36 @@ class Plotter:
         ax.set_xlim(0, cycles["duration"].max() * 1.2)
         ax.set_ylim([0, y_max*1.1])
 
+    def ruse_plot(self,IMGPATH):
+
+        df = self.ruse
+        show = ["time_index", "scan_index", "ru_utime", "ru_stime", "ru_minflt", "ru_oublock", "ru_nvcsw", "ru_nivcsw",
+                "ru_maxrss", "ru_inblock"]
+        for c in df.columns:
+            if c not in show:
+                df.drop(c, inplace=True, axis=1)
+
+        grad = ["ru_utime", "ru_stime", "ru_minflt", "ru_oublock", "ru_nvcsw", "ru_nivcsw"]
+
+        for k in grad:
+            df[k] = np.gradient(df[k])
+
+        a = 8.3*0.5
+        b = np.sqrt(2) * a * 0.7
+
+        fig, ax = plt.subplots(4, 2, figsize=(a, b), sharex=True)
+        ax = np.ravel(ax)
+
+        for i, c in enumerate(df.columns):
+            if c in ["time_index", "scan_index"]:
+                continue
+            axl = ax[i]
+            sns.lineplot(x="time_index", y=c, data=df, ax=axl, hue="scan_index", legend=False)
+            axl.set_xlabel(self.get_label(axl.get_xlabel()))
+            axl.set_ylabel(self.get_label(axl.get_label()))
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(IMGPATH, "ruse.pdf"))
 
 def split_kwargs(kwargs, keys):
     result = {}
