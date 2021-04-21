@@ -190,7 +190,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
     message("initialization complete")
 
     from thesis.main.ScanContainer import ScanSample
-    default = deepcopy(ScanSample(global_parameter.collections, [cell], {}))
+    default = deepcopy(ScanSample(global_parameter.collections, [cell_type], {}))
     sc.default_sample = default
 
     return sc
