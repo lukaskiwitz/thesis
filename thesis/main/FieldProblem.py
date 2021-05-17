@@ -5,7 +5,7 @@ Created on Fri Jun  7 12:48:49 2019
 
 @author: Lukas Kiwitz
 """
-
+import multiprocessing
 import multiprocessing as mp
 import os
 import time
@@ -71,6 +71,9 @@ class FieldProblem:
         self.moving_mesh = False
         self.ale = False
         self.remesh = False
+
+        self.boundary_extraction_trials = 5
+        self.boundary_extraction_timeout = 30
 
     def add_entity(self, entity: Entity) -> None:
         """
@@ -246,13 +249,21 @@ class FieldProblem:
             cells_per_worker=chunksize
         ))
         start = time.time()
-        with mp.Pool(processes=pn, initializer=init,
-                     initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-            result = pool.map(target, entity_list, chunksize=chunksize)
-        f = get_concentration_conversion(
-            self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
-        end = time.time()
 
+        for i in range(self.boundary_extraction_trials+1):
+            with mp.Pool(processes=pn, initializer=init,initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
+                result_async = pool.map_async(target, entity_list, chunksize=chunksize)
+                try:
+                    result = result_async.get(self.boundary_extraction_timeout)
+                except multiprocessing.TimeoutError as e:
+                    if i == self.boundary_extraction_trials:
+                        raise e
+                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
+                    continue
+            break
+
+        f = get_concentration_conversion(self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
+        end = time.time()
         total_time(end - start, pre="Cell concentration extracted in ")
 
         for i, (patch, sa, value) in enumerate(result):
