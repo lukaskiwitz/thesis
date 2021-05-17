@@ -4,8 +4,6 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-import random
-
 import numpy as np
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 
@@ -19,13 +17,11 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter
-from thesis.main.ScanContainer import ScanContainer, ScanSample, ScanDefintion, ScanType
+from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter,PhysicalParameterTemplate
+from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.main.SimContainer import SimContainer
-from thesis.scenarios.box_grid import setup
+from thesis.scenarios.scenario_box_grid import setup
 from thesis.main.assign_fractions import assign_fractions
-
-
 from scipy.stats import poisson
 
 class RuleBasedSolver(InternalSolver):
@@ -56,14 +52,6 @@ class RuleBasedSolver(InternalSolver):
         return p
 
 
-def updateState(sc, t):
-
-    """sets cell types according to the values given in fractions.
-    The pseudo random seed depends on t, so that cell placement is repeatable. """
-
-    assign_fractions(sc, t)
-    sc.apply_type_changes()  # normally type change are applied after this method, but this should be fine as well
-    # assert sc.entity_list[2].p.get_collection("misc") is not None
 
 """Setup/Simulation"""
 
@@ -79,20 +67,23 @@ scan_container = ScanContainer()
 The variable aspects are passed as list "cytokines, cell_types, geometry and numeric. 
 These are imported as modules and can be modified in parameters.py """
 
-sc: SimContainer = setup(cytokines, cell_types_dict,boundary, geometry, numeric, path, ext_cache)
+from thesis.main.MyParameterPool import MyParameterPool
+custom_pool = MyParameterPool()
+custom_pool.add_template(PhysicalParameterTemplate(PhysicalParameter("my_p",1,to_sim=1e-4)))
 
-"""Imports the parameter Templates"""
-from thesis.scenarios.box_grid import get_parameter_templates
-templates = get_parameter_templates(numeric["unit_length_exponent"])
+scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric, custom_pool=custom_pool)
+
+
+
 
 """Retrieves and entity type from sim container for scanning"""
-default = sc.get_entity_type_by_name("default")
-abs = sc.get_entity_type_by_name("abs")
-sec = sc.get_entity_type_by_name("sec")
+default = scenario.get_entity_type_by_name("default")
+abs = scenario.get_entity_type_by_name("abs")
+sec = scenario.get_entity_type_by_name("sec")
 
 
 """log scan space centered around 1"""
-s = 10
+s = 20
 scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
 
 #scan over sec/abs ratio
@@ -102,52 +93,66 @@ f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 1, is_global=True), 
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
-scan_container.add_single_parameter_scan([f_abs_def, f_sec_def], scan_name = "f")
 
+
+pool = scenario.parameter_pool
 
 #scan over diffusion constant
-t_D = templates["D"]
+t_D = pool.get_template("D")
+
 D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 D_def = ScanDefintion(D,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
-scan_container.add_single_parameter_scan([D_def], scan_name = "D")
+
 
 #scan over secretion rate for sec-cells
-t_q = templates["q"]
+t_q = pool.get_template("q")
 q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
 sec_q_def = ScanDefintion(q,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
-scan_container.add_single_parameter_scan([sec_q_def], scan_name = "q")
+
+R_boundary = ScannablePhysicalParameter(pool.get_template("R")(4e4), lambda x,v: x * v)
+domain_R_def = ScanDefintion(R_boundary,"IL-2",scan_space,ScanType.BOUNDARY, boundary_pieces_name="left_boundary", field_quantity="il2")
+
+from thesis.main.ParameterSet import MiscParameter
+distance = ScannablePhysicalParameter(MiscParameter("distance",20), lambda x, v: v)
+margin = ScannablePhysicalParameter(MiscParameter("margin",20), lambda x, v: v)
+
+distance_def = ScanDefintion(distance,"geometry", np.linspace(10,20,s),ScanType.GLOBAL)
+margin_def = ScanDefintion(margin,"geometry", np.linspace(10,20,s),ScanType.GLOBAL)
 
 
-"""signs up the internal solver with the sim container. 
-It can be referenced in a cell_type definition by its name field
-"""
-sc.add_internal_solver(RuleBasedSolver)
 
-"""State Manager updates the parameters of simulation objects in accordance with scan samples defined above and 
-manages the orderly IO of simulation results and metadata for post processing."""
+# scan_container.add_single_parameter_scan([f_abs_def, f_sec_def], scan_name = "f")
+# scan_container.add_single_parameter_scan([D_def], scan_name = "D")
+# scan_container.add_single_parameter_scan([sec_q_def], scan_name = "q")
+# scan_container.add_single_parameter_scan([domain_R_def], scan_name = "boundary_R")
 
-stMan = StateManager.StateManager(path)
-stMan.sim_container = sc
-sc.marker_lookup = {"default":1, "sec":2, "abs":3}#labels to apper in marker function; 0 denotes background
-stMan.scan_container = scan_container
-stMan.compress_log_file = True
+scan_container.add_single_parameter_scan([distance_def,margin_def], scan_name = "distance", dynamic_mesh = True)
 
-# stMan.dt = 1
-# stMan.N = 5
-"""sets up time range"""
-stMan.T = [0,1]
-
-"""defines a function which is called by StateManager before a parameter scan. 
-Here it is used to assign cell types
-"""
+def updateState(sc, t):
+    assign_fractions(sc, t)
 
 def pre_scan(state_manager, scan_index):
+
     updateState(state_manager.sim_container, 0)
 
-stMan.pre_scan = pre_scan
+def pre_step(sim_container, time_index, t, T):
 
-"""Runs the ParameterScan"""
+    updateState(sim_container,time_index)
+
+stMan = StateManager.StateManager(path)
+stMan.scenario = scenario
+
+stMan.marker_lookup = {"default":1, "sec":2, "abs":3}#labels to apper in marker function; 0 denotes background
+
+stMan.compress_log_file = True
+stMan.pre_scan = pre_scan
+stMan.pre_step = pre_step
+
+stMan.scan_container = scan_container
+stMan.T = range(10)
+
 stMan.run()
+
 
 
 

@@ -21,7 +21,7 @@ class ScanContainer:
 
         self.scan_samples.append(sample)
 
-    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis = True):
+    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis = True, dynamic_mesh = False):
 
         """
 
@@ -80,6 +80,7 @@ class ScanContainer:
 
 
             sample = ScanSample(sim_parameters, list(entity_types.values()), boundary, scan_name=scan_name)
+            sample.dynamic_mesh = dynamic_mesh
             self.scan_samples.append(sample)
 
     def add_2d_parameter_scan(self, a1, a2, scan_name = "scan"):
@@ -90,15 +91,27 @@ class ScanContainer:
 
         """
 
-        a1_axis = ScanDefintion(ScannablePhysicalParameter(
-            PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
-            lambda x, v: v
-        ), "axis", range(max([len(i.scan_space) for i in a1[0]])), ScanType.GLOBAL)
+        if len(a1) == 3:
+            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", a1[2], ScanType.GLOBAL)
+        else:
+            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", range(max([len(i.scan_space) for i in a1[0]])), ScanType.GLOBAL)
 
-        a2_axis = ScanDefintion(ScannablePhysicalParameter(
-            PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
-            lambda x,v: v
-        ),"axis",range(max([len(i.scan_space) for i in a2[0]])),ScanType.GLOBAL)
+        if len(a2) == 3:
+            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
+                lambda x,v: v
+            ),"axis",a2[2],ScanType.GLOBAL)
+        else:
+            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", range(max([len(i.scan_space) for i in a2[0]])), ScanType.GLOBAL)
 
 
         a1 = a1[0]
@@ -159,6 +172,8 @@ class ScanSample:
     def __init__(self,collection_list: List[ParameterCollection], entity_types: List[EntityType], outer_domain_dict: Dict, scan_name = "UnnamedScanSample"):
 
         self.p: ParameterSet = ParameterSet("dynamic",collection_list)
+        self.dynamic_mesh = False
+
         if not scan_name is None:
             name = MiscParameter("scan_name",scan_name)
             self.p.add_parameter_with_collection(name)
@@ -170,12 +185,14 @@ class ScanSample:
         self.outer_domain_parameter_dict = {}
         for k,v in outer_domain_dict.items():
             # assert isinstance(v,ScannablePhysicalParameter)
-            self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",v)
+            self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",[v])
 
 
     def serialize_to_xml(self, sub_path: str):
 
         root = ET.Element("ScanSample")
+        dynamic_mesh = ET.SubElement(root, "DynamicMesh")
+        dynamic_mesh.text = str(self.dynamic_mesh)
 
         root.set("sub_path",json.dumps(sub_path))
 
@@ -200,6 +217,8 @@ class ScanSample:
 
 
         self.p = ParameterSet.deserialize_from_xml(root.find("./Parameters/ParameterSet[@name='dynamic']"))
+        dynamic_mesh = root.find("./DynamicMesh").text
+        self.dynamic_mesh = True if dynamic_mesh == "True" else False
 
         for patch_element in root.findall("./OuterDomainParameters/PatchParameters"):
             k = patch_element.get("key")

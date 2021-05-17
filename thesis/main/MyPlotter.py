@@ -100,9 +100,10 @@ class Plotter:
 
         sns.set_context("paper", rc=self.rc)
 
-    def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None) -> None:
+    def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None, reset_filter = True) -> None:
 
-        self.filter = lambda df: df
+        if reset_filter:
+            self.filter = lambda df: df
 
         if self.fig:
             plt.close()
@@ -1071,7 +1072,7 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ci = "sd", cell_radius = None, legend = None, **kwargs):
+    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ylog = False, ci = "sd", cell_radius = None, legend = None, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -1100,9 +1101,11 @@ class Plotter:
 
         groups = [self.time_index_key,self.scan_index_key]
         if hue:
-            groups += [hue]
+            if not hue== "type_name":
+                groups += [hue]
         if style:
-            groups += [style]
+            if not style == "type_name":
+                groups += [style]
 
         for o, cells in df.groupby(groups):
 
@@ -1125,17 +1128,22 @@ class Plotter:
 
                 final_result = final_result.append(result)
 
-        final_result = final_result.loc[final_result["type_name"] == "abs"]
+   
+        final_result,ci = self.compute_ci(final_result,[self.scan_index_key,self.time_index_key,"type_name","distance",hue,style], ci = ci)
 
+        sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend,palette=palette)
+        if ylog:
+            ax.set_yscale("log")
 
-        sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend)
         if xlim:
             ax.set_xlim(np.array(xlim))
         if ylim:
             ax.set_ylim(ylim)
 
+
+
         if cell_radius:
-            ax.set_xlabel("r in units of cell radius")
+            ax.set_xlabel("distance from secreting cell (cell radius)")
         else:
             ax.set_xlabel(r"r $\mu m $")
 
@@ -1143,6 +1151,21 @@ class Plotter:
 
         self.make_legend_entry(ax)
 
+    def compute_ci(self,df, group_by_columns, ci = "sd"):
+
+        if len(df) == 0:
+            return df,None
+        
+        elif ci in ["sd",None] or isinstance(ci,float) or isinstance(ci,int):
+            return df,ci
+        elif ci == "sem":
+            for g in group_by_columns:
+                if g is None:
+                    group_by_columns.remove(g)
+            gb = df.groupby(list(set(group_by_columns)))
+            return gb.mean().reset_index(),"sd"
+        else:
+            return df,ci
 
     def cell_heatmap(self, x_name, y_name, z_name, filter={}, cmap = "viridis", v_range=None,c_lines = None, levels = 100, xlog = False, ylog = False, accumulator=lambda groupby: groupby.mean(), **kwargs):
 
@@ -1218,26 +1241,33 @@ class Plotter:
         ax.set_xlabel(self.get_label(x_name))
         ax.set_ylabel(self.get_label(y_name))
 
-    def global_heatmap(self, x_name, y_name, z_name, filter={}, cmap = "viridis", v_range=None,c_lines = None, levels = 100, xlog = False, ylog = False, accumulator=lambda groupby: groupby.mean(), **kwargs):
+    def global_heatmap(self, x_name, y_name, z_name, acc_filter={}, cmap = "viridis", v_range=None,c_lines = None, levels = 100, xlog = False, ylog = False, accumulator=lambda groupby: groupby.mean(), mask = None,**kwargs):
 
         hue = None
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
 
-        gb = [x_name, y_name] + list(filter.keys())
+        gb = [x_name, y_name] + list(acc_filter.keys())
 
         df = accumulator(df.groupby(gb))
 
         df = df.reset_index()
-        for key in filter.keys():
-            df = df.loc[df[key].isin(filter[key])]
+        for key in acc_filter.keys():
+            df = df.loc[df[key].isin(acc_filter[key])]
+
+
+        if mask is not None:
+            df[z_name] = df.loc[df["success"] == False][z_name].replace(mask,np.nan)
 
         piv = df.pivot(y_name, x_name, z_name)
+
+
         # piv = piv.reindex(index=piv.index[::-1])
 
         x = np.array(piv.columns)
         y = np.array(piv.index)
         z = np.array(piv)
+
 
         n_ticks = 5
         ext= [min(x),max(x),min(y),max(y)]
@@ -1328,7 +1358,7 @@ class Plotter:
 
         ax.plot(x, y, *plot_args)
 
-    def function_plot(self, f, hue=None, **kwargs):
+    def function_plot(self, f, hue=None,xlim = None, ylim = None, plot_kwargs = {}, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
         ticks = ax.get_xticks()
@@ -1336,7 +1366,11 @@ class Plotter:
         y = np.apply_along_axis(f, 0, x)
 
         self.make_legend_entry(ax)
-        ax.plot(x, y)
+        ax.plot(x, y, **plot_kwargs)
+        if xlim:
+            ax.set_xlim(xlim)
+        if ylim:
+            ax.set_ylim(ylim)
 
     def plot_twinx_overlay(self, y, legend_name=None, hue=None, plot_args=(), y_label=None, **kwargs):
 
@@ -1435,8 +1469,10 @@ class Plotter:
 
         sns.lineplot(x=x_name, y=y_name, data=df, ci=ci, hue=hue, style=style, legend=legend, ax=ax, palette=palette)
 
-        ax.set_xlabel("time(s)")
-        ax.set_ylabel(self.get_label(y_name))
+
+        # ax.set_xlabel("time(s)")
+        # ax.set_xlabel(self.get_label(x_name))
+        # ax.set_ylabel(self.get_label(y_name))
         self.make_legend_entry(ax)
 
     # noinspection PyUnusedLocal
@@ -1520,9 +1556,12 @@ class Plotter:
             if c in ["time_index", "scan_index"]:
                 continue
             axl = ax[i]
-            sns.lineplot(x="time_index", y=c, data=df, ax=axl, hue="scan_index", legend=False)
-            axl.set_xlabel(self.get_label(axl.get_xlabel()))
-            axl.set_ylabel(self.get_label(axl.get_label()))
+            if len(df["time_index"].unique()) > 1:
+                sns.lineplot(x="time_index", y=c, data=df, ax=axl, hue="scan_index", legend=False)
+            else:
+                sns.lineplot(x="scan_index", y=c, data=df, ax=axl, legend=False)
+            # axl.set_xlabel(self.get_label(axl.get_xlabel()))
+            # axl.set_ylabel(self.get_label(axl.get_label()))
 
         plt.tight_layout()
         plt.savefig(os.path.join(IMGPATH, "ruse.pdf"))

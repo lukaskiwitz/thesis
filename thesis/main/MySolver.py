@@ -100,7 +100,7 @@ class MyDiffusionSolver(MySolver):
         for i in self.subdomains:
             e = i["entity"]
             patch = i["patch"]
-            bc = e.get_BC(self.field_quantity)
+            bc = e.get_interaction(self.field_quantity)
 
             patch_list.append([i["patch"], i["entity"].get_surface_area()])
 
@@ -205,9 +205,11 @@ class MyDiffusionSolver(MySolver):
             pass
 
         message(self.timeout)
-        for o in range(5):
+        limit = 1
 
-            if o == 5:
+        for o in range(limit+1):
+
+            if o == limit:
                 raise SolutionFailedError
 
             try:
@@ -216,6 +218,9 @@ class MyDiffusionSolver(MySolver):
                     message(i)
 
                 file = str(signal_out).split("\\n")[-1].replace("'", "")
+                if file == "solution_failed":
+                    raise SolutionFailedError
+                    return -1
                 if os.path.exists(file+".h5"):
                     message("loading solution from {f}".format( f= file))
                     with fcs.HDF5File(comm, file + ".h5", "r") as f:

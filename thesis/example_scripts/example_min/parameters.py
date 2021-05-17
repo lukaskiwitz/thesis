@@ -21,46 +21,40 @@ cytokines = [
 The first entry is the default cell type. There the "fraction" entry is meaningless.
 """
 R_h = 1e4
-R_l = 1e2
-q = 1
+R_l = 0
+q = 10
 
 lol = [1,2,3]
-v = 1
+v = 1/10
 
 cell_types_dict = [
     {"name": "default",
      "mc":0,
      "fraction": 0,
-     "il2": {"R": 0, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "R_saturation"},
+     "il2": {"R": 0, "q": 0, "Kc": 0.01,"ths":0.01, "bc_type": "R_saturation"},
      "misc":{"lol":lol},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "mc":0,
      "fraction": v / (v + 1),
-     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths":0.01, "bc_type": "R_saturation"},
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "ths":0.01, "bc_type": "R_saturation"},
      "misc":{"lol":lol},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "mc":0,
      "fraction": 1/(v+1),
-     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1,"ths":0.01, "bc_type": "R_saturation"},
-     "misc":{"lol":lol},
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01,"ths":0.01, "bc_type": "R_saturation"},
+     "misc":{"lol":lol,"my_p":1},
      "internal_solver": "RuleBasedSolver"
      }
 ]
 
 boundary = [
-    {"name": "box",
-     "expr":"!near(x[0],{d})",
-     "il6":{"q":0, "R":0, "bc_type": "R_saturation"},
-     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
-     },
     {"name": "left_boundary",
-     "expr":"near(x[0],{d})",
-     "il6":{"q":0, "R":0, "amax":0, "bc_type": "R_saturation"},
-     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
+     "expr":"near(x[0],0)",
+     "il2":{"q":0, "R":0, "Kc":0.01, "bc_type": "R_saturation"},
      }
 ]
 
@@ -69,9 +63,9 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 150,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 150,
-    "z_grid": 150,# comment out for single cell layer
+    "x_grid": 200,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 200,
+    # "z_grid": 150,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
 }
 
@@ -107,7 +101,7 @@ else:
 
 user = getpass.getuser()
 model_name = "example_min"
-name = "example_1"
+name = "distance_scan"
 path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 

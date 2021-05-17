@@ -20,7 +20,7 @@ from thesis.main.Entity import Entity
 from thesis.main.EntityType import CellType, EntityType
 from thesis.main.FieldProblem import FieldProblem
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ParameterSet
+from thesis.main.ParameterSet import ParameterSet, MiscParameter
 from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import message, total_time, debug
 from thesis.main.TaskRecord import TaskRecord, ClassRecord
@@ -127,18 +127,29 @@ class SimContainer(SimComponent):
 
         self.ext_boundary_markers = kwargs["load_subdomain"] if "load_subdomain" in kwargs else self.path + "cache/"
 
-        for field in self.fields:
-            field.update_parameter_set(self.p)
+        self.register_entites()
 
+        for field in self.fields:
+
+            field.update_parameter_set(self.p)
+            field.generate_mesh(cache=True, path=self.path, path_prefix="cache", **kwargs)
+            field.update_parameter_set(self.p)
+            field.update_solver(self.get_tmp_path())
+
+    def set_ext_cache(self, ext_cache: str):
+        for field in self.fields:
+            field.ext_cache = ext_cache
+
+    def register_entites(self):
+
+        for field in self.fields:
             fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
-                if fq in entity.fieldQuantities:
+                if fq in [i.field_quantity for i in entity.interactions]:
                     field.add_entity(entity)
-            field.generate_mesh(cache=True, path=self.path, path_prefix="cache", **kwargs)
-            field.update_solver(self.get_tmp_path())
 
-
+            field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
 
     def get_entity_by_name(self, name: str) -> Entity:
 
@@ -204,6 +215,7 @@ class SimContainer(SimComponent):
 
     def move_cells(self, time_index, dt):
 
+        return None
 
         from time import sleep
         for field in self.fields:
@@ -296,6 +308,7 @@ class SimContainer(SimComponent):
 
         for field in self.fields:
             tmp_path = self.get_tmp_path()
+            field.path = self.path
             # field.unit_length_exponent = self.unit_length_exponent
             field.update_solver(tmp_path, p=self.p)
             field.step(dt,time_index, tmp_path)
@@ -340,6 +353,8 @@ class SimContainer(SimComponent):
             entity.id = self.entity_list[-1].id + 1
         else:
             entity.id = 0
+
+        entity.p.update(MiscParameter("id", entity.id), override = True)
         self.entity_list.append(entity)
 
     def add_entity_type(self,template: EntityType):
@@ -358,6 +373,9 @@ class SimContainer(SimComponent):
             self.entity_templates.append(template)
         else:
             i = self.entity_templates.index(self.get_entity_type_by_name(template.name))
+            #todo quick fix!
+            template.interactions = self.entity_templates[i].interactions
+
             self.entity_templates[i] = template
 
     def add_internal_solver(self, internal_solver: InternalSolver):
@@ -382,10 +400,10 @@ class SimContainer(SimComponent):
         for e in self.entity_templates:
             if e.name == name:
                 return e
-        message("could not find entity type {n}".format(n = name))
+        debug("could not find entity type {n}".format(n = name))
         return None
 
-    def add_field(self, field: FieldProblem) -> None:
+    def add_problem(self, field: FieldProblem) -> None:
 
         """
 
@@ -395,7 +413,7 @@ class SimContainer(SimComponent):
 
         """
 
-        field.update_parameter_set(self.p)
+        # field.update_parameter_set(self.p)
         # field.unit_length_exponent = self.unit_length_exponent
         self.fields.append(field)
 
@@ -442,7 +460,6 @@ class SimContainer(SimComponent):
 
         return path_dict
 
-
     def save_fields(self, n: int) -> Dict:
 
         """
@@ -468,13 +485,16 @@ class SimContainer(SimComponent):
 
             sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
             u = i.get_field()
-            u.rename(i.field_quantity, i.field_quantity)
+            if u is not None:
+                u.rename(i.field_quantity, i.field_quantity)
 
-            with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
-                f.write(i.get_field(), i.field_name)
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
-                f.write(i.get_field(), n)
-            result[i.field_name] = (distplot, sol, o)
+                with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
+                    f.write(i.get_field(), i.field_name)
+                with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
+                    f.write(i.get_field(), n)
+                result[i.field_name] = (distplot, sol, o)
+            else:
+                result[i.field_name] = (None,None,o)
         return result
 
     def to_xml(self) -> et.Element:

@@ -47,12 +47,13 @@ class StateManager:
         :return None
         """
         self.path = path
-        self.ruse = None
+        self.ruse = []
 
         self.scan_folder_pattern = "scan_{n}/"
         self.element_tree = None
         self.scan_container = None
         self.sim_container = None
+        self.scenario = None
         self.T = None
         self.dt = 1
         self.N = 10
@@ -62,6 +63,7 @@ class StateManager:
         self.record = ClassRecord("StateManager")
         self.progress_bar = None
         self.eta_estimates = []
+        self.marker_lookup = {}
 
     def load_xml(self):
         """loads xml representation from file"""
@@ -205,21 +207,29 @@ class StateManager:
         time_series.insert(0, self.global_parameters.serialize_to_xml())
 
         fields = ET.SubElement(step,"Fields")
+    
         for field_name, (distplot, sol, field_index) in result_path.items():
-            d = os.path.split(os.path.split(sc.path)[0])[1]
 
+            d = os.path.split(os.path.split(sc.path)[0])[1]
             field = time_series.find("Field[@field_name='{n}']".format(n=field_name))
+
             if not field:
                 field = ET.SubElement(fields, "Field")
-                dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
 
-                if dynamic_mesh:
-                    field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
-                else:
-                    field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
+            dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
+            if dynamic_mesh:
+                field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
+            else:
+                field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
 
-                field.set("dynamic_mesh",str(dynamic_mesh))
-                field.set("field_name", field_name)
+            field.set("dynamic_mesh",str(dynamic_mesh))
+            field.set("field_name", field_name)
+
+            if sol is None:
+                field.set("success",str(False))
+                continue
+            else:
+                field.set("success", str(True))
                 field.set("dist_plot_path", "scan_{i}/".format(i = scan_index) + distplot)
                 field.set("solution_path", "scan_{i}/".format(i = scan_index) + sol)
 
@@ -275,26 +285,39 @@ class StateManager:
             while [] in result:
                 result.remove([])
 
-            result = list(np.array(result).ravel())
+            full_result = []
+            for i in result:
+                full_result += i
 
-        return pd.DataFrame(result)
+
+
+        return pd.DataFrame(full_result)
+
+    def get_scan_sample(self, i):
+
+        scan_container = self.deserialize_from_element_tree()
+        assert i <= len(scan_container.scan_samples) - 1
+        sample = scan_container.scan_samples[i]
+        return sample
 
     def update_sim_container(self, sc, i) -> Dict:
 
-
-        scan_container = self.deserialize_from_element_tree()
         sc.path = self.get_scan_folder(i)
-        assert i <= len(scan_container.scan_samples) - 1
-        sample = scan_container.scan_samples[i]
+        sample = self.get_scan_sample(i)
 
         assert hasattr(sc,"default_sample")
 
         sc.p.update(sc.default_sample.p)
         sc.p.update(sample.p)
 
+
         for f in sc.fields:
             f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
+
+            if sample.dynamic_mesh:
+                f.moving_mesh = False
+                f.remesh = True
 
         for e in sc.entity_list:
             e.p.update(sc.default_sample.p, override = True)
@@ -346,11 +369,10 @@ class StateManager:
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
         # message("ETA: {eta}".format(eta = eta))
 
-    def run(self):
+    def run(self, ext_cache = ""):
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")
-        sample_task.add_child(self.sim_container.record)
 
         self.serialize_to_element_tree()
 
@@ -361,6 +383,7 @@ class StateManager:
 
 
         for scan_index in range(n_samples):
+
             if not sample_task.running:
                 sample_task.start()
             self.time_series_bar.reset()
@@ -385,6 +408,21 @@ class StateManager:
 
                 self.scan_container.t = 0
 
+                get_sim_container_task = sample_task.start_child("build_sim_container")
+                self.sim_container = self.scenario.get_sim_container(self.get_scan_sample(scan_index).p)
+                self.sim_container.path = self.path
+                self.sim_container.marker_lookup = self.marker_lookup
+                get_sim_container_task.stop()
+                sample_task.add_child(self.sim_container.record)
+
+                initialize_task = sample_task.start_child("initialize")
+                if not ext_cache == "":
+                    self.sim_container.set_ext_cache(ext_cache)
+                    self.sim_container.initialize(load_subdomain=True, file_name="mesh")
+                else:
+                    self.sim_container.initialize()
+                initialize_task.stop()
+
                 sample_task.start_child("update_sim_container")
                 self.update_sim_container(self.sim_container, scan_index)
                 sample_task.stop_child("update_sim_container")
@@ -398,6 +436,10 @@ class StateManager:
                 sample_task.stop_child("pre_scan")
 
                 self.sim_container._post_step = post_step
+
+                #todo not a permantent solution
+                self.sim_container.pre_step = self.pre_step if hasattr(self,"pre_step") else self.sim_container.pre_step
+                self.sim_container.post_step = self.post_step if hasattr(self,"post_step") else self.sim_container.post_step
 
 
 
