@@ -291,7 +291,13 @@ class FieldProblem:
         """
 
         message("Solving Field Problem")
-        self.solver.solve()
+        try:
+            self.solver.solve()
+        except Exception as e:
+            self.u = None
+            self.solver.u = None
+            return None
+
         message("Computing Boundary Concentrations")
         self.get_boundary_concentrations(tmp_path)
         self.compute_boundary_term()

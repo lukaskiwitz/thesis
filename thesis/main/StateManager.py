@@ -205,21 +205,29 @@ class StateManager:
         time_series.insert(0, self.global_parameters.serialize_to_xml())
 
         fields = ET.SubElement(step,"Fields")
+    
         for field_name, (distplot, sol, field_index) in result_path.items():
-            d = os.path.split(os.path.split(sc.path)[0])[1]
 
+            d = os.path.split(os.path.split(sc.path)[0])[1]
             field = time_series.find("Field[@field_name='{n}']".format(n=field_name))
+
             if not field:
                 field = ET.SubElement(fields, "Field")
-                dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
 
-                if dynamic_mesh:
-                    field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
-                else:
-                    field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
+            dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
+            if dynamic_mesh:
+                field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
+            else:
+                field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
 
-                field.set("dynamic_mesh",str(dynamic_mesh))
-                field.set("field_name", field_name)
+            field.set("dynamic_mesh",str(dynamic_mesh))
+            field.set("field_name", field_name)
+
+            if sol is None:
+                field.set("success",str(False))
+                continue
+            else:
+                field.set("success", str(True))
                 field.set("dist_plot_path", "scan_{i}/".format(i = scan_index) + distplot)
                 field.set("solution_path", "scan_{i}/".format(i = scan_index) + sol)
 

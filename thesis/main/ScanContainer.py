@@ -90,15 +90,27 @@ class ScanContainer:
 
         """
 
-        a1_axis = ScanDefintion(ScannablePhysicalParameter(
-            PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
-            lambda x, v: v
-        ), "axis", range(max([len(i.scan_space) for i in a1[0]])), ScanType.GLOBAL)
+        if len(a1) == 3:
+            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", a1[2], ScanType.GLOBAL)
+        else:
+            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", range(max([len(i.scan_space) for i in a1[0]])), ScanType.GLOBAL)
 
-        a2_axis = ScanDefintion(ScannablePhysicalParameter(
-            PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
-            lambda x,v: v
-        ),"axis",range(max([len(i.scan_space) for i in a2[0]])),ScanType.GLOBAL)
+        if len(a2) == 3:
+            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
+                lambda x,v: v
+            ),"axis",a2[2],ScanType.GLOBAL)
+        else:
+            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+                PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
+                lambda x, v: v
+            ), "axis", range(max([len(i.scan_space) for i in a2[0]])), ScanType.GLOBAL)
 
 
         a1 = a1[0]
