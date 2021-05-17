@@ -73,7 +73,7 @@ class FieldProblem:
         self.remesh = False
 
         self.boundary_extraction_trials = 5
-        self.boundary_extraction_timeout = 30
+        self.boundary_extraction_timeout = 600
 
     def add_entity(self, entity: Entity) -> None:
         """

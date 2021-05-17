@@ -192,6 +192,7 @@ class MyDiffusionSolver(MySolver):
 
     def solve(self) -> fcs.Function:
 
+        from sys import exit
         def sig_handler(signum, frame):
             if self.process is not None:
                 self.process.kill()
@@ -204,7 +205,6 @@ class MyDiffusionSolver(MySolver):
         class SolutionFailedError(Exception):
             pass
 
-        message(self.timeout)
         limit = 1
 
         for o in range(limit+1):
