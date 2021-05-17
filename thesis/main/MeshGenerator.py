@@ -34,8 +34,9 @@ class MeshGenerator:
     
     dim = 2
     def __init__(self,**kwargs):
-            if "outer_domain" in kwargs:
-                self.outerDomain = kwargs["outer_domain"]
+        if "outer_domain" in kwargs:
+            self.outerDomain = kwargs["outer_domain"]
+
     def meshGen(self, p, load_subdomain = False,path = "", load = False, ):
         geom = pygmsh.opencascade.Geometry(
           characteristic_length_min=p.get_misc_parameter("min_char_length","numeric").get_in_sim_unit(),
@@ -90,8 +91,10 @@ class MeshGenerator:
             with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"r") as f:
                 f.read(boundary_markers,"/boundaries")
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain.get_subdomains()[-1]["patch"] + 1
-                o["patch"] = i+a
+                domain_patches = self.outerDomain.get_subdomains()
+                a = domain_patches[-1]["patch"] + 1 if len(domain_patches) > 0 else 1
+                o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
+                o["patch"] = i + a
                 
         else:
             boundary_markers = fcs.MeshFunction("size_t",mesh, mesh.topology().dim() - 1)
@@ -102,7 +105,8 @@ class MeshGenerator:
                 i["entity"].get_subdomain().mark(boundary_markers, i["patch"])
             message("outer domain set")
             for i,o in enumerate(self.entityList):
-                a = self.outerDomain.get_subdomains()[-1]["patch"] + 1
+                domain_patches = self.outerDomain.get_subdomains()
+                a = domain_patches[-1]["patch"] + 1 if len(domain_patches) > 0 else 1
                 o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
                 o["patch"] = i+a
             message("loop complete")

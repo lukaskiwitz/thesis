@@ -132,7 +132,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
             fieldProblem.ext_cache = ext_cache
 
         fieldProblem.set_outer_domain(domain)
-        sc.add_field(fieldProblem)
+        sc.add_problem(fieldProblem)
 
 
     """top level path"""

@@ -28,7 +28,6 @@ def cellBC(u, p, field_quantity, area=1):
             pass
         elif v == "R_saturation":
             Kc = p["Kc"]
-            amax = p["amax"]
             uptake = k_on * R * Kc * u / (Kc + u)
         elif v == "amax_saturation":
             Kc = p["Kc"]

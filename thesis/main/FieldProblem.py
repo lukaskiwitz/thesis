@@ -145,10 +145,10 @@ class FieldProblem:
         self.path_prefix = path_prefix
         self.path = path
 
+
         mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
         mesh_gen.dim = 3
-
 
         if self.moving_mesh or self.ale or self.remesh:
             self.ext_cache = ""
@@ -184,8 +184,9 @@ class FieldProblem:
 
     def update_parameter_set(self, p):
         self.p.update(p)
-        self.solver.p.update(p)
-        self.outer_domain.update_bcs(p)
+        if self.solver is not None:
+            self.solver.p.update(p)
+        self.outer_domain.update_bcs(p = p)
 
     def update_bcs(self, p=None) -> None:
         """
@@ -291,10 +292,17 @@ class FieldProblem:
         """
 
         message("Solving Field Problem")
-        self.solver.solve()
+        try:
+            self.solver.solve()
+        except Exception as e:
+            self.u = None
+            self.solver.u = None
+            return None
+
         message("Computing Boundary Concentrations")
         self.get_boundary_concentrations(tmp_path)
         self.compute_boundary_term()
+        self.save_mesh(time_index,self.path)
 
         # message("Computing Boundary Gradients")
         # self.get_boundary_gradients()
@@ -419,10 +427,15 @@ class FieldProblem:
         return self.solver.boundary_markers
 
     def compute_boundary_term(self):
+        from thesis.main.BC import BC
 
         for e in self.registered_entities:
             entity = e["entity"]
-            for bc in entity.bc_list:
+            for bc in entity.interactions:
+
+                if not isinstance(bc,BC):
+                    continue
+
                 fq = bc.field_quantity
                 try:
                     u = entity.p.get_physical_parameter_by_field_quantity("surf_c", fq).get_in_sim_unit()
