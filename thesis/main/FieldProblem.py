@@ -282,8 +282,6 @@ class FieldProblem:
                 ], field_quantity=self.field_quantity)])
                 , override=True)
 
-        message("done pool map with chunksize {}".format(cs))
-
     def get_boundary_gradients(self) -> None:
 
         """
