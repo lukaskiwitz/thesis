@@ -112,23 +112,31 @@ class Plotter:
             gridspec_args = {}
 
         self.legend_entries = {}
-        self.external_legend = external_legend
+
 
         self.n = n
         self.m = m
         self.gridspec_index = 0
 
-        self.fig = plt.figure(figsize=figsize)
+        from typing import Tuple
         if external_legend == "axes":
+            self.fig = plt.figure(figsize=((figsize[0]/m)*(m+1),figsize[1]))
             self.gridspec = self.fig.add_gridspec(n, m + 1, **gridspec_args)
             self.legend_axes = self.fig.add_subplot(self.gridspec[:, -1])
-        elif external_legend == "figure":
-            self.legend_figure = plt.figure()
+        elif external_legend == "figure" or isinstance(external_legend,Tuple):
+            self.fig = plt.figure(figsize=figsize)
+            if isinstance(external_legend, Tuple):
+                self.legend_figure = plt.figure(figsize=external_legend)
+                external_legend = "figure"
+            else:
+                self.legend_figure = plt.figure(figsize=(figsize[0] / m, figsize[1] / n))
             self.gridspec = self.fig.add_gridspec(n, m, **gridspec_args)
         else:
+            self.fig = plt.figure(figsize=figsize)
             self.legend_figure = None
             self.gridspec = self.fig.add_gridspec(n, m, **gridspec_args)
 
+        self.external_legend = external_legend
     def gca(self):
         return self.fig.gca()
 
@@ -1072,7 +1080,7 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ylog = False, ci = "sd", cell_radius = None, legend = None, **kwargs):
+    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ylog = False, ci = "sd", cell_radius = None, legend = None, estimator = None, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -1129,7 +1137,7 @@ class Plotter:
                 final_result = final_result.append(result)
 
    
-        final_result,ci = self.compute_ci(final_result,[self.scan_index_key,self.time_index_key,"type_name","distance",hue,style], ci = ci)
+        final_result,ci = self.compute_ci(final_result,[self.scan_index_key,self.time_index_key,"type_name","distance",hue,style], ci = ci, estimator=estimator)
 
         sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend)
         if ylog:
@@ -1151,7 +1159,7 @@ class Plotter:
 
         self.make_legend_entry(ax)
 
-    def compute_ci(self,df, group_by_columns, ci = "sd"):
+    def compute_ci(self,df, group_by_columns, ci = "sd", estimator = None):
 
         if ci in ["sd",None] or isinstance(ci,float) or isinstance(ci,int):
             return df,ci
@@ -1160,7 +1168,10 @@ class Plotter:
                 if g is None:
                     group_by_columns.remove(g)
             gb = df.groupby(list(set(group_by_columns)))
-            return gb.mean().reset_index(),"sd"
+            if estimator is None:
+                return gb.mean().reset_index(),"sd"
+            else:
+                return gb.agg(estimator).reset_index(), "sd"
         else:
             return df,ci
 
