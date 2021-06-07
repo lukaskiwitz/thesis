@@ -444,7 +444,7 @@ class FieldProblem:
                 except:
                     pass
 
-                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False), fq,
+                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False,field_quantity = fq),
                          1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
                 ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)
 
