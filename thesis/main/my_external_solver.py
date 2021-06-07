@@ -214,17 +214,19 @@ if __name__ == "__main__":
 
     if signal == "START":
 
+        file = result_path + "tmp_{fq}".format(fq=fq)
+
         try:
             solver.solve()
         except Exception as e:
-            if rank == 0:
                 sys.stdout.write(str(e))
+                sys.stdout.write("solution_failed")
                 exit(0)
 
         if rank == 0:
             os.makedirs(result_path, exist_ok=True)
 
-        file = result_path + "tmp_{fq}".format(fq=fq)
+
 
         with fcs.HDF5File(comm, file + ".h5", "w") as f:
             f.write(u, "field")

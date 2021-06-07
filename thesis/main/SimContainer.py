@@ -468,13 +468,16 @@ class SimContainer(SimComponent):
 
             sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
             u = i.get_field()
-            u.rename(i.field_quantity, i.field_quantity)
+            if u is not None:
+                u.rename(i.field_quantity, i.field_quantity)
 
-            with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
-                f.write(i.get_field(), i.field_name)
-            with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
-                f.write(i.get_field(), n)
-            result[i.field_name] = (distplot, sol, o)
+                with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
+                    f.write(i.get_field(), i.field_name)
+                with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
+                    f.write(i.get_field(), n)
+                result[i.field_name] = (distplot, sol, o)
+            else:
+                result[i.field_name] = (None,None,o)
         return result
 
     def to_xml(self) -> et.Element:

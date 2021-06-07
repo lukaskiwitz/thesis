@@ -177,6 +177,10 @@ class PostProcessor:
 
                 markers = field_step.findall("../../Marker")
                 compute_settings: ComputeSettings = ComputeSettings()
+                if field_step.get("success") == "False":
+                    compute_settings.success = False
+                else:
+                    compute_settings.success = True
                 compute_settings.additional_conversion = self.visual_conversion
                 self.render_paraview = render_paraview
                 compute_settings.markers = {e.get("marker_key"): e.get("path") for e in markers}
@@ -239,12 +243,6 @@ class PostProcessor:
         with mp.Pool(processes=n_processes, initializer=initialise(mesh_prefix,self.cell_dataframe)) as p:
             result_list = p.map(compute, scatter_list)
 
-
-        # result_list  =[]
-        # for s in scatter_list:
-        #     initialise(mesh_prefix,self.cell_dataframe)
-        #     result_list.append(compute(s))
-
         element_list = []
         for file in result_list:
             if not file is None:
@@ -298,12 +296,15 @@ class PostProcessor:
                         continue
                     time = float(file.get("time"))
                     field_name = file.get("field_name")
+                    success = True if file.get("success") == "True" else False
+
                     filter = lambda x: (x["time_index"] == time_index) & \
                                        (x["scan_index"] == scan_index)
 
                     d = {
                         "scan_index": scan_index,
                         "time_index": time_index,
+                        "success":success,
                         "time": time,
                         "field_name": field_name,
                         "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
@@ -606,110 +607,114 @@ def compute(compute_settings: ComputeSettings) -> str:
     :return:
     """
 
-    mesh = fcs.Mesh()
-    with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
-        f.read(mesh)
+    try:
+        mesh = fcs.Mesh()
+        with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
+            f.read(mesh)
+    except Exception as e:
+        print("")
 
     mesh_volume = get_mesh_volume(mesh)
-
     function_space = fcs.FunctionSpace(mesh, "P", 1)
 
-    u: fcs.Function = fcs.Function(function_space)
-    with fcs.HDF5File(comm, os.path.join(compute_settings.path, compute_settings.file_path), "r") as f:
-        f.read(u, "/" + compute_settings.field)
-
     result: et.Element = et.Element("File")
-    global_results: et.Element = et.SubElement(result, "GlobalResults")
-
-    result.set("field_name", str(compute_settings.field))
-    result.set("dist_plot_path", str(compute_settings.file_path))
-
     result.append(et.fromstring(compute_settings.parameters))
-
     scan_index = str(compute_settings.scan_index)
     result.set("scan_index", scan_index)
     time_index = str(compute_settings.time_index)
     result.set("time_index", time_index)
     result.set("time", str(compute_settings.time))
+    result.set("success", str(compute_settings.success))
+    global_results: et.Element = et.SubElement(result, "GlobalResults")
+    result.set("field_name", str(compute_settings.field))
 
-    message("running global computations for step {t} in scan {s}".format(t=time_index, s=scan_index))
+    if compute_settings.success:
+        u: fcs.Function = fcs.Function(function_space)
+        with fcs.HDF5File(comm, os.path.join(compute_settings.path, compute_settings.file_path), "r") as f:
+            f.read(u, "/" + compute_settings.field)
 
-    mesh_volume_element = et.SubElement(global_results, "MeshVolume")
-    mesh_volume_element.text = str(mesh_volume)
-
-    p = ParameterSet.deserialize_from_xml(et.fromstring(compute_settings.parameters))
-
-    V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
-
-    grad: fcs.Function = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-
-    c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
-    g_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
-
-    if compute_settings.make_images:
-        try:
-            make_images(u, c_conv, compute_settings, visual_conv = compute_settings.additional_conversion)
-        except RuntimeError as e:
-            warning("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
+        result.set("dist_plot_path", str(compute_settings.file_path))
 
 
-    if compute_settings.render_paraview:
 
-        try:
-            make_paraview_images(c_conv, compute_settings,  visual_conv = compute_settings.additional_conversion)
-        except FileNotFoundError as e:
-            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(si=scan_index, ti=time_index))
-        except NameError as e:
-            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
-                si=scan_index, ti=time_index))
-        except AttributeError as e:
-            warning("could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
-                si=scan_index, ti=time_index))
+        message("running global computations for step {t} in scan {s}".format(t=time_index, s=scan_index))
+
+        mesh_volume_element = et.SubElement(global_results, "MeshVolume")
+        mesh_volume_element.text = str(mesh_volume)
+
+        p = ParameterSet.deserialize_from_xml(et.fromstring(compute_settings.parameters))
+
+        V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
+
+        grad: fcs.Function = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
+
+        c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
+        g_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
+
+        if compute_settings.make_images:
+            try:
+                make_images(u, c_conv, compute_settings, visual_conv = compute_settings.additional_conversion)
+            except RuntimeError as e:
+                warning("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
 
 
-    for comp in compute_settings.computations:
+        if compute_settings.render_paraview:
 
-        assert isinstance(comp, PostProcessComputation)
-        try:
-            if comp.add_xml_result:
+            try:
+                make_paraview_images(c_conv, compute_settings,  visual_conv = compute_settings.additional_conversion)
+            except FileNotFoundError as e:
+                warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(si=scan_index, ti=time_index))
+            except NameError as e:
+                warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                    si=scan_index, ti=time_index))
+            except AttributeError as e:
+                warning("could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+                    si=scan_index, ti=time_index))
 
-                comp_result = comp(
-                    u,
-                    grad,
-                    c_conv,
-                    g_conv,
-                    mesh_volume,
-                    V=function_space,
-                    V_vec=V_vec,
-                    path = compute_settings.path,
-                    solution_path = compute_settings.solution_path,
-                    scan_index = compute_settings.scan_index,
-                    time_index = compute_settings.time_index,
-                    cell_df = compute_settings.cell_df,
-                    p = p
-                )
 
-            else:
-                comp(
-                    u,
-                    grad,
-                    c_conv,
-                    g_conv,
-                    mesh_volume,
-                    V=function_space,
-                    V_vec=V_vec,
-                    path=compute_settings.path,
-                    scan_index=compute_settings.scan_index,
-                    time_index=compute_settings.time_index,
-                    cell_df=compute_settings.cell_df,
-                    p=p)
-        except Exception as e:
-            message("could not perform post process computation: {name}".format(name = comp.name))
-            raise e
-            break
+        for comp in compute_settings.computations:
 
-        result_element: et.Element = et.SubElement(global_results, comp.name)
-        result_element.text = str(comp_result)
+            assert isinstance(comp, PostProcessComputation)
+            try:
+                if comp.add_xml_result:
+
+                    comp_result = comp(
+                        u,
+                        grad,
+                        c_conv,
+                        g_conv,
+                        mesh_volume,
+                        V=function_space,
+                        V_vec=V_vec,
+                        path = compute_settings.path,
+                        solution_path = compute_settings.solution_path,
+                        scan_index = compute_settings.scan_index,
+                        time_index = compute_settings.time_index,
+                        cell_df = compute_settings.cell_df,
+                        p = p
+                    )
+
+                else:
+                    comp(
+                        u,
+                        grad,
+                        c_conv,
+                        g_conv,
+                        mesh_volume,
+                        V=function_space,
+                        V_vec=V_vec,
+                        path=compute_settings.path,
+                        scan_index=compute_settings.scan_index,
+                        time_index=compute_settings.time_index,
+                        cell_df=compute_settings.cell_df,
+                        p=p)
+            except Exception as e:
+                message("could not perform post process computation: {name}".format(name = comp.name))
+                raise e
+                break
+
+            result_element: et.Element = et.SubElement(global_results, comp.name)
+            result_element.text = str(comp_result)
 
     tmp_path = compute_settings.tmp_path
 

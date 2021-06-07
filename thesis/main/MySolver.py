@@ -192,6 +192,7 @@ class MyDiffusionSolver(MySolver):
 
     def solve(self) -> fcs.Function:
 
+        from sys import exit
         def sig_handler(signum, frame):
             if self.process is not None:
                 self.process.kill()
@@ -204,10 +205,11 @@ class MyDiffusionSolver(MySolver):
         class SolutionFailedError(Exception):
             pass
 
-        message(self.timeout)
-        for o in range(5):
+        limit = 1
 
-            if o == 5:
+        for o in range(limit+1):
+
+            if o == limit:
                 raise SolutionFailedError
 
             try:
@@ -216,6 +218,9 @@ class MyDiffusionSolver(MySolver):
                     message(i)
 
                 file = str(signal_out).split("\\n")[-1].replace("'", "")
+                if file == "solution_failed":
+                    raise SolutionFailedError
+                    return -1
                 if os.path.exists(file+".h5"):
                     message("loading solution from {f}".format( f= file))
                     with fcs.HDF5File(comm, file + ".h5", "r") as f:
