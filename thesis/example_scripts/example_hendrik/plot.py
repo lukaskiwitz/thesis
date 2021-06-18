@@ -25,14 +25,14 @@ fig = plt.figure()
 plt.subplots_adjust(wspace=.3)
 
 """
-IL-2_surf_c is the IL-2 surface concentration on each cell.
+IL-2_surf_c is the IL-2 surface concentration on each cell. Here seaborn averaged over all the cells.
 """
 fig.add_subplot(1,2, 1)
 ax1 = sns.lineplot(x="fractions_sec", y="IL-2_surf_c", data=cell_df)
 ax1.set(xlabel="Fraction of secreting cells", ylabel="Surface concentration [nM]", title="cell_df")
 
 """
-Here seaborn averaged over all the cells, which is equivalent to globel_df's "surf_c" :
+Same can be done with the globel_df's "surf_c", just without the standard deviation:
 """
 fig.add_subplot(1,2, 2)
 ax2 = sns.lineplot(x="fractions_sec", y="surf_c", data=global_df)
