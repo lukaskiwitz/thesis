@@ -28,8 +28,19 @@ def cellBC(u, p, field_quantity, area=1):
             pass
         elif v == "R_saturation":
             Kc = p["Kc"]
-            amax = p["amax"]
             uptake = k_on * R * Kc * u / (Kc + u)
+        elif v == "patrick_saturation":
+            k_off = p["k_off"]
+            k_endo = p["k_endo"]  # 1/s
+            KD = k_off / k_on
+
+            try:
+                uptake = k_endo * R * u / (KD + u)
+            except TypeError:
+                KD = float(KD)
+                k_endo = float(k_endo)
+                uptake = k_endo * R * u / (KD + u)
+
         elif v == "amax_saturation":
             Kc = p["Kc"]
             amax = p["amax"]
