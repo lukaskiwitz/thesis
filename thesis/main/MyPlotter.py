@@ -39,6 +39,7 @@ class Plotter:
         self.gridspec_index = 0
 
         self.scan_scale: List = []
+        self.groups = groups
         self.color_dict: Dict = {}
         self.style_dict = {
         }
@@ -50,7 +51,7 @@ class Plotter:
         self.means: pd.DataFrame = pd.DataFrame()
         self.counts: pd.DataFrame = pd.DataFrame()
 
-        self.filter = None
+        self.filter = lambda df:df
 
 
 
@@ -101,6 +102,12 @@ class Plotter:
         sns.set_context("paper", rc=self.rc)
 
     def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None, reset_filter = True) -> None:
+
+        if self.fig is not None:
+            plt.close(self.fig)
+
+        if self.legend_figure is not None:
+            plt.close(self.legend_figure)
 
         if reset_filter:
             self.filter = lambda df: df
@@ -1008,16 +1015,17 @@ class Plotter:
                     distplot_kwargs["bins"] = int(len(x) / 5) if distplot_kwargs["bins"] > len(x) / 5 else \
                         distplot_kwargs["bins"]
 
-                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs, ax=ax)
+                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs, ax=ax,norm_hist = False)
         else:
             if "bins" in distplot_kwargs:
                 distplot_kwargs["bins"] = int(len(df) / 5) if distplot_kwargs["bins"] > len(df) / 5 else \
                     distplot_kwargs["bins"]
             print(df[x_name].mean())
-            sns.distplot(df[x_name], **distplot_kwargs, ax=ax)
+            sns.distplot(df[x_name], **distplot_kwargs, ax=ax,norm_hist = False)
 
         self.make_legend_entry(ax)
-
+        ax.set_yscale('log')
+        ax.set_xscale('log')
         if ylim is not None:
             ax.set_ylim(ylim)
         
@@ -1071,6 +1079,8 @@ class Plotter:
             ax.set_xlim(xlim)
         if ylim is not None:
             ax.set_ylim(ylim)
+        # ax.set_yscale('log')
+        ax.set_xscale('log')
 
         if relative:
             ax.set_ylabel("% activation")
@@ -1080,66 +1090,63 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ylog = False, ci = "sd", cell_radius = None, legend = None, estimator = None, **kwargs):
-
-        ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
-
-        def get_distance_matrix(df):
-
-            df = df.groupby("id").first()
-            df = df.reset_index()
-            ids = np.array(df["id"], dtype=int)
-
-            XX = np.array([
-                np.array(df["x"], dtype=float),
-                np.array(df["y"], dtype=float),
-                np.array(df["z"], dtype=float),
-            ]).T
-
-            r = distance_matrix(XX, XX, p=2)
-            return ids, r
+    def _compute_radial_profile(self, df, y_names, center_func = lambda df: df.loc[df["type_name"] =="sec"], n_workers= 8, chunksize = 32):
 
 
-        ids, r = get_distance_matrix(df)
+        if not isinstance(y_names,List):
+            y_names = [y_names]
+
+        def init(_y_names,_groups, _center_func):
+
+            global y_names
+            y_names = _y_names
+
+            global  groups
+            groups = _groups
+
+            global center_func
+            center_func = _center_func
+
+        from multiprocessing import Pool
+        with Pool(n_workers, initializer=init, initargs=(y_names,self.groups, center_func)) as p:
+            l = list(df.groupby(["raw_scan_index",self.time_index_key]))
+
+            c = int(len(l)/n_workers)
+            c = c if c > 0 else 1
+
+            chunksize = c if c < chunksize else chunksize
+            print("running radials for l: {l} and chunksize {cs} on {n} workers".format(l = len(l), cs = chunksize, n = n_workers))
+            full_result = pd.concat(p.starmap(run_single_step, l,chunksize=chunksize))
+
+        return full_result
+
+
+
+    def compute_radial_profiles(self, y_names, center_func = lambda df: df.loc[df["type_name"] =="sec"],   n_workers= 8, chunksize = 32):
+
+        self.radials_df = self._compute_radial_profile(self.cell_df, y_names, center_func=center_func ,  n_workers= n_workers, chunksize = chunksize)
+
+
+    def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,ci="sd", cell_radius=None, legend=None, estimator=None, **kwargs):
+
+        if hasattr(self,"radials_df") and hue in self.radials_df.columns and y_name in self.radials_df.columns:
+            ax, df, palette, hue = self.prepare_plot(self.radials_df, hue, **kwargs)
+        else:
+            print("recomputing radial profiles because hue or y_name wasn't found in cache")
+            ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
+            df = self._compute_radial_profile(df, [y_name, "type_name"],center_func=lambda df: df.loc[df["type_name"] == center_type])
+
+        df, ci = self.compute_ci(
+            df,
+            [self.scan_index_key, self.time_index_key,"type_name", "distance", hue,style],
+            ci=ci, estimator=estimator, y_names=[y_name])
 
         if cell_radius:
-            r = r / cell_radius
+            df["distance"] = df["distance"] / cell_radius
 
-        final_result = pd.DataFrame(columns=["distance", y_name])
 
-        groups = [self.time_index_key,self.scan_index_key]
-        if hue:
-            if not hue== "type_name":
-                groups += [hue]
-        if style:
-            if not style == "type_name":
-                groups += [style]
+        sns.lineplot(x="distance", y=y_name, hue=hue, data=df,ax = ax, legend=legend, ci = ci, palette=palette)
 
-        for o, cells in df.groupby(groups):
-
-            secretors_step = cells.loc[df["type_name"] == center_type]
-
-            for i, sec in secretors_step.iterrows():
-                i = np.where(ids == sec["id"])[0][0]
-
-                result = pd.DataFrame({
-                    "id": ids,
-                    "distance": r[i],
-                    "scan_index": sec["scan_index"],
-                    y_name: cells[y_name],
-                    "activation": cells["activation"],
-                    "type_name": cells["type_name"]
-                })
-
-                for g in groups:
-                    result[g] = sec[g]
-
-                final_result = final_result.append(result)
-
-   
-        final_result,ci = self.compute_ci(final_result,[self.scan_index_key,self.time_index_key,"type_name","distance",hue,style], ci = ci, estimator=estimator)
-
-        sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend)
         if ylog:
             ax.set_yscale("log")
 
@@ -1148,18 +1155,96 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-
-
         if cell_radius:
             ax.set_xlabel("distance from secreting cell (cell radius)")
         else:
             ax.set_xlabel(r"r $\mu m $")
 
+
         ax.set_ylabel(self.get_label(y_name))
+
 
         self.make_legend_entry(ax)
 
-    def compute_ci(self,df, group_by_columns, ci = "sd", estimator = None):
+    # def _cell_radial_niche_plot(self, y_name, center_type, hue = None, style = None, xlim = None, ylim = None, ylog = False, ci = "sd", cell_radius = None, legend = None, estimator = None, **kwargs):
+    #
+    #     ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
+    #
+    #     def get_distance_matrix(df):
+    #
+    #         df = df.groupby("id").first()
+    #         df = df.reset_index()
+    #         ids = np.array(df["id"], dtype=int)
+    #
+    #         XX = np.array([
+    #             np.array(df["x"], dtype=float),
+    #             np.array(df["y"], dtype=float),
+    #             np.array(df["z"], dtype=float),
+    #         ]).T
+    #
+    #         r = distance_matrix(XX, XX, p=2)
+    #         return ids, r
+    #
+    #
+    #     ids, r = get_distance_matrix(df)
+    #
+    #     if cell_radius:
+    #         r = r / cell_radius
+    #
+    #     final_result = pd.DataFrame(columns=["distance", y_name])
+    #
+    #     groups = [self.time_index_key,self.scan_index_key]
+    #
+    #     if hue:
+    #         if not hue== "type_name":
+    #             groups += [hue]
+    #     if style:
+    #         if not style == "type_name":
+    #             groups += [style]
+    #
+    #     for o, cells in df.groupby(groups):
+    #
+    #         secretors_step = cells.loc[df["type_name"] == center_type]
+    #
+    #         for i, sec in secretors_step.iterrows():
+    #             i = np.where(ids == sec["id"])[0][0]
+    #
+    #             result = pd.DataFrame({
+    #                 "id": ids,
+    #                 "distance": r[i],
+    #                 "scan_index": sec["scan_index"],
+    #                 y_name: cells[y_name],
+    #                 "activation": cells["activation"],
+    #                 "type_name": cells["type_name"]
+    #             })
+    #
+    #             for g in groups:
+    #                 result[g] = sec[g]
+    #
+    #             final_result = final_result.append(result)
+    #
+    #
+    #     final_result,ci = self.compute_ci(final_result,[self.scan_index_key,self.time_index_key,"type_name","distance",hue,style], ci = ci, estimator=estimator)
+    #
+    #     sns.lineplot(x="distance", y=y_name, data=final_result, ci=ci, ax=ax, style=style, hue=hue ,legend=legend)
+    #
+    #     if ylog:
+    #         ax.set_yscale("log")
+    #
+    #     if xlim:
+    #         ax.set_xlim(np.array(xlim))
+    #     if ylim:
+    #         ax.set_ylim(ylim)
+    #     if cell_radius:
+    #         ax.set_xlabel("distance from secreting cell (cell radius)")
+    #     else:
+    #         ax.set_xlabel(r"r $\mu m $")
+    #
+    #     ax.set_ylabel(self.get_label(y_name))
+    #
+    #     self.make_legend_entry(ax)
+
+    def compute_ci(self,df, group_by_columns, ci = "sd", estimator = None, y_names = None):
 
         if ci in ["sd",None] or isinstance(ci,float) or isinstance(ci,int):
             return df,ci
@@ -1167,7 +1252,12 @@ class Plotter:
             for g in group_by_columns:
                 if g is None:
                     group_by_columns.remove(g)
+
+            if y_names is not None:
+                df = df[list(set(group_by_columns + y_names))]
+
             gb = df.groupby(list(set(group_by_columns)))
+
             if estimator is None:
                 return gb.mean().reset_index(),"sd"
             else:
@@ -1581,3 +1671,44 @@ def split_kwargs(kwargs, keys):
             result[k] = kwargs[k]
 
     return result
+
+
+def run_single_step(i, dfg):
+    rsi,ti = i
+
+    time_index_key = "time_index"
+    scan_name_key = "scan_name_scan_name"
+    scan_index_key = "scan_index"
+
+    chunk_result = []
+    ids, r = get_distance_matrix(dfg)
+
+    for i, center in center_func(dfg).iterrows():
+        single_center_result = pd.DataFrame()
+        center_id = center["id"]
+        i = np.where(ids == center_id)[0]
+        distances = r[:, i][:, 0]
+        sort_index = np.argsort(distances)
+
+        distances = np.take_along_axis(distances, sort_index, axis=0)
+        single_center_result["distance"] = distances
+        properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
+                                  scan_index_key] + y_names + groups
+        for p in properties:
+            single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
+
+        chunk_result.append(single_center_result)
+
+    return pd.concat(chunk_result)
+
+def get_distance_matrix(df):#for single replicate
+
+        ids = np.array(df["id"], dtype=int)
+        XX = np.array([
+            np.array(df["x"], dtype=float),
+            np.array(df["y"], dtype=float),
+            np.array(df["z"], dtype=float),
+        ]).T
+
+        r = distance_matrix(XX, XX, p=2)
+        return ids, r
