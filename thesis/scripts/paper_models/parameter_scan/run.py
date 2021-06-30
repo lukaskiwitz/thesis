@@ -72,7 +72,7 @@ naive = sc.get_entity_type_by_name("naive")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-s = 10
+s = 30
 
 scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
 
@@ -119,8 +119,8 @@ stMan.sim_container = sc
 stMan.scan_container = scan_container
 stMan.dt = 1
 
-stMan.T = [0,1,3,4]
-# stMan.T = list(range(11))
+# stMan.T = [0,1,3,4]
+stMan.T = list(range(11))
 
 
 def pre_scan(state_manager, scan_index):

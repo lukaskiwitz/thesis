@@ -94,7 +94,7 @@ else:
 
 user = getpass.getuser()
 model_name = "boxed_static_small"
-name = "test_2"
+name = "test_1"
 path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 
