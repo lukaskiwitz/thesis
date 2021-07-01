@@ -46,19 +46,22 @@ plotter.label_replacement.update({
 
 })
 
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend="brief", ylog=True,average=True)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = [0, 5],average=True)
+cv_lim = [0,5]
+c_lim = [1e-4,1]
+#
+plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, ylim = c_lim,legend="brief", ylog=True,average=True)
+plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
 plotter.filter = lambda df: df.loc[df["type_name"] == "abs"]
 
-plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=True)
-plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = [0, 5],average=True)
+plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
+plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
 
 plotter.filter = lambda df: df.loc[df["type_name"] == "sec"]
 
-plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=True)
-plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = [0, 5],average=True)
+plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
+plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
 
 
@@ -86,42 +89,42 @@ f_3 = lambda df: df.loc[
     (df[plotter.scan_name_key] == "kendo")
     ]
 
+
 plotter.subplots(3,2, figsize = (2* a/3,b/2), external_legend = "axes")
 
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem", hue = plotter.scan_name_key, legend="brief",xlog=True, ylog=True,average=True, filter = f_1)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem", hue=plotter.scan_name_key, legend = False, xlog=True, ylog=False, ylim = [0, 1],average=True, filter = f_1)
+plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem", hue = plotter.scan_name_key, legend="brief",xlog=True, ylog=True,ylim = c_lim,average=True, filter = f_1)
+plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem", hue=plotter.scan_name_key, legend = False, xlog=True, ylog=False, ylim =cv_lim,average=True, filter = f_1)
 
 
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,average=True,filter = f_2)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = [0, 1],average=True, filter = f_2)
+plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,ylim = c_lim,average=True,filter = f_2)
+plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim =cv_lim,average=True, filter = f_2)
 
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,average=True,filter = f_3)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = [0, 1],average=True,filter = f_3)
+plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,ylim = c_lim,average=True,filter = f_3)
+plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True,filter = f_3)
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection_seperate.pdf")
 plt.show()
 
+select = {"task": [
+    # "run",
+    "run:scan_sample",
+    "run:scan_sample:SimContainer:run",
+    "run:scan_sample:SimContainer:run:step",
+    "run:scan_sample:update_sim_container",
+    "run:write_element_tree"
+]}
 
-# select = {"task": [
-#     # "run",
-#     "run:scan_sample",
-#     "run:scan_sample:SimContainer:run",
-#     "run:scan_sample:SimContainer:run:step",
-#     "run:scan_sample:update_sim_container",
-#     "run:write_element_tree"
-# ]}
 
+plotter.subplots(1, 2, figsize=(a,b/4), external_legend="figure")
+plotter.timing_barplot("task", select=select, legend="brief")
+plotter.timing_lineplot("duration",x_name="scan_index", hue="task", select=select)
+# plotter.timing_timelineplot(select=select)
+plotter.make_legend()
+plotter.savefig(IMGPATH + "timing.pdf")
+plotter.show()
 
-# plotter.subplots(1, 2, figsize=(a,b/4), external_legend="figure")
-# plotter.timing_barplot("task", select=select, legend="brief")
-# plotter.timing_lineplot("duration",x_name="scan_index", hue="task", select=select)
-# # plotter.timing_timelineplot(select=select)
-# plotter.make_legend()
-# plotter.savefig(IMGPATH + "timing.pdf")
-# plotter.show()
-#
-# d = plotter.timing_df
-# T = d.loc[d["task"] =="run"]["duration"]
-# for t in T:
-#     print("total runtime {t}".format(t = t/60**2))
-# message("done")
+d = plotter.timing_df
+T = d.loc[d["task"] =="run"]["duration"]
+for t in T:
+    print("total runtime {t}".format(t = t/60**2))
+message("done")
