@@ -12,9 +12,7 @@ from thesis.main.my_debug import warning
 
 class Plotter:
 
-    def __init__(self, path, groups = []) -> None:
-
-
+    def __init__(self, path, groups=[]) -> None:
 
         self.main_title = ""
         self.time_key: str = "time"
@@ -28,7 +26,7 @@ class Plotter:
         self.t_max = 10
         self.scan_name_key: str = "scan_name_scan_name"
         self.scan_index_key: str = "scan_value"
-        self.path_name: str  = "path_name"
+        self.path_name: str = "path_name"
         self.scan_ticks = []
         self.legend_axes = None
         self.legend_figure = None
@@ -47,13 +45,11 @@ class Plotter:
         self.global_df: pd.DataFrame = pd.DataFrame()
         self.cell_df: pd.DataFrame = pd.DataFrame()
         self.timing_df: pd.DataFrame = pd.DataFrame()
-        self.ruse_df:pd.DataFrame = None
+        self.ruse_df: pd.DataFrame = None
         self.means: pd.DataFrame = pd.DataFrame()
         self.counts: pd.DataFrame = pd.DataFrame()
 
-        self.filter = lambda df:df
-
-
+        self.filter = lambda df: df
 
         self.label_replacement = {
             "type_name": "Cell Type",
@@ -85,7 +81,7 @@ class Plotter:
                    'ytick.major.size': 2,
                    'xtick.minor.size': 1,
                    'ytick.minor.size': 2,
-                   'axes.formatter.usemathtext':True
+                   'axes.formatter.usemathtext': True
                    }
 
         sns.set_context("paper", rc=self.rc)
@@ -101,7 +97,7 @@ class Plotter:
 
         sns.set_context("paper", rc=self.rc)
 
-    def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None, reset_filter = True) -> None:
+    def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None, reset_filter=True) -> None:
 
         if self.fig is not None:
             plt.close(self.fig)
@@ -120,17 +116,16 @@ class Plotter:
 
         self.legend_entries = {}
 
-
         self.n = n
         self.m = m
         self.gridspec_index = 0
 
         from typing import Tuple
         if external_legend == "axes":
-            self.fig = plt.figure(figsize=((figsize[0]/m)*(m+1),figsize[1]))
+            self.fig = plt.figure(figsize=((figsize[0] / m) * (m + 1), figsize[1]))
             self.gridspec = self.fig.add_gridspec(n, m + 1, **gridspec_args)
             self.legend_axes = self.fig.add_subplot(self.gridspec[:, -1])
-        elif external_legend == "figure" or isinstance(external_legend,Tuple):
+        elif external_legend == "figure" or isinstance(external_legend, Tuple):
             self.fig = plt.figure(figsize=figsize)
             if isinstance(external_legend, Tuple):
                 self.legend_figure = plt.figure(figsize=external_legend)
@@ -144,6 +139,7 @@ class Plotter:
             self.gridspec = self.fig.add_gridspec(n, m, **gridspec_args)
 
         self.external_legend = external_legend
+
     def gca(self):
         return self.fig.gca()
 
@@ -198,15 +194,41 @@ class Plotter:
         else:
             self.color_dict = self.get_color_dict(np.concatenate([fields, t, cell_types, scan_names]))
 
-    def get_color(self, key, palette_name="Dark2") -> Dict:
+    def get_categorical_color(self, kvp, palette_name="Dark2") -> Dict:
+
+        key, value = kvp
+
+        if kvp in self.color_dict.keys():
+            return self.color_dict[kvp]
+        else:
+            keys = list(self.color_dict.keys())
+            keys.append(kvp)
+            self.color_dict = self.get_color_dict(keys, palette_name=palette_name)
+            return self.color_dict[kvp]
+
+    def get_continuous_color(self, key, palette_name = "viridids"):
 
         if key in self.color_dict.keys():
             return self.color_dict[key]
         else:
-            keys = list(self.color_dict.keys())
-            keys.append(key)
-            self.color_dict = self.get_color_dict(keys, palette_name=palette_name)
-            return self.color_dict[key]
+            self.color_dict[key] = palette_name
+            return palette_name
+
+    def get_palette(self, df, key, palette_name="Dark2", categorical = None) -> Dict:
+
+        if key is None:
+            return None
+
+        values = df[key].unique()
+
+        if len(values) > 5:
+            return self.get_continuous_color(key, palette_name=palette_name)
+        else:
+            p = {}
+            for v in values:
+                p[v] = self.get_categorical_color((key, v), palette_name=palette_name)
+
+        return p
 
     @staticmethod
     def get_color_dict(keys, palette_name="Dark2") -> Dict:
@@ -217,20 +239,7 @@ class Plotter:
             color_dict[k] = palette[i]
         return color_dict
 
-    def get_palette(self, df, key, palette_name="Dark2") -> Dict:
-
-        if key is None:
-            return None
-
-        keys = df[key].unique()
-
-        p = {}
-        for k in keys:
-            p[k] = self.get_color(k, palette_name=palette_name)
-
-        return p
-
-    def activation(self,c , R, R_M=860, max = 0.125, min = 0, n_R = 0.55, n_il2 = 4):
+    def activation(self, c, R, R_M=860, max=0.125, min=0, n_R=0.55, n_il2=4):
 
         def rec(R):
             ec50 = (max - min) * (1 - np.power(R, n_R) / (np.power(R_M, n_R) + np.power(R, n_R))) + min
@@ -241,35 +250,34 @@ class Plotter:
 
         if isinstance(R, float) and R == 0:
             return 0
-        if isinstance(R,float) and isinstance(c,float):
+        if isinstance(R, float) and isinstance(c, float):
             return a
         else:
             a[R == 0] = 0
             return a
 
-    def calc_cell_activation(self, R_M=860, max = 0.125, min = 0, n_R = 0.55, n_il2 = 4):
-
+    def calc_cell_activation(self, R_M=860, max=0.125, min=0, n_R=0.55, n_il2=4):
 
         # mask = self.cell_df["scan_name_scan_name"] == name
 
         act = self.activation(
             self.cell_df["IL-2_surf_c"], self.cell_df["IL-2_R"],
-            R_M=R_M, max = max, min = min,n_R = n_R, n_il2 = n_il2)
+            R_M=R_M, max=max, min=min, n_R=n_R, n_il2=n_il2)
 
         self.cell_df["activation"] = act
 
     def load(self, path, groups=[]) -> None:
 
-        if isinstance(path,str):
+        if isinstance(path, str):
             path = [path]
 
-        acc ={}
+        acc = {}
         for p in path:
 
             result = self.load_single_sim(p, groups)
 
-            for k,v in result.items():
-                name_series = pd.Series([p.split("/")[-1]]*len(v))
+            for k, v in result.items():
+                name_series = pd.Series([p.split("/")[-1]] * len(v))
                 v[self.path_name] = name_series
 
                 if k in acc.keys():
@@ -277,19 +285,17 @@ class Plotter:
                 else:
                     acc[k] = v
 
-        for k,v in acc.items():
-            v.index = pd.RangeIndex(0,len(v))
-            self.__setattr__(k,v)
+        for k, v in acc.items():
+            v.index = pd.RangeIndex(0, len(v))
+            self.__setattr__(k, v)
 
     def load_single_sim(self, path, groups) -> None:
-
 
         assert os.path.exists(path)
         ruse_df = pd.DataFrame()
         try:
             global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
             global_df = self.reset_scan_index(global_df)
-
 
             cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
             if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
@@ -310,7 +316,6 @@ class Plotter:
                 ruse_df = self.reset_scan_index(ruse_df)
             except FileNotFoundError:
                 pass
-
 
             # self.timing_df = timing_df
         except FileNotFoundError as e:
@@ -382,7 +387,8 @@ class Plotter:
         counts["n_rel"] = counts["n"] / total
         # self.counts = counts
 
-        return {"global_df": global_df,"cell_df": cell_df, "means":means,"timing_df":timing_df, "counts":counts,"ruse":ruse_df}
+        return {"global_df": global_df, "cell_df": cell_df, "means": means, "timing_df": timing_df, "counts": counts,
+                "ruse": ruse_df}
 
     def get_max_time_index(self) -> float:
 
@@ -413,7 +419,6 @@ class Plotter:
         axis_df = self.global_df.loc[self.global_df[scan_axis_name].notna()]
         ticks = axis_df[self.scan_index_key].unique()
 
-
         labels = axis_df[scan_axis_name]
         return np.array(ticks), np.array(labels)
 
@@ -439,7 +444,7 @@ class Plotter:
         #             if i % 10 == 0:
         #                 labels[i] = np.round(self.scan_scale, 2)[i]
 
-            # return ticks, labels
+        # return ticks, labels
 
     def replace_labels(self, labels) -> Dict:
 
@@ -468,8 +473,6 @@ class Plotter:
 
     def reset_scan_index(self, df) -> pd.DataFrame:
 
-
-
         df["raw_scan_index"] = df["scan_index"]
 
         if "scan_name" in list(df.columns):
@@ -490,14 +493,12 @@ class Plotter:
 
     def make_legend_entry(self, ax) -> None:
 
-
-
         if ax.get_legend() is not None:
             handles = ax.get_legend().legendHandles
             labels = [i._text for i in ax.get_legend().texts]
-            for i,l in enumerate(labels):
+            for i, l in enumerate(labels):
                 try:
-                    labels[i] = np.round(float(l),2)
+                    labels[i] = np.round(float(l), 2)
                 except ValueError:
                     continue
 
@@ -506,7 +507,6 @@ class Plotter:
 
         else:
             handles, labels = ax.get_legend_handles_labels()
-
 
         if self.external_legend:
             try:
@@ -582,7 +582,7 @@ class Plotter:
 
         palette = {}
         for y in y_names:
-            palette[y] = self.get_color(y)
+            palette[y] = self.get_categorical_color(y)
 
         return ax, df, palette
 
@@ -605,10 +605,16 @@ class Plotter:
         ax.set_xlim([0, self.t_max])
         ax.set_ylabel(self.get_label(y_name))
 
-    def global_steady_state_plot(self, y_name, x_name =None, legend=False, ci = "sd", hue=None, style=None, ylog=False, xlog = True, ylim=None, average=False,
+    def global_steady_state_plot(self, y_name, x_name=None, legend=False, ci="sd", hue=None, style=None, ylog=False,
+                                 xlog=True, ylim=None, average=False,estimator = None,
                                  **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
+
+        df, ci = self.compute_ci(
+            df,
+            [self.scan_index_key, self.time_index_key, hue, style],
+            ci=ci, estimator=estimator, y_names=[y_name])
 
         if x_name is None:
             x_name = self.scan_index_key
@@ -630,11 +636,11 @@ class Plotter:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
                          ci=ci)
 
-
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
-    def global_steady_state_barplot(self, y_names, x_name = None, legend=False, hue=None, ylim=None, bar_spacing=1.1, cat_spacing=1.2,
-                                    barwidth=0.1,norm = False, y_ticks = True, t_mean = False, **kwargs) -> None:
+    def global_steady_state_barplot(self, y_names, x_name=None, legend=False, hue=None, ylim=None, bar_spacing=1.1,
+                                    cat_spacing=1.2,
+                                    barwidth=0.1, norm=False, y_ticks=True, t_mean=False, **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
         if t_mean == False:
@@ -660,7 +666,6 @@ class Plotter:
                 for v in df[x_name].unique():
                     x_values[v] = v
 
-
             for k, v in x_values.items():
                 x.append(x[-1] + barwidth * spacing)
                 scan_ticks.append(v)
@@ -679,8 +684,6 @@ class Plotter:
             t = np.mean(x[-len(self.scan_scale):])
             x_ticks.append(t)
         x = x[1:]
-
-
 
         ax.bar(x, height=y, width=w)
         ax.set_xticks(x)
@@ -703,14 +706,13 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def finalize_steady_state_plot(self, ax, y_name, ylim, ylog, xlog, x_name = None):
+    def finalize_steady_state_plot(self, ax, y_name, ylim, ylog, xlog, x_name=None):
 
         self.make_legend_entry(ax)
         ax.set_xlabel(self.get_label(self.scan_index_key))
         ax.set_ylabel(self.get_label(y_name))
         if ylog:
             ax.set_yscale("log")
-
 
         if x_name is None:
             ticks, labels = self.get_scan_ticks()
@@ -719,7 +721,8 @@ class Plotter:
         else:
             ax.set_xlabel(self.get_label(x_name))
 
-        from matplotlib.ticker import StrMethodFormatter, FixedFormatter, LogLocator, IndexLocator, AutoLocator, ScalarFormatter, FixedLocator, LinearLocator
+        from matplotlib.ticker import StrMethodFormatter, FixedFormatter, LogLocator, IndexLocator, AutoLocator, \
+            ScalarFormatter, FixedLocator, LinearLocator
 
         if xlog:
             ax.xaxis.set_major_locator(LogLocator())
@@ -732,9 +735,15 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def cell_steady_state_plot(self, y_name, legend=False, hue=None, style=None, ylog=False,xlog = True, cummulative=False,
+    def cell_steady_state_plot(self, y_name, x_name = None, legend=False, hue=None, style=None, ylog=False, xlog=True,
+                               cummulative=False,estimator = None,
                                ylim=None, ci="sd", **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
+
+        df, ci = self.compute_ci(
+            df,
+            [self.scan_index_key, self.time_index_key, hue, style],
+            ci=ci, estimator=estimator, y_names=[y_name])
 
         if cummulative:
             if hue and style:
@@ -746,11 +755,12 @@ class Plotter:
             else:
                 df = df.groupby([self.time_index_key, self.scan_index_key]).sum()
             df = df.reset_index()
-        sns.lineplot(x=self.scan_index_key, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
+        if x_name is None:
+            x_name = self.scan_index_key
+        sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
                      palette=palette, ci=ci)
 
-
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog ,xlog)
+        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name = x_name)
 
     def cell_steady_state_barplot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
                                   ylim=None, ci="sd", y_ticks=True, **kwargs) -> None:
@@ -769,7 +779,8 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def single_cell_steady_state_plot(self, y_name, legend=False, hue=None, style=None, ylog=False, xlog = True, cummulative=False,
+    def single_cell_steady_state_plot(self, y_name, x_name= None,legend=False, hue=None, style=None, ylog=False, xlog=True,
+                                      cummulative=False,
                                       ylim=None, linewidth=0.1, units="id", **kwargs):
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -783,20 +794,27 @@ class Plotter:
             else:
                 df = df.groupby([self.time_index_key, self.scan_index_key]).sum()
             df = df.reset_index()
-        sns.lineplot(x=self.scan_index_key, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
+
+        if x_name is None:
+            x_name= self.scan_index_key
+
+        sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
                      palette=palette, estimator=None, units=units, linewidth=linewidth)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog)
+        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name = x_name)
 
-    def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False, xlog = True, ci="sd", **kwargs):
+    def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False,ylim = None, xlog=True, ci="sd",
+                           **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.counts, hue, **kwargs)
         if relative:
             y = "n_rel"
-            ylim = [0, 1]
+            if ylim is None:
+                ylim = [0, 1]
         else:
             y = "n"
-            ylim = False
+            if ylim is None:
+                ylim = False
 
         sns.lineplot(x=self.scan_index_key, y=y, hue=hue, data=df, ax=ax, style=style, ci=ci,
                      legend=legend,
@@ -942,7 +960,7 @@ class Plotter:
         ax.set_ylabel(self.get_label("dr"))
         ax.set_xlabel(self.get_label("time"))
 
-    def cell_plot(self, x_name, y_name, legend=False, hue=None, style=None, ci="sd", time=None, **kwargs) -> None:
+    def cell_plot(self, x_name, y_name, legend=False, hue=None, style=None, ci="sd", time=None,ylim = None,xlim = None, condition = lambda df:df, count = False, **kwargs) -> None:
 
         if time:
             cell_df = self.cell_df.loc[self.cell_df["time"].isin(time)]
@@ -951,15 +969,30 @@ class Plotter:
 
         ax, df, palette, hue = self.prepare_plot(cell_df, hue, **kwargs)
 
-        sns.lineplot(x=x_name, y=y_name, hue=hue, data=df, ax=ax, style=style, ci=ci,
+        df = condition(df)
+        if count:
+            grp = [x_name]
+            if hue is not None:
+                grp.append(hue)
+            if style is not None:
+                grp.append(style)
+
+            df = df.groupby(grp).count()
+            df = df.reset_index()
+            sns.lineplot(x=x_name, y="id_id", hue=hue, data=df, ax=ax, style=style, ci=ci,
+                         legend=legend, palette=palette)
+        else:
+            sns.lineplot(x=x_name, y=y_name, hue=hue, data=df, ax=ax, style=style, ci=ci,
                      legend=legend, palette=palette)
 
         self.make_legend_entry(ax)
 
         ax.set_ylabel(self.get_label(y_name))
         ax.set_xlabel(self.get_label(x_name))
-        # if ylim:
-        #     ax.set_ylim(ylim)
+        if ylim:
+            ax.set_ylim(ylim)
+        if xlim:
+            ax.set_xlim(xlim)
 
     def cell_plot_twinx(self, x_name, y_names, legend=False, ylim=None, style=None, color_axis=True, ci="sd",
                         time=None, marker=None, **kwargs) -> None:
@@ -995,7 +1028,8 @@ class Plotter:
         ax.set_ylabel(self.get_label(y_name))
         ax.set_xlabel(self.get_label(axis_name))
 
-    def cell_histogramm(self, x_name, t=None, hue=None, xlim = None, ylim = None, quantiles=None, distplot_kwargs=None, **kwargs):
+    def cell_histogramm(self, x_name, t=None, hue=None, xlim=None, ylim=None, quantiles=None, distplot_kwargs=None,
+                        xlog = True, ylog = True, **kwargs):
 
         if quantiles is None:
             quantiles = [0, 1]
@@ -1015,20 +1049,23 @@ class Plotter:
                     distplot_kwargs["bins"] = int(len(x) / 5) if distplot_kwargs["bins"] > len(x) / 5 else \
                         distplot_kwargs["bins"]
 
-                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs, ax=ax,norm_hist = False)
+                sns.distplot(x[x_name], color=palette[h], **distplot_kwargs, ax=ax, norm_hist=False)
         else:
             if "bins" in distplot_kwargs:
                 distplot_kwargs["bins"] = int(len(df) / 5) if distplot_kwargs["bins"] > len(df) / 5 else \
                     distplot_kwargs["bins"]
             print(df[x_name].mean())
-            sns.distplot(df[x_name], **distplot_kwargs, ax=ax,norm_hist = False)
+            sns.distplot(df[x_name], **distplot_kwargs, ax=ax, norm_hist=False)
 
         self.make_legend_entry(ax)
-        ax.set_yscale('log')
-        ax.set_xscale('log')
+
+        if ylog:
+            ax.set_yscale('log')
+        if xlog:
+            ax.set_xscale('log')
         if ylim is not None:
             ax.set_ylim(ylim)
-        
+
         if xlim is not None:
             ax.set_xlim(xlim)
         else:
@@ -1040,7 +1077,8 @@ class Plotter:
         ax.set_ylabel("absolute frequency")
         ax.set_xlabel(self.get_label(x_name))
 
-    def cell_activation_histogramm(self, x_name, cummulative = False, relative = False,color = "red", showmax = None, t=None,bins = 100, hue=None, xlim = None, ylim = None, **kwargs):
+    def cell_activation_histogramm(self, x_name, cummulative=False, relative=False, color="red", showmax=None, t=None,
+                                   bins=100, hue=None, xlim=None, ylim=None, xlog = True, ylog = True, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -1060,92 +1098,136 @@ class Plotter:
         nans = np.argwhere(np.isnan(act))
 
         b = b[1:]
-        b = np.delete(b,nans)
-        act = np.delete(act,nans)
+        b = np.delete(b, nans)
+        act = np.delete(act, nans)
 
         import matplotlib.lines as lines
 
         ax.plot(b, act, "-", color=color)
 
         if showmax is not None:
-            q = np.quantile(np.array(act),[showmax])
+            q = np.quantile(np.array(act), [showmax])
 
             x = b[np.argmin(np.abs(act - q))]
             print(x)
-            line = lines.Line2D([x,x], [0, 1])
+            line = lines.Line2D([x, x], [0, 1])
             ax.add_artist(line)
 
         if xlim is not None:
             ax.set_xlim(xlim)
         if ylim is not None:
             ax.set_ylim(ylim)
-        # ax.set_yscale('log')
-        ax.set_xscale('log')
+        if ylog:
+            ax.set_yscale('log')
+        if xlog:
+            ax.set_xscale('log')
 
         if relative:
             ax.set_ylabel("% activation")
         else:
             ax.set_ylabel("n activated")
 
-
         ax.set_xlabel(self.get_label(x_name))
 
-    def _compute_radial_profile(self, df, y_names, center_func = lambda df: df.loc[df["type_name"] =="sec"], n_workers= 8, chunksize = 32):
+    def _compute_radial_profile(self, df, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
+                                chunksize=32):
 
-
-        if not isinstance(y_names,List):
+        if not isinstance(y_names, List):
             y_names = [y_names]
 
-        def init(_y_names,_groups, _center_func):
-
+        def init(_y_names, _groups, _center_func):
             global y_names
             y_names = _y_names
 
-            global  groups
+            global groups
             groups = _groups
 
             global center_func
             center_func = _center_func
 
         from multiprocessing import Pool
-        with Pool(n_workers, initializer=init, initargs=(y_names,self.groups, center_func)) as p:
-            l = list(df.groupby(["raw_scan_index",self.time_index_key]))
+        with Pool(n_workers, initializer=init, initargs=(y_names, self.groups, center_func)) as p:
+            l = list(df.groupby(["raw_scan_index", self.time_index_key]))
 
-            c = int(len(l)/n_workers)
+            c = int(len(l) / n_workers)
             c = c if c > 0 else 1
 
             chunksize = c if c < chunksize else chunksize
-            print("running radials for l: {l} and chunksize {cs} on {n} workers".format(l = len(l), cs = chunksize, n = n_workers))
-            full_result = pd.concat(p.starmap(run_single_step, l,chunksize=chunksize))
+            print("running radials for l: {l} and chunksize {cs} on {n} workers".format(l=len(l), cs=chunksize,
+                                                                                        n=n_workers))
+            full_result = pd.concat(p.starmap(run_single_step, l, chunksize=chunksize))
 
         return full_result
 
+    def compute_radial_profiles(self, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
+                                chunksize=32):
+
+        self.radials_df = self._compute_radial_profile(self.cell_df, y_names, center_func=center_func,
+                                                       n_workers=n_workers, chunksize=chunksize)
+
+    def compute_cell_distance_metric(self, source_type_name, metric_dict = {"mean_distance":np.mean}):
 
 
-    def compute_radial_profiles(self, y_names, center_func = lambda df: df.loc[df["type_name"] =="sec"],   n_workers= 8, chunksize = 32):
+        for k in metric_dict.keys():
+            if k in self.cell_df.columns:
+                self.cell_df = self.cell_df.drop(columns=[k])
 
-        self.radials_df = self._compute_radial_profile(self.cell_df, y_names, center_func=center_func ,  n_workers= n_workers, chunksize = chunksize)
+        result = []
+        for i, gf in self.cell_df.groupby(["raw_scan_index", self.time_index_key]):
+            print(i)
+            ids, r = self.compute_distance_metric(gf, source_type_name, metrics=metric_dict)
+            d = {"id_id": ids, "raw_scan_index": gf["raw_scan_index"],
+                 self.time_index_key: gf[self.time_index_key]}
+            d.update(r)
+            result.append(pd.DataFrame(d))
+
+        result = pd.concat(result)
+
+        self.cell_df = self.cell_df.merge(result, on=["id_id", "raw_scan_index", self.time_index_key])
+
+    def compute_distance_metric(self,df, type_name, metrics):
 
 
-    def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,ci="sd", cell_radius=None, legend=None, estimator=None, **kwargs):
+        ids, r = get_distance_matrix(df)
+        source_ids = np.array(df.loc[df.type_name == type_name]["id_id"])
+        folded = r[np.argwhere(np.isin(ids, source_ids)).ravel()]
 
-        if hasattr(self,"radials_df") and hue in self.radials_df.columns and y_name in self.radials_df.columns:
-            ax, df, palette, hue = self.prepare_plot(self.radials_df, hue, **kwargs)
+        d = {}
+        for k,v in metrics.items():
+            d[k] = np.apply_along_axis(v,0,folded)
+        return ids, d
+
+
+
+
+    def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,
+                               ci="sd", cell_radius=None, legend=None, estimator=None, plot_filter = lambda df: df, **kwargs):
+
+        df = self.cell_df
+
+        # cell = df.loc[df.type_name == "sec"].iloc[5]
+        # df = df.loc[(df.type_name == "abs") | (df.id_id == cell.id_id)]
+
+        if hasattr(self, "radials_df") and hue in self.radials_df.columns and y_name in self.radials_df.columns:
+            ax, df, palette, hue = self.prepare_plot(self.radials_df, hue,  **kwargs)
+
         else:
             print("recomputing radial profiles because hue or y_name wasn't found in cache")
-            ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
-            df = self._compute_radial_profile(df, [y_name, "type_name"],center_func=lambda df: df.loc[df["type_name"] == center_type])
+            ax, df, palette, hue = self.prepare_plot(df, hue, **kwargs)
+            df = self._compute_radial_profile(df, [y_name, "type_name"],
+                                              center_func=lambda df: df.loc[df["type_name"] == center_type])
+        df = plot_filter(df)
+
 
         df, ci = self.compute_ci(
             df,
-            [self.scan_index_key, self.time_index_key,"type_name", "distance", hue,style],
+            [self.scan_index_key, self.time_index_key, "type_name", "distance", hue, style],
             ci=ci, estimator=estimator, y_names=[y_name])
 
         if cell_radius:
             df["distance"] = df["distance"] / cell_radius
 
-
-        sns.lineplot(x="distance", y=y_name, hue=hue, data=df,ax = ax, legend=legend, ci = ci, palette=palette)
+        sns.lineplot(x="distance", y=y_name, hue=hue, style = style, data=df, ax=ax, legend=legend, ci = ci, palette=palette)
 
         if ylog:
             ax.set_yscale("log")
@@ -1160,9 +1242,7 @@ class Plotter:
         else:
             ax.set_xlabel(r"r $\mu m $")
 
-
         ax.set_ylabel(self.get_label(y_name))
-
 
         self.make_legend_entry(ax)
 
@@ -1244,10 +1324,10 @@ class Plotter:
     #
     #     self.make_legend_entry(ax)
 
-    def compute_ci(self,df, group_by_columns, ci = "sd", estimator = None, y_names = None):
+    def compute_ci(self, df, group_by_columns, ci="sd", estimator=None, y_names=None):
 
-        if ci in ["sd",None] or isinstance(ci,float) or isinstance(ci,int):
-            return df,ci
+        if ci in ["sd", None] or isinstance(ci, float) or isinstance(ci, int):
+            return df, ci
         elif ci == "sem":
             for g in group_by_columns:
                 if g is None:
@@ -1259,13 +1339,14 @@ class Plotter:
             gb = df.groupby(list(set(group_by_columns)))
 
             if estimator is None:
-                return gb.mean().reset_index(),"sd"
+                return gb.mean().reset_index(), "sd"
             else:
                 return gb.agg(estimator).reset_index(), "sd"
         else:
-            return df,ci
+            return df, ci
 
-    def cell_heatmap(self, x_name, y_name, z_name, filter={}, cmap = "viridis", v_range=None,c_lines = None, levels = 100, xlog = False, ylog = False, accumulator=lambda groupby: groupby.mean(), **kwargs):
+    def cell_heatmap(self, x_name, y_name, z_name, filter={}, cmap="viridis", v_range=None, c_lines=None, levels=100,
+                     xlog=False, ylog=False, accumulator=lambda groupby: groupby.mean(), **kwargs):
 
         hue = None
 
@@ -1287,25 +1368,24 @@ class Plotter:
         z = np.array(piv)
 
         n_ticks = 5
-        ext= [min(x),max(x),min(y),max(y)]
+        ext = [min(x), max(x), min(y), max(y)]
 
         # cs = ax.imshow(z, extent=ext, aspect = "auto",origin="lower", cmap = cmap)
-        from matplotlib.colors import  Normalize
+        from matplotlib.colors import Normalize
         from matplotlib.cm import ScalarMappable
 
         if v_range is None:
-            v_range = [np.nanmin(z),np.nanmax(z)]
+            v_range = [np.nanmin(z), np.nanmax(z)]
 
-        levels = np.linspace(v_range[0],v_range[1],100)
+        levels = np.linspace(v_range[0], v_range[1], 100)
 
-        cs = ax.contourf(x,y,z, vmin = v_range[0], vmax = v_range[1], cmap = cmap, levels = levels)
+        cs = ax.contourf(x, y, z, vmin=v_range[0], vmax=v_range[1], cmap=cmap, levels=levels)
         for c in cs.collections:
             c.set_edgecolor("face")
 
-
         if c_lines:
             if not isinstance(c_lines, List):
-                c_lines = np.linspace(v_range[0],v_range[1],c_lines)
+                c_lines = np.linspace(v_range[0], v_range[1], c_lines)
             c_lines_sc = ax.contour(x, y, z, vmin=v_range[0], vmax=v_range[1], colors="black", levels=c_lines)
             ax.clabel(c_lines_sc, fmt='%2.3f', colors='black', fontsize=4)
 
@@ -1320,11 +1400,11 @@ class Plotter:
         ax.set_xticks(x)
         ax.set_yticks(y)
 
-        norm = Normalize( vmin = v_range[0], vmax = v_range[1])
-        mappable = ScalarMappable(norm, cmap = cmap)
+        norm = Normalize(vmin=v_range[0], vmax=v_range[1])
+        mappable = ScalarMappable(norm, cmap=cmap)
 
         if self.external_legend:
-            plt.colorbar(mappable, label= self.get_label(z_name), ax = ax, cax=self.legend_axes)
+            plt.colorbar(mappable, label=self.get_label(z_name), ax=ax, cax=self.legend_axes)
         else:
             plt.colorbar(mappable, ax=ax)
 
@@ -1339,7 +1419,9 @@ class Plotter:
         ax.set_xlabel(self.get_label(x_name))
         ax.set_ylabel(self.get_label(y_name))
 
-    def global_heatmap(self, x_name, y_name, z_name, acc_filter={}, cmap = "viridis", v_range=None,c_lines = None, levels = 100, xlog = False, ylog = False, accumulator=lambda groupby: groupby.mean(), mask = None,**kwargs):
+    def global_heatmap(self, x_name, y_name, z_name, acc_filter={}, cmap="viridis", v_range=None, c_lines=None,
+                       levels=100, xlog=False, ylog=False, accumulator=lambda groupby: groupby.mean(), mask=None,
+                       **kwargs):
 
         hue = None
 
@@ -1353,12 +1435,10 @@ class Plotter:
         for key in acc_filter.keys():
             df = df.loc[df[key].isin(acc_filter[key])]
 
-
         if mask is not None:
-            df[z_name] = df.loc[df["success"] == False][z_name].replace(mask,np.nan)
+            df[z_name] = df.loc[df["success"] == False][z_name].replace(mask, np.nan)
 
         piv = df.pivot(y_name, x_name, z_name)
-
 
         # piv = piv.reindex(index=piv.index[::-1])
 
@@ -1366,18 +1446,17 @@ class Plotter:
         y = np.array(piv.index)
         z = np.array(piv)
 
-
         n_ticks = 5
-        ext= [min(x),max(x),min(y),max(y)]
+        ext = [min(x), max(x), min(y), max(y)]
 
         # cs = ax.imshow(z, extent=ext, aspect = "auto",origin="lower", cmap = cmap)
-        from matplotlib.colors import  Normalize
+        from matplotlib.colors import Normalize
         from matplotlib.cm import ScalarMappable
 
         if v_range is None:
-            v_range = [np.min(z),np.max(z)]
+            v_range = [np.min(z), np.max(z)]
         levels = np.linspace(v_range[0], v_range[1], 100)
-        cs = ax.contourf(x,y,z, vmin = v_range[0], vmax = v_range[1], cmap = cmap, levels = levels)
+        cs = ax.contourf(x, y, z, vmin=v_range[0], vmax=v_range[1], cmap=cmap, levels=levels)
 
         for c in cs.collections:
             c.set_edgecolor("face")
@@ -1395,11 +1474,11 @@ class Plotter:
         ax.set_xticks(x)
         ax.set_yticks(y)
 
-        norm = Normalize( vmin = v_range[0], vmax = v_range[1])
-        mappable = ScalarMappable(norm, cmap = cmap)
+        norm = Normalize(vmin=v_range[0], vmax=v_range[1])
+        mappable = ScalarMappable(norm, cmap=cmap)
 
         if self.external_legend:
-            plt.colorbar(mappable, label= self.get_label(z_name), ax = ax, cax=self.legend_axes)
+            plt.colorbar(mappable, label=self.get_label(z_name), ax=ax, cax=self.legend_axes)
         else:
             plt.colorbar(mappable, ax=ax)
 
@@ -1413,8 +1492,6 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(x_name))
         ax.set_ylabel(self.get_label(y_name))
-
-
 
     def _global_heatmap(self, x_name, y_name, z_name, filter={}, accumulator=lambda groupby: groupby.mean(), **kwargs):
 
@@ -1456,11 +1533,11 @@ class Plotter:
 
         ax.plot(x, y, *plot_args)
 
-    def function_plot(self, f, hue=None,xlim = None, ylim = None, plot_kwargs = {}, **kwargs):
+    def function_plot(self, f, hue=None, xlim=None, ylim=None, plot_kwargs={}, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
         ticks = ax.get_xticks()
-        x = np.linspace(min(ticks),max(ticks), 100)
+        x = np.linspace(min(ticks), max(ticks), 100)
         y = np.apply_along_axis(f, 0, x)
 
         self.make_legend_entry(ax)
@@ -1489,7 +1566,7 @@ class Plotter:
 
             self.make_legend_entry(old_ax)
 
-    def cell_scatter_plot(self, names, t=None, hue=None, m=0.05, legend = None, marker = "o", s = 0.1, **kwargs):
+    def cell_scatter_plot(self, names, t=None, hue=None, m=0.05, legend=None, marker="o", s=0.1, **kwargs):
 
         from matplotlib.lines import Line2D
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
@@ -1502,16 +1579,16 @@ class Plotter:
 
             for i, h in enumerate(df[hue].unique()):
                 x = df.loc[df[hue] == h]
-                ax.scatter(x[names[0]], x[names[1]], marker = marker, color=palette[h], s = s)
+                ax.scatter(x[names[0]], x[names[1]], marker=marker, color=palette[(hue,h)], s=s)
                 labels.append(str(h))
                 handels.append(
                     Line2D([0], [0], marker=marker, color=palette[h], markersize=1,
-                               markerfacecolor=palette[h], markeredgewidth=1, linewidth=1)
+                           markerfacecolor=palette[(hue,h)], markeredgewidth=1, linewidth=1)
                 )
 
             ax.legend(handels, labels)
         else:
-            ax.scatter(df[names[0]], df[names[1]], marker=marker, s = s)
+            ax.scatter(df[names[0]], df[names[1]], marker=marker, s=s)
 
         self.make_legend_entry(ax)
 
@@ -1556,7 +1633,7 @@ class Plotter:
         if not legend and ax.get_legend():
             ax.get_legend().remove()
 
-    def timing_lineplot(self, y_name, x_name = None, hue=None, style=None, ci="sd",ylim = None, legend=False, **kwargs):
+    def timing_lineplot(self, y_name, x_name=None, hue=None, style=None, ci="sd", ylim=None, legend=False, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.timing_df, hue, **kwargs)
 
@@ -1566,7 +1643,6 @@ class Plotter:
             ax.set_ylim(ylim)
 
         sns.lineplot(x=x_name, y=y_name, data=df, ci=ci, hue=hue, style=style, legend=legend, ax=ax, palette=palette)
-
 
         # ax.set_xlabel("time(s)")
         # ax.set_xlabel(self.get_label(x_name))
@@ -1587,18 +1663,18 @@ class Plotter:
         for i, c in cycles.iterrows():
             df["cycle"][(df["start"] >= c["start"]) & (df["end"] < c["end"])] = int(i - 1)
 
-        colors = {key: self.get_color(key) for key in df["task"].unique()}
+        colors = {key: self.get_categorical_color(key) for key in df["task"].unique()}
 
-        level_size = df.groupby(["level"],as_index=False).count()
+        level_size = df.groupby(["level"], as_index=False).count()
 
-        def get_y(level, i, h = 0.01):
+        def get_y(level, i, h=0.01):
 
             n = level_size.iloc[row["level"]]["task"]
 
             return 0.5 + level + h * i
 
         y_max = 0
-        level_counter = {i:0 for i in range(len(level_size))}
+        level_counter = {i: 0 for i in range(len(level_size))}
 
         for o, c in df.groupby("cycle"):
 
@@ -1609,7 +1685,7 @@ class Plotter:
                 start = row["start"] - cycles.iloc[int(row["cycle"])]["start"]
                 end = row["end"] - cycles.iloc[int(row["cycle"])]["end"]
 
-                y = get_y(row["level"], level_counter[row["level"]], h = 1/level_size.iloc[row["level"]]["task"])
+                y = get_y(row["level"], level_counter[row["level"]], h=1 / level_size.iloc[row["level"]]["task"])
                 level_counter[row["level"]] = level_counter[row["level"]] + 1
 
                 y_max = y if y > y_max else y_max
@@ -1618,19 +1694,18 @@ class Plotter:
                 bar = Rectangle((start, y), width, 0.1, color=colors[row["task"]])
                 ax.add_patch(bar)
 
-
         from matplotlib.lines import Line2D
         custom_lines = []
-        for k,c in colors.items():
+        for k, c in colors.items():
             custom_lines.append(Line2D([0], [0], color=c, lw=4))
 
         ax.legend(custom_lines, colors.keys())
         self.make_legend_entry(ax)
 
         ax.set_xlim(0, cycles["duration"].max() * 1.2)
-        ax.set_ylim([0, y_max*1.1])
+        ax.set_ylim([0, y_max * 1.1])
 
-    def ruse_plot(self,IMGPATH):
+    def ruse_plot(self, IMGPATH):
 
         df = self.ruse
         show = ["time_index", "scan_index", "ru_utime", "ru_stime", "ru_minflt", "ru_oublock", "ru_nvcsw", "ru_nivcsw",
@@ -1644,7 +1719,7 @@ class Plotter:
         for k in grad:
             df[k] = np.gradient(df[k])
 
-        a = 8.3*0.5
+        a = 8.3 * 0.5
         b = np.sqrt(2) * a * 0.7
 
         fig, ax = plt.subplots(4, 2, figsize=(a, b), sharex=True)
@@ -1664,6 +1739,7 @@ class Plotter:
         plt.tight_layout()
         plt.savefig(os.path.join(IMGPATH, "ruse.pdf"))
 
+
 def split_kwargs(kwargs, keys):
     result = {}
     for k in keys:
@@ -1674,7 +1750,7 @@ def split_kwargs(kwargs, keys):
 
 
 def run_single_step(i, dfg):
-    rsi,ti = i
+    rsi, ti = i
 
     time_index_key = "time_index"
     scan_name_key = "scan_name_scan_name"
@@ -1701,14 +1777,15 @@ def run_single_step(i, dfg):
 
     return pd.concat(chunk_result)
 
-def get_distance_matrix(df):#for single replicate
 
-        ids = np.array(df["id"], dtype=int)
-        XX = np.array([
-            np.array(df["x"], dtype=float),
-            np.array(df["y"], dtype=float),
-            np.array(df["z"], dtype=float),
-        ]).T
+def get_distance_matrix(df):  # for single replicate
 
-        r = distance_matrix(XX, XX, p=2)
-        return ids, r
+    ids = np.array(df["id"], dtype=int)
+    XX = np.array([
+        np.array(df["x"], dtype=float),
+        np.array(df["y"], dtype=float),
+        np.array(df["z"], dtype=float),
+    ]).T
+
+    r = distance_matrix(XX, XX, p=2)
+    return ids, r
