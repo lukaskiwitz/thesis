@@ -514,7 +514,7 @@ class PostProcessor:
 
 def get_concentration_conversion(unit_length_exponent: int):
     assert isinstance(unit_length_exponent, int)
-    return 10 ** (-1 * (unit_length_exponent * 3 + 3))
+    return float(10 ** (-1 * (unit_length_exponent * 3 + 3)))
 
 
 def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
@@ -523,7 +523,7 @@ def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
     # exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
     # exp -= (6 + unit_length_exponent)  # to nM/um
 
-    return 10 ** (-3-4 * unit_length_exponent + target_exponent)
+    return float(10 ** (-3-4 * unit_length_exponent + target_exponent))
 
 
 class PostProcessComputation():
