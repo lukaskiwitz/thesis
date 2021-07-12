@@ -14,15 +14,13 @@ else:
 
 path = path
 plotter = Plotter(path)
+plotter.calc_cell_activation()
 message("dataset loaded")
 
 
 
 a = 8.3
 b = np.sqrt(2) * a
-
-
-plotter.subplots(3,3, figsize = (a,b/2), external_legend = "axes")
 
 
 plotter.label_replacement.update({
@@ -46,24 +44,30 @@ plotter.label_replacement.update({
 
 })
 
-cv_lim = [0,5]
-c_lim = [1e-4,1]
-#
+cv_lim = [0,3]
+c_lim = [1e-3,1]
+
+plotter.subplots(3,4, figsize = (a,b/2), external_legend = "axes")
 plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, ylim = c_lim,legend="brief", ylog=True,average=True)
 plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
+plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
+
 plotter.filter = lambda df: df.loc[df["type_name"] == "abs"]
 
 plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
 plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
+plotter.cell_steady_state_plot("activation", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=False)
+
+
 
 plotter.filter = lambda df: df.loc[df["type_name"] == "sec"]
 
 plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
 plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
-
+plotter.cell_steady_state_plot("activation", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=False)
 
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection_full.pdf")
@@ -128,3 +132,38 @@ T = d.loc[d["task"] =="run"]["duration"]
 for t in T:
     print("total runtime {t}".format(t = t/60**2))
 message("done")
+
+
+metrics = {"min_distance": np.min, "mean_distance": np.mean, "max_distance": np.max}
+plotter.compute_cell_distance_metric("sec", metric_dict=metrics, round = 0)
+
+cell_df = plotter.cell_df
+cell_df = cell_df.loc[(cell_df["numeric_linear"] == False) & (cell_df["scan_value"] == 1)  & (cell_df[plotter.scan_name_key] == "D")]
+
+abs_f = lambda df: df.loc[df.type_name == "abs"]
+sec_f = lambda df: df.loc[df.type_name == "sec"]
+
+import seaborn as sns
+fig,ax = plt.subplots(2,2)
+ax = np.ravel(ax)
+
+sns.boxplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0])
+sns.stripplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0], color="gray",size=2)
+
+sns.boxplot(x="type_name", y = "activation", data=cell_df,ax = ax[1])
+sns.stripplot(x="type_name", y = "activation", data=cell_df,ax = ax[1], color="gray",size=2)
+
+sns.boxplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2])
+sns.stripplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2], color="gray",size=2)
+
+sns.boxplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3])
+sns.stripplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3], color="gray",size=2)
+
+ax[1].set_xlabel("cell type")
+ax[2].set_xlabel("cell type")
+
+ax[2].set_xlabel("distance to closest secreting cell $(\mu m)$")
+ax[3].set_xlabel("distance to closest secreting cell $(\mu m)$")
+plt.tight_layout()
+plt.savefig(os.path.join(IMGPATH,"boxplots.pdf"))
+plt.show()

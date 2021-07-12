@@ -24,10 +24,9 @@ The first entry is the default cell type. There the "fraction" entry is meaningl
 """
 
 R_l = 1e2
-R_h = 5000
-q = 10
-
-rat = 1/24
+R_h = 5e3
+q = 30
+rat = 1/9
 
 f_sec =   lambda  v: (rat*v)/((rat*v)+1)
 f_abs =  lambda v: 1/((rat*v)+1)
@@ -73,7 +72,7 @@ numeric = {
     "krylov_rtol": 1e-5,# linear solver relative tolerance
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 2*15000,#target degrees of freedom per mpi node for pde solving
+    "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": int(os.cpu_count()),# max nodes for fenics solver
     "cells_per_worker": 50,
     "max_pool_size": 16,#max number of worker to extract boundary conditions at runtime
@@ -94,7 +93,8 @@ else:
 
 user = getpass.getuser()
 model_name = "boxed_static_300"
-name = "test_1"
+# model_name = "boxed_static_small"
+name = "test_2"
 path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 

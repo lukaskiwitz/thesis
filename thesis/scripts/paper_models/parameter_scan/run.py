@@ -90,8 +90,6 @@ abs_R_def = ScanDefintion(R,"IL-2",  scan_space, ScanType.ENTITY, field_quantity
 kendo_def = ScanDefintion(kendo, "IL-2", scan_space, ScanType.GLOBAL, field_quantity = "il2")
 koff_def = ScanDefintion(koff, "IL-2", scan_space, ScanType.GLOBAL, field_quantity = "il2")
 
-# bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
-# linear_solver = ScannablePhysicalParameter(MiscParameter("linear", True, is_global = True), lambda x, v: v)
 
 for bc, linear in [("linear",True),("patrick_saturation",False)]:
 
@@ -112,7 +110,6 @@ for bc, linear in [("linear",True),("patrick_saturation",False)]:
     scan_container.add_single_parameter_scan([sec_q_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "sec_q")
     scan_container.add_single_parameter_scan([abs_R_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "abs_R")
     scan_container.add_single_parameter_scan([f_abs_def, f_sec_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "ratio")
-
 
 stMan = StateManager.StateManager(path)
 stMan.sim_container = sc
