@@ -211,7 +211,9 @@ class FieldProblem:
         """
 
         self.update_bcs(p=p)
-        self.solver.compileSolver(tmp_path)
+        pass
+        # self.solver.kill()
+        # self.solver.compileSolver(tmp_path)
 
     def get_boundary_concentrations(self, tmp_path: str) -> None:
 
@@ -301,7 +303,10 @@ class FieldProblem:
 
         message("Solving Field Problem")
         try:
+
+            self.solver.compileSolver(tmp_path)
             self.solver.solve()
+            self.solver.kill()
         except Exception as e:
             self.u = None
             self.solver.u = None
