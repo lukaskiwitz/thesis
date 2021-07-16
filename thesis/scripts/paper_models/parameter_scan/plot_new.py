@@ -148,16 +148,16 @@ fig,ax = plt.subplots(2,2)
 ax = np.ravel(ax)
 
 sns.boxplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0])
-sns.stripplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0], color="gray",size=2)
+# sns.stripplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0], color="gray",size=2)
 
 sns.boxplot(x="type_name", y = "activation", data=cell_df,ax = ax[1])
-sns.stripplot(x="type_name", y = "activation", data=cell_df,ax = ax[1], color="gray",size=2)
+# sns.stripplot(x="type_name", y = "activation", data=cell_df,ax = ax[1], color="gray",size=2)
 
 sns.boxplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2])
-sns.stripplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2], color="gray",size=2)
+# sns.stripplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2], color="gray",size=2)
 
 sns.boxplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3])
-sns.stripplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3], color="gray",size=2)
+# sns.stripplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3], color="gray",size=2)
 
 ax[1].set_xlabel("cell type")
 ax[2].set_xlabel("cell type")
