@@ -41,12 +41,14 @@ if you got the wheel file or
 pip install -e "repository_dir"
 `
 
-if you clonded the repository.
+if you cloned this repository.
 
 5.Run
 
-`conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/enviroment_name/lib
 `
+conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/enviroment_name/lib
+`
+
 
 and if you want to use paraview rendering 
 
