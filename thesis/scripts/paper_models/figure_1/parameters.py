@@ -36,13 +36,13 @@ cell_types_dict = [
     {"name": "sec",
      "mc":0,
      "fraction": f_sec(1),
-     "il2": {"R": R_l, "q": q, "bc_type": "patrick_saturation"},
+     "il2": {"R": R_l, "q": q, "bc_type": "linear"},
      "internal_solver": ""
      },
     {"name": "abs",
      "mc":0,
      "fraction": f_abs(1),
-     "il2": {"R": R_h, "q": 0, "bc_type": "patrick_saturation"},
+     "il2": {"R": R_h, "q": 0, "bc_type": "linear"},
      "internal_solver": ""
      },
 ]
@@ -71,7 +71,7 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": False,# use linear fenics solver
+    "linear": True,# use linear fenics solver
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,# linear solver relative tolerance
     "newton_atol": 1e-35,
@@ -96,8 +96,8 @@ else:
 
 
 user = getpass.getuser()
-model_name = "paper_figure1B"
-name = "test"
+model_name = "figure1"
+name = "test_linear"
 path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 
