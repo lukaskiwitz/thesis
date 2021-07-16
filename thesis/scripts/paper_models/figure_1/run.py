@@ -39,8 +39,8 @@ sc.marker_lookup = {"default":1, "sec":2, "abs":3}#labels to apper in marker fun
 stMan.scan_container = scan_container
 stMan.compress_log_file = True
 
-stMan.T = [0,1]
-# stMan.T = list(range(11))
+# stMan.T = [0,1]
+stMan.T = list(range(11))
 
 def pre_scan(state_manager, scan_index):
     updateState(state_manager.sim_container, 0)
