@@ -80,7 +80,7 @@ naive = sc.get_entity_type_by_name("naive")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-s = 30
+s = 10
 
 R_space = np.linspace(0, 1, s)
 for bc, linear in [("linear", True)]:
