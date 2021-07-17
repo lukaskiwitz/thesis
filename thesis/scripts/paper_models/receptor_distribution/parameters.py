@@ -21,25 +21,26 @@ cytokines = [
 The first entry is the default cell type. There the "fraction" entry is meaningless.
 """
 
-R_l = 1e2
-R_h = 5e3
+"""
+Receptors per cell have to be edited in run.py as "RpC" variable!!!
+"""
 q = 30
 
 
 cell_types_dict = [
     {"name": "naive",
      "fraction": 0,
-     "il2": {"q": 0, "R":R_l, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
+     "il2": {"q": 0, "R":0, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
      "internal_solver": ""
      },
     {"name": "sec",
      "fraction": 0.1 ,
-     "il2": {"q": q, "R": R_l, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
+     "il2": {"q": q, "R": 0, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
      "internal_solver": ""
      },
     {"name": "abs",
      "fraction": 0.9,
-     "il2": {"q": 0, "R": R_h, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
+     "il2": {"q": 0, "R": 0, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
      "internal_solver": ""
      }
 ]
