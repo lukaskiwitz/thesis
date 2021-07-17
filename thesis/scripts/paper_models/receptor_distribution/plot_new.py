@@ -48,7 +48,7 @@ plotter.compute_cell_distance_metric("sec", metric_dict=metrics)
 plotter.scan_scale = plotter.global_df.v_v.unique()
 
 f = lambda df: df
-stat_max = lambda df: df.loc[df.activation > 0.9]
+stat_max = lambda df: df.loc[df.activation > 0.5]
 
 b = 8.3/6
 a = np.sqrt(2) * b * 1.2
@@ -56,19 +56,15 @@ a = np.sqrt(2) * b * 1.2
 plotter.subplots(2,3, external_legend="axes", figsize=(a, b))
 plotter.filter = f
 
-plotter.global_steady_state_plot("Concentration","v_v",xlog=False, select = {"numeric_linear":[False]})
-plotter.global_steady_state_plot("Concentration","v_v",xlog=False,twinx = True,style=True, plot_kwargs={"dashes":[(2,2)]}, select = {"numeric_linear":[True]})
+plotter.global_steady_state_plot("Concentration","v_v",xlog=False)
+plotter.global_steady_state_plot("SD","v_v",xlog=False,style=True, legend="brief")
 
-plotter.global_steady_state_plot("SD","v_v",xlog=False, select = {"numeric_linear":[False]},style=True, legend="brief")
-plotter.global_steady_state_plot("SD","v_v",xlog=False,twinx = True, style=True, plot_kwargs={"dashes":[(2,2)]}, select = {"numeric_linear":[True]},legend="brief")
-
-
-plotter.filter =  lambda df: df.loc[(df.numeric_linear == False) ]
+plotter.filter =  lambda df: df.loc[(df.numeric_linear == True) ]
 
 
-plotter.cell_steady_state_plot("activation",x_name="v_v", filter=lambda df: df.loc[(df.type_name == "abs")],
-                               xlog=False, palette_name = "plasma", hue="min_distance",
-                               ci=None,xlim = [0,1], ylim = [0,1],legend="brief", categorical = False)
+plotter.cell_steady_state_plot("IL-2_R",x_name="v_v", hue="type_name",
+                               xlog=False,
+                               ci=None,xlim = [0,1], legend="brief", categorical = False)
 plotter.cell_plot("v_v","activation", filter=lambda df: df.loc[(df.type_name == "abs")],
                                xlog=False, hue="min_distance", palette_name="plasma", condition=stat_max, count=True,
                                ci=None,legend=None,xlim = [0,1], categorical = False,overlay = True)
