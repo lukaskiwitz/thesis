@@ -22,7 +22,7 @@ The first entry is the default cell type. There the "fraction" entry is meaningl
 """
 
 R_l = 1e2
-R_h = 1e4
+R_h = 5e3
 q = 30
 
 
@@ -87,7 +87,7 @@ else:
 
 user = getpass.getuser()
 model_name = "receptor_distribution_box_300"
-name = "test_4"
+name = "test_5"
 
 
 

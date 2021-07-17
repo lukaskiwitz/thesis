@@ -37,6 +37,7 @@ size = comm.Get_size()
 def update_state(sim_container, t):
 
     assign_fractions(sim_container,t)
+    sim_container.apply_type_changes()
 
     v = sim_container.p.get_physical_parameter("v", "v").get_in_sim_unit()
     R_per_cell = sim_container.p.get_physical_parameter("R_per_cell", "v").get_in_sim_unit()
@@ -50,13 +51,14 @@ def update_state(sim_container, t):
 
     sec_R = (v * total_R / sec_n) if sec_n > 0 else 0
     abs_R = (total_R - sec_R * sec_n) / abs_n if abs_n > 0 else 0
-    # print(sec_R * sec_n + abs_R * abs_n)
+
 
     abs = sim_container.get_entity_type_by_name("abs")
     sec = sim_container.get_entity_type_by_name("sec")
 
     sim_container.add_entity_type(abs.get_updated(ParameterCollection("IL-2", [t_R(abs_R)], field_quantity="il2")))
     sim_container.add_entity_type(sec.get_updated(ParameterCollection("IL-2", [t_R(sec_R)], field_quantity="il2")))
+    sim_container.apply_type_changes()
 
 
 scan_container = ScanContainer()
@@ -81,7 +83,7 @@ sec = sc.get_entity_type_by_name("sec")
 s = 30
 
 R_space = np.linspace(0, 1, s)
-for bc, linear in [("linear", True),("R_saturation", False)]:
+for bc, linear in [("linear", True)]:
         RpC = 5e3
         for v in R_space:
             sample = ScanSample(
