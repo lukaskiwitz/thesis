@@ -109,11 +109,9 @@ class SimContainer(SimComponent):
 
         os.makedirs(self.path, exist_ok=True)
         for i in self.fields:
-            self.subdomain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/subdomain_" + i.field_name + ".xdmf"))
-            self.domain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/domain_" + i.field_name + ".xdmf"))
-            self.field_files.append("field_" + i.field_name)
+            self.subdomain_files.append(os.path.join(self.get_current_path() + "cache/subdomain_" + i.field_name + ".xdmf"))
+            self.domain_files.append(os.path.join(self.get_current_path() + "cache/domain_" + i.field_name + ".xdmf"))
+            self.field_files.append(os.path.join("field_" + i.field_name))
 
     def initialize(self, **kwargs) -> None:
 
@@ -418,7 +416,8 @@ class SimContainer(SimComponent):
 
         for o, i in enumerate(self.fields):
             message("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
-            self.subdomain_files[o].write(i.get_sub_domains_vis())
+            with fcs.XDMFFile(self.subdomain_files[o]) as f:
+                f.write(i.get_sub_domains_vis())
 
     def save_domain(self) -> None:
 
@@ -428,7 +427,8 @@ class SimContainer(SimComponent):
         :return:
         """
         for o, i in enumerate(self.fields):
-            self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
+            with fcs.XDMFFile(self.domain_files[o]) as f:
+                f.write(self.fields[0].get_outer_domain_vis("type_name"))
 
     def save_markers(self, time_index):
 
