@@ -17,6 +17,6 @@ jobs:
       run: pip install -e .
     - name: run test
       run: | 
-        sudo python ./thesis/example_scripts/example_hendrik/run.py
-        sudo python ./thesis/example_scripts/example_hendrik/post_process.py 2
-        sudo python ./thesis/example_scripts/example_hendrik/plot.py
+        python ./thesis/example_scripts/example_hendrik/run.py
+        python ./thesis/example_scripts/example_hendrik/post_process.py 2
+        python ./thesis/example_scripts/example_hendrik/plot.py
