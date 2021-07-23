@@ -162,7 +162,7 @@ def pre_scan(state_manager, scan_index):
 stMan.pre_scan = pre_scan
 
 """Runs the ParameterScan"""
-# stMan.run()
+stMan.run()
 sys.exit(0)
 
 
