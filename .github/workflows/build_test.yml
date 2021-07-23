@@ -15,8 +15,28 @@ jobs:
       run: conda env update --file ./fenics_explicit.yml --name base
     - name: install package
       run: pip install -e .
-    - name: run test
+    - name: create result directory
       run: | 
-        sudo python ./thesis/example_scripts/example_hendrik/run.py
-        sudo python ./thesis/example_scripts/example_hendrik/post_process.py 2
-        sudo python ./thesis/example_scripts/example_hendrik/plot.py
+        sudo mkdir /extra
+        sudo mkdir /extra/runner
+        sudo chmod -R a+rxw /extra
+    - name: run test
+      run: python ./thesis/example_scripts/example_hendrik/run.py > /extra/runner/run.txt
+    - name: post process
+      if: ${{ always() }}
+      run: python ./thesis/example_scripts/example_hendrik/post_process.py 2
+    - name: plot
+      if: ${{ always() }}
+      run: python ./thesis/example_scripts/example_hendrik/plot.py
+    - name: upload-extra
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: upload extra
+        path: /extra/runner/*
+    - name: upload-images
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: upload extra
+        path: /extra/runner/images/
