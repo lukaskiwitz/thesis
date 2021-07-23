@@ -18,6 +18,7 @@ jobs:
     - name: create result directory
       run: | 
         sudo mkdir /extra
+        sudo mkdir /extra/runner
         sudo chmod -R a+rxw /extra
     - name: run test
       run: python ./thesis/example_scripts/example_hendrik/run.py > /extra/runner/run.txt
