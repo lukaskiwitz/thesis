@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from parameters import path
+from parameters import path, IMGPATH
 
 # path = "/extra/brunner/thesis/kinetic/standard/5_delayed/run0/"
 """
@@ -52,5 +52,7 @@ fig = plt.figure()
 ax3 = sns.lineplot(x="fractions_sec", y="IL-2_surf_c", data=cell_df, estimator=None, units="id_id")
 ax3.set(xlabel="Fraction of secreting cells", ylabel="Each cells surface concentration [nM]")
 plt.tight_layout()
+os.makedirs(IMGPATH,exist_ok=True)
+plt.savefig(IMGPATH + "result.png")
 plt.show()
 

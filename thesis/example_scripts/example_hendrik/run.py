@@ -2,8 +2,8 @@ import os
 import sys
 
 # add the necessary resources to your sys path. Change according to location of package
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
+# sys.path.append("/home/lukas/thesis/main/")
+# sys.path.append("/home/lukas/thesis/scenarios/")
 
 import random
 
@@ -163,6 +163,7 @@ stMan.pre_scan = pre_scan
 
 """Runs the ParameterScan"""
 stMan.run()
+sys.exit(0)
 
 
 
