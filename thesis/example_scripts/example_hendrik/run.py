@@ -163,7 +163,7 @@ stMan.pre_scan = pre_scan
 
 """Runs the ParameterScan"""
 stMan.run()
-sys.exit(0)
+# sys.exit(0)
 
 
 
