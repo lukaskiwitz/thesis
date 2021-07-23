@@ -25,3 +25,9 @@ jobs:
       run: python ./thesis/example_scripts/example_hendrik/post_process.py 2
     - name: plot
       run: python ./thesis/example_scripts/example_hendrik/plot.py
+    - name: upload-extra
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: upload extra
+        path: /extra/runner/*
