@@ -20,7 +20,8 @@ jobs:
         sudo mkdir /extra
         sudo chmod -R a+rxw /extra
     - name: run test
-      run: | 
-        python ./thesis/example_scripts/example_hendrik/run.py
-        python ./thesis/example_scripts/example_hendrik/post_process.py 2
-        python ./thesis/example_scripts/example_hendrik/plot.py
+      run: python ./thesis/example_scripts/example_hendrik/run.py
+    - name: post process
+      run: python ./thesis/example_scripts/example_hendrik/post_process.py 2
+    - name: plot
+      run: python ./thesis/example_scripts/example_hendrik/plot.py
