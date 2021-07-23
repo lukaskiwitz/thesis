@@ -15,6 +15,10 @@ jobs:
       run: conda env update --file ./fenics_explicit.yml --name base
     - name: install package
       run: pip install -e .
+    - name: create result directory
+      run: | 
+        sudo mkdir /extra
+        sudo chmod -R a+rxw /extra
     - name: run test
       run: | 
         python ./thesis/example_scripts/example_hendrik/run.py
