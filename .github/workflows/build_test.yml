@@ -15,7 +15,6 @@ jobs:
       run: | 
         conda env update --file ./fenics_explicit.yml --name base
         conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
-        conda activate base
     - name: install package
       run: pip install -e .
     - name: create result directory
