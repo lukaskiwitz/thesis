@@ -42,4 +42,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: upload extra
-        path: /extra/runner/images/
+        path: /extra/runner/example_1/images
