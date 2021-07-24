@@ -22,32 +22,18 @@ jobs:
         sudo mkdir /extra
         sudo mkdir /extra/runner
         sudo chmod -R a+rxw /extra
-  spherical-test:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-    - uses: actions/checkout@v2
-    - name: run test
+    - name: run spherical
       run: python ./thesis/unit_tests/spherical_test_problem/run.py
       continue-on-error: true
     - name: post process
-      if: ${{ always() }}
       run: python ./thesis/unit_tests/spherical_test_problem/post_process.py
-    - name: plot
-      if: ${{ always() }}
+    - name: unit test
       run: python ./thesis/unit_tests/spherical_test_problem/test.py
-  box_static-test:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-    - uses: actions/checkout@v2
-    - name: run test
+    - name: run box_static
       run: python ./thesis/unit_tests/box_static_R_saturation/run.py
       continue-on-error: true
     - name: post process
-      if: ${{ always() }}
       run: python ./thesis/unit_tests/box_static_R_saturation/post_process.py
-    - name: plot
-      if: ${{ always() }}
+    - name: unit test
       run: python ./thesis/unit_tests/box_static_R_saturation/test.py
       
