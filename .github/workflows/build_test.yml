@@ -24,6 +24,7 @@ jobs:
         sudo chmod -R a+rxw /extra
     - name: run test
       run: python ./thesis/example_scripts/example_hendrik/run.py > /extra/runner/run.txt
+      continue-on-error: true
     - name: post process
       if: ${{ always() }}
       run: python ./thesis/example_scripts/example_hendrik/post_process.py 2
@@ -41,4 +42,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: upload extra
-        path: /extra/runner/images/
+        path: /extra/runner/example_1/images
