@@ -1,0 +1,20 @@
+name: Test example script
+
+on: workflow_dispatch
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Add conda to system path
+      run: echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: conda env update --file ./fenics.yml --name base
+    - name: run test
+      run: | 
+        sudo python ./thesis/example_scripts/example_hendrik/run.py
+        sudo python ./thesis/example_scripts/example_hendrik/post_process.py 2
+        sudo python ./thesis/example_scripts/example_hendrik/plot.py

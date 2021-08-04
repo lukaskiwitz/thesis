@@ -17,7 +17,7 @@ Installation Instructions (with anaconda)
 2. Run
 
 `
-conda env create -f fenics_min.yml -n enviroment_name
+conda env create -f fenics.yml -n "enviroment_name"
 `
 
 to create a new anaconda environment with the necessary packages.
@@ -25,20 +25,30 @@ This could take a moment.
 
 3.Run
 
-`conda activate enviroment_name`
+`conda activate "enviroment_name"`
 
 to activate the newly created environment.
 
-4.Install the package using pip
+4.Install the package using pip with
 
 `
 pip install wheel-file
 `
 
+if you got the wheel file or 
+
+`
+pip install -e "repository_dir"
+`
+
+if you cloned this repository.
+
 5.Run
 
-`conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/enviroment_name/lib
 `
+conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/enviroment_name/lib
+`
+
 
 and if you want to use paraview rendering 
 
@@ -56,7 +66,7 @@ to set up necessary environment variables.
 <h1>
     Usage
 </h1>
-1.Copy the boxed_static folder to a location of your choice.
+1.Create a copy of one of the folders in "example_scripts/" in a location of your choice.
 
 2.Open the parameters.py file and edit the path variable at the bottom to point to the desired top level directoy for your simulation results.
 Note: If your are on the itb computers this will work well without a change.

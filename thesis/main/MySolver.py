@@ -190,6 +190,10 @@ class MyDiffusionSolver(MySolver):
 
 
 
+    def kill(self):
+        if hasattr(self,"process"):
+            self.process.kill()
+
     def solve(self) -> fcs.Function:
 
         from sys import exit
