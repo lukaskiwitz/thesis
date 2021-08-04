@@ -499,7 +499,11 @@ class PostProcessor:
             cell_df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
             cell_df_constant.to_hdf(os.path.join(self.path, "cell_constants_df.h5"), key="df", mode="w")
         else:
-            df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+            try:
+                df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+            except:
+                message("Saving the cell_df to hdf failed, falling back to pickling...")
+                df.to_pickle(os.path.join(self.path, "cell_df.pkl"))
 
         self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w", data_columns=self.global_dataframe.columns)
         self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
