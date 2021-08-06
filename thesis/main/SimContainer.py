@@ -281,7 +281,7 @@ class SimContainer(SimComponent):
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
                 entity.set_cell_type(entity_type, internal_solver)
                 entity.change_type = ""
-            elif not entity.type_name == "":
+            elif not entity.type_name == "":#todo very bad solution
                 entity_type = self.get_entity_type_by_name(entity.type_name)
                 assert entity_type is not None
 
