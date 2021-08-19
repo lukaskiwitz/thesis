@@ -73,7 +73,7 @@ numeric = {
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,# newton method relative tolerance
     "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
-    "max_mpi_nodes": int(os.cpu_count()),# max nodes for fenics solver
+    "max_mpi_nodes": int(os.cpu_count()/2),# max nodes for fenics solver
     "cells_per_worker": 50,
     "max_pool_size": 16,#max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
@@ -93,8 +93,8 @@ else:
 
 user = getpass.getuser()
 model_name = "boxed_static_300"
-# model_name = "boxed_static_small"
-name = "test_2"
+# model_name = "boxed_static_200"
+name = "test_3"
 path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 

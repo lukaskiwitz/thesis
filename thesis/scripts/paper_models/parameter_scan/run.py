@@ -29,6 +29,22 @@ size = comm.Get_size()
 def updateState(sc, t):
 
     assign_fractions(sc, t)
+    sc.apply_type_changes()
+
+
+    R = np.unique([e.p.get_physical_parameter("R","IL-2").get_in_post_unit() for e in sc.entity_list if e.type_name == "abs"])
+    assert len(R) == 1
+    E = R[0]
+    var = 1
+    np.random.seed(t)
+    tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
+    mean = np.log(E) - 1 / 2 * tmp_sigma ** 2
+    for e in sc.entity_list:
+        if e.type_name == "abs":
+            R_draw = np.random.lognormal(mean, tmp_sigma)
+            e.p.get_physical_parameter("R","IL-2").set_in_post_unit(R_draw)
+
+
 
 
 
@@ -55,13 +71,18 @@ t_koff = templates["k_off"]
 from parameters import R_h, q
 from parameters import rat as ratio, f_sec as fs, f_abs as fr
 
+R_constant = ScannablePhysicalParameter(t_R(R_h), lambda x, v: (5e3 * 0.9)/fr(v))
 R = ScannablePhysicalParameter(t_R(R_h), lambda x, v: x * v)
+q_constant = ScannablePhysicalParameter(t_q(q), lambda x, v:(30 * 0.1)/fs(v))
+
+
 q = ScannablePhysicalParameter(t_q(q), lambda x, v: x * v)
 D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
 kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
 
 kendo = ScannablePhysicalParameter(t_kendo(1.1e-3), lambda x, v: x * v)
 koff = ScannablePhysicalParameter(t_koff(0.83), lambda x, v: x * v)
+
 
 f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", ratio, is_global=True), lambda x,v: fs(v))
 f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", ratio, is_global=True), lambda x,v: fr(v))
@@ -72,12 +93,15 @@ naive = sc.get_entity_type_by_name("naive")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-s = 30
+# s = 4
+# scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
 
-scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
-
+scan_space = [0.1,1,10]
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
+q_constant_def = ScanDefintion(q_constant,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
+R_constant_df = ScanDefintion(R_constant,"IL-2",scan_space,ScanType.ENTITY, field_quantity="il2",entity_type=abs)
+
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
 
 D_def = ScanDefintion(D,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
@@ -109,14 +133,15 @@ for bc, linear in [("linear",True),("patrick_saturation",False)]:
 
     scan_container.add_single_parameter_scan([sec_q_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "sec_q")
     scan_container.add_single_parameter_scan([abs_R_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "abs_R")
-    scan_container.add_single_parameter_scan([f_abs_def, f_sec_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "ratio")
+
+    scan_container.add_single_parameter_scan([f_abs_def, f_sec_def,bc_def(sec),q_constant_def,R_constant_df,bc_def(abs),linear_def], scan_name = "ratio")
 
 stMan = StateManager.StateManager(path)
 stMan.sim_container = sc
 stMan.scan_container = scan_container
 stMan.dt = 1
 
-# stMan.T = [0,1,3,4]
+# stMan.T = [0,1]
 stMan.T = list(range(11))
 
 
