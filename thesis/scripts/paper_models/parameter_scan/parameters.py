@@ -92,10 +92,11 @@ else:
 
 
 user = getpass.getuser()
-model_name = "boxed_static_300"
-# model_name = "boxed_static_200"
-name = "test_3"
-path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
+# model_name = "boxed_static_300"
+
+model_name = "boxed_static_100"
+name = "distance_scan"
+path = "/{extra}/{u}/paper_models/prelim_{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 
 """

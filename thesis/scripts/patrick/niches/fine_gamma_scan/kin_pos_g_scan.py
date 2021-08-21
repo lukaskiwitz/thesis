@@ -128,7 +128,7 @@ for run in range(10):
 
     """the setup function is defined in an external file. It builds the SimContainer for this simulation.
     The variable aspects are passed as list "cytokines, cell_types, geometry and numeric. 
-    These are imported as modules and can be modified in parameters.py """
+    These are imported as modules and can be modified in parameters_old.py """
 
     sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
 
