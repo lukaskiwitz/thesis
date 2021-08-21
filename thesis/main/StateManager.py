@@ -9,15 +9,17 @@ import json
 import os
 import time
 from copy import deepcopy
-from typing import Dict
+from typing import *
 
 import lxml.etree as ET
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
 import traceback
-import scipy
 
+from scipy.stats.mstats import gmean
+
+from thesis.main.SimContainer import SimContainer
 from thesis.main.Entity import Cell
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
 from thesis.main.ScanContainer import ScanContainer, ScanSample
@@ -37,15 +39,45 @@ def outputParse(v):
 
 class StateManager:
     """
-    Used to store Simulation state as xml file. Either to save the state of a simulation to file or for usage in post processing
+    This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
+    produces the xml files necessary for the use of PostProcessor.
+
+
+    :ivar path:
+    :ivar ruse:
+    :ivar scan_folder_pattern:
+    :ivar element_tree:
+    :ivar scan_container:
+    :ivar sim_container:
+    :ivar T:
+    :ivar N:
+    :ivar compress_log_file:
+    :ivar globarl_collections:
+    :ivar global_parameters:
+    :ivar record:
+    :ivar progress_bar:
+    :ivar eta_estimates:
+
+    :vartype path: str
+    :vartype ruse: pd.DataFrame
+    :vartype scan_folder_pattern: str
+    :vartype element_tree: ET.ElementTree
+    :vartype scan_container: ScanContainer
+    :vartype sim_container: SimConatiner
+    :vartype T: List[float]
+    :vartype dt: float
+    :vartype N: int
+    :vartype compress_log_file: bool
+    :vartype global_collections: GlobalCollections
+    :vartype global_parameters: GlobalParameters
+    :vartype record: ClassRecord
+    :vartype progress_bar:
+    :vartype eta_estimates: List[float]
     """
 
-    def __init__(self, path):
-        """Docstring for constructor
+    def __init__(self, path: str):
 
-        :param path: This is a test
-        :return None
-        """
+
         self.path = path
         self.ruse = None
 
@@ -63,14 +95,14 @@ class StateManager:
         self.progress_bar = None
         self.eta_estimates = []
 
-    def load_xml(self):
+    def load_xml(self) -> None:
         """loads xml representation from file"""
         self.element_tree = ET.parse("{p}log.scan".format(p=self.path))
 
-    def get_scan_folder(self, n):
+    def get_scan_folder(self, n: str)-> str:
         return self.path + self.scan_folder_pattern.format(n=n)
 
-    def write_element_tree(self):
+    def write_element_tree(self) -> None:
 
         if rank == 0:
             try:
@@ -81,7 +113,7 @@ class StateManager:
                 message("Could not write element tree to file: {e}".format(e=e))
 
 
-    def serialize_to_element_tree(self):
+    def serialize_to_element_tree(self) -> None:
 
 
         if not self.scan_container:
@@ -102,7 +134,7 @@ class StateManager:
         self.element_tree = ET.ElementTree(element=root)
 
 
-    def deserialize_from_element_tree(self):
+    def deserialize_from_element_tree(self) -> ScanContainer:
 
         root = self.element_tree.getroot()
         self.scan_folder_pattern = json.loads(root.get("scan_folder_pattern"))
@@ -112,7 +144,7 @@ class StateManager:
 
         return scan
 
-    def _addCellDump(self, sc, i):
+    def _addCellDump(self, sc: SimContainer, i: int):
         """
         i Scan index in xml file
         """
@@ -134,10 +166,10 @@ class StateManager:
                 patch.text = str(n["patch"])
                 center.text = json.dumps(list(n["entity"].center))
 
-    def _loadCellDump(self):
+    def _loadCellDump(self) -> None:
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Dict, marker_paths: Dict):
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Mapping, marker_paths: Mapping):
         scan = self.element_tree.getroot().find("ScanContainer/ScanSample[@scan_index='{s}']".format(s=scan_index))
         if scan.find("TimeSeries") is not None:
             time_series = scan.find("TimeSeries")
@@ -235,20 +267,20 @@ class StateManager:
             tree = ET.ElementTree(step)
             tree.write(os.path.join(self.path, path),pretty_print = True)
 
-    def get_field_names(self):
+    def get_field_names(self) -> List[str]:
 
         scans = self.element_tree.getroot().find("ScanContainer")
         names = np.unique(np.array([i.get("field_name") for i in scans.findall("./ScanSample/TimeSeries/Step/Fields/Field")]))
         return names
 
-    def rebuild_tree(self,scan):
+    def rebuild_tree(self,scan: ET.Element) -> None:
         for step in scan.findall("TimeSeries/Step"):
             path = step.get("path")
             if not path is None:
                 et = ET.parse(os.path.join(self.path, path))
                 step.getparent().replace(step, et.getroot())
 
-    def get_cell_ts_data_frame(self, time_indices = None,n_processes = 1, **kwargs):
+    def get_cell_ts_data_frame(self, time_indices: List[int] = None,n_processes:int = 1, **kwargs) -> pd.DataFrame:
 
 
         def init():
@@ -287,7 +319,7 @@ class StateManager:
 
         return pd.DataFrame(result)
 
-    def update_sim_container(self, sc, i) -> Dict:
+    def update_sim_container(self, sc: SimContainer, i: int) -> Mapping:
 
 
         scan_container = self.deserialize_from_element_tree()
@@ -326,13 +358,13 @@ class StateManager:
 
         return deepcopy(sample.p)
 
-    def estimate_time_remaining(self, sc, scan_index, time_index,S,T):
+    def estimate_time_remaining(self, sc, scan_index: int, time_index: int,S: List,T: List) -> None:
 
 
         sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
         time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
         step_durations = [i["end"] - i["start"] for i in time_step.history]
-        mean_step_duration = scipy.stats.gmean(step_durations)
+        mean_step_duration = gmean(step_durations)
 
         n_steps = (len(T) - time_index)
         n_scans = len(S) - scan_index
@@ -354,7 +386,7 @@ class StateManager:
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
         # message("ETA: {eta}".format(eta = eta))
 
-    def run(self):
+    def run(self) -> None:
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")
@@ -443,14 +475,14 @@ class StateManager:
 
         self.save_records()
 
-    def get_records_path(self):
+    def get_records_path(self) -> str:
 
         records_path = os.path.join(self.path, "records")
         os.makedirs(records_path, exist_ok=True)
 
         return records_path
 
-    def save_records(self):
+    def save_records(self) -> None:
 
         records = self.record.gather_records()
         records_path = self.get_records_path()

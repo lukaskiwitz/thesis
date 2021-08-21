@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 
 import thesis.main.StateManager as st
+from thesis.main.PostProcessUtil import get_concentration_conversion, get_gradient_conversion, get_mesh_volume, \
+    get_rectangle_plane_mesh
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.myDictSorting import groupByKey
 from thesis.main.my_debug import message, warning
@@ -516,20 +518,6 @@ class PostProcessor:
         self.save_dataframes(extra_cell_constants = extra_cell_constants)
 
 
-def get_concentration_conversion(unit_length_exponent: int):
-    assert isinstance(unit_length_exponent, int)
-    return float(10 ** (-1 * (unit_length_exponent * 3 + 3)))
-
-
-def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
-    #converts gradient to nM/um for target_exponent = -6.
-    assert isinstance(unit_length_exponent, int)
-    # exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
-    # exp -= (6 + unit_length_exponent)  # to nM/um
-
-    return float(10 ** (-3-4 * unit_length_exponent + target_exponent))
-
-
 class PostProcessComputation():
     add_xml_result = True
 
@@ -590,12 +578,6 @@ class CV(PostProcessComputation):
         mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])*c_conv
 
         return sd/mean_c
-
-def get_mesh_volume(mesh):
-    sum = 0
-    for cell in fcs.cells(mesh):
-        sum += cell.volume()
-    return sum
 
 
 def compute(compute_settings: ComputeSettings) -> str:
@@ -794,21 +776,6 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
 
     return color_dict, legend_items,labels, categorical
 
-
-def get_rectangle_plane_mesh(u, res = (200,200)):
-
-    coords = u.function_space().mesh().coordinates()
-    coords_t = np.transpose(coords)
-
-    x_limits = (
-        np.min(coords_t[0]), np.max(coords_t[0])
-    )
-    y_limits = (
-        np.min(coords_t[1]), np.max(coords_t[1])
-    )
-    rec_mesh = fcs.RectangleMesh(fcs.Point(x_limits[0], y_limits[0]), fcs.Point(x_limits[1], y_limits[1]), res[0], res[1])
-
-    return rec_mesh, [x_limits,y_limits]
 
 def make_paraview_images(conv_factor, compute_settings,  visual_conv = 1):
 
