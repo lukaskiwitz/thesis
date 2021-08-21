@@ -35,6 +35,8 @@ class MyCytokineTemplate(MyFieldTemplate):
 
 
         collection.set_parameter(parameter_pool.get_template("k_on")())
+        collection.set_parameter(parameter_pool.get_template("k_off")())
+        collection.set_parameter(parameter_pool.get_template("k_endo")())
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
