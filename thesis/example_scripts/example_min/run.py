@@ -70,7 +70,6 @@ These are imported as modules and can be modified in parameters.py """
 from thesis.main.MyParameterPool import MyParameterPool
 custom_pool = MyParameterPool()
 custom_pool.add_template(PhysicalParameterTemplate(PhysicalParameter("my_p",1,to_sim=1e-4)))
-
 scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric, custom_pool=custom_pool)
 
 
