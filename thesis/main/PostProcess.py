@@ -362,6 +362,7 @@ class PostProcessor:
     def get_kde_estimators(self, n, ts, time_index, type_names):
 
         kernels = {}
+        bw = 20
         message("computing kde for time series: {n} and timestep {t}".format(n=n, t=time_index))
         for type_name in type_names:
             inital_cells = ts.loc[(ts["time_index"] == time_index) & (ts["type_name"] == type_name)]
@@ -369,10 +370,10 @@ class PostProcessor:
                 break
             elif inital_cells.shape[0] == 1:
                 data = np.array([inital_cells["x"].iloc[0], inital_cells["y"].iloc[0], inital_cells["z"].iloc[0]])
-                kernel = KDEpy.NaiveKDE("tri", bw=10).fit(data)
+                kernel = KDEpy.NaiveKDE("exponential", bw=bw).fit(data)
             else:
                 data = np.array([inital_cells["x"], inital_cells["y"], inital_cells["z"]]).T
-                kernel = KDEpy.TreeKDE("tri", bw=10).fit(data)
+                kernel = KDEpy.TreeKDE("exponential", bw=bw).fit(data)
 
             # kernel = KDEpy.TreeKDE(bw='ISJ').fit(data)
 
@@ -406,9 +407,6 @@ class PostProcessor:
         result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
         result["time"] = result["time"].apply(lambda x: float(x))
 
-
-        """---------------------------"""
-
         if kde:
             message("running kernel density estimation")
             r_grouped = result.groupby(["scan_index"], as_index=False)
@@ -417,6 +415,7 @@ class PostProcessor:
                 kernels = []
                 for time_index, step in ts.groupby(["time_index"]):
                     kde_time_index = time_index - 1 if time_index > 0 else 0
+                    kde_time_index = time_index
                     kernels.append(
                         self.get_kde_estimators(scan_index, ts, kde_time_index, result["type_name"].unique()))
 
@@ -499,7 +498,11 @@ class PostProcessor:
             cell_df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
             cell_df_constant.to_hdf(os.path.join(self.path, "cell_constants_df.h5"), key="df", mode="w")
         else:
-            df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+            try:
+                df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
+            except:
+                message("Saving the cell_df to hdf failed, falling back to pickling...")
+                df.to_pickle(os.path.join(self.path, "cell_df.pkl"))
 
         self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w", data_columns=self.global_dataframe.columns)
         self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
@@ -515,7 +518,7 @@ class PostProcessor:
 
 def get_concentration_conversion(unit_length_exponent: int):
     assert isinstance(unit_length_exponent, int)
-    return 10 ** (-1 * (unit_length_exponent * 3 + 3))
+    return float(10 ** (-1 * (unit_length_exponent * 3 + 3)))
 
 
 def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
@@ -524,7 +527,7 @@ def get_gradient_conversion(unit_length_exponent: int, target_exponent = -6):
     # exp = (-1 * (unit_length_exponent * 3 + 3)) - 1
     # exp -= (6 + unit_length_exponent)  # to nM/um
 
-    return 10 ** (-3-4 * unit_length_exponent + target_exponent)
+    return float(10 ** (-3-4 * unit_length_exponent + target_exponent))
 
 
 class PostProcessComputation():

@@ -276,6 +276,12 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
                 if "amax" in ct_dict.keys():
                     p.append(t_amax(ct_dict["amax"]))
                     del ct_dict["amax"]
+                if "k_off" in ct_dict.keys():
+                    p.append(t_amax(ct_dict["k_off"]))
+                    del ct_dict["k_off"]
+                if "k_endo" in ct_dict.keys():
+                    p.append(t_amax(ct_dict["k_endo"]))
+                    del ct_dict["k_endo"]
 
                 for k, v in ct_dict.items():
                     p.append(MiscParameter(k, v))
@@ -291,6 +297,8 @@ def make_cell_types(cell_types, cytokines, templates) -> (List[CellType], Parame
 
 def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict, templates) -> ParameterSet:
     t_k_on = templates["k_on"]
+    t_k_off = templates["k_off"]
+    t_k_endo = templates["k_endo"]
     t_D = templates["D"]
     t_kd = templates["kd"]
     t_Kc = templates["Kc"]
@@ -315,6 +323,15 @@ def make_global_parameters(cytokines: List, geometry: Dict, numeric: Dict, templ
             p.append(t_k_on(c["k_on"]))
         else:
             p.append(t_k_on(111.6))
+        if "k_off" in c.keys():
+
+            p.append(t_k_off(c["k_off"]))
+        else:
+            p.append(t_k_off(0.83))
+        if "k_endo" in c.keys():
+            p.append(t_k_endo(c["k_endo"]))
+        else:
+            p.append(t_k_endo(1.1e-3, in_sim=True))
         if "D" in c.keys():
             p.append(t_D(c["D"]))
         else:
@@ -337,6 +354,8 @@ def get_parameter_templates(ule):
     templates = {
         "R": PhysicalParameterTemplate(PhysicalParameter("R", 0, to_sim=N_A ** -1 * 1e9)),
         "k_on": PhysicalParameterTemplate(PhysicalParameter("k_on", 111.6, to_sim=1e15 / 60 ** 2, is_global=True)),
+        "k_off": PhysicalParameterTemplate(PhysicalParameter("k_off", 0.83, to_sim=1 / 60 ** 2, is_global=True)),
+        "k_endo": PhysicalParameterTemplate(PhysicalParameter("k_endo", 1.1e-3, to_sim=1, is_global=True)),
         "q": PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9)),
         "D": PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True)),
         "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 ** 2), is_global=True)),

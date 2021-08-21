@@ -207,7 +207,7 @@ class StateManager:
         time_series.insert(0, self.global_parameters.serialize_to_xml())
 
         fields = ET.SubElement(step,"Fields")
-    
+
         for field_name, (distplot, sol, field_index) in result_path.items():
 
             d = os.path.split(os.path.split(sc.path)[0])[1]
@@ -285,13 +285,9 @@ class StateManager:
             while [] in result:
                 result.remove([])
 
-            full_result = []
-            for i in result:
-                full_result += i
+            result = list(np.array(result).ravel())
 
-
-
-        return pd.DataFrame(full_result)
+        return pd.DataFrame(result)
 
     def get_scan_sample(self, i):
 
@@ -309,7 +305,6 @@ class StateManager:
 
         sc.p.update(sc.default_sample.p)
         sc.p.update(sample.p)
-
 
         for f in sc.fields:
             f.apply_sample(sc.default_sample)
@@ -373,6 +368,7 @@ class StateManager:
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")
+        sample_task.add_child(self.sim_container.record)
 
         self.serialize_to_element_tree()
 
@@ -383,7 +379,6 @@ class StateManager:
 
 
         for scan_index in range(n_samples):
-
             if not sample_task.running:
                 sample_task.start()
             self.time_series_bar.reset()

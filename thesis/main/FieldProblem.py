@@ -5,7 +5,7 @@ Created on Fri Jun  7 12:48:49 2019
 
 @author: Lukas Kiwitz
 """
-
+import multiprocessing
 import multiprocessing as mp
 import os
 import time
@@ -72,6 +72,9 @@ class FieldProblem:
         self.ale = False
         self.remesh = False
 
+        self.boundary_extraction_trials = 5
+        self.boundary_extraction_timeout = 600
+
     def add_entity(self, entity: Entity) -> None:
         """
         :param entity:  entity to be added
@@ -108,14 +111,14 @@ class FieldProblem:
 
     def remove_entity(self, entity) -> None:
         """
-        TODO
+
         """
-        pass
+        raise NotImplementedError
 
     #        self.registered_entities.remove(entity)
     def is_registered(self, entity) -> None:
-        """TODO"""
-        pass
+        """"""
+        raise NotImplementedError
 
     def set_solver(self, solver: MySolver) -> None:
         """
@@ -144,7 +147,6 @@ class FieldProblem:
         self.file_name = file_name
         self.path_prefix = path_prefix
         self.path = path
-
 
         mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
         mesh_gen.entityList = self.registered_entities
@@ -209,7 +211,9 @@ class FieldProblem:
         """
 
         self.update_bcs(p=p)
-        self.solver.compileSolver(tmp_path)
+        pass
+        # self.solver.kill()
+        # self.solver.compileSolver(tmp_path)
 
     def get_boundary_concentrations(self, tmp_path: str) -> None:
 
@@ -247,11 +251,20 @@ class FieldProblem:
             cells_per_worker=chunksize
         ))
         start = time.time()
-        with mp.Pool(processes=pn, initializer=init,
-                     initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-            result = pool.map(target, entity_list, chunksize=chunksize)
-        f = get_concentration_conversion(
-            self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
+
+        for i in range(self.boundary_extraction_trials+1):
+            with mp.Pool(processes=pn, initializer=init,initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
+                result_async = pool.map_async(target, entity_list, chunksize=chunksize)
+                try:
+                    result = result_async.get(self.boundary_extraction_timeout)
+                except multiprocessing.TimeoutError as e:
+                    if i == self.boundary_extraction_trials:
+                        raise e
+                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
+                    continue
+            break
+
+        f = get_concentration_conversion(self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
         end = time.time()
 
         total_time(end - start, pre="Cell concentration extracted in ")
@@ -293,7 +306,10 @@ class FieldProblem:
 
         message("Solving Field Problem")
         try:
+
+            self.solver.compileSolver(tmp_path)
             self.solver.solve()
+            self.solver.kill()
         except Exception as e:
             self.u = None
             self.solver.u = None
@@ -442,7 +458,7 @@ class FieldProblem:
                 except:
                     pass
 
-                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False), fq,
+                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False,field_quantity = fq),
                          1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
                 ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)
 
