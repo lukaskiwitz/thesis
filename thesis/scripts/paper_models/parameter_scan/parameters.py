@@ -49,14 +49,19 @@ cell_types_dict = [
      }
 ]
 
+d = lambda x, v: (x-10) * v + 10
+f = lambda n,d : np.ceil(n**(1/3) * d + d)
+grid = f(500,d(20,1))
+
+
 """defines the variable aspects of the geometry. Unit is micro meters"""
 geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 300,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 300,
-    "z_grid":300,# comment out for single cell layer
+    "x_grid": grid,  # dimensions of the cell grid (edge length in um)
+    "y_grid": grid,
+    "z_grid":grid,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
 }
 
