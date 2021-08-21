@@ -21,6 +21,7 @@ class MyBoxDomainTemplate:
         domain = DomainCube(p1, p2, self.bc_list)
         return domain
 
+class BoundingBoxError(Exception): pass
 
 class MyBoundingBoxTemplate:
 
@@ -34,8 +35,12 @@ class MyBoundingBoxTemplate:
         cell_position = np.array([c["entity"].center for c in entity_list])
         margin = p.get_misc_parameter("margin","geometry").get_in_sim_unit(type = float)
 
+        if len(cell_position) == 0:
+            raise BoundingBoxError
+
         p1 = np.min(cell_position, axis=0) - margin
         p2 = np.max(cell_position, axis=0) + margin
+
 
         domain = DomainCube(p1, p2, self.bc_list)
 
