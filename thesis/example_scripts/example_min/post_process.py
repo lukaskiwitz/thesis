@@ -5,7 +5,7 @@ sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
 import numpy as np
-from parameters_old import path
+from parameters import path
 
 os.environ["LOG_PATH"] = path
 
