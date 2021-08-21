@@ -23,6 +23,7 @@ from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalPara
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.my_debug import message, warning, critical
 from tqdm import tqdm
+from functools import reduce
 from thesis.main.TaskRecord import TaskRecord, ClassRecord
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -285,7 +286,9 @@ class StateManager:
             while [] in result:
                 result.remove([])
 
-            result = list(np.array(result).ravel())
+            result = reduce(lambda x, v: x + v, result, [])
+
+
 
         return pd.DataFrame(result)
 
