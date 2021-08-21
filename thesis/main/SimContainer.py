@@ -217,8 +217,6 @@ class SimContainer(SimComponent):
 
     def move_cells(self, time_index: int, dt: float) -> None:
 
-        return None
-
         from time import sleep
         for field in self.fields:
             tmp_path = self.get_tmp_path()
