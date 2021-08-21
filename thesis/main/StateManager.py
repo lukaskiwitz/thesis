@@ -368,7 +368,6 @@ class StateManager:
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")
-        sample_task.add_child(self.sim_container.record)
 
         self.serialize_to_element_tree()
 
