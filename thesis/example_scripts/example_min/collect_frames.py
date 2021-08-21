@@ -2,7 +2,7 @@ import os
 import glob
 from shutil import copyfile, rmtree
 
-from parameters import path
+from parameters_old import path
 
 
 for collect, format in [("slice","png"),("volume","png")]:
