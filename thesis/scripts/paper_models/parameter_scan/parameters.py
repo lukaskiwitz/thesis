@@ -51,7 +51,7 @@ cell_types_dict = [
 
 d = lambda x, v: (x-10) * v + 10
 f = lambda n,d : np.ceil(n**(1/3) * d + d)
-grid = f(500,d(20,1))
+grid = f(2000,d(20,1))
 
 
 """defines the variable aspects of the geometry. Unit is micro meters"""
@@ -99,7 +99,7 @@ else:
 user = getpass.getuser()
 # model_name = "boxed_static_300"
 
-model_name = "boxed_static_100"
+model_name = "boxed_static"
 name = "distance_scan"
 path = "/{extra}/{u}/paper_models/prelim_{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
