@@ -52,3 +52,4 @@ class InternalSolverNotFound(SimContainerError):
 class EntityTypeNotFound(SimContainerError):
     def __init__(self, name: str) -> None:
         self.message = "Could not find entity type {n}".format(n=name)
+

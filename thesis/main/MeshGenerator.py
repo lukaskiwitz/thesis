@@ -37,7 +37,12 @@ class MeshGenerator:
         if "outer_domain" in kwargs:
             self.outerDomain = kwargs["outer_domain"]
 
-    def meshGen(self, p, load_subdomain = False,path = "", load = False, ):
+    def meshGen(self, p, mesh_path,subdomain_path, load_mesh = False, load_subdomain = False, ):
+
+        os.makedirs(os.path.dirname(mesh_path),exist_ok=True)
+        os.makedirs(os.path.dirname(subdomain_path), exist_ok=True)
+
+
         geom = pygmsh.opencascade.Geometry(
           characteristic_length_min=p.get_misc_parameter("min_char_length","numeric").get_in_sim_unit(),
           characteristic_length_max=p.get_misc_parameter("max_char_length","numeric").get_in_sim_unit()
@@ -56,39 +61,33 @@ class MeshGenerator:
         entities = []
 
 
-        full_mesh_path = path
-
-
         for i in self.entityList:
             r = i["entity"].radius
             c = i["entity"].center
             ball = geom.add_ball(c,r)
             geom.add_physical(ball)
             entities.append(ball)
-        if not load or not os.path.isfile(full_mesh_path):
+        if not load_mesh or not os.path.isfile(mesh_path):
             if len(entities) > 0:
                 geom.boolean_difference([domain],entities)
             mesh = pygmsh.generate_mesh(geom)
             message(mesh)
-            meshio.write(full_mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
+            meshio.write(mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
 
         else:
-            message("loading Mesh from: "+full_mesh_path)
+            message("loading Mesh from: "+mesh_path)
         mesh = dlf.Mesh()
 
 
-        with dlf.XDMFFile(dlf.MPI.comm_world, full_mesh_path) as f:
+        with dlf.XDMFFile(dlf.MPI.comm_world, mesh_path) as f:
             f.read(mesh)
         message("mesh loaded")
 
-        full_subdomain_path = path+"boundary_markers.h5"
-
-        if load_subdomain and os.path.isfile(full_subdomain_path):
-            # subPath = kwargs["load_subdomain"]
-            message("loading subdomain from "+ full_subdomain_path)
+        if load_subdomain and os.path.isfile(subdomain_path):
+            message("loading subdomain from "+ subdomain_path)
 
             boundary_markers = fcs.MeshFunction("size_t",mesh,mesh.topology().dim() - 1)
-            with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"r") as f:
+            with fcs.HDF5File(fcs.MPI.comm_world,subdomain_path,"r") as f:
                 f.read(boundary_markers,"/boundaries")
             for i,o in enumerate(self.entityList):
                 domain_patches = self.outerDomain.get_subdomains()
@@ -111,6 +110,6 @@ class MeshGenerator:
                 o["patch"] = i+a
             message("loop complete")
             if load_subdomain:
-                with fcs.HDF5File(fcs.MPI.comm_world,full_subdomain_path,"w") as f:
+                with fcs.HDF5File(fcs.MPI.comm_world,subdomain_path,"w") as f:
                     f.write(boundary_markers,"/boundaries")
         return mesh,boundary_markers

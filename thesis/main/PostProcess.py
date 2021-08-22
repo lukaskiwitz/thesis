@@ -194,7 +194,8 @@ class PostProcessor:
 
                 compute_settings.field = field_step.get("field_name")
                 compute_settings.mesh_path = field_step.get("mesh_path")
-                compute_settings.dynamic_mesh = True if field_step.get("dynamic_mesh") == 'True' else False
+                compute_settings.remesh_timestep = True if field_step.get("remesh_timestep") == 'True' else False
+                compute_settings.remesh_scan_sample = True if field_step.get("remesh_scan_sample") == 'True' else False
 
                 compute_settings.parameters = et.tostring(parameters)
                 compute_settings.scan_index = int(scan_index)
@@ -610,12 +611,10 @@ def compute(compute_settings: ComputeSettings) -> str:
     :return:
     """
 
-    try:
-        mesh = fcs.Mesh()
-        with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
-            f.read(mesh)
-    except Exception as e:
-        print("")
+
+    mesh = fcs.Mesh()
+    with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
+        f.read(mesh)
 
     mesh_volume = get_mesh_volume(mesh)
     function_space = fcs.FunctionSpace(mesh, "P", 1)

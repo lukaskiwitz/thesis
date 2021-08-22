@@ -130,15 +130,12 @@ class SimContainer(SimComponent):
 
 
         self.init_xdmf_files()
-
-        self.ext_boundary_markers = kwargs["load_subdomain"] if "load_subdomain" in kwargs else self.path + "cache/"
-
         self.register_entites()
 
         for field in self.fields:
 
             field.update_parameter_set(self.p)
-            field.generate_mesh(cache=True, path=self.path, path_prefix="cache", **kwargs)
+            field.generate_mesh(self.path, load_cache=True)
             field.update_parameter_set(self.p)
             field.update_solver(self.get_tmp_path())
 
@@ -186,6 +183,9 @@ class SimContainer(SimComponent):
 
         run_task = self.record.start_child("run")
 
+        for field in self.fields:
+            if field.remesh_scan_sample:
+                field.generate_mesh(path=self.get_current_path(), time_index=0, load_cache=False)
 
         self.t = T[0]
         for time_index, t in enumerate(T[1:]):
@@ -200,7 +200,7 @@ class SimContainer(SimComponent):
 
             dt = t - T[time_index]
 
-            self.move_cells(time_index, dt)
+            # self.move_cells(time_index, dt)
 
             run_task.start_child("step")
             self.step(dt, time_index)
@@ -215,7 +215,14 @@ class SimContainer(SimComponent):
 
         run_task.stop()
 
+
+
+
+
+
     def move_cells(self, time_index: int, dt: float) -> None:
+
+        return None
 
         from time import sleep
         for field in self.fields:
@@ -269,7 +276,12 @@ class SimContainer(SimComponent):
             return self.scan_path
 
     def _pre_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
-        return None
+
+        for field in sc.fields:
+            if field.remesh_timestep:
+                field.generate_mesh(path=self.get_current_path(), time_index=time_index, load_cache=False)
+
+
 
     def _post_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
         return None

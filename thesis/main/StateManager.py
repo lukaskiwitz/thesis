@@ -217,13 +217,16 @@ class StateManager:
             if not field:
                 field = ET.SubElement(fields, "Field")
 
-            dynamic_mesh =  sc.fields[field_index].moving_mesh or sc.fields[field_index].remesh or sc.fields[field_index].ale
-            if dynamic_mesh:
-                field.set("mesh_path",os.path.join(d,sc.fields[field_index].get_mesh_path(time_step-1, local=True)))
+            if sc.fields[field_index].remesh_timestep:
+                field.set("mesh_path",sc.fields[field_index].get_mesh_path(d,time_step, abspath=False))
+            elif sc.fields[field_index].remesh_scan_sample:
+                field.set("mesh_path", sc.fields[field_index].get_mesh_path(d, 0, abspath=False))
             else:
-                field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step-1, local=True))
+                field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step, abspath=False))
 
-            field.set("dynamic_mesh",str(dynamic_mesh))
+            field.set("remesh_timestep",str(sc.fields[field_index].remesh_timestep))
+            field.set("remesh_scan_sample", str(sc.fields[field_index].remesh_scan_sample))
+
             field.set("field_name", field_name)
 
             if sol is None:
@@ -313,9 +316,8 @@ class StateManager:
             f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
 
-            if sample.dynamic_mesh:
-                f.moving_mesh = False
-                f.remesh = True
+            f.remesh_scan_sample = sample.remesh_scan_sample
+            f.remesh_timestep = sample.remesh_timestep
 
         for e in sc.entity_list:
             e.p.update(sc.default_sample.p, override = True)
@@ -415,9 +417,7 @@ class StateManager:
                 initialize_task = sample_task.start_child("initialize")
                 if not ext_cache == "":
                     self.sim_container.set_ext_cache(ext_cache)
-                    self.sim_container.initialize(load_subdomain=True, file_name="mesh")
-                else:
-                    self.sim_container.initialize()
+                self.sim_container.initialize()
                 initialize_task.stop()
 
                 sample_task.start_child("update_sim_container")
@@ -460,6 +460,8 @@ class StateManager:
                 warning("Continuing to next scan sample")
                 self.scan_bar.update(1)
                 sample_task.reset()
+                raise e
+
 
 
             sample_task.stop()
