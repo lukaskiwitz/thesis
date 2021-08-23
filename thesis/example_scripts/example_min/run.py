@@ -74,7 +74,6 @@ scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric, custom
 
 
 
-
 """Retrieves and entity type from sim container for scanning"""
 default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
@@ -139,7 +138,7 @@ for bc, linear in [("linear",True),("patrick_saturation",False)]:
     linear_def = ScanDefintion(ScannablePhysicalParameter(MiscParameter("linear", True, is_global = True), lambda x, v: linear),
                                "numeric", scan_space, ScanType.GLOBAL)
 
-    scan_container.add_single_parameter_scan([distance_def,margin_def], scan_name = "distance", dynamic_mesh = True)
+    scan_container.add_single_parameter_scan([distance_def,margin_def], scan_name = "distance", remesh_scan_sample = True)
 
 def updateState(sc, t):
     assign_fractions(sc, t)

@@ -81,12 +81,12 @@ default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
-s = 4
+s = 10
 fc = 10
 e = np.log10(fc) / np.log10(10)
 scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
-fc = 10
+fc = 2
 e = np.log10(fc) / np.log10(10)
 scan_space_2 = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
