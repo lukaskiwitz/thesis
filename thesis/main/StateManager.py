@@ -311,6 +311,14 @@ class StateManager:
         sample = scan_container.scan_samples[i]
         return sample
 
+    def apply_sample_flags(self, sc: SimContainer, scan_index: int):
+
+        sample = self.get_scan_sample(scan_index)
+        for f in sc.fields:
+            f.remesh_scan_sample = sample.remesh_scan_sample
+            f.remesh_timestep = sample.remesh_timestep
+
+
     def update_sim_container(self, sc: SimContainer, scan_index: int) -> ParameterSet:
 
         sc.path = self.get_scan_folder(scan_index)
@@ -325,8 +333,6 @@ class StateManager:
             f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
 
-            f.remesh_scan_sample = sample.remesh_scan_sample
-            f.remesh_timestep = sample.remesh_timestep
 
         for e in sc.entity_list:
             e.p.update(sc.default_sample.p, override=True)
@@ -418,6 +424,8 @@ class StateManager:
                 self.sim_container.marker_lookup = self.marker_lookup
                 get_sim_container_task.stop()
                 sample_task.add_child(self.sim_container.record)
+
+                self.apply_sample_flags(self.sim_container, scan_index)
 
                 initialize_task = sample_task.start_child("initialize")
                 if not ext_cache == "":

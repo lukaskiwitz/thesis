@@ -79,7 +79,10 @@ class SimContainer(SimComponent):
         self.p: ParameterSet = parameter_set
         self.entity_list: List[Entity] = []
         self.fields: List[FieldProblem] = []
+
         self.path: str = "./"
+        self.top_path = self.path
+
         self.scan_path: str = self.path
 
         self.worker_sub_path: str = ""
@@ -139,7 +142,8 @@ class SimContainer(SimComponent):
 
         for field in self.fields:
             field.update_parameter_set(self.p)
-            field.generate_mesh(self.path, load_cache=True)
+            if not (field.remesh_timestep or field.remesh_scan_sample):
+                field.generate_mesh(self.path, load_cache=True)
             field.update_parameter_set(self.p)
             field.update_solver(self.get_tmp_path())
 
