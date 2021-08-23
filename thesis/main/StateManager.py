@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import traceback
 import scipy
+from scipy.stats.mstats import gmean
 
 from thesis.main.Entity import Cell
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
@@ -354,7 +355,7 @@ class StateManager:
         sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
         time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
         step_durations = [i["end"] - i["start"] for i in time_step.history]
-        mean_step_duration = scipy.stats.gmean(step_durations)
+        mean_step_duration = gmean(step_durations)
 
         n_steps = (len(T) - time_index)
         n_scans = len(S) - scan_index
