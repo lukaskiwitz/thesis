@@ -18,7 +18,7 @@ import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
-from thesis.main.PostProcess import get_concentration_conversion
+from PostProcessUtil import get_concentration_conversion
 from thesis.main.my_debug import message, total_time, warning
 
 class BoundaryConcentrationError(Exception):pass

@@ -13,7 +13,7 @@ from thesis.main.MyInteraction import MyFieldInteractionTemplate
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import N_A
-from thesis.main.PostProcess import get_concentration_conversion as get_cc
+from PostProcessUtil import get_concentration_conversion as get_cc
 from typing import List, Dict
 from copy import deepcopy
 import os

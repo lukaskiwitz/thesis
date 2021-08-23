@@ -114,7 +114,7 @@ f = lambda n, d: np.ceil(n ** (1 / 3) * d + d)
 
 distance = ScannablePhysicalParameter(MiscParameter("distance", 20), d)
 margin = ScannablePhysicalParameter(MiscParameter("margin", 20), d)
-n = 2000
+n = 200
 
 x_grid = ScannablePhysicalParameter(MiscParameter("x_grid", 100), lambda x, v: f(n, d(20, v)))
 y_grid = ScannablePhysicalParameter(MiscParameter("y_grid", 100), lambda x, v: f(n, d(20, v)))
