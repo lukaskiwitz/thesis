@@ -28,8 +28,8 @@ from thesis.main.my_debug import message, debug
 
 Element = et.Element
 
-class InternalSolverNotRegisteredError: pass
-class EntityTypeNotRegisteredError: pass
+class InternalSolverNotRegisteredError(Exception): pass
+class EntityTypeNotRegisteredError(Exception): pass
 
 class SimContainer(SimComponent):
     """
@@ -402,20 +402,21 @@ class SimContainer(SimComponent):
 
         return internal_solver
 
-    def get_internal_solver_by_name(self, name: str) -> InternalSolver:
+    def get_internal_solver_by_name(self, name: str) -> Union[InternalSolver, None]:
 
         for s in self.internal_solvers:
             if s.name == name:
                 return s
+        return None
+        # raise InternalSolverNotRegisteredError("could not find internal solver {n}".format(n=name))
 
-        raise InternalSolverNotRegisteredError("could not find internal solver {n}".format(n=name))
 
-
-    def get_entity_type_by_name(self, name: str) -> EntityType:
+    def get_entity_type_by_name(self, name: str) -> Union[EntityType,None]:
         for e in self.entity_templates:
             if e.name == name:
                 return e
-        raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
+        return None
+        # raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
 
 
     def add_problem(self, field: FieldProblem) -> FieldProblem:

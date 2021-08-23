@@ -17,8 +17,8 @@ import fenics as fcs
 import numpy as np
 
 import thesis.main.MeshGenerator as mshGen
-from PostProcessUtil import get_concentration_conversion
-from ScanContainer import ScanSample
+from thesis.main.PostProcessUtil import get_concentration_conversion
+from thesis.main.ScanContainer import ScanSample
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter

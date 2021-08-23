@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 import thesis.main.StateManager as st
-from PostProcessUtil import get_rectangle_plane_mesh, get_mesh_volume, get_concentration_conversion, \
+from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_mesh_volume, get_concentration_conversion, \
     get_gradient_conversion
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.myDictSorting import groupByKey
