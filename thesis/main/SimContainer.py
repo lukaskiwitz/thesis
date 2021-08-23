@@ -7,24 +7,29 @@ Created on Fri Jun  7 12:21:51 2019
 """
 
 import os
-import time
+from numbers import Number
 from typing import *
 
 #
 import fenics as fcs
 import lxml.etree as et
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from thesis.main.Entity import Entity
-from thesis.main.EntityType import CellType, EntityType
+from thesis.main.EntityType import EntityType
 from thesis.main.FieldProblem import FieldProblem
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import ParameterSet, MiscParameter
+from thesis.main.ScanContainer import ScanSample
 from thesis.main.SimComponent import SimComponent
-from thesis.main.my_debug import message, total_time, debug
-from thesis.main.TaskRecord import TaskRecord, ClassRecord
+from thesis.main.TaskRecord import ClassRecord
+from thesis.main.my_debug import message, debug
 
+Element = et.Element
+
+class InternalSolverNotRegisteredError: pass
+class EntityTypeNotRegisteredError: pass
 
 class SimContainer(SimComponent):
     """
@@ -83,13 +88,14 @@ class SimContainer(SimComponent):
         self.field_files: List = []
         self.boundary_markers: List = []
         self.entity_templates: List[EntityType] = []
-        self.marker_lookup: Mapping[str, int] = {}
+        self.marker_lookup: Dict[Union[str,int,float], int] = {}
         self.internal_solvers: List[InternalSolver] = []
         self.t: float = 0
         self._time_log_df: pd.DataFrame = pd.DataFrame()
         self.record: ClassRecord = ClassRecord("SimContainer")
         self.orig_stdout = None
         self.markers: List[str] = ["type_name", "IL-2_surf_c"]
+        self.default_sample: ScanSample = None
 
         # self.unit_length_exponent: int = 1
 
@@ -128,29 +134,27 @@ class SimContainer(SimComponent):
         loads subdomain; generates mesh; adds entities to Fields
         """
 
-
         self.init_xdmf_files()
         self.register_entites()
 
         for field in self.fields:
-
             field.update_parameter_set(self.p)
             field.generate_mesh(self.path, load_cache=True)
             field.update_parameter_set(self.p)
             field.update_solver(self.get_tmp_path())
 
-    def set_ext_cache(self, ext_cache: str):
+    def set_ext_cache(self, ext_cache: str) -> None:
         for field in self.fields:
             field.ext_cache = ext_cache
 
-    def register_entites(self):
+    def register_entites(self) -> None:
 
         for field in self.fields:
             fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
                 if fq in [i.field_quantity for i in entity.interactions]:
-                    field.add_entity(entity)
+                    field._add_entity(entity)
 
             field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
 
@@ -167,17 +171,15 @@ class SimContainer(SimComponent):
             if i.name == name:
                 return i
 
-    def get_entity_by_type(self, type: CellType) -> Entity:
+    def get_entity_by_type(self, entity_type: EntityType) -> Entity:
 
         """
-        TODO
         returns all entities of type
-        maybe add EntityType <- CellType, ... classes
 
-        :param type:
+        :param entity_type:
         """
 
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def run(self, T: List[float]) -> None:
 
@@ -189,8 +191,6 @@ class SimContainer(SimComponent):
 
         self.t = T[0]
         for time_index, t in enumerate(T[1:]):
-
-
             run_task.info.update({"time_index": time_index})
             run_task.update_child_info()
 
@@ -215,15 +215,13 @@ class SimContainer(SimComponent):
 
         run_task.stop()
 
-
-
-
-
-
     def move_cells(self, time_index: int, dt: float) -> None:
 
         return None
+        """
+        TODO: the code below needs to be reworked, because some of the field have been removed
 
+        """
         from time import sleep
         for field in self.fields:
             tmp_path = self.get_tmp_path()
@@ -281,8 +279,6 @@ class SimContainer(SimComponent):
             if field.remesh_timestep:
                 field.generate_mesh(path=self.get_current_path(), time_index=time_index, load_cache=False)
 
-
-
     def _post_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
         return None
 
@@ -322,13 +318,11 @@ class SimContainer(SimComponent):
 
         """
 
-
         self.apply_type_changes()
 
         for field in self.fields:
             tmp_path = self.get_tmp_path()
             field.path = self.path
-            # field.unit_length_exponent = self.unit_length_exponent
             field.update_solver(tmp_path, p=self.p)
             field.step(dt, time_index, tmp_path)
 
@@ -337,7 +331,7 @@ class SimContainer(SimComponent):
 
         self.t = self.t + dt
 
-    def get_number_of_entites(self) -> Dict[int,str]:
+    def get_number_of_entities(self) -> Dict[str, int]:
 
         result = {}
         for e in self.entity_list:
@@ -353,9 +347,10 @@ class SimContainer(SimComponent):
                 result[name] += 1
             else:
                 result[name] = 1
+
         return result
 
-    def add_entity(self, entity: Entity) -> None:
+    def add_entity(self, entity: Entity) -> Entity:
 
         """
         adds entity to simulation
@@ -370,10 +365,11 @@ class SimContainer(SimComponent):
         else:
             entity.id = 0
 
-        entity.p.update(MiscParameter("id", entity.id), override = True)
+        entity.p.update(MiscParameter("id", entity.id), override=True)
         self.entity_list.append(entity)
+        return entity
 
-    def add_entity_type(self, template: EntityType) -> None:
+    def add_entity_type(self, template: EntityType) -> EntityType:
         """
         adds entity template to simulation
 
@@ -389,12 +385,14 @@ class SimContainer(SimComponent):
             self.entity_templates.append(template)
         else:
             i = self.entity_templates.index(self.get_entity_type_by_name(template.name))
-            #todo quick fix!
+            # todo quick fix!
             template.interactions = self.entity_templates[i].interactions
 
             self.entity_templates[i] = template
 
-    def add_internal_solver(self, internal_solver: InternalSolver) -> None:
+        return template
+
+    def add_internal_solver(self, internal_solver: InternalSolver) -> InternalSolver:
 
         if not self.get_internal_solver_by_name(internal_solver.name):
             self.internal_solvers.append(internal_solver)
@@ -402,23 +400,25 @@ class SimContainer(SimComponent):
             i = self.internal_solvers.index(self.get_internal_solver_by_name(internal_solver.name))
             self.internal_solvers[i] = internal_solver
 
-    def get_internal_solver_by_name(self, name: str) -> None:
+        return internal_solver
+
+    def get_internal_solver_by_name(self, name: str) -> InternalSolver:
 
         for s in self.internal_solvers:
             if s.name == name:
                 return s
 
-        debug("could not find internal solver {n}".format(n=name))
-        return None
+        raise InternalSolverNotRegisteredError("could not find internal solver {n}".format(n=name))
+
 
     def get_entity_type_by_name(self, name: str) -> EntityType:
         for e in self.entity_templates:
             if e.name == name:
                 return e
-        debug("could not find entity type {n}".format(n = name))
-        return None
+        raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
 
-    def add_problem(self, field: FieldProblem) -> None:
+
+    def add_problem(self, field: FieldProblem) -> FieldProblem:
 
         """
 
@@ -428,9 +428,9 @@ class SimContainer(SimComponent):
 
         """
 
-        # field.update_parameter_set(self.p)
-        # field.unit_length_exponent = self.unit_length_exponent
+
         self.fields.append(field)
+        return field
 
     def save_subdomains(self) -> None:
 
@@ -456,7 +456,7 @@ class SimContainer(SimComponent):
         for o, i in enumerate(self.fields):
             self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
 
-    def save_markers(self, time_index: int) -> Mapping[str,str]:
+    def save_markers(self, time_index: int) -> Dict[str,str]:
 
         path_dict = {}
         top_dir = os.path.join(self.get_current_path(), "entity_markers")
@@ -473,13 +473,13 @@ class SimContainer(SimComponent):
 
         return path_dict
 
-    def save_fields(self, n: int) -> Mapping[str,Tuple[str,str,int]]:
+    def save_fields(self, time_index: int) -> Mapping[str, Tuple[str, str, int]]:
 
         """
 
         saves results for each element in self.fields as xdmf file with index n
 
-        :param n:
+        :param time_index:
 
         """
         os.makedirs(self.get_current_path() + "sol/distplot", exist_ok=True)
@@ -494,9 +494,9 @@ class SimContainer(SimComponent):
             # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
             #     f.write(markers[1])
 
-            distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
+            distplot = "sol/distplot/" + self.field_files[o] + "_" + str(time_index) + "_distPlot.h5"
 
-            sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
+            sol = "sol/" + self.field_files[o] + "_" + str(time_index) + ".xdmf"
             u = i.get_field()
             if u is not None:
                 u.rename(i.field_quantity, i.field_quantity)
@@ -504,20 +504,20 @@ class SimContainer(SimComponent):
                 with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
                     f.write(i.get_field(), i.field_name)
                 with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
-                    f.write(i.get_field(), n)
+                    f.write(i.get_field(), time_index)
                 result[i.field_name] = (distplot, sol, o)
             else:
                 result[i.field_name] = (None, None, o)
         return result
 
-    def to_xml(self) -> et.Element:
+    def to_xml(self) -> Element:
         raise NotImplementedError
         pass
 
-    def from_xml(self, e: et.Element):
+    def from_xml(self, e: Element):
         raise NotImplementedError
         pass
 
-    def set_parameters(self, set: ParameterSet):
+    def set_parameters(self, p: ParameterSet):
 
-        self.p = set
+        self.p = p

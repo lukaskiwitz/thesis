@@ -267,7 +267,7 @@ class StateManager:
                 et = ET.parse(os.path.join(self.path, path))
                 step.getparent().replace(step, et.getroot())
 
-    def get_cell_ts_data_frame(self, time_indices=None, n_processes=1, **kwargs):
+    def get_cell_ts_data_frame(self, time_indices: List[int] = None, n_processes: int =1, **kwargs) -> pd.DataFrame:
 
         def init():
             global path
@@ -303,17 +303,17 @@ class StateManager:
 
         return pd.DataFrame(result)
 
-    def get_scan_sample(self, i):
+    def get_scan_sample(self, i: int) -> ScanSample:
 
         scan_container = self.deserialize_from_element_tree()
         assert i <= len(scan_container.scan_samples) - 1
         sample = scan_container.scan_samples[i]
         return sample
 
-    def update_sim_container(self, sc, i) -> Dict:
+    def update_sim_container(self, sc: SimContainer, scan_index: int) -> ParameterSet:
 
-        sc.path = self.get_scan_folder(i)
-        sample = self.get_scan_sample(i)
+        sc.path = self.get_scan_folder(scan_index)
+        sample = self.get_scan_sample(scan_index)
 
         assert hasattr(sc, "default_sample")
 
@@ -349,7 +349,7 @@ class StateManager:
 
         return deepcopy(sample.p)
 
-    def estimate_time_remaining(self, sc, scan_index, time_index, S, T):
+    def estimate_time_remaining(self, sc: SimContainer, scan_index: int, time_index: int, S: List, T: List) -> None:
 
         sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
         time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
@@ -373,7 +373,7 @@ class StateManager:
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
         # message("ETA: {eta}".format(eta = eta))
 
-    def run(self, ext_cache=""):
+    def run(self, ext_cache: str="") -> None:
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")
@@ -480,14 +480,14 @@ class StateManager:
 
         self.save_records()
 
-    def get_records_path(self):
+    def get_records_path(self) -> str:
 
         records_path = os.path.join(self.path, "records")
         os.makedirs(records_path, exist_ok=True)
 
         return records_path
 
-    def save_records(self):
+    def save_records(self) -> None:
 
         records = self.record.gather_records()
         records_path = self.get_records_path()
@@ -526,14 +526,14 @@ class StateManager:
 
         np.save(os.path.join(records_path, "eta"), np.array(self.eta_estimates))
 
-    def pre_scan(self, state_manager, scan_index):
+    def pre_scan(self, state_manager: 'StateManager', scan_index: int):
         pass
 
-    def post_scan(self, state_manager, scan_index):
+    def post_scan(self, state_manager: 'StateManager', scan_index: int):
         pass
 
 
-def target(mp_input):
+def target(mp_input: Tuple[int, str, List[int]]) -> List[pd.DataFrame]:
     try:
         n_scans, scan, time_indices = mp_input
         scan = ET.fromstring(scan)
@@ -588,12 +588,12 @@ def target(mp_input):
 
 class ScanManager:
 
-    def __init__(self, path):
+    def __init__(self, path: str):
 
-        self.path = path
-        self.scan_folder_pattern = "scan_{n}/"
-        self.element_tree = None
-        self.scan_container = None
+        self.path: str = path
+        self.scan_folder_pattern: str = "scan_{n}/"
+        self.element_tree: ElementTree = None
+        self.scan_container: ScanContainer = None
         self.sim_container = None
         self.T = None
         self.dt = 1

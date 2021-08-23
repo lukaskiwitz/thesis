@@ -6,6 +6,7 @@ Created on Fri Jun  7 12:22:13 2019
 @author: Lukas Kiwitz
 """
 
+from abc import *
 from typing import List, Dict
 
 import fenics as fcs
@@ -54,6 +55,7 @@ class Entity:
         self.type_name = None
         self.task_record = TaskRecord("Entity")
         self.interactions = []
+        self.p = ParameterSet("Entity_dummy", [])
 
     def move(self, dt):
         pass
@@ -279,6 +281,7 @@ class Cell(Entity):
         self.change_type = type_name
 
 
+
 class DomainEntity(Entity):
     """
 
@@ -291,6 +294,14 @@ class DomainEntity(Entity):
 
     def getState(self, parameter_name="q", field_quantity="il2", in_post=True) -> float:
         return 0
+
+    @abstractmethod
+    def apply_sample(self, outer_domain_dict) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_subdomains(self, **kwargs) -> List:
+        raise NotImplementedError
 
 
 class DomainSphere(DomainEntity):
