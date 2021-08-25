@@ -1,0 +1,643 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>main package &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+    <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to Spatial Simulation’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">main package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-thesis.main.StateManager">State Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-thesis.main.SimContainer">Sim container</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-thesis.main.FieldProblem">FieldProblem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-thesis.main.PostProcess">PostProcessor</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>main package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/main.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="main-package">
+<h1>main package<a class="headerlink" href="#main-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-thesis.main.StateManager">
+<span id="state-manager"></span><h2>State Manager<a class="headerlink" href="#module-thesis.main.StateManager" title="Permalink to this headline">¶</a></h2>
+<p>Created on Mon Oct 14 14:34:19 2019</p>
+<p>&#64;author: Lukas Kiwitz</p>
+<dl class="class">
+<dt id="thesis.main.StateManager.StateManager">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">StateManager</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Used to store Simulation state as xml file. Either to save the state of a simulation to file or for usage in post processing</p>
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.add_time_step_to_element_tree">
+<code class="sig-name descname">add_time_step_to_element_tree</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">time_step</em>, <em class="sig-param">time</em>, <em class="sig-param">result_path</em>, <em class="sig-param">marker_paths</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.add_time_step_to_element_tree" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>result_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Dictionary of shape {field_name: (distplot, sol, field_index)}</p></li>
+<li><p><strong>marker_paths</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Dictionry of shape {marker_key :marker_name}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.load_xml">
+<code class="sig-name descname">load_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.load_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads xml representation from file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-thesis.main.SimContainer">
+<span id="sim-container"></span><h2>Sim container<a class="headerlink" href="#module-thesis.main.SimContainer" title="Permalink to this headline">¶</a></h2>
+<p>Created on Fri Jun  7 12:21:51 2019</p>
+<p>&#64;author: kiwitz</p>
+<dl class="exception">
+<dt id="thesis.main.SimContainer.EntityTypeNotRegisteredError">
+<em class="property">exception </em><code class="sig-prename descclassname">thesis.main.SimContainer.</code><code class="sig-name descname">EntityTypeNotRegisteredError</code><a class="headerlink" href="#thesis.main.SimContainer.EntityTypeNotRegisteredError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="thesis.main.SimContainer.InternalSolverNotRegisteredError">
+<em class="property">exception </em><code class="sig-prename descclassname">thesis.main.SimContainer.</code><code class="sig-name descname">InternalSolverNotRegisteredError</code><a class="headerlink" href="#thesis.main.SimContainer.InternalSolverNotRegisteredError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.SimContainer.SimContainer">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.SimContainer.</code><code class="sig-name descname">SimContainer</code><span class="sig-paren">(</span><em class="sig-param">parameter_set</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
+<p>Sim container</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>Parameterset</em>) – </p></li>
+<li><p><strong>entity_list</strong> (<em>List</em><em>[</em><em>Entity</em><em>]</em>) – </p></li>
+<li><p><strong>fields</strong> (<em>List</em><em>[</em><a class="reference internal" href="#thesis.main.FieldProblem.FieldProblem" title="thesis.main.FieldProblem.FieldProblem"><em>FieldProblem</em></a><em>]</em>) – </p></li>
+<li><p><strong>path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>scan_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>worker_sub_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>subdomain_files</strong> (<em>List</em>) – </p></li>
+<li><p><strong>domain_files</strong> (<em>List</em>) – </p></li>
+<li><p><strong>field_files</strong> (<em>List</em>) – </p></li>
+<li><p><strong>boundary_marker</strong> (<em>List</em><em>[</em><em>fcs.MeshFunction</em><em>]</em>) – </p></li>
+<li><p><strong>entity_templates</strong> (<em>List</em><em>[</em><em>EntityType</em><em>]</em>) – </p></li>
+<li><p><strong>marker_lookup</strong> (<em>Mapping</em><em>[</em><em>str</em><em>,</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>internal_solvers</strong> (<em>List</em><em>[</em><em>InternalSolver</em><em>]</em>) – </p></li>
+<li><p><strong>t</strong> (<em>int</em>) – </p></li>
+<li><p><strong>_time_log_df</strong> (<em>pd.DataFrame</em>) – </p></li>
+<li><p><strong>record</strong> (<em>ClassRecord</em>) – </p></li>
+<li><p><strong>orig_stdout</strong> – </p></li>
+<li><p><strong>markers</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – properties to mark</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_entity">
+<code class="sig-name descname">add_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds entity to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>entity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_entity_type">
+<code class="sig-name descname">add_entity_type</code><span class="sig-paren">(</span><em class="sig-param">template</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds entity template to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>template</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>) – the entity type register with simcontainer</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_problem">
+<code class="sig-name descname">add_problem</code><span class="sig-paren">(</span><em class="sig-param">field</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_problem" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds field to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>field</strong> (<a class="reference internal" href="#thesis.main.FieldProblem.FieldProblem" title="thesis.main.FieldProblem.FieldProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldProblem</span></code></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#thesis.main.FieldProblem.FieldProblem" title="thesis.main.FieldProblem.FieldProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldProblem</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_entity_by_name">
+<code class="sig-name descname">get_entity_by_name</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns first entity with name
+:type name: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
+:param name:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_entity_by_type">
+<code class="sig-name descname">get_entity_by_type</code><span class="sig-paren">(</span><em class="sig-param">entity_type</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns all entities of type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>entity_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.init_logs">
+<code class="sig-name descname">init_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_logs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleans old logs and writes directory structure for log files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.init_xdmf_files">
+<code class="sig-name descname">init_xdmf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_xdmf_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes directory structure for XDMF and sets up file lists (subdomain_files, domain_files, field_files)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads subdomain; generates mesh; adds entities to Fields</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.save_domain">
+<code class="sig-name descname">save_domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_domain" title="Permalink to this definition">¶</a></dt>
+<dd><p>saves Mesh Function with outer domains colored according to field.get_outer_domain_vis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.save_fields">
+<code class="sig-name descname">save_fields</code><span class="sig-paren">(</span><em class="sig-param">time_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>saves results for each element in self.fields as xdmf file with index n</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>time_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.save_subdomains">
+<code class="sig-name descname">save_subdomains</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_subdomains" title="Permalink to this definition">¶</a></dt>
+<dd><p>saves Mesh Function with subdomains domains colored according to field.get_sub_domain_vis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">dt</em>, <em class="sig-param">time_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>advanches simulation by dt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-thesis.main.FieldProblem">
+<span id="fieldproblem"></span><h2>FieldProblem<a class="headerlink" href="#module-thesis.main.FieldProblem" title="Permalink to this headline">¶</a></h2>
+<p>Created on Fri Jun  7 12:48:49 2019</p>
+<p>&#64;author: Lukas Kiwitz</p>
+<dl class="exception">
+<dt id="thesis.main.FieldProblem.BoundaryConcentrationError">
+<em class="property">exception </em><code class="sig-prename descclassname">thesis.main.FieldProblem.</code><code class="sig-name descname">BoundaryConcentrationError</code><a class="headerlink" href="#thesis.main.FieldProblem.BoundaryConcentrationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.FieldProblem.FieldProblem">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.FieldProblem.</code><code class="sig-name descname">FieldProblem</code><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<em>str</em>) – string to identify this field</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – desired mesh resolution (currently not used)</p></li>
+<li><p><strong>mesh_cache</strong> (<em>str</em>) – path for mesh storage (optional)</p></li>
+<li><p><strong>registered_entities</strong> (<em>List</em><em>[</em><em>Entity</em><em>]</em>) – entities that interact with this field</p></li>
+<li><p><strong>outer_domain</strong> (<em>DomainEntity</em>) – outside domain</p></li>
+<li><p><strong>solver</strong> (<em>MySolver</em>) – solver to be used for this field</p></li>
+<li><p><strong>field_quantity</strong> (<em>str</em>) – physical properties associated with this field</p></li>
+<li><p><strong>ext_cache</strong> (<em>str</em>) – path to folder containing pre generated mesh</p></li>
+<li><p><strong>p</strong> (<em>Dict</em>) – parameter dict to be handed down</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.generate_mesh">
+<code class="sig-name descname">generate_mesh</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">time_index=None</em>, <em class="sig-param">load_cache=True</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.generate_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>generates mesh</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.get_entity_surface_area">
+<code class="sig-name descname">get_entity_surface_area</code><span class="sig-paren">(</span><em class="sig-param">e</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_entity_surface_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>todo very simple, placeholder ?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis">
+<code class="sig-name descname">get_outer_domain_vis</code><span class="sig-paren">(</span><em class="sig-param">parameter_name='q'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets MeshFunction that has outer domain surfaces labeled by entity.getState(key)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>key</strong> – key to pass to getState()</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MeshFunction</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis">
+<code class="sig-name descname">get_sub_domains_vis</code><span class="sig-paren">(</span><em class="sig-param">marker_key</em>, <em class="sig-param">lookup=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis" title="Permalink to this definition">¶</a></dt>
+<dd><p>save meshfunction that labels cells by type_name</p>
+<p>:param {type_name:label}</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">MeshFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.remove_entity">
+<code class="sig-name descname">remove_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.remove_entity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.set_outer_domain">
+<code class="sig-name descname">set_outer_domain</code><span class="sig-paren">(</span><em class="sig-param">domain</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_outer_domain" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets outer domain
+:type domain: <code class="xref py py-class docutils literal notranslate"><span class="pre">DomainEntity</span></code>
+:param domain: domain object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.set_solver">
+<code class="sig-name descname">set_solver</code><span class="sig-paren">(</span><em class="sig-param">solver</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets solver
+:type solver: <code class="xref py py-class docutils literal notranslate"><span class="pre">MySolver</span></code>
+:param solver:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">dt</em>, <em class="sig-param">time_index</em>, <em class="sig-param">tmp_path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs timestep</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dT</strong> – delta t for this timestep</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.update_bcs">
+<code class="sig-name descname">update_bcs</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_bcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>updates boundary conditions for all child objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.FieldProblem.FieldProblem.update_solver">
+<code class="sig-name descname">update_solver</code><span class="sig-paren">(</span><em class="sig-param">tmp_path</em>, <em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>updates solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-thesis.main.PostProcess">
+<span id="postprocessor"></span><h2>PostProcessor<a class="headerlink" href="#module-thesis.main.PostProcess" title="Permalink to this headline">¶</a></h2>
+<p>Created on Wed Oct 16 12:56:59 2019</p>
+<p>&#64;author: Lukas Kiwitz</p>
+<dl class="class">
+<dt id="thesis.main.PostProcess.CV">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">CV</code><a class="headerlink" href="#thesis.main.PostProcess.CV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></p>
+<p>Defines a custom computation</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.ComputeSettings">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">ComputeSettings</code><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to store computation input and output</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – file path to volume file</p></li>
+<li><p><strong>field</strong> (<em>str</em>) – field name in h5 file</p></li>
+<li><p><strong>cell_data</strong> (<em>List</em><em>[</em><em>Dict</em><em>]</em>) – cell data</p></li>
+<li><p><strong>dynamic</strong> (<em>Dict</em>) – dynamic parameters</p></li>
+<li><p><strong>scan_index</strong> (<em>int</em>) – scan index</p></li>
+<li><p><strong>time_index</strong> (<em>float</em>) – time index</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.ComputeSettings.file_path">
+<code class="sig-name descname">file_path</code><em class="property"> = None</em><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.file_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>file path to volume file</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Spatial Simulation’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
