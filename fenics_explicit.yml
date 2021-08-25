@@ -237,3 +237,4 @@ dependencies:
     - kdepy
     - meshio==2.3.10
     - sphinx-autodoc-typehints
+    - sphinx-rtd-theme
