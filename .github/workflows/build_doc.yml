@@ -3,7 +3,7 @@ name: Build and commit documentation
 on: workflow_dispatch
 
 jobs:
-  setup:
+  build-linux:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
@@ -11,11 +11,50 @@ jobs:
     - uses: actions/checkout@v2
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
+    - name: Conda package cache
+      uses: actions/cache@v2
+      env:
+        cache-name: pkg-cache
+      with:
+        path: /usr/share/miniconda/pkgs
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('environment.yml') }}
     - name: Install dependencies
       run: | 
         conda env update --file ./fenics_explicit.yml --name base
         conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
-    - name: install package
+    - name: Create buil yml
+      run: conda env export --name base > build.yml
+    - name: Build yml cache
+      uses: actions/cache@v2
+      env:
+        cache-name: yml-cache
+      with:
+        path: build.yml
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build.yml') }}
+  run-test:
+    runs-on: ubuntu-latest
+    needs: build-linux
+    steps:
+    - uses: actions/checkout@v2
+    - name: Add conda to system path
+      run: echo $CONDA/bin >> $GITHUB_PATH
+    - name: Conda package cache
+      uses: actions/cache@v2
+      env:
+        cache-name: pkg-cache
+      with:
+        path: /usr/share/miniconda/pkgs
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('environment.yml') }}
+    - name: Build yml cache
+      uses: actions/cache@v2
+      env:
+        cache-name: yml-cache
+      with:
+        path: build.yml
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build.yml') }}
+    - name: Install dependencies
+      run: conda env update --file build.yml --name base
+    - name: Install package
       run: pip install -e .
     - name: make html
       run: |
