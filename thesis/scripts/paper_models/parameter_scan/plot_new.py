@@ -52,7 +52,7 @@ plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci = 
 plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
 plotter.empty_plot()
-plotter.steady_state_count(hue = plotter.scan_name_key,style="type_name", subtitle = "cell fraction\n(for distance scan)", relative=True, filter= lambda df:df.loc[(df[plotter.scan_name_key] == "distance")])
+plotter.steady_state_count(hue = plotter.scan_name_key,style="type_name", subtitle = "cell fraction\n(for distance scan)", relative=False, filter= lambda df:df.loc[(df[plotter.scan_name_key] == "distance")])
 plotter.steady_state_count(hue = plotter.scan_name_key,style="type_name", subtitle = "cell fraction\n(for ratio scan)", relative=True, filter= lambda df:df.loc[(df[plotter.scan_name_key] == "ratio")])
 plotter.cell_steady_state_plot("IL-2_q",subtitle = "systemic secretion\n(for ratio scan)",filter= lambda df:df.loc[(df.type_name == "sec") & (df[plotter.scan_name_key] == "ratio")],cummulative=True, legend="brief")
 plotter.cell_steady_state_plot("IL-2_R",subtitle = "systemic IL-2R\n(for ratio scan)", filter= lambda df:df.loc[(df.type_name == "abs") & (df[plotter.scan_name_key] == "ratio")],cummulative=True, legend="brief")

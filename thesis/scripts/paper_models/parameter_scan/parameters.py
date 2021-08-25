@@ -51,7 +51,7 @@ cell_types_dict = [
 
 d = lambda x, v: (x-10) * v + 10
 f = lambda n,d : np.ceil(n**(1/3) * d + d)
-grid = f(200,d(20,1))
+grid = f(2000,d(20,1))
 
 
 """defines the variable aspects of the geometry. Unit is micro meters"""

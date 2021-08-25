@@ -81,16 +81,17 @@ default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
-s = 10
+s = 4
 fc = 10
 e = np.log10(fc) / np.log10(10)
 scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
-fc = 2
+fc = 10
 e = np.log10(fc) / np.log10(10)
 scan_space_2 = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
-# scan_space = [0.1,1,10]
+scan_space = [0.1,1,10]
+scan_space_2 = [0.1,1,10]
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 q_constant_def = ScanDefintion(q_constant, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
