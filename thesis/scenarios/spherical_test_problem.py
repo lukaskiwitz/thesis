@@ -13,7 +13,7 @@ import thesis.main.SimContainer as SC
 from thesis.main.EntityType import CellType
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter, \
     PhysicalParameterTemplate
-from thesis.main.PostProcess import get_concentration_conversion as get_cc
+from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
 from thesis.main.bcFunctions import cellBC
 from thesis.main.my_debug import message
 import fenics as fcs
@@ -150,7 +150,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
         fieldProblem.ext_cache = ext_cache
 
     fieldProblem.set_outer_domain(domain)
-    sc.add_field(fieldProblem)
+    sc.add_problem(fieldProblem)
 
     """top level path"""
     sc.path = path

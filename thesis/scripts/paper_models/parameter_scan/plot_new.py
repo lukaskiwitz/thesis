@@ -44,126 +44,21 @@ plotter.label_replacement.update({
 
 })
 
-cv_lim = [0,3]
-c_lim = [1e-3,1]
+cv_lim = [0,2]
+c_lim = [1e-3,10]
 
 plotter.subplots(3,4, figsize = (a,b/2), external_legend = "axes")
 plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, ylim = c_lim,legend="brief", ylog=True,average=True)
 plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True)
 plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
-plotter.global_steady_state_plot("SD", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True, average=True)
-
-plotter.filter = lambda df: df.loc[df["type_name"] == "abs"]
-
-plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
-plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
-plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
-plotter.cell_steady_state_plot("activation", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=False)
-
-
-
-plotter.filter = lambda df: df.loc[df["type_name"] == "sec"]
-
-plotter.cell_steady_state_plot("IL-2_surf_c", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=True)
-plotter.global_steady_state_plot("surf_c_cv", style = "numeric_linear", ci = "sem",hue = plotter.scan_name_key, legend=False, ylog=False,ylim = cv_lim,average=True)
-plotter.global_steady_state_plot("surf_c_std", style = "numeric_linear",ci = "sem", hue = plotter.scan_name_key, legend=False, ylog=True,average=True)
-plotter.cell_steady_state_plot("activation", style = "numeric_linear",ci = "sem",hue = plotter.scan_name_key, ylim = c_lim,legend=False, ylog=False)
+plotter.empty_plot()
+plotter.steady_state_count(hue = plotter.scan_name_key,style="type_name", subtitle = "cell fraction\n(for distance scan)", relative=False, filter= lambda df:df.loc[(df[plotter.scan_name_key] == "distance")])
+plotter.steady_state_count(hue = plotter.scan_name_key,style="type_name", subtitle = "cell fraction\n(for ratio scan)", relative=True, filter= lambda df:df.loc[(df[plotter.scan_name_key] == "ratio")])
+plotter.cell_steady_state_plot("IL-2_q",subtitle = "systemic secretion\n(for ratio scan)",filter= lambda df:df.loc[(df.type_name == "sec") & (df[plotter.scan_name_key] == "ratio")],cummulative=True, legend="brief")
+plotter.cell_steady_state_plot("IL-2_R",subtitle = "systemic IL-2R\n(for ratio scan)", filter= lambda df:df.loc[(df.type_name == "abs") & (df[plotter.scan_name_key] == "ratio")],cummulative=True, legend="brief")
+plotter.cell_histogramm("IL-2_R",subtitle = "IL-2R distribution\n(for fold-change = 1)",filter = lambda df:df.loc[(df.type_name == "abs") & (df.scan_value == 1)] , distplot_kwargs={"bins":100}, ylog=False, xlog=False, xlim=[0,5e4])
 
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection_full.pdf")
 plt.show()
 
-
-
-f_1 = lambda df: df.loc[
-    (df[plotter.scan_name_key] == "ratio")
-    ]
-
-f_2 = lambda df: df.loc[
-    (df[plotter.scan_name_key] == "sec_q")|
-    (df[plotter.scan_name_key] == "abs_R")|
-    (df[plotter.scan_name_key] == "f_sec")|
-    (df[plotter.scan_name_key] == "f_abs")
-    ]
-
-f_3 = lambda df: df.loc[
-    (df[plotter.scan_name_key] == "D")|
-    (df[plotter.scan_name_key] == "kd")|
-    (df[plotter.scan_name_key] == "Koff")|
-    (df[plotter.scan_name_key] == "kendo")
-    ]
-
-
-plotter.subplots(3,2, figsize = (2* a/3,b/2), external_legend = "axes")
-
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem", hue = plotter.scan_name_key, legend="brief",xlog=True, ylog=True,ylim = c_lim,average=True, filter = f_1)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci = "sem", hue=plotter.scan_name_key, legend = False, xlog=True, ylog=False, ylim =cv_lim,average=True, filter = f_1)
-
-
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,ylim = c_lim,average=True,filter = f_2)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim =cv_lim,average=True, filter = f_2)
-
-plotter.global_steady_state_plot("Concentration", style = "numeric_linear",ci ="sem",hue = plotter.scan_name_key, legend="brief", ylog=True,ylim = c_lim,average=True,filter = f_3)
-plotter.global_steady_state_plot("CV", style = "numeric_linear",ci ="sem",hue=plotter.scan_name_key, legend = False, ylog=False, ylim = cv_lim,average=True,filter = f_3)
-plotter.make_legend()
-plotter.savefig(IMGPATH + "collection_seperate.pdf")
-plt.show()
-
-select = {"task": [
-    # "run",
-    "run:scan_sample",
-    "run:scan_sample:SimContainer:run",
-    "run:scan_sample:SimContainer:run:step",
-    "run:scan_sample:update_sim_container",
-    "run:write_element_tree"
-]}
-
-
-plotter.subplots(1, 2, figsize=(a,b/4), external_legend="figure")
-plotter.timing_barplot("task", select=select, legend="brief")
-plotter.timing_lineplot("duration",x_name="scan_index", hue="task", select=select)
-# plotter.timing_timelineplot(select=select)
-plotter.make_legend()
-plotter.savefig(IMGPATH + "timing.pdf")
-plotter.show()
-
-d = plotter.timing_df
-T = d.loc[d["task"] =="run"]["duration"]
-for t in T:
-    print("total runtime {t}".format(t = t/60**2))
-message("done")
-
-
-metrics = {"min_distance": np.min, "mean_distance": np.mean, "max_distance": np.max}
-plotter.compute_cell_distance_metric("sec", metric_dict=metrics, round = 0)
-
-cell_df = plotter.cell_df
-cell_df = cell_df.loc[(cell_df["numeric_linear"] == False) & (cell_df["scan_value"] == 1)  & (cell_df[plotter.scan_name_key] == "D")]
-
-abs_f = lambda df: df.loc[df.type_name == "abs"]
-sec_f = lambda df: df.loc[df.type_name == "sec"]
-
-import seaborn as sns
-fig,ax = plt.subplots(2,2)
-ax = np.ravel(ax)
-
-sns.boxplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0])
-# sns.stripplot(x="type_name", y = "IL-2_surf_c", data=cell_df, ax = ax[0], color="gray",size=2)
-
-sns.boxplot(x="type_name", y = "activation", data=cell_df,ax = ax[1])
-# sns.stripplot(x="type_name", y = "activation", data=cell_df,ax = ax[1], color="gray",size=2)
-
-sns.boxplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2])
-# sns.stripplot(x="min_distance", y = "IL-2_surf_c", data=abs_f(cell_df), ax = ax[2], color="gray",size=2)
-
-sns.boxplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3])
-# sns.stripplot(x="min_distance", y = "activation", data=abs_f(cell_df),ax = ax[3], color="gray",size=2)
-
-ax[1].set_xlabel("cell type")
-ax[2].set_xlabel("cell type")
-
-ax[2].set_xlabel("distance to closest secreting cell $(\mu m)$")
-ax[3].set_xlabel("distance to closest secreting cell $(\mu m)$")
-plt.tight_layout()
-plt.savefig(os.path.join(IMGPATH,"boxplots.pdf"))
-plt.show()

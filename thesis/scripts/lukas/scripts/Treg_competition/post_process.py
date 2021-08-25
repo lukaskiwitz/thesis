@@ -22,7 +22,7 @@ class my_post_process(PostProcessComputation):
 
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
 
-        from thesis.main.PostProcess import get_rectangle_plane_mesh
+        from thesis.main.PostProcessUtil import get_rectangle_plane_mesh
         from scipy.signal import correlate2d, fftconvolve
         path = kwargs["path"]
         ti = kwargs["time_index"]

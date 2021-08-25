@@ -16,7 +16,7 @@ class ParameterSet:
     def __init__(self, name: str, collections) -> None:
 
         for s in collections:
-            assert isinstance(s,ParameterCollection)
+            assert isinstance(s, ParameterCollection)
 
         self.collections: List[ParameterCollection] = collections
         self.name = name
@@ -32,14 +32,14 @@ class ParameterSet:
 
         """
         input can now be a Parameter, ParameterCollection or ParameterSet.
-        When a Parameter object is passed a dummy collection is creted.
+        When a Parameter object is passed a dummy collection is created.
 
         """
         debug("updating {n1} with {n2}".format(n1=self.name, n2=input.name))
 
         if isinstance(input, Parameter):
             dummy = ParameterCollection(input.name, [input])
-            message("Collection {name} created with parameter".format(name=input.name))
+            debug("Collection {name} created with parameter".format(name=input.name))
             input = dummy
 
         if isinstance(input, ParameterCollection):
@@ -170,11 +170,11 @@ class ParameterSet:
 
 class ParameterCollection:
 
-    def __init__(self, name: str, physical_parameters=[], field_quantity="", is_global=False) -> None:
+    def __init__(self, name: str, physical_parameters=[], field_quantity: str ="", is_global=False) -> None:
 
         for s in physical_parameters:
-            assert isinstance(s,Parameter)
-
+            assert isinstance(s, Parameter)
+        assert isinstance(field_quantity,str)
         self.parameters: List[PhysicalParameter] = physical_parameters
         self.name: str = name
         self.field_quantity = field_quantity
@@ -247,6 +247,10 @@ class ParameterCollection:
     def get_misc_parameter(self, misc_name):
 
         result = self.get_parameter(misc_name)
+        if result is None:
+            return None
+
+
         assert isinstance(result, MiscParameter)
         return result
 
@@ -311,7 +315,7 @@ class Parameter:
         self.name = name
         self.value = value
 
-    def __call__(self, *args, in_sim = False):
+    def __call__(self, *args, in_sim=False):
         if len(args > 0):
             if in_sim:
                 self.set_in_sim_unit(args[0])
@@ -322,7 +326,6 @@ class Parameter:
                 return self.get_in_sim_unit()
             else:
                 return self.get_in_post_unit()
-
 
     def set_in_sim_unit(self, value):
         self.value = value
@@ -474,18 +477,27 @@ class ScannablePhysicalParameter:
         return p
 
 
-class PhysicalParameterTemplate:
+class ParameterTemplate:
+
+    def __init__(self):
+        pass
+
+
+
+class PhysicalParameterTemplate(ParameterTemplate):
 
     def __init__(self, parameter):
         self.p = parameter
+        self.name = parameter.name
 
-    def __call__(self, value, in_sim=False):
+    def __call__(self, value = None, in_sim=False):
 
         p = deepcopy(self.p)
-        if in_sim:
-            p.set_in_sim_unit(value)
-        else:
-            p.set_in_post_unit(value)
+        if value is not None:
+            if in_sim:
+                p.set_in_sim_unit(value)
+            else:
+                p.set_in_post_unit(value)
 
         return p
 

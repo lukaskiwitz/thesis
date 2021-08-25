@@ -12,8 +12,7 @@ from scipy.constants import golden
 
 plotter = Plotter(path)
 
-plotter.scan_scale = np.linspace(0,1,5)
-# plotter.scan_scale = np.logspace(-1,1,10)
+plotter.scan_scale = np.linspace(10,20,5)
 
 plotter.label_replacement.update({
 
@@ -21,7 +20,7 @@ plotter.label_replacement.update({
     plotter.time_key: "time (a.u)",
     "sec_amax":"$a_{max}$",
     "sec_q":"$q$",
-    plotter.scan_index_key:"parameter fold-change",
+    plotter.scan_index_key:"cell-cell distance ($\mu m$)",
     "Concentration":"Concentration (nM)",
     "Gradient": "Gradient (nM$ / \mu m)$",
     "SD": "SD (nM)",
@@ -37,17 +36,25 @@ plotter.color_dict = {
 
 }
 
-l = 8.3 * (1-0.1)#page length x
-n =  4#rows
-m = 3#columns
+MM_PER_INCH = 2.54 * 10
+margin_a = 10
+margin_b = 10
 
-plotter.subplots(2,2,(8,6), external_legend = "axes")
+a = (128 -  2*margin_a)/MM_PER_INCH
+b = (96-2 * margin_b)/MM_PER_INCH
 
-plotter.global_steady_state_plot("Concentration", hue = plotter.scan_name_key, ylog=True, legend="brief")
-plotter.cell_steady_state_plot("IL-2_surf_c",hue = plotter.scan_name_key, ylog=True)
-plotter.steady_state_count(hue=plotter.scan_name_key, style="type_name",legend="brief")
+plotter.subplots(2,2, figsize = (a,b), external_legend = "figure")
+
+plotter.global_steady_state_plot("Concentration", hue = plotter.scan_name_key, ylog=False, xlog=False,legend="brief", ci = "sd",average=True)
+plotter.cell_steady_state_plot("IL-2_surf_c",hue = plotter.scan_name_key, ylog=False,xlog=False)
+plotter.steady_state_count(hue=plotter.scan_name_key, style="type_name",legend="brief",xlog=False)
+plotter.timing_lineplot("duration", hue="task", x_name="scan_index", style="scan_name",legend="brief")
 plotter.make_legend()
 plotter.savefig(IMGPATH+"collection.pdf")
 plotter.show()
 
+
+
+
+plotter.ruse_plot(IMGPATH)
 

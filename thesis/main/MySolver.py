@@ -10,26 +10,31 @@ from __future__ import print_function
 import getpass
 import os
 import pickle as pl
-from typing import List
 import signal
+import subprocess as sp
+from abc import *
+from typing import List
 
 import dill
 import fenics as fcs
 import lxml.etree as ET
 import mpi4py.MPI as MPI
-import subprocess as sp
+
 import thesis.main.BC as BC
 from thesis.main.MySubDomain import MySubDomain
 from thesis.main.ParameterSet import ParameterSet
-from thesis.main.my_debug import message, total_time, warning
+from thesis.main.my_debug import message, warning
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
 
-class MySolver:
-    pass
+class MySolver(ABC):
+
+    def __init__(self):
+        self.p: ParameterSet = ParameterSet("solver_dummy", [])
+        self.field_quantity: str = ""
 
 
 class MyDiffusionSolver(MySolver):
@@ -68,9 +73,9 @@ class MyDiffusionSolver(MySolver):
         self.integralBC: List[BC.Integral] = []
         self.subdomains: List[MySubDomain] = []
         self.p: ParameterSet = ParameterSet("solver_dummy",[])
+        self.field_quantity: str = ""
         self.mesh = None
         self.boundary_markers = None
-        self.field_quantity: str = ""
         self.timeout = None
 
         super().__init__()
@@ -100,7 +105,7 @@ class MyDiffusionSolver(MySolver):
         for i in self.subdomains:
             e = i["entity"]
             patch = i["patch"]
-            bc = e.get_BC(self.field_quantity)
+            bc = e.get_interaction(self.field_quantity)
 
             patch_list.append([i["patch"], i["entity"].get_surface_area()])
 

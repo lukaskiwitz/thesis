@@ -59,14 +59,14 @@ def prepare_solver():
     ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
 
     if p.get_misc_parameter("linear", "numeric").get_in_sim_unit(type=bool):
-        solver, u = linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers)
+        solver, u = linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = fq)
     else:
-        solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers)
+        solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = fq)
 
     return solver, result_path, u
 
 
-def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
+def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers,fq = None):
     dirichlet_bc = []
     integral_bc = []
 
@@ -80,7 +80,7 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
         area = bc["area"]
         patch = bc["patch"]
 
-        field_quantity = bc["field_quantity"]
+        # field_quantity = bc["field_quantity"]
 
         for k, value in p_bc.items():
             try:
@@ -88,12 +88,12 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
             except:
                 pass
 
-        r = f(u, p_bc, field_quantity, area=area)
+        r = f(u, p_bc, fq, area=area)
 
         integral_bc.append(r * v * ds(patch))
 
-    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D", field_quantity).get_in_sim_unit())
-    kd = fcs.Constant(p.get_physical_parameter_by_field_quantity("kd", field_quantity).get_in_sim_unit())
+    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit())
+    kd = fcs.Constant(p.get_physical_parameter_by_field_quantity("kd", fq).get_in_sim_unit())
 
     F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(integral_bc))
 
@@ -119,7 +119,7 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
     return solver, u
 
 
-def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
+def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = None):
     dirichlet_bc = []
     integral_bc = []
 
@@ -138,7 +138,7 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
         area = bc["area"]
         patch = bc["patch"]
 
-        field_quantity = bc["field_quantity"]
+        # field_quantity = bc["field_quantity"]
 
 
 
@@ -148,11 +148,11 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers):
             except:
                 pass
 
-        r = f(u, p_bc, field_quantity, area=area)
+        r = f(u, p_bc, fq, area=area)
         integral_bc.append(r * v * ds(patch))
 
-    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D", field_quantity).get_in_sim_unit())
-    kd = fcs.Constant(p.get_physical_parameter_by_field_quantity("kd", field_quantity).get_in_sim_unit())
+    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit())
+    kd = fcs.Constant(p.get_physical_parameter_by_field_quantity("kd", fq).get_in_sim_unit())
 
     F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(integral_bc))
 

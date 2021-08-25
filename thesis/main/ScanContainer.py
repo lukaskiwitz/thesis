@@ -21,7 +21,7 @@ class ScanContainer:
 
         self.scan_samples.append(sample)
 
-    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis = True):
+    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis = True, remesh_scan_sample = False, remesh_timestep = False):
 
         """
 
@@ -80,6 +80,10 @@ class ScanContainer:
 
 
             sample = ScanSample(sim_parameters, list(entity_types.values()), boundary, scan_name=scan_name)
+
+            sample.remesh_scan_sample = remesh_scan_sample
+            sample.remesh_timestep = remesh_timestep
+
             self.scan_samples.append(sample)
 
     def add_2d_parameter_scan(self, a1, a2, scan_name = "scan"):
@@ -171,6 +175,10 @@ class ScanSample:
     def __init__(self,collection_list: List[ParameterCollection], entity_types: List[EntityType], outer_domain_dict: Dict, scan_name = "UnnamedScanSample"):
 
         self.p: ParameterSet = ParameterSet("dynamic",collection_list)
+        self.remesh_scan_sample = False
+        self.remesh_timestep = False
+
+
         if not scan_name is None:
             name = MiscParameter("scan_name",scan_name)
             self.p.add_parameter_with_collection(name)
@@ -182,12 +190,17 @@ class ScanSample:
         self.outer_domain_parameter_dict = {}
         for k,v in outer_domain_dict.items():
             # assert isinstance(v,ScannablePhysicalParameter)
-            self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",v)
+            self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",[v])
 
 
     def serialize_to_xml(self, sub_path: str):
 
         root = ET.Element("ScanSample")
+        remesh_scan_sample = ET.SubElement(root, "RemeshScanSample")
+        remesh_scan_sample.text = str(self.remesh_scan_sample)
+
+        remesh_timestep = ET.SubElement(root, "RemeshTimestep")
+        remesh_timestep.text = str(self.remesh_timestep)
 
         root.set("sub_path",json.dumps(sub_path))
 
@@ -212,6 +225,12 @@ class ScanSample:
 
 
         self.p = ParameterSet.deserialize_from_xml(root.find("./Parameters/ParameterSet[@name='dynamic']"))
+
+        remesh_scan_sample = root.find("./RemeshScanSample").text
+        self.remesh_scan_sample = True if remesh_scan_sample == "True" else False
+
+        remesh_timestep = root.find("./RemeshTimestep").text
+        self.remesh_timestep = True if remesh_timestep == "True" else False
 
         for patch_element in root.findall("./OuterDomainParameters/PatchParameters"):
             k = patch_element.get("key")
