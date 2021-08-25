@@ -24,6 +24,6 @@ FieldProblem
 
 PostProcessor
 ------------------------
-.. automodule:: thesis.main.PostProcessor
+.. automodule:: thesis.main.PostProcess
     :members:
     :show-inheritance:
