@@ -47,12 +47,45 @@ Element = lxml.etree.Element
 
 class StateManager:
     """
-    Used to store Simulation state as xml file. Either to save the state of a simulation to file or for usage in post processing
+    This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
+    produces the xml files necessary for the use of PostProcessor.
+
+
+    :ivar path:
+    :ivar ruse:
+    :ivar scan_folder_pattern:
+    :ivar element_tree:
+    :ivar scan_container:
+    :ivar sim_container:
+    :ivar T:
+    :ivar N:
+    :ivar compress_log_file:
+    :ivar globarl_collections:
+    :ivar global_parameters:
+    :ivar record:
+    :ivar progress_bar:
+    :ivar eta_estimates:
+
+    :vartype path: str
+    :vartype ruse: pd.DataFrame
+    :vartype scan_folder_pattern: str
+    :vartype element_tree: ET.ElementTree
+    :vartype scan_container: ScanContainer
+    :vartype sim_container: SimConatiner
+    :vartype T: List[float]
+    :vartype dt: float
+    :vartype N: int
+    :vartype compress_log_file: bool
+    :vartype global_collections: GlobalCollections
+    :vartype global_parameters: GlobalParameters
+    :vartype record: ClassRecord
+    :vartype progress_bar:
+    :vartype eta_estimates: List[float]
     """
 
-    def __init__(self, path):
-        """Docstring for constructor
+    def __init__(self, path: str):
 
+        """
         :param path: Path to simulation directoy
         :return None
         """

@@ -31,7 +31,6 @@ import thesis.main.MyError as MyError
 
 from copy import deepcopy
 
-
 class ComputeSettings:
     """
     Class to store computation input and output
@@ -163,10 +162,12 @@ class PostProcessor:
         self.stateManager = st.StateManager(self.path)
         self.stateManager.load_xml()
 
+
         tmp_path = self.path + "tmp/"
         os.makedirs(tmp_path, exist_ok=True)
 
         scatter_list: List[ComputeSettings] = []
+
 
         # loads timestep logs
 
@@ -212,6 +213,7 @@ class PostProcessor:
                     (self.cell_dataframe["scan_index"] == compute_settings.scan_index)
                     ]
 
+
                 image_settings = deepcopy(self.image_settings)
 
                 if hasattr(self, "image_settings_fields") and isinstance(self.image_settings_fields, Dict):
@@ -222,6 +224,7 @@ class PostProcessor:
                                     image_settings[kk].update(vv)
                             else:
                                 image_settings[k] = v
+
 
                 for k, v in image_settings.items():
                     if isinstance(v, Dict):
@@ -354,6 +357,7 @@ class PostProcessor:
         df["end"] = df["end"].sub(offset)
         df["duration"] = df["end"] - df["start"]
         df["name"] = df["task"].map(lambda x: x.split(":")[-1])
+
 
         return df
 
@@ -615,6 +619,8 @@ def compute(compute_settings: ComputeSettings) -> str:
 
         result.set("dist_plot_path", str(compute_settings.file_path))
 
+
+
         message("running global computations for step {t} in scan {s}".format(t=time_index, s=scan_index))
 
         mesh_volume_element = et.SubElement(global_results, "MeshVolume")
@@ -635,6 +641,7 @@ def compute(compute_settings: ComputeSettings) -> str:
             except RuntimeError as e:
                 warning("could not make images for scanindex {si} at t = {ti}".format(si=scan_index, ti=time_index))
 
+
         if compute_settings.render_paraview:
 
             try:
@@ -649,6 +656,7 @@ def compute(compute_settings: ComputeSettings) -> str:
                 warning(
                     "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
                         si=scan_index, ti=time_index))
+
 
         for comp in compute_settings.computations:
 

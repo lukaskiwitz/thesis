@@ -26,6 +26,7 @@ setting filepath to look for sim results. This is setup so that it works on the 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6
 
+
 """appends a custom calculation.
 default computations are defined in PostProcess.py"""
 pp.image_settings = {

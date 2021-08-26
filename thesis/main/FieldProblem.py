@@ -22,6 +22,7 @@ from thesis.main.ScanContainer import ScanSample
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
+from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.my_debug import message, total_time, warning
 
 
