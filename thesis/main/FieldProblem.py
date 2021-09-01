@@ -17,12 +17,11 @@ import fenics as fcs
 import numpy as np
 
 import thesis.main.MeshGenerator as mshGen
-from thesis.main.PostProcessUtil import get_concentration_conversion
-from thesis.main.ScanContainer import ScanSample
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion
+from thesis.main.ScanContainer import ScanSample
 from thesis.main.my_debug import message, total_time, warning
 
 
@@ -66,10 +65,10 @@ class FieldProblem:
 
         self.field_name: str = ""
         self.registered_entities: List[Mapping[str, Union[Entity, int]]] = []
-        self.outer_domain: Union[DomainEntity,None] = None
-        self.solver: Union[MyDiffusionSolver,None] = None
+        self.outer_domain: Union[DomainEntity, None] = None
+        self.solver: Union[MyDiffusionSolver, None] = None
         self.field_quantity: str = ""
-        self.path: Union[str,None] = None
+        self.path: Union[str, None] = None
         self.ext_cache: str = ""
         self.p: ParameterSet = ParameterSet("field_dummy", [])
         self.remesh_scan_sample: bool = False
@@ -188,7 +187,7 @@ class FieldProblem:
             self.solver.p.update(p)
         self.outer_domain.update_bcs(p=p)
 
-    def update_bcs(self, p: ParameterSet=None) -> None:
+    def update_bcs(self, p: ParameterSet = None) -> None:
         """
         updates boundary conditions for all child objects
 
@@ -203,7 +202,7 @@ class FieldProblem:
             subdomains.append(e)
         self.solver.subdomains = subdomains
 
-    def update_solver(self, tmp_path: str, p: ParameterSet=None) -> None:
+    def update_solver(self, tmp_path: str, p: ParameterSet = None) -> None:
         """
         updates solver
         """
@@ -288,7 +287,6 @@ class FieldProblem:
 
         message("done pool map with chunksize {}".format(cs))
 
-
     # noinspection PyPep8Naming
     def step(self, dt: float, time_index: int, tmp_path: str) -> None:
         """
@@ -372,7 +370,8 @@ class FieldProblem:
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
-    def get_sub_domains_vis(self, marker_key: str , lookup:Dict[Union[str,int,float], int] =None) -> Tuple[fcs.MeshFunction, Dict[Union[str,int,float], int]]:
+    def get_sub_domains_vis(self, marker_key: str, lookup: Dict[Union[str, int, float], int] = None) -> Tuple[
+        fcs.MeshFunction, Dict[Union[str, int, float], int]]:
         """
 
         save meshfunction that labels cells by type_name
@@ -398,7 +397,6 @@ class FieldProblem:
             else:
                 continue
 
-
             if isinstance(value, Number):
                 value = float(value)
             elif value in lookup:
@@ -420,7 +418,7 @@ class FieldProblem:
             return None
         return e["surface_area"]
 
-    def get_outer_domain_vis(self, parameter_name: str="q") -> fcs.MeshFunction:
+    def get_outer_domain_vis(self, parameter_name: str = "q") -> fcs.MeshFunction:
         """
 
         gets MeshFunction that has outer domain surfaces labeled by entity.getState(key)

@@ -8,7 +8,9 @@ Created on Mon Oct 14 14:34:19 2019
 import json
 import os
 import time
+import traceback
 from copy import deepcopy
+from functools import reduce
 from typing import *
 
 import lxml.etree
@@ -16,19 +18,16 @@ import lxml.etree as ET
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
-import traceback
-import scipy
 from scipy.stats.mstats import gmean
+from tqdm import tqdm
 
 from thesis.main.Entity import Cell
+from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
 from thesis.main.ScanContainer import ScanContainer, ScanSample
-from thesis.main.my_debug import message, warning, critical
 from thesis.main.SimContainer import SimContainer
-from thesis.main.MyScenario import MyScenario
-from tqdm import tqdm
-from functools import reduce
-from thesis.main.TaskRecord import TaskRecord, ClassRecord
+from thesis.main.TaskRecord import ClassRecord
+from thesis.main.my_debug import message, warning, critical
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -44,6 +43,7 @@ def outputParse(v):
 
 ElementTree = lxml.etree.ElementTree
 Element = lxml.etree.Element
+
 
 class StateManager:
     """
@@ -182,8 +182,9 @@ class StateManager:
     def _loadCellDump(self) -> None:
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float, result_path: Mapping[str,Tuple[str,str,int]],
-                                      marker_paths: Mapping[str,str]) -> None:
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float,
+                                      result_path: Mapping[str, Tuple[str, str, int]],
+                                      marker_paths: Mapping[str, str]) -> None:
 
         """
 
@@ -301,7 +302,7 @@ class StateManager:
                 et = ET.parse(os.path.join(self.path, path))
                 step.getparent().replace(step, et.getroot())
 
-    def get_cell_ts_data_frame(self, time_indices: List[int] = None, n_processes: int =1, **kwargs) -> pd.DataFrame:
+    def get_cell_ts_data_frame(self, time_indices: List[int] = None, n_processes: int = 1, **kwargs) -> pd.DataFrame:
 
         def init():
             global path
@@ -351,7 +352,6 @@ class StateManager:
             f.remesh_scan_sample = sample.remesh_scan_sample
             f.remesh_timestep = sample.remesh_timestep
 
-
     def update_sim_container(self, sc: SimContainer, scan_index: int) -> ParameterSet:
 
         sc.path = self.get_scan_folder(scan_index)
@@ -365,7 +365,6 @@ class StateManager:
         for f in sc.fields:
             f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
-
 
         for e in sc.entity_list:
             e.p.update(sc.default_sample.p, override=True)
@@ -413,7 +412,7 @@ class StateManager:
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
         # message("ETA: {eta}".format(eta = eta))
 
-    def run(self, ext_cache: str="") -> None:
+    def run(self, ext_cache: str = "") -> None:
 
         run_task = self.record.start_child("run")
         sample_task = run_task.start_child("scan_sample")

@@ -2,6 +2,7 @@ import random
 from copy import deepcopy
 from typing import List, Dict
 
+import fenics as fcs
 import numpy as np
 from scipy.constants import N_A
 
@@ -16,7 +17,7 @@ from thesis.main.ParameterSet import ParameterSet, ParameterCollection, Physical
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
 from thesis.main.bcFunctions import cellBC
 from thesis.main.my_debug import message
-import fenics as fcs
+
 """Sets up parameter templates. This are callable object, which return a full copy of themselves 
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
 
@@ -73,7 +74,7 @@ def get_cuboid_domain(x, y, z, margin):
     return p1, p2
 
 
-def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cache="", cell_list = None):
+def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cache="", cell_list=None):
     message("---------------------------------------------------------------")
     message("Setup")
     message("---------------------------------------------------------------")
@@ -102,17 +103,13 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
     cell_type_list, fractions = make_cell_types(cell_types, cytokines, templates)
     global_parameter.add_collection(fractions)
 
-
     domain_bc = make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x)
 
-    p1, p2 = get_cuboid_domain(x,y,z, margin)
-
+    p1, p2 = get_cuboid_domain(x, y, z, margin)
 
     domain = thesis.main.Entity.DomainCube(
         p1,
-        p2, domain_bc, periodic = False)
-
-
+        p2, domain_bc, periodic=False)
 
     sc = SC.SimContainer(global_parameter)
 
@@ -120,7 +117,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
     for c in cytokines:
 
         solver = thesis.main.MySolver.MyDiffusionSolver()
-        solver.timeout = 24 * 60**2
+        solver.timeout = 24 * 60 ** 2
 
         fieldProblem = fp.FieldProblem()
         fieldProblem.field_name = c["name"]
@@ -133,7 +130,6 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
 
         fieldProblem.set_outer_domain(domain)
         sc.add_problem(fieldProblem)
-
 
     """top level path"""
     sc.path = path
@@ -150,9 +146,9 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, path, ext_cac
                 cell_bcs.append(
                     bc.Integral(cellBC, field_quantity=c["field_quantity"])
                 )
-            p = [i["x"],i["y"],i["z"]]
+            p = [i["x"], i["y"], i["z"]]
 
-            cell = Entity.Cell(p,i["radius"], cell_bcs)
+            cell = Entity.Cell(p, i["radius"], cell_bcs)
             cell.name = i["name"]
             sc.add_entity(cell)
 
@@ -183,8 +179,9 @@ def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x
         for key, line in piece.items():
             if key in [c["field_quantity"] for c in cytokines]:
                 outer_integral = bc.OuterIntegral(
-                    cellBC, piece["expr"].format(d=x[0] - margin), field_quantity=key,#todo only works in x direction!
-                    p = deepcopy(domain_parameter_set), name = piece["name"]
+                    cellBC, piece["expr"].format(d=x[0] - margin), field_quantity=key,
+                    # todo only works in x direction!
+                    p=deepcopy(domain_parameter_set), name=piece["name"]
                 )
 
                 i = [c["field_quantity"] for c in cytokines].index(key)
@@ -202,15 +199,14 @@ def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, margin, x
     if len(domainBC) == 0:
         c = cytokines[0]
 
-        def dummy_bc(u,p,fq,area = 1):
+        def dummy_bc(u, p, fq, area=1):
             return fcs.Constant(0)
 
         outer_integral = bc.OuterIntegral(
-                    dummy_bc, "true", field_quantity=c["field_quantity"],
-                    p = deepcopy(domain_parameter_set), name = "box"
-                )
+            dummy_bc, "true", field_quantity=c["field_quantity"],
+            p=deepcopy(domain_parameter_set), name="box"
+        )
         domainBC.append(outer_integral)
-
 
     return domainBC
 
@@ -365,7 +361,7 @@ def get_parameter_templates(ule):
         "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
         "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
         "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9)),
-        "mc":PhysicalParameterTemplate(PhysicalParameter("mc",0,to_sim = 1))
+        "mc": PhysicalParameterTemplate(PhysicalParameter("mc", 0, to_sim=1))
     }
 
     return templates

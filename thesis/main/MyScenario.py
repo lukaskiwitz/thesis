@@ -1,28 +1,25 @@
-import numpy as np
-from thesis.main.SimContainer import SimContainer
-from thesis.main.ParameterSet import ParameterSet
-from thesis.main.MySolver import MyDiffusionSolver
-from thesis.main.MyParameterPool import MyParameterPool
 from copy import deepcopy
+
+from thesis.main.MyParameterPool import MyParameterPool
+from thesis.main.ParameterSet import ParameterSet
 from thesis.main.ScanContainer import ScanSample
+from thesis.main.SimContainer import SimContainer
+
 
 class MyScenario:
 
     def __init__(self, parameter_pool):
 
-        assert isinstance(parameter_pool,MyParameterPool)
+        assert isinstance(parameter_pool, MyParameterPool)
 
         self.global_models = []
         self.internal_solvers = []
         self.entity_types = []
         self.entity_locators = []
         self.parameter_pool = parameter_pool
-        self.global_parameters: ParameterSet = ParameterSet("scenario_dummy",[])
-
+        self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
 
     def get_sim_container(self, p):
-
-
 
         parameter_set = deepcopy(self.global_parameters)
         parameter_set.update(p, override=True)
@@ -31,7 +28,7 @@ class MyScenario:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)
 
         for model in self.global_models:
-                parameter_set.update(model.build_parameter_set(self.parameter_pool))
+            parameter_set.update(model.build_parameter_set(self.parameter_pool))
 
         sc = SimContainer(parameter_set)
 
@@ -58,6 +55,7 @@ class MyScenario:
         return None
 
     def serialize_to_xml(self):
-        pass
+        raise NotImplementedError
+
     def deserialize_from_xml(self):
-        pass
+        raise NotImplementedError

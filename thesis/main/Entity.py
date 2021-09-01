@@ -83,7 +83,6 @@ class Entity:
 
         """
 
-
         for i in self.interactions:
             if i.field_quantity == field_quantity:
                 return i
@@ -97,7 +96,6 @@ class Entity:
 
         """
         if p or hasattr(self, "p"):
-
 
             for i in self.interactions:
                 fq = i.field_quantity
@@ -258,7 +256,7 @@ class Cell(Entity):
         """
         self.type_name = cell_type.name
         self.interactions = []
-        if isinstance(cell_type.internal_solver,InternalSolver):
+        if isinstance(cell_type.internal_solver, InternalSolver):
             self.set_internal_solver(internal_solver())
         else:
             self.set_internal_solver(None)
@@ -279,7 +277,6 @@ class Cell(Entity):
         schedules type change for next timestep
         """
         self.change_type = type_name
-
 
 
 class DomainEntity(Entity):
@@ -398,7 +395,7 @@ class CompiledSphere(DomainSphere, Entity):
 
         box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(
             c0=c[0], c1=c[1], c2=c[2],
-           r=self.parent.radius)
+            r=self.parent.radius)
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
@@ -416,11 +413,10 @@ class CompiledSphere(DomainSphere, Entity):
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, interactions, periodic = False, **kwargs):
+    def __init__(self, p1, p2, interactions, periodic=False, **kwargs):
         self.p1 = p1
         self.p2 = p2
         self.periodic: bool = periodic
-
 
         self.interactions = interactions
 
@@ -432,7 +428,7 @@ class DomainCube(DomainEntity):
 
         if self.periodic:
             for i, o in enumerate(self.interactions):
-                s = PeriodicCube(o,self)
+                s = PeriodicCube(o, self)
                 s.field_quantity = o.field_quantity
                 subdomain_dict["true"] = [s]
             return subdomain_dict
@@ -499,9 +495,8 @@ class PeriodicCube(DomainCube, Entity):
 
     def get_subdomain(self):
 
-        sd = PeriodicCubeSubDomain(self.parent.p1,self.parent.p2)
+        sd = PeriodicCubeSubDomain(self.parent.p1, self.parent.p2)
         return sd
-
 
     def get_BC(self, field_quantity: str) -> BC:
         return self.bc
@@ -545,5 +540,3 @@ class CompiledCube(DomainCube, Entity):
             return p.get_in_sim_unit()
         else:
             return None
-
-

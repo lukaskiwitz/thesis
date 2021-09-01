@@ -1,6 +1,8 @@
 from thesis.main.FieldProblem import FieldProblem
-from thesis.main.ParameterSet import ParameterCollection
 from thesis.main.MySolver import MyDiffusionSolver
+from thesis.main.ParameterSet import ParameterCollection
+
+
 class MyFieldTemplate:
 
     def __init__(self):
@@ -11,6 +13,7 @@ class MyFieldTemplate:
 
     def get_problem(self):
         pass
+
     def build_parameter_collection(self):
         pass
 
@@ -18,7 +21,6 @@ class MyFieldTemplate:
 class MyCytokineTemplate(MyFieldTemplate):
 
     def get_problem(self):
-
         fieldProblem = FieldProblem()
         fieldProblem.field_name = self.name
         fieldProblem.field_quantity = self.field_quantity
@@ -29,10 +31,8 @@ class MyCytokineTemplate(MyFieldTemplate):
         return fieldProblem
 
     def build_parameter_collection(self, parameter_pool):
-
         collection = ParameterCollection(self.name, [])
         collection.field_quantity = self.field_quantity
-
 
         collection.set_parameter(parameter_pool.get_template("k_on")())
         collection.set_parameter(parameter_pool.get_template("k_off")())
@@ -41,5 +41,3 @@ class MyCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("kd")())
 
         return collection
-
-

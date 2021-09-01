@@ -72,7 +72,7 @@ class MyDiffusionSolver(MySolver):
         self.dirichlet: List[BC.DirichletBC] = []
         self.integralBC: List[BC.Integral] = []
         self.subdomains: List[MySubDomain] = []
-        self.p: ParameterSet = ParameterSet("solver_dummy",[])
+        self.p: ParameterSet = ParameterSet("solver_dummy", [])
         self.field_quantity: str = ""
         self.mesh = None
         self.boundary_markers = None
@@ -92,8 +92,7 @@ class MyDiffusionSolver(MySolver):
 
         self.V = fcs.FunctionSpace(self.mesh, "P", 1)
         self.u = fcs.Function(self.V)
-        self.tmp_path = tmp_path + "{fq}/".format(fq = self.field_quantity)
-
+        self.tmp_path = tmp_path + "{fq}/".format(fq=self.field_quantity)
 
         self.dirichlet = []
         self.integralBC = []
@@ -121,7 +120,8 @@ class MyDiffusionSolver(MySolver):
                     "area": e.get_surface_area(),
                     "patch": patch,
                     "field_quantity": self.field_quantity,
-                    "p": bc.p.get_as_dictionary(in_sim=True, with_collection_name=False, field_quantity=self.field_quantity)
+                    "p": bc.p.get_as_dictionary(in_sim=True, with_collection_name=False,
+                                                field_quantity=self.field_quantity)
                 }
                 integral_bc_test.append(d)
 
@@ -155,7 +155,6 @@ class MyDiffusionSolver(MySolver):
         with open(pickle_loc + "result_path", "wb") as f:
             pl.dump(self.tmp_path, f)
 
-
         if hasattr(self, "process"):
             if not self.process == None:
                 self.process.kill()
@@ -185,7 +184,7 @@ class MyDiffusionSolver(MySolver):
         if hasattr(self, "process"):
             self.process.kill()
 
-        cpu_list = "0-0{e}".format(e = mpi_nodes-1) if mpi_nodes < 11 else "0:{e}".format(e = mpi_nodes-1)
+        cpu_list = "0-0{e}".format(e=mpi_nodes - 1) if mpi_nodes < 11 else "0:{e}".format(e=mpi_nodes - 1)
 
         p = sp.Popen(
             ["nice", "-n", "19", "mpiexec", "-n", str(mpi_nodes), "python", ext_solver_path,
@@ -193,10 +192,8 @@ class MyDiffusionSolver(MySolver):
 
         self.process = p
 
-
-
     def kill(self):
-        if hasattr(self,"process"):
+        if hasattr(self, "process"):
             self.process.kill()
 
     def solve(self) -> fcs.Function:
@@ -210,13 +207,12 @@ class MyDiffusionSolver(MySolver):
         signal.signal(signal.SIGINT, sig_handler)
         signal.signal(signal.SIGTERM, sig_handler)
 
-
         class SolutionFailedError(Exception):
             pass
 
         limit = 1
 
-        for o in range(limit+1):
+        for o in range(limit + 1):
 
             if o == limit:
                 raise SolutionFailedError
@@ -230,27 +226,19 @@ class MyDiffusionSolver(MySolver):
                 if file == "solution_failed":
                     raise SolutionFailedError
                     return -1
-                if os.path.exists(file+".h5"):
-                    message("loading solution from {f}".format( f= file))
+                if os.path.exists(file + ".h5"):
+                    message("loading solution from {f}".format(f=file))
                     with fcs.HDF5File(comm, file + ".h5", "r") as f:
                         f.read(self.u, "field")
                     self.u.rename(self.field_quantity, self.field_quantity)
                     return self.u
                 else:
-                    message("Something went wrong. Solution file {f}.h5 doesn't exist".format(f = file))
+                    message("Something went wrong. Solution file {f}.h5 doesn't exist".format(f=file))
                     message(o)
                     continue
 
 
-            except (FileNotFoundError,sp.TimeoutExpired,ValueError) as e:
+            except (FileNotFoundError, sp.TimeoutExpired, ValueError) as e:
                 self.process.kill()
                 warning("External solver timed out or crashed, restarting worker threads")
                 self.compileSolver(self.tmp_path)
-
-
-
-
-
-
-
-

@@ -1,12 +1,12 @@
 import json
-from typing import List, Dict
 from enum import Enum
+from typing import List, Dict
 
 import lxml.etree as ET
 
 from thesis.main.EntityType import EntityType, CellType
-from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscParameter, PhysicalParameterTemplate, ScannablePhysicalParameter
-
+from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscParameter, PhysicalParameterTemplate, \
+    ScannablePhysicalParameter
 
 
 class ScanContainer:
@@ -21,20 +21,18 @@ class ScanContainer:
 
         self.scan_samples.append(sample)
 
-    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis = True, remesh_scan_sample = False, remesh_timestep = False):
+    def add_single_parameter_scan(self, scan_list, scan_name="scan", add_axis=True, remesh_scan_sample=False,
+                                  remesh_timestep=False):
 
         """
 
         :param scan_list: [ScanDefintion])
         """
 
-        if isinstance(scan_list,ScanDefintion):
+        if isinstance(scan_list, ScanDefintion):
             scan_list = [scan_list]
 
-
-
         scan_length = max([len(i.scan_space) for i in scan_list])
-
 
         for i in range(scan_length):
 
@@ -42,17 +40,16 @@ class ScanContainer:
             entity_types = {}
             boundary = {}
 
-
             for d in scan_list:
                 if i < len(d.scan_space):
                     v = d.scan_space[i]
                 else:
                     v = d.scan_space[-1]
 
-                assert isinstance(d,ScanDefintion)
+                assert isinstance(d, ScanDefintion)
 
                 if add_axis:
-                    axis  = ScannablePhysicalParameter(
+                    axis = ScannablePhysicalParameter(
                         PhysicalParameterTemplate(MiscParameter("value", 0, is_global=True))(0),
                         lambda x, v: v
                     )
@@ -76,8 +73,8 @@ class ScanContainer:
                     )
 
                 elif d.scan_type == ScanType.BOUNDARY:
-                    boundary[d.boundary_pieces_name] = ParameterCollection(d.collection_name, [d.scannable(v)], field_quantity=d.field_quantity)
-
+                    boundary[d.boundary_pieces_name] = ParameterCollection(d.collection_name, [d.scannable(v)],
+                                                                           field_quantity=d.field_quantity)
 
             sample = ScanSample(sim_parameters, list(entity_types.values()), boundary, scan_name=scan_name)
 
@@ -86,7 +83,7 @@ class ScanContainer:
 
             self.scan_samples.append(sample)
 
-    def add_2d_parameter_scan(self, a1, a2, scan_name = "scan"):
+    def add_2d_parameter_scan(self, a1, a2, scan_name="scan"):
 
         """
 
@@ -108,14 +105,13 @@ class ScanContainer:
         if len(a2) == 3:
             a2_axis = ScanDefintion(ScannablePhysicalParameter(
                 PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
-                lambda x,v: v
-            ),"axis",a2[2],ScanType.GLOBAL)
+                lambda x, v: v
+            ), "axis", a2[2], ScanType.GLOBAL)
         else:
             a2_axis = ScanDefintion(ScannablePhysicalParameter(
                 PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
                 lambda x, v: v
             ), "axis", range(max([len(i.scan_space) for i in a2[0]])), ScanType.GLOBAL)
-
 
         a1 = a1[0]
         a1.append(a1_axis)
@@ -136,13 +132,14 @@ class ScanContainer:
 
             self.add_single_parameter_scan(a, add_axis=False, scan_name=scan_name)
 
-    def _add_single_entity_scan(self, entities,scanable,collection_name,field_quantity,scan_space, scan_name = None):
+    def _add_single_entity_scan(self, entities, scanable, collection_name, field_quantity, scan_space, scan_name=None):
 
         for v in scan_space:
             entity_types = []
             for e in entities:
                 if not field_quantity is None:
-                    e = e.get_updated([ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity)])
+                    e = e.get_updated(
+                        [ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity)])
                 else:
                     e = e.get_updated([ParameterCollection(collection_name, [scanable(v)])])
                 entity_types.append(e)
@@ -154,7 +151,6 @@ class ScanContainer:
 
         root = ET.Element("ScanContainer")
         for n, s in enumerate(self.scan_samples):
-
             sample = s.serialize_to_xml(scan_folder_pattern.format(n=n))
             sample.set("scan_index", json.dumps(n))
 
@@ -162,36 +158,35 @@ class ScanContainer:
 
         return root
 
-    def deserialize_from_xml(self,root):
+    def deserialize_from_xml(self, root):
 
-        for n,s in enumerate(root.findall("ScanSample")):
-
-            sample = ScanSample([],[],{})
+        for n, s in enumerate(root.findall("ScanSample")):
+            sample = ScanSample([], [], {})
             sample.deserialize_from_xml(s)
             self.scan_samples.append(sample)
 
+
 class ScanSample:
 
-    def __init__(self,collection_list: List[ParameterCollection], entity_types: List[EntityType], outer_domain_dict: Dict, scan_name = "UnnamedScanSample"):
+    def __init__(self, collection_list: List[ParameterCollection], entity_types: List[EntityType],
+                 outer_domain_dict: Dict, scan_name="UnnamedScanSample"):
 
-        self.p: ParameterSet = ParameterSet("dynamic",collection_list)
+        self.p: ParameterSet = ParameterSet("dynamic", collection_list)
         self.remesh_scan_sample = False
         self.remesh_timestep = False
 
-
         if not scan_name is None:
-            name = MiscParameter("scan_name",scan_name)
+            name = MiscParameter("scan_name", scan_name)
             self.p.add_parameter_with_collection(name)
 
         for e in entity_types:
-            assert isinstance(e,EntityType)
+            assert isinstance(e, EntityType)
 
         self.entity_types: List[EntityType] = entity_types
         self.outer_domain_parameter_dict = {}
-        for k,v in outer_domain_dict.items():
+        for k, v in outer_domain_dict.items():
             # assert isinstance(v,ScannablePhysicalParameter)
-            self.outer_domain_parameter_dict[k]  = ParameterSet("dummy",[v])
-
+            self.outer_domain_parameter_dict[k] = ParameterSet("dummy", [v])
 
     def serialize_to_xml(self, sub_path: str):
 
@@ -202,16 +197,15 @@ class ScanSample:
         remesh_timestep = ET.SubElement(root, "RemeshTimestep")
         remesh_timestep.text = str(self.remesh_timestep)
 
-        root.set("sub_path",json.dumps(sub_path))
+        root.set("sub_path", json.dumps(sub_path))
 
         parameters: ET.Element = ET.SubElement(root, "Parameters")
         parameters.append(self.p.serialize_to_xml())
 
         outer_domain_parameters: ET.Element = ET.SubElement(root, "OuterDomainParameters")
-        for k,v in self.outer_domain_parameter_dict.items():
-
-            patch_element = ET.SubElement(outer_domain_parameters,"PatchParameters")
-            patch_element.set("key",k)
+        for k, v in self.outer_domain_parameter_dict.items():
+            patch_element = ET.SubElement(outer_domain_parameters, "PatchParameters")
+            patch_element.set("key", k)
             patch_element.append(v.serialize_to_xml())
 
         entity_types: ET.Element = ET.SubElement(root, "EntityTypes")
@@ -221,8 +215,7 @@ class ScanSample:
 
         return root
 
-    def deserialize_from_xml(self,root):
-
+    def deserialize_from_xml(self, root):
 
         self.p = ParameterSet.deserialize_from_xml(root.find("./Parameters/ParameterSet[@name='dynamic']"))
 
@@ -238,23 +231,23 @@ class ScanSample:
             dummy = ParameterSet.deserialize_from_xml(patch_element[0])
             self.outer_domain_parameter_dict[k] = dummy
 
-
         for entity_type in root.find("EntityTypes"):
             if entity_type.tag == "CellType":
-                t = CellType(None,"","")
+                t = CellType(None, "", "")
                 t.deserialize_from_xml(entity_type)
                 self.entity_types.append(t)
 
-class ScanType(Enum):
 
+class ScanType(Enum):
     GLOBAL = 1
     ENTITY = 2
     BOUNDARY = 3
 
+
 class ScanDefintion:
 
-    def __init__(self,scannable,collection_name,scan_space, scan_type: ScanType,
-                 entity_type = None, boundary_pieces_name = None, field_quantity = ""):
+    def __init__(self, scannable, collection_name, scan_space, scan_type: ScanType,
+                 entity_type=None, boundary_pieces_name=None, field_quantity=""):
 
         assert isinstance(scannable, ScannablePhysicalParameter)
 
@@ -266,13 +259,7 @@ class ScanDefintion:
         self.entity_type = entity_type
         self.boundary_pieces_name = boundary_pieces_name
 
-
         if scan_type == ScanType.ENTITY:
-            assert isinstance(entity_type,EntityType)
+            assert isinstance(entity_type, EntityType)
         elif scan_type == ScanType.BOUNDARY:
             assert isinstance(boundary_pieces_name, str)
-
-
-
-
-

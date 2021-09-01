@@ -1,7 +1,7 @@
 import random
-import numpy as np
 
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter
+from thesis.main.ParameterSet import MiscParameter
+
 
 def assign_fractions(sc, t):
     """sets cell types according to the values given in fractions.

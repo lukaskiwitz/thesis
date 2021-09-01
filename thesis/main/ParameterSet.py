@@ -170,11 +170,11 @@ class ParameterSet:
 
 class ParameterCollection:
 
-    def __init__(self, name: str, physical_parameters=[], field_quantity: str ="", is_global=False) -> None:
+    def __init__(self, name: str, physical_parameters=[], field_quantity: str = "", is_global=False) -> None:
 
         for s in physical_parameters:
             assert isinstance(s, Parameter)
-        assert isinstance(field_quantity,str)
+        assert isinstance(field_quantity, str)
         self.parameters: List[PhysicalParameter] = physical_parameters
         self.name: str = name
         self.field_quantity = field_quantity
@@ -249,7 +249,6 @@ class ParameterCollection:
         result = self.get_parameter(misc_name)
         if result is None:
             return None
-
 
         assert isinstance(result, MiscParameter)
         return result
@@ -483,14 +482,13 @@ class ParameterTemplate:
         pass
 
 
-
 class PhysicalParameterTemplate(ParameterTemplate):
 
     def __init__(self, parameter):
         self.p = parameter
         self.name = parameter.name
 
-    def __call__(self, value = None, in_sim=False):
+    def __call__(self, value=None, in_sim=False):
 
         p = deepcopy(self.p)
         if value is not None:

@@ -1,11 +1,12 @@
 import os
 from typing import List, Dict
-from scipy.spatial import distance_matrix
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Rectangle
+from scipy.spatial import distance_matrix
 
 from thesis.main.my_debug import warning
 
@@ -206,7 +207,7 @@ class Plotter:
             self.color_dict = self.get_color_dict(keys, palette_name=palette_name)
             return self.color_dict[kvp]
 
-    def get_continuous_color(self, key, palette_name = "viridids"):
+    def get_continuous_color(self, key, palette_name="viridids"):
 
         if key in self.color_dict.keys():
             return self.color_dict[key]
@@ -214,7 +215,7 @@ class Plotter:
             self.color_dict[key] = palette_name
             return palette_name
 
-    def get_palette(self, df, key, palette_name="Dark2", categorical = None) -> Dict:
+    def get_palette(self, df, key, palette_name="Dark2", categorical=None) -> Dict:
 
         if key is None:
             return None
@@ -606,7 +607,7 @@ class Plotter:
         ax.set_ylabel(self.get_label(y_name))
 
     def global_steady_state_plot(self, y_name, x_name=None, legend=False, ci="sd", hue=None, style=None, ylog=False,
-                                 xlog=True, ylim=None, average=False,estimator = None,
+                                 xlog=True, ylim=None, average=False, estimator=None, dashes=True,
                                  **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
@@ -631,10 +632,10 @@ class Plotter:
 
         if style in df.columns:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         style=style, ci=ci)
+                         style=style, ci=ci, dashes=dashes)
         else:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         ci=ci)
+                         ci=ci, dashes=dashes)
 
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
@@ -721,8 +722,8 @@ class Plotter:
         else:
             ax.set_xlabel(self.get_label(x_name))
 
-        from matplotlib.ticker import StrMethodFormatter, FixedFormatter, LogLocator, IndexLocator, AutoLocator, \
-            ScalarFormatter, FixedLocator, LinearLocator
+        from matplotlib.ticker import LogLocator, AutoLocator, \
+            ScalarFormatter
 
         if xlog:
             ax.xaxis.set_major_locator(LogLocator())
@@ -735,9 +736,9 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def cell_steady_state_plot(self, y_name, x_name = None, legend=False, hue=None, style=None, ylog=False, xlog=True,
-                               cummulative=False,estimator = None,
-                               ylim=None, ci="sd", **kwargs) -> None:
+    def cell_steady_state_plot(self, y_name, x_name=None, legend=False, hue=None, style=None, ylog=False, xlog=True,
+                               cummulative=False, estimator=None,
+                               ylim=None, ci="sd", dashes=True, **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
         df, ci = self.compute_ci(
@@ -758,9 +759,9 @@ class Plotter:
         if x_name is None:
             x_name = self.scan_index_key
         sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
-                     palette=palette, ci=ci)
+                     palette=palette, ci=ci, dashes=dashes)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name = x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
     def cell_steady_state_barplot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
                                   ylim=None, ci="sd", y_ticks=True, **kwargs) -> None:
@@ -779,7 +780,8 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def single_cell_steady_state_plot(self, y_name, x_name= None,legend=False, hue=None, style=None, ylog=False, xlog=True,
+    def single_cell_steady_state_plot(self, y_name, x_name=None, legend=False, hue=None, style=None, ylog=False,
+                                      xlog=True,
                                       cummulative=False,
                                       ylim=None, linewidth=0.1, units="id", **kwargs):
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
@@ -796,14 +798,15 @@ class Plotter:
             df = df.reset_index()
 
         if x_name is None:
-            x_name= self.scan_index_key
+            x_name = self.scan_index_key
 
         sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
                      palette=palette, estimator=None, units=units, linewidth=linewidth)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name = x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
-    def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False,ylim = None, xlog=True, ci="sd",
+    def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False, ylim=None, xlog=True,
+                           ci="sd",
                            **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.counts, hue, **kwargs)
@@ -960,7 +963,8 @@ class Plotter:
         ax.set_ylabel(self.get_label("dr"))
         ax.set_xlabel(self.get_label("time"))
 
-    def cell_plot(self, x_name, y_name, legend=False, hue=None, style=None, ci="sd", time=None,ylim = None,xlim = None, condition = lambda df:df, count = False, **kwargs) -> None:
+    def cell_plot(self, x_name, y_name, legend=False, hue=None, style=None, ci="sd", time=None, ylim=None, xlim=None,
+                  condition=lambda df: df, count=False, **kwargs) -> None:
 
         if time:
             cell_df = self.cell_df.loc[self.cell_df["time"].isin(time)]
@@ -983,7 +987,7 @@ class Plotter:
                          legend=legend, palette=palette)
         else:
             sns.lineplot(x=x_name, y=y_name, hue=hue, data=df, ax=ax, style=style, ci=ci,
-                     legend=legend, palette=palette)
+                         legend=legend, palette=palette)
 
         self.make_legend_entry(ax)
 
@@ -1029,7 +1033,7 @@ class Plotter:
         ax.set_xlabel(self.get_label(axis_name))
 
     def cell_histogramm(self, x_name, t=None, hue=None, xlim=None, ylim=None, quantiles=None, distplot_kwargs=None,
-                        xlog = True, ylog = True, **kwargs):
+                        xlog=True, ylog=True, **kwargs):
 
         if quantiles is None:
             quantiles = [0, 1]
@@ -1078,7 +1082,7 @@ class Plotter:
         ax.set_xlabel(self.get_label(x_name))
 
     def cell_activation_histogramm(self, x_name, cummulative=False, relative=False, color="red", showmax=None, t=None,
-                                   bins=100, hue=None, xlim=None, ylim=None, xlog = True, ylog = True, **kwargs):
+                                   bins=100, hue=None, xlim=None, ylim=None, xlog=True, ylog=True, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -1165,8 +1169,7 @@ class Plotter:
         self.radials_df = self._compute_radial_profile(self.cell_df, y_names, center_func=center_func,
                                                        n_workers=n_workers, chunksize=chunksize)
 
-    def compute_cell_distance_metric(self, source_type_name, metric_dict = {"mean_distance":np.mean}):
-
+    def compute_cell_distance_metric(self, source_type_name, metric_dict={"mean_distance": np.mean}):
 
         for k in metric_dict.keys():
             if k in self.cell_df.columns:
@@ -1185,23 +1188,20 @@ class Plotter:
 
         self.cell_df = self.cell_df.merge(result, on=["id_id", "raw_scan_index", self.time_index_key])
 
-    def compute_distance_metric(self,df, type_name, metrics):
-
+    def compute_distance_metric(self, df, type_name, metrics):
 
         ids, r = get_distance_matrix(df)
         source_ids = np.array(df.loc[df.type_name == type_name]["id_id"])
         folded = r[np.argwhere(np.isin(ids, source_ids)).ravel()]
 
         d = {}
-        for k,v in metrics.items():
-            d[k] = np.apply_along_axis(v,0,folded)
+        for k, v in metrics.items():
+            d[k] = np.apply_along_axis(v, 0, folded)
         return ids, d
 
-
-
-
     def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,
-                               ci="sd", cell_radius=None, legend=None, estimator=None, plot_filter = lambda df: df, **kwargs):
+                               ci="sd", cell_radius=None, legend=None, estimator=None, plot_filter=lambda df: df,
+                               **kwargs):
 
         df = self.cell_df
 
@@ -1209,7 +1209,7 @@ class Plotter:
         # df = df.loc[(df.type_name == "abs") | (df.id_id == cell.id_id)]
 
         if hasattr(self, "radials_df") and hue in self.radials_df.columns and y_name in self.radials_df.columns:
-            ax, df, palette, hue = self.prepare_plot(self.radials_df, hue,  **kwargs)
+            ax, df, palette, hue = self.prepare_plot(self.radials_df, hue, **kwargs)
 
         else:
             print("recomputing radial profiles because hue or y_name wasn't found in cache")
@@ -1217,7 +1217,6 @@ class Plotter:
             df = self._compute_radial_profile(df, [y_name, "type_name"],
                                               center_func=lambda df: df.loc[df["type_name"] == center_type])
         df = plot_filter(df)
-
 
         df, ci = self.compute_ci(
             df,
@@ -1227,7 +1226,8 @@ class Plotter:
         if cell_radius:
             df["distance"] = df["distance"] / cell_radius
 
-        sns.lineplot(x="distance", y=y_name, hue=hue, style = style, data=df, ax=ax, legend=legend, ci = ci, palette=palette)
+        sns.lineplot(x="distance", y=y_name, hue=hue, style=style, data=df, ax=ax, legend=legend, ci=ci,
+                     palette=palette)
 
         if ylog:
             ax.set_yscale("log")
@@ -1411,8 +1411,6 @@ class Plotter:
         ax.set_ylabel(self.get_label(y_name))
         ax.set_xlabel(self.get_label(x_name))
 
-        from matplotlib.ticker import MaxNLocator, StrMethodFormatter, ScalarFormatter, EngFormatter
-
         # ax.xaxis.set_major_formatter(StrMethodFormatter("{x:.1g}"))
         # ax.yaxis.set_major_formatter(StrMethodFormatter("{x:.0e}"))
 
@@ -1484,8 +1482,6 @@ class Plotter:
 
         ax.set_ylabel(self.get_label(y_name))
         ax.set_xlabel(self.get_label(x_name))
-
-        from matplotlib.ticker import MaxNLocator, StrMethodFormatter, ScalarFormatter, EngFormatter
 
         # ax.xaxis.set_major_formatter(StrMethodFormatter("{x:.1g}"))
         # ax.yaxis.set_major_formatter(StrMethodFormatter("{x:.0e}"))
@@ -1579,11 +1575,11 @@ class Plotter:
 
             for i, h in enumerate(df[hue].unique()):
                 x = df.loc[df[hue] == h]
-                ax.scatter(x[names[0]], x[names[1]], marker=marker, color=palette[(hue,h)], s=s)
+                ax.scatter(x[names[0]], x[names[1]], marker=marker, color=palette[(hue, h)], s=s)
                 labels.append(str(h))
                 handels.append(
                     Line2D([0], [0], marker=marker, color=palette[h], markersize=1,
-                           markerfacecolor=palette[(hue,h)], markeredgewidth=1, linewidth=1)
+                           markerfacecolor=palette[(hue, h)], markeredgewidth=1, linewidth=1)
                 )
 
             ax.legend(handels, labels)

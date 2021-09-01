@@ -14,7 +14,7 @@ class EntityType:
         self.p = deepcopy(p)
         self.name = name
         self.internal_solvers: [str] = []
-        self.global_solvers: [str]  = []
+        self.global_solvers: [str] = []
         self.interactions = []
 
     def get_updated(self, update):
@@ -56,4 +56,3 @@ class CellType(EntityType):
         self.internal_solver = json.loads(element.get("internal_solver_name"))
 
         self.p = ParameterSet.deserialize_from_xml(element.find("ParameterSet"))
-

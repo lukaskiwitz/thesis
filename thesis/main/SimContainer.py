@@ -7,7 +7,6 @@ Created on Fri Jun  7 12:21:51 2019
 """
 
 import os
-from numbers import Number
 from typing import *
 
 #
@@ -28,8 +27,12 @@ from thesis.main.my_debug import message, debug
 
 Element = et.Element
 
+
 class InternalSolverNotRegisteredError(Exception): pass
+
+
 class EntityTypeNotRegisteredError(Exception): pass
+
 
 class SimContainer(SimComponent):
     """
@@ -91,7 +94,7 @@ class SimContainer(SimComponent):
         self.field_files: List = []
         self.boundary_markers: List = []
         self.entity_templates: List[EntityType] = []
-        self.marker_lookup: Dict[Union[str,int,float], int] = {}
+        self.marker_lookup: Dict[Union[str, int, float], int] = {}
         self.internal_solvers: List[InternalSolver] = []
         self.t: float = 0
         self._time_log_df: pd.DataFrame = pd.DataFrame()
@@ -414,14 +417,12 @@ class SimContainer(SimComponent):
         return None
         # raise InternalSolverNotRegisteredError("could not find internal solver {n}".format(n=name))
 
-
-    def get_entity_type_by_name(self, name: str) -> Union[EntityType,None]:
+    def get_entity_type_by_name(self, name: str) -> Union[EntityType, None]:
         for e in self.entity_templates:
             if e.name == name:
                 return e
         return None
         # raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
-
 
     def add_problem(self, field: FieldProblem) -> FieldProblem:
 
@@ -432,7 +433,6 @@ class SimContainer(SimComponent):
         :param field:
 
         """
-
 
         self.fields.append(field)
         return field
@@ -461,7 +461,7 @@ class SimContainer(SimComponent):
         for o, i in enumerate(self.fields):
             self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
 
-    def save_markers(self, time_index: int) -> Dict[str,str]:
+    def save_markers(self, time_index: int) -> Dict[str, str]:
 
         path_dict = {}
         top_dir = os.path.join(self.get_current_path(), "entity_markers")

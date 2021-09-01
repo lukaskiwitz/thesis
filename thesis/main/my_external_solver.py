@@ -7,12 +7,11 @@ import dill
 import dolfin as dlf
 import fenics as fcs
 from mpi4py import MPI
-from thesis.main.MySubDomain import PeriodicCubeSubDomain
+
 from thesis.main.ParameterSet import ParameterSet
 
 comm = MPI.COMM_WORLD
 rank = comm.rank
-
 
 
 def prepare_solver():
@@ -37,10 +36,8 @@ def prepare_solver():
     with open(pickle_loc + "patch_list", "rb") as f:
         patch_list = pl.load(f)
 
-
     p_xml = ET.parse(pickle_loc + "p_xml").getroot()
     p = ParameterSet.deserialize_from_xml(p_xml)
-
 
     mesh = dlf.Mesh()
     with dlf.XDMFFile(dlf.MPI.comm_world, mesh_file) as f:
@@ -50,8 +47,6 @@ def prepare_solver():
     with fcs.HDF5File(fcs.MPI.comm_world, markers_path, "r") as f:
         f.read(boundary_markers, "/boundaries")
 
-
-
     V = fcs.FunctionSpace(mesh, "CG", 1)
     u = fcs.TrialFunction(V)
     v = fcs.TestFunction(V)
@@ -59,14 +54,14 @@ def prepare_solver():
     ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
 
     if p.get_misc_parameter("linear", "numeric").get_in_sim_unit(type=bool):
-        solver, u = linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = fq)
+        solver, u = linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
     else:
-        solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = fq)
+        solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
 
     return solver, result_path, u
 
 
-def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers,fq = None):
+def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None):
     dirichlet_bc = []
     integral_bc = []
 
@@ -119,7 +114,7 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers,fq = Non
     return solver, u
 
 
-def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq = None):
+def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None):
     dirichlet_bc = []
     integral_bc = []
 
@@ -130,7 +125,6 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq 
     for bc in dirichlet:
         dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
 
-
     for bc in integral:
 
         p_bc = bc["p"]
@@ -139,8 +133,6 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq 
         patch = bc["patch"]
 
         # field_quantity = bc["field_quantity"]
-
-
 
         for k, value in p_bc.items():
             try:
@@ -156,7 +148,7 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq 
 
     F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(integral_bc))
 
-    problem = fcs.NonlinearVariationalProblem(F, u, dirichlet_bc, J=fcs.derivative(F,u,du))
+    problem = fcs.NonlinearVariationalProblem(F, u, dirichlet_bc, J=fcs.derivative(F, u, du))
 
     # instantiates fenics solver
     solver = fcs.NonlinearVariationalSolver(problem)
@@ -184,14 +176,13 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq 
 
 import signal as sig
 
-def alarm_handler(signum, frame):
 
+def alarm_handler(signum, frame):
     print("Solver timed out")
     raise TimeoutError
 
 
-
-timeout = 60**2
+timeout = 60 ** 2
 
 if __name__ == "__main__":
 
@@ -211,7 +202,6 @@ if __name__ == "__main__":
 
     signal = comm.bcast(signal, root=0)
 
-
     if signal == "START":
 
         file = result_path + "tmp_{fq}".format(fq=fq)
@@ -219,14 +209,12 @@ if __name__ == "__main__":
         try:
             solver.solve()
         except Exception as e:
-                sys.stdout.write(str(e))
-                sys.stdout.write("solution_failed")
-                exit(0)
+            sys.stdout.write(str(e))
+            sys.stdout.write("solution_failed")
+            exit(0)
 
         if rank == 0:
             os.makedirs(result_path, exist_ok=True)
-
-
 
         with fcs.HDF5File(comm, file + ".h5", "w") as f:
             f.write(u, "field")

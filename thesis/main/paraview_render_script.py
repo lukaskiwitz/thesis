@@ -15,7 +15,6 @@ def load_cytokine_xdmf(file_path):
 
 
 def load_markers_xdmf(file_path):
-
     markers_0xdmf = Xdmf3ReaderS(FileName=[file_path])
 
     return markers_0xdmf
@@ -30,7 +29,6 @@ def marker_threshold(source, view, range=(1, 1)):
 
 
 def create_slice(source, origin=(0, 0, 0), normal=(0, 0, 1)):
-
     slice = Slice(Input=source)
     slice.SliceType = 'Plane'
     slice.HyperTreeGridSlicer = 'Plane'
@@ -45,10 +43,8 @@ def create_slice(source, origin=(0, 0, 0), normal=(0, 0, 1)):
 def create_calc(source, factor="1e18", result_name="Cytokine"):
     calc = Calculator(Input=source)
 
-
     calc.Function = '{name}*{f}'.format(f=factor, name=calc.PointData.GetArray(0).Name)
     calc.ResultArrayName = result_name
-
 
     Hide(calc)
     return calc
@@ -197,14 +193,12 @@ def make_images(cytokine_path, marker_path, img_path, settings):
     source = load_cytokine_xdmf(cytokine_path)  # loads file
     markers = load_markers_xdmf(marker_path)  # loads boundary markers
 
-
     original_field_name = source.PointData.GetArray(0).Name
 
     source = create_calc(source,
                          factor=settings["conversion_factor"],
                          result_name=settings["field_name"]
                          )  # unit conversion
-
 
     bb = source.GetDataInformation().GetBounds()
     origin = np.array(
@@ -213,9 +207,6 @@ def make_images(cytokine_path, marker_path, img_path, settings):
             np.mean([bb[2], bb[3]]),
             np.mean([bb[4], bb[5]])
         ])
-
-
-
 
     r, t, p = settings["volume_camera_pos"]
 
@@ -250,7 +241,7 @@ def make_images(cytokine_path, marker_path, img_path, settings):
 
     for threshold in cell_type_thresholds:
         if threshold.CellData.GetArray(0) is None:
-            continue# no cells present
+            continue  # no cells present
 
         clip = Clip(Input=threshold)
         clip.ClipType = 'Box'
@@ -271,7 +262,6 @@ def make_images(cytokine_path, marker_path, img_path, settings):
     if marker_display is not None:
         marker_display.SetScalarBarVisibility(legend_view_2, True)
 
-
     output_array = source.PointData.GetArray(0)
 
     for i in range(source.PointData.GetNumberOfArrays()):
@@ -283,7 +273,6 @@ def make_images(cytokine_path, marker_path, img_path, settings):
 
     elif len(settings["color_bar_range"]) == 1:
         settings["color_bar_range"] = [settings["color_bar_range"][0], output_array.GetRange()[1]]
-
 
     format_cytokine_bar(output_array.Name, legend_view_1, settings)
 
@@ -333,7 +322,6 @@ if __name__ == "__main__":
     img_path = sys.argv[3]
 
     if len(sys.argv) > 4:
-
         settings_path = sys.argv[4]
         with open(settings_path, "r") as f:
             settings.update(json.load(f))

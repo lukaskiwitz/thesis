@@ -28,12 +28,12 @@ class Integral(BC):
             assert isinstance(kwargs["p"], ParameterSet)
             self.p = kwargs["p"]
         else:
-            self.p = ParameterSet("BC_dummy",[])
+            self.p = ParameterSet("BC_dummy", [])
         self.q = q
         super().__init__(**kwargs)
 
-    def get_BC(self, u: fcs.Function, area = 1) -> object:
-        return self.q(u, self.p, self.field_quantity, area = area)
+    def get_BC(self, u: fcs.Function, area=1) -> object:
+        return self.q(u, self.p, self.field_quantity, area=area)
 
 
 class DirichletBC(BC):
@@ -51,12 +51,12 @@ class DirichletBC(BC):
 
 class OuterBC(BC):
     def __init__(self, **kwargs: Dict) -> None:
-
         self.name = kwargs["name"] if "name" in kwargs else ""
 
         super().__init__(**kwargs)
 
-class OuterDirichletBC(OuterBC,DirichletBC):
+
+class OuterDirichletBC(OuterBC, DirichletBC):
 
     def __init__(self, value: object, expr: str, **kwargs: Dict) -> None:
         self.degree = 1
@@ -77,7 +77,5 @@ class OuterIntegral(Integral, OuterBC):
         self.value = None
         self.expr = expr
         self.q = q
-        OuterBC.__init__(self,**kwargs)
-        super().__init__(q,**kwargs)
-
-
+        OuterBC.__init__(self, **kwargs)
+        super().__init__(q, **kwargs)

@@ -1,15 +1,16 @@
-from thesis.main.MyFieldTemplate import MyFieldTemplate, MyCytokineTemplate
+from thesis.main.MyFieldTemplate import MyFieldTemplate
 from thesis.main.ParameterSet import ParameterSet
+
 
 class MyGlobalModel:
 
-    def __init__(self,name: str):
-
+    def __init__(self, name: str):
         self.name = name
 
 
 class MyODEModel(MyGlobalModel):
     pass
+
 
 class MyPDEModel(MyGlobalModel):
 
@@ -19,9 +20,9 @@ class MyPDEModel(MyGlobalModel):
         self.field_templates = []
         self.domain_template = None
 
-    def add_field_template(self,field_template: MyFieldTemplate):
+    def add_field_template(self, field_template: MyFieldTemplate):
 
-        assert isinstance(field_template,MyFieldTemplate)
+        assert isinstance(field_template, MyFieldTemplate)
         self.field_templates.append(field_template)
 
     def get_problem_list(self, p):
@@ -37,11 +38,9 @@ class MyPDEModel(MyGlobalModel):
 
     def build_parameter_set(self, parameter_pool):
 
-        p = ParameterSet(self.name,[])
+        p = ParameterSet(self.name, [])
 
         for template in self.field_templates:
             p.add_collection(template.build_parameter_collection(parameter_pool))
 
         return p
-
-
