@@ -8,7 +8,13 @@ Welcome to Spatial Simulation's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Examples:
+
+   intro/intro
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API reference:
 
    main
 
