@@ -71,6 +71,7 @@ class ComputeSettings:
         self.render_paraview = False
         self.unit_name = "nM"
         self.marker_lookup = {}
+        self.round_legend_labels = 2
 
         self.paraview_settings = {
 
@@ -653,6 +654,7 @@ def compute(compute_settings: ComputeSettings) -> str:
                 warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
                     si=scan_index, ti=time_index))
             except AttributeError as e:
+                warning(e)
                 warning("could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
                     si=scan_index, ti=time_index))
 
