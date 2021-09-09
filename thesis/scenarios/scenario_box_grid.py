@@ -14,7 +14,7 @@ from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, PhysicalParameter, ParameterCollection, \
     MiscParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
-
+from thesis.main.MyInteraction import FieldInteractionType
 ule = -6
 
 templates = {
@@ -93,6 +93,8 @@ def make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], P
 
         fractions.set_parameter(PhysicalParameter(ct["name"], ct["fraction"], is_global=True))
         cell_p_set = ParameterSet(ct["name"], [])
+        interactions = []
+
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
                 ct_dict = ct[c["field_quantity"]]
@@ -103,6 +105,7 @@ def make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], P
                         p.append(parameter_pool.get_template(k)(v))
                     else:
                         p.append(MiscParameter(k, v))
+                interactions.append(MyFieldInteractionTemplate(c["field_quantity"], FieldInteractionType.INTEGRAL))
                 del ct[c["field_quantity"]]
 
                 collection = ParameterCollection(c["name"], p)
@@ -126,10 +129,10 @@ def make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], P
                 else:
                     cell_p_set.add_parameter_with_collection(MiscParameter(k, v))
 
-        from thesis.main.MyInteraction import FieldInteractionType
+
 
         cell_type = CellType(cell_p_set, ct["name"], ct["internal_solver"])
-        cell_type.interactions.append(MyFieldInteractionTemplate("il2", FieldInteractionType.INTEGRAL))
+        cell_type.interactions = interactions
         cell_types_list.append(cell_type)
 
     return cell_types_list, fractions

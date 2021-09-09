@@ -111,7 +111,7 @@ class StateManager:
 
     def load_xml(self) -> None:
         """loads xml representation from file"""
-        self.element_tree = ET.parse("{p}log.scan".format(p=self.path))
+        self.element_tree = ET.parse(os.path.join(self.path,"log.xml"))
 
     def get_scan_folder(self, n: int) -> str:
         return self.path + self.scan_folder_pattern.format(n=n)
@@ -120,7 +120,7 @@ class StateManager:
 
         if rank == 0:
             try:
-                f = self.path + "log.scan"
+                f = os.path.join(self.path, "log.xml")
                 message("writing element tree to {file}".format(file=f))
                 self.element_tree.write(f, pretty_print=True)
             except Exception as e:
@@ -182,13 +182,10 @@ class StateManager:
     def _loadCellDump(self) -> None:
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_step: int, time: float,
-                                      result_path: Mapping[str, Tuple[str, str, int]],
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_index: int, time: float,
                                       marker_paths: Mapping[str, str]) -> None:
 
         """
-
-        :param result_path: Dictionary of shape {field_name: (distplot, sol, field_index)}
         :param marker_paths: Dictionry of shape {marker_key :marker_name}
         """
 
@@ -200,7 +197,7 @@ class StateManager:
 
         if self.compress_log_file:
             path = "./scan_{i}/timestep_logs/".format(i=scan_index)
-            file_name = "step_{si}_{ti}.xml".format(si=scan_index, ti=time_step)
+            file_name = "step_{si}_{ti}.xml".format(si=scan_index, ti=time_index)
             os.makedirs(os.path.join(self.path, path), exist_ok=True)
             path = os.path.join(path, file_name)
             substitute_element = ET.SubElement(time_series, "Step")
@@ -210,7 +207,7 @@ class StateManager:
 
         else:
             step = ET.SubElement(time_series, "Step")
-        step.set("time_index", str(time_step))
+        step.set("time_index", str(time_index))
         step.set("time", str(time))
 
         lookup_table_element = ET.SubElement(step, "MarkerLookupTable")
@@ -256,33 +253,11 @@ class StateManager:
 
         fields = ET.SubElement(step, "Fields")
 
-        for field_name, (distplot, sol, field_index) in result_path.items():
+        for field in self.sim_container.fields:
+            field_element = field.get_result_element(time_index, scan_index, self.sim_container.get_current_path())
+            fields.insert(0,field_element)
 
-            d = os.path.split(os.path.split(sc.path)[0])[1]
-            field = time_series.find("Field[@field_name='{n}']".format(n=field_name))
 
-            if not field:
-                field = ET.SubElement(fields, "Field")
-
-            if sc.fields[field_index].remesh_timestep:
-                field.set("mesh_path", sc.fields[field_index].get_mesh_path(d, time_step, abspath=False))
-            elif sc.fields[field_index].remesh_scan_sample:
-                field.set("mesh_path", sc.fields[field_index].get_mesh_path(d, 0, abspath=False))
-            else:
-                field.set("mesh_path", sc.fields[field_index].get_mesh_path(time_step, abspath=False))
-
-            field.set("remesh_timestep", str(sc.fields[field_index].remesh_timestep))
-            field.set("remesh_scan_sample", str(sc.fields[field_index].remesh_scan_sample))
-
-            field.set("field_name", field_name)
-
-            if sol is None:
-                field.set("success", str(False))
-                continue
-            else:
-                field.set("success", str(True))
-                field.set("dist_plot_path", "scan_{i}/".format(i=scan_index) + distplot)
-                field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
 
         if self.compress_log_file:
             tree = ET.ElementTree(step)
@@ -435,9 +410,9 @@ class StateManager:
             try:
                 def post_step(sc, time_index, t, T):
                     self.estimate_time_remaining(sc, scan_index, time_index, range(n_samples), T)
-                    result_paths = sc.save_fields(int(time_index - 1))
+                    # result_paths = sc.save_fields(int(time_index - 1))
                     marker_paths = sc.save_markers(time_index)
-                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, result_paths, marker_paths)
+                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, marker_paths)
                     self.write_element_tree()
 
                     import resource

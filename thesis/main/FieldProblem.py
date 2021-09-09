@@ -24,11 +24,39 @@ from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.my_debug import message, total_time, warning
 
-
+import lxml.etree as et
+Element = et.Element
 class BoundaryConcentrationError(Exception): pass
 
 
-class FieldProblem:
+class GlobalProblem:
+
+    def __init__(self) -> None:
+
+        self.name: str = ""
+        self.registered_entities: List[Mapping[str, Union[Entity, int]]] = []
+        self.solver: Union[MyDiffusionSolver, None] = None
+        self.field_quantity: str = ""
+        self.path: Union[str, None] = None
+        self.p: ParameterSet = ParameterSet("field_dummy", [])
+
+    def initialize_run(self) -> None: pass
+
+    def finish_run(self) -> None: pass
+
+    def update_step(self, tmp_path: str, p: ParameterSet = None) -> None: pass
+
+    def step(self, dt: float, time_index: int, tmp_path: str) -> None:pass
+
+    def apply_sample(self, sample: ScanSample) -> None: pass
+
+    def _add_entity(self, entity: Entity) -> None: pass
+
+    def get_result_element(self) -> Element: pass
+
+    def save_result_to_file(self): pass
+
+class FieldProblem(GlobalProblem):
     """
 
     :var field_name: string to identify this field
@@ -78,6 +106,59 @@ class FieldProblem:
         self.boundary_extraction_trials: int = 5
         self.boundary_extraction_timeout: int = 600
 
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str,str]:
+
+        file_name = "field_{fq}".format(fq=self.field_quantity)
+        distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
+        sol = "sol/{fn}_{ti}.xdmf".format(fn = file_name,ti = str(time_index))
+
+        u = self.get_field()
+        if u is not None:
+            u.rename(self.field_quantity, self.field_quantity)
+
+            with fcs.HDF5File(fcs.MPI.comm_world, path + distplot, "w") as f:
+                f.write(self.get_field(), self.field_name)
+            with fcs.XDMFFile(fcs.MPI.comm_world, path + sol) as f:
+                f.write(self.get_field(), time_index)
+            result = (distplot, sol)
+        else:
+            result = (None, None)
+
+        return result
+
+    def get_result_element(self, time_index: int, scan_index:int, path: str) -> Element:
+
+
+        distplot, sol = self.save_result_to_file(time_index, path)
+
+        d = os.path.split(os.path.split(path)[0])[1]
+        field = et.Element("Field")
+
+
+        if not field:
+            field = et.Element("Field")
+
+        if self.remesh_timestep:
+            field.set("mesh_path", self.get_mesh_path(d, time_index, abspath=False))
+        elif self.remesh_scan_sample:
+            field.set("mesh_path", self.get_mesh_path(d, 0, abspath=False))
+        else:
+            field.set("mesh_path", self.get_mesh_path(d, None, abspath=False))
+
+        field.set("remesh_timestep", str(self.remesh_timestep))
+        field.set("remesh_scan_sample", str(self.remesh_scan_sample))
+
+        field.set("field_name", self.field_name)
+
+        if sol is None:
+            field.set("success", str(False))
+        else:
+            field.set("success", str(True))
+            field.set("dist_plot_path", "scan_{i}/".format(i=scan_index) + distplot)
+            field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
+
+        return field
+
     def _add_entity(self, entity: Entity) -> None:
         """
         :param entity:  entity to be added
@@ -87,7 +168,7 @@ class FieldProblem:
 
     def get_mesh_path(self, path: str, time_index: int = None, abspath: bool = False) -> str:
 
-        file_name = "mesh"
+        file_name = "mesh_{fq}".format(fq = self.field_quantity)
         result = self._get_mesh_dir(path)
         if not time_index is None:
             file = file_name + "_{t}" + ".xdmf"
@@ -121,7 +202,7 @@ class FieldProblem:
             result = os.path.join(path, "cache")
         else:
             if self.ext_cache == "":
-                result = path
+                result = os.path.join(path, "mesh")
             else:
                 result = self.ext_cache
         return result
@@ -132,7 +213,6 @@ class FieldProblem:
         """
         raise NotImplementedError
 
-    #        self.registered_entities.remove(entity)
     def is_registered(self, entity: Entity) -> None:
         """"""
         raise NotImplementedError
@@ -252,7 +332,7 @@ class FieldProblem:
         for i in range(self.boundary_extraction_trials + 1):
             with mp.Pool(processes=pn, initializer=init,
                          initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-                result_async = pool.map_async(target, entity_list, chunksize=chunksize)
+                result_async = pool.map_async(calc_boundary_values, entity_list, chunksize=chunksize)
                 try:
                     result = result_async.get(self.boundary_extraction_timeout)
                 except multiprocessing.TimeoutError as e:
@@ -463,7 +543,12 @@ class FieldProblem:
                 entity.p.get_collections_by_field_quantity(fq)[0].set_parameter(boundary, override=True)
 
 
-def target(entity: Entity):
+class MeanFieldProblem(GlobalProblem):
+
+    def step(self, dt: float, time_index: int, tmp_path: str) -> None: pass
+
+
+def calc_boundary_values(entity: Entity):
     patch_index = entity[0]
     sa = entity[1]
     if sa == None:

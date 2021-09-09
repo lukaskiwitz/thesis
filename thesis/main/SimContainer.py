@@ -478,42 +478,6 @@ class SimContainer(SimComponent):
 
         return path_dict
 
-    def save_fields(self, time_index: int) -> Mapping[str, Tuple[str, str, int]]:
-
-        """
-
-        saves results for each element in self.fields as xdmf file with index n
-
-        :param time_index:
-
-        """
-        os.makedirs(self.get_current_path() + "sol/distplot", exist_ok=True)
-        result: Dict = {}
-
-        for o, i in enumerate(self.fields):
-
-            # markers = i.get_sub_domains_vis(marker_lookup = self.marker_lookup)
-            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "markers_{n}.xdmf".format(n=n)) as f:
-            #     f.write(markers[0])
-            #
-            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
-            #     f.write(markers[1])
-
-            distplot = "sol/distplot/" + self.field_files[o] + "_" + str(time_index) + "_distPlot.h5"
-
-            sol = "sol/" + self.field_files[o] + "_" + str(time_index) + ".xdmf"
-            u = i.get_field()
-            if u is not None:
-                u.rename(i.field_quantity, i.field_quantity)
-
-                with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
-                    f.write(i.get_field(), i.field_name)
-                with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
-                    f.write(i.get_field(), time_index)
-                result[i.field_name] = (distplot, sol, o)
-            else:
-                result[i.field_name] = (None, None, o)
-        return result
 
     def to_xml(self) -> Element:
         raise NotImplementedError

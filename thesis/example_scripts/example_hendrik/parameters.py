@@ -94,7 +94,7 @@ numeric = {
     "krylov_rtol": 1e-5,# linear solver relative tolerance
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
+    "dofs_per_node": 15000,#calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": os.cpu_count()/2,# max nodes for fenics solver
     "cells_per_worker": 50,
     "max_pool_size": os.cpu_count()/2,#max number of worker to extract boundary conditions at runtime
