@@ -58,5 +58,5 @@ jobs:
       run: pip install -e .
     - name: make html
       run: |
-        cd docs
+        cd docsrc
         make html
