@@ -20,8 +20,8 @@ jobs:
         path: build.yml
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build.yml') }}
     - name: Conda package cache
-      uses: actions/cache@v2
       if: steps.build-cache.cache-hit != 'true'
+      uses: actions/cache@v2
       env:
         cache-name: pkg-cache
       with:
