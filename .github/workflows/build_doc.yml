@@ -44,7 +44,7 @@ jobs:
       run: echo $CONDA/bin >> $GITHUB_PATH
     - name: change package cache permission
       run:
-          sudo chmod -r a+rwx /usr/share/miniconda/pkgs
+          sudo chmod -R a+rwx /usr/share/miniconda/pkgs
     - name: Conda package cache
       uses: actions/cache@v2
       env:
