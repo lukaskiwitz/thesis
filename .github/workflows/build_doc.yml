@@ -9,55 +9,17 @@ jobs:
       max-parallel: 1
     steps:
     - uses: actions/checkout@v2
-    - name: Add conda to system path
-      run: echo $CONDA/bin >> $GITHUB_PATH
-    - name: Restore yml cache
-      uses: actions/cache@v2
-      id: build-cache
-      env:
-        cache-name: yml-cache
-      with:
-        path: build.yml
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build.yml') }}-v2
-    - name: Conda package cache
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
-      env:
-        cache-name: pkg-cache
-      with:
-        path: /usr/share/miniconda/pkgs
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
-    - name: Install dependencies
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: | 
-        conda env update --file ./fenics_explicit.yml --name base
-        conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
-    - name: Create buil yml
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: conda env export --name base > build.yml
+    
+    
   run-test:
     runs-on: ubuntu-latest
     needs: build-linux
     steps:
     - uses: actions/checkout@v2
-    - name: Add conda to system path
-      run: echo $CONDA/bin >> $GITHUB_PATH
-    - name: Conda package cache
-      uses: actions/cache@v2
-      env:
-        cache-name: pkg-cache
-      with:
-        path: /usr/share/miniconda/pkgs
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
-    - name: Build yml cache
-      uses: actions/cache@v2
-      env:
-        cache-name: yml-cache
-      with:
-        path: build.yml
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build.yml') }}-v2
-    - name: Install dependencies
-      run: conda env update --file build.yml --name base
+    - uses: lukaskiwitz/thesis/conda_build_cached@v1
+    - name: Set env variables
+      run: | 
+        conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
     - name: Install package
       run: pip install -e .
     - name: make html
