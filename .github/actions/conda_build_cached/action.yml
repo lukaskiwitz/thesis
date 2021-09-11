@@ -30,7 +30,7 @@ runs:
 
     - name: Install dependencies
       run:|
-        if [ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]
+        if [[ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]];
         then
           conda env update --file build.yml --name base
         else
@@ -38,4 +38,5 @@ runs:
           conda env export --name base > build.yml
         fi
         exit 0
+        
      shell: bash
