@@ -28,18 +28,14 @@ runs:
         path: build.yml
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
-    - name: Install dependencies from input file
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: |
-        conda env update --file ./${{inputs.env-file}} --name base
-      shell: bash
-
-    - name: Create build yml
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: conda env export --name base > build.yml
-      shell: bash
-      
-    - name: Install dependencies from build.yml
-      if: steps.build-cache.outputs.cache-hit == 'true'
-      run: conda env update --file build.yml --name base
-      shell: bash
+    - name: Install dependencies
+      run:|
+        if [ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]
+        then
+          conda env update --file build.yml --name base
+        else
+          conda env update --file ./${{inputs.env-file}} --name base
+          conda env export --name base > build.yml
+        fi
+        exit 0
+     shell: bash
