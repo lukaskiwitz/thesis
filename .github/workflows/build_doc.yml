@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install conda env with cache
-      uses: ./.github/actions/conda_build_cached.yml
+      uses: ./.github/actions/conda_build_cached/
       with:
         env-file: fenics_explicit.yml
     - name: Set env variables
