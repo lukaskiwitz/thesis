@@ -9,6 +9,7 @@ runs:
   steps:
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
+      shell: bash
 
     - name: Restore conda package cache
       uses: actions/cache@v2
@@ -31,11 +32,14 @@ runs:
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: |
         conda env update --file ./${{env-file}} --name base
+      shell: bash
 
     - name: Create build yml
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: conda env export --name base > build.yml
-
+      shell: bash
+      
     - name: Install dependencies from build.yml
       if: steps.build-cache.outputs.cache-hit == 'true'
       run: conda env update --file build.yml --name base
+      shell: bash
