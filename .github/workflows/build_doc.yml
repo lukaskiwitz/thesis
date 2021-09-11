@@ -62,3 +62,4 @@ jobs:
         publish_dir: ./docsrc/build/html
         publish_branch: master
         destination_dir: docs
+        enable_jekyll: false
