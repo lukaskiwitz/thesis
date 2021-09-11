@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,17 +31,17 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Automation with StateManager and post processing" href="intro/minimal/state_manager_example.html" /> 
+    <link rel="prev" title="How to extend the documentation" href="intro/contribute/doc.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -84,11 +86,13 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Guide:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro/contribute/doc.html">How to extend the documentation</a></li>
 </ul>
-<p class="caption"><span class="caption-text">API reference:</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">main package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-thesis.main.SimContainer">Sim container</a></li>
@@ -171,9 +175,9 @@
 <span id="sim-container"></span><h2>Sim container<a class="headerlink" href="#module-thesis.main.SimContainer" title="Permalink to this headline">¶</a></h2>
 <p>Created on Fri Jun  7 12:21:51 2019</p>
 <p>&#64;author: kiwitz</p>
-<dl class="class">
-<dt id="thesis.main.SimContainer.SimContainer">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.SimContainer.</code><code class="sig-name descname">SimContainer</code><span class="sig-paren">(</span><em class="sig-param">parameter_set</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.SimContainer.</span></span><span class="sig-name descname"><span class="pre">SimContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Sim container</p>
 <dl class="field-list simple">
@@ -200,51 +204,51 @@
 </ul>
 </dd>
 </dl>
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.add_entity">
-<code class="sig-name descname">add_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.add_entity">
+<span class="sig-name descname"><span class="pre">add_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity" title="Permalink to this definition">¶</a></dt>
 <dd><p>adds entity to simulation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>entity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.add_entity_type">
-<code class="sig-name descname">add_entity_type</code><span class="sig-paren">(</span><em class="sig-param">template</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity_type" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.add_entity_type">
+<span class="sig-name descname"><span class="pre">add_entity_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>adds entity template to simulation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>template</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>) – the entity type register with simcontainer</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.add_field">
-<code class="sig-name descname">add_field</code><span class="sig-paren">(</span><em class="sig-param">field</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.add_field">
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_field" title="Permalink to this definition">¶</a></dt>
 <dd><p>adds field to simulation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>field</strong> (<a class="reference internal" href="#thesis.main.FieldProblem.FieldProblem" title="thesis.main.FieldProblem.FieldProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldProblem</span></code></a>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.get_entity_by_name">
-<code class="sig-name descname">get_entity_by_name</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_name" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.get_entity_by_name">
+<span class="sig-name descname"><span class="pre">get_entity_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns first entity with name
 :type name: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
 :param name:</p>
@@ -255,9 +259,9 @@
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.get_entity_by_type">
-<code class="sig-name descname">get_entity_by_type</code><span class="sig-paren">(</span><em class="sig-param">type</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_type" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.get_entity_by_type">
+<span class="sig-name descname"><span class="pre">get_entity_by_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO
 returns all entities of type
 maybe add EntityType &lt;- CellType, … classes</p>
@@ -271,46 +275,46 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.init_logs">
-<code class="sig-name descname">init_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_logs" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.init_logs">
+<span class="sig-name descname"><span class="pre">init_logs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_logs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans old logs and writes directory structure for log files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.init_xdmf_files">
-<code class="sig-name descname">init_xdmf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_xdmf_files" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.init_xdmf_files">
+<span class="sig-name descname"><span class="pre">init_xdmf_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_xdmf_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes directory structure for XDMF and sets up file lists (subdomain_files, domain_files, field_files)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.initialize">
-<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.initialize" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.initialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>loads subdomain; generates mesh; adds entities to Fields</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.save_domain">
-<code class="sig-name descname">save_domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_domain" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.save_domain">
+<span class="sig-name descname"><span class="pre">save_domain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_domain" title="Permalink to this definition">¶</a></dt>
 <dd><p>saves Mesh Function with outer domains colored according to field.get_outer_domain_vis</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -318,9 +322,9 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.save_fields">
-<code class="sig-name descname">save_fields</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_fields" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.save_fields">
+<span class="sig-name descname"><span class="pre">save_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>saves results for each element in self.fields as xdmf file with index n</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -332,13 +336,13 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.save_subdomains">
-<code class="sig-name descname">save_subdomains</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_subdomains" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.save_subdomains">
+<span class="sig-name descname"><span class="pre">save_subdomains</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_subdomains" title="Permalink to this definition">¶</a></dt>
 <dd><p>saves Mesh Function with subdomains domains colored according to field.get_sub_domain_vis</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -346,16 +350,16 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.SimContainer.SimContainer.step">
-<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">dt</em>, <em class="sig-param">time_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.step" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.SimContainer.SimContainer.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.step" title="Permalink to this definition">¶</a></dt>
 <dd><p>advanches simulation by dt</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -367,9 +371,9 @@ maybe add EntityType &lt;- CellType, … classes</p>
 <span id="fieldproblem"></span><h2>FieldProblem<a class="headerlink" href="#module-thesis.main.FieldProblem" title="Permalink to this headline">¶</a></h2>
 <p>Created on Fri Jun  7 12:48:49 2019</p>
 <p>&#64;author: Lukas Kiwitz</p>
-<dl class="class">
-<dt id="thesis.main.FieldProblem.FieldProblem">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.FieldProblem.</code><code class="sig-name descname">FieldProblem</code><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.FieldProblem.</span></span><span class="sig-name descname"><span class="pre">FieldProblem</span></span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -386,47 +390,47 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </ul>
 </dd>
 </dl>
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.add_entity">
-<code class="sig-name descname">add_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.add_entity" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.add_entity">
+<span class="sig-name descname"><span class="pre">add_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.add_entity" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>entity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code>) – entity to be added</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.generate_mesh">
-<code class="sig-name descname">generate_mesh</code><span class="sig-paren">(</span><em class="sig-param">path=''</em>, <em class="sig-param">path_prefix=''</em>, <em class="sig-param">file_name='mesh_{field}'</em>, <em class="sig-param">time_index=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.generate_mesh" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.generate_mesh">
+<span class="sig-name descname"><span class="pre">generate_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mesh_{field}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.generate_mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>generates mesh</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>path_prefix</strong> – path to store mesh data</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.get_boundary_gradients">
-<code class="sig-name descname">get_boundary_gradients</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_boundary_gradients" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.get_boundary_gradients">
+<span class="sig-name descname"><span class="pre">get_boundary_gradients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_boundary_gradients" title="Permalink to this definition">¶</a></dt>
 <dd><p>computes average gradient over each entity and stores results in p[“surf_g_{field}”]</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis">
-<code class="sig-name descname">get_outer_domain_vis</code><span class="sig-paren">(</span><em class="sig-param">parameter_name='q'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis">
+<span class="sig-name descname"><span class="pre">get_outer_domain_vis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'q'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_outer_domain_vis" title="Permalink to this definition">¶</a></dt>
 <dd><p>gets MeshFunction that has outer domain surfaces labeled by entity.getState(key)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -438,9 +442,9 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis">
-<code class="sig-name descname">get_sub_domains_vis</code><span class="sig-paren">(</span><em class="sig-param">marker_key</em>, <em class="sig-param">lookup=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis">
+<span class="sig-name descname"><span class="pre">get_sub_domains_vis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lookup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.get_sub_domains_vis" title="Permalink to this definition">¶</a></dt>
 <dd><p>save meshfunction that labels cells by type_name</p>
 <p>:param {type_name:label}</p>
 <dl class="field-list simple">
@@ -450,86 +454,86 @@ maybe add EntityType &lt;- CellType, … classes</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.is_registered">
-<code class="sig-name descname">is_registered</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.is_registered" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.is_registered">
+<span class="sig-name descname"><span class="pre">is_registered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.is_registered" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.remove_entity">
-<code class="sig-name descname">remove_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.remove_entity" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.remove_entity">
+<span class="sig-name descname"><span class="pre">remove_entity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.remove_entity" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.set_outer_domain">
-<code class="sig-name descname">set_outer_domain</code><span class="sig-paren">(</span><em class="sig-param">domain</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_outer_domain" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.set_outer_domain">
+<span class="sig-name descname"><span class="pre">set_outer_domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_outer_domain" title="Permalink to this definition">¶</a></dt>
 <dd><p>sets outer domain
 :type domain: <code class="xref py py-class docutils literal notranslate"><span class="pre">DomainEntity</span></code>
 :param domain: domain object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.set_solver">
-<code class="sig-name descname">set_solver</code><span class="sig-paren">(</span><em class="sig-param">solver</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_solver" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.set_solver">
+<span class="sig-name descname"><span class="pre">set_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.set_solver" title="Permalink to this definition">¶</a></dt>
 <dd><p>sets solver
 :type solver: <code class="xref py py-class docutils literal notranslate"><span class="pre">MySolver</span></code>
 :param solver:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.step">
-<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">dt</em>, <em class="sig-param">time_index</em>, <em class="sig-param">tmp_path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.step" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmp_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.step" title="Permalink to this definition">¶</a></dt>
 <dd><p>runs timestep</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>dT</strong> – delta t for this timestep</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.update_bcs">
-<code class="sig-name descname">update_bcs</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_bcs" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.update_bcs">
+<span class="sig-name descname"><span class="pre">update_bcs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_bcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>updates boundary conditions for all child objects</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.FieldProblem.FieldProblem.update_solver">
-<code class="sig-name descname">update_solver</code><span class="sig-paren">(</span><em class="sig-param">tmp_path</em>, <em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_solver" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.FieldProblem.FieldProblem.update_solver">
+<span class="sig-name descname"><span class="pre">update_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.FieldProblem.FieldProblem.update_solver" title="Permalink to this definition">¶</a></dt>
 <dd><p>updates solver</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -541,9 +545,9 @@ maybe add EntityType &lt;- CellType, … classes</p>
 <span id="state-manager"></span><h2>State Manager<a class="headerlink" href="#module-thesis.main.StateManager" title="Permalink to this headline">¶</a></h2>
 <p>Created on Mon Oct 14 14:34:19 2019</p>
 <p>&#64;author: Lukas Kiwitz</p>
-<dl class="class">
-<dt id="thesis.main.StateManager.StateManager">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">StateManager</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.StateManager.StateManager">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.StateManager.</span></span><span class="sig-name descname"><span class="pre">StateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
 produces the xml files necessary for the use of PostProcessor.</p>
@@ -567,13 +571,13 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </ul>
 </dd>
 </dl>
-<dl class="method">
-<dt id="thesis.main.StateManager.StateManager.load_xml">
-<code class="sig-name descname">load_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.load_xml" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.StateManager.StateManager.load_xml">
+<span class="sig-name descname"><span class="pre">load_xml</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.load_xml" title="Permalink to this definition">¶</a></dt>
 <dd><p>loads xml representation from file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -585,16 +589,16 @@ produces the xml files necessary for the use of PostProcessor.</p>
 <span id="postprocessor"></span><h2>PostProcessor<a class="headerlink" href="#module-thesis.main.PostProcess" title="Permalink to this headline">¶</a></h2>
 <p>Created on Wed Oct 16 12:56:59 2019</p>
 <p>&#64;author: Lukas Kiwitz</p>
-<dl class="class">
-<dt id="thesis.main.PostProcess.CV">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">CV</code><a class="headerlink" href="#thesis.main.PostProcess.CV" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.CV">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">CV</span></span><a class="headerlink" href="#thesis.main.PostProcess.CV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
 <p>Defines a custom computation</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="thesis.main.PostProcess.ComputeSettings">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">ComputeSettings</code><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">ComputeSettings</span></span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to store computation input and output</p>
 <dl class="field-list simple">
@@ -609,15 +613,15 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </ul>
 </dd>
 </dl>
-<dl class="attribute">
-<dt id="thesis.main.PostProcess.ComputeSettings.file_path">
-<code class="sig-name descname">file_path</code><em class="property"> = None</em><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.file_path" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.file_path">
+<span class="sig-name descname"><span class="pre">file_path</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.file_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>file path to volume file</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.get_V">
-<code class="sig-name descname">get_V</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_V" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.get_V">
+<span class="sig-name descname"><span class="pre">get_V</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_V" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionSpace</span></code></p>
@@ -625,9 +629,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.get_boundary_markers">
-<code class="sig-name descname">get_boundary_markers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_boundary_markers" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.get_boundary_markers">
+<span class="sig-name descname"><span class="pre">get_boundary_markers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_boundary_markers" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MeshFunction</span></code></p>
@@ -635,9 +639,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.get_mesh">
-<code class="sig-name descname">get_mesh</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_mesh" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.get_mesh">
+<span class="sig-name descname"><span class="pre">get_mesh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_mesh" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></p>
@@ -645,9 +649,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.get_u">
-<code class="sig-name descname">get_u</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_u" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.get_u">
+<span class="sig-name descname"><span class="pre">get_u</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.get_u" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Function</span></code></p>
@@ -655,51 +659,51 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.set_V">
-<code class="sig-name descname">set_V</code><span class="sig-paren">(</span><em class="sig-param">V</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_V" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.set_V">
+<span class="sig-name descname"><span class="pre">set_V</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">V</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_V" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.set_boundary_markers">
-<code class="sig-name descname">set_boundary_markers</code><span class="sig-paren">(</span><em class="sig-param">bm</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_boundary_markers" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.set_boundary_markers">
+<span class="sig-name descname"><span class="pre">set_boundary_markers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_boundary_markers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.set_mesh">
-<code class="sig-name descname">set_mesh</code><span class="sig-paren">(</span><em class="sig-param">mesh</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_mesh" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.set_mesh">
+<span class="sig-name descname"><span class="pre">set_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_mesh" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.ComputeSettings.set_u">
-<code class="sig-name descname">set_u</code><span class="sig-paren">(</span><em class="sig-param">u</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_u" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="thesis.main.PostProcess.PostProcessComputation">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessComputation</code><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="attribute">
-<dt id="thesis.main.PostProcess.PostProcessComputation.add_xml_result">
-<code class="sig-name descname">add_xml_result</code><em class="property"> = True</em><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation.add_xml_result" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.ComputeSettings.set_u">
+<span class="sig-name descname"><span class="pre">set_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_u" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="thesis.main.PostProcess.PostProcessor">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessor</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessComputation">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">PostProcessComputation</span></span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.get_cell_dataframe">
-<code class="sig-name descname">get_cell_dataframe</code><span class="sig-paren">(</span><em class="sig-param">kde=False</em>, <em class="sig-param">time_indices=None</em>, <em class="sig-param">n_processes=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_cell_dataframe" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessComputation.add_xml_result">
+<span class="sig-name descname"><span class="pre">add_xml_result</span></span><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation.add_xml_result" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.get_global_dataframe">
-<code class="sig-name descname">get_global_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_global_dataframe" title="Permalink to this definition">¶</a></dt>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">PostProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.get_cell_dataframe">
+<span class="sig-name descname"><span class="pre">get_cell_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_cell_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.get_global_dataframe">
+<span class="sig-name descname"><span class="pre">get_global_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_global_dataframe" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
@@ -707,19 +711,19 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.get_kde_estimators">
-<code class="sig-name descname">get_kde_estimators</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">ts</em>, <em class="sig-param">time_index</em>, <em class="sig-param">type_names</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_kde_estimators" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.get_kde_estimators">
+<span class="sig-name descname"><span class="pre">get_kde_estimators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_kde_estimators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.get_stats">
-<code class="sig-name descname">get_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_stats" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.get_stats">
+<span class="sig-name descname"><span class="pre">get_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_stats" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.get_timing_dataframe">
-<code class="sig-name descname">get_timing_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_timing_dataframe" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.get_timing_dataframe">
+<span class="sig-name descname"><span class="pre">get_timing_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_timing_dataframe" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
@@ -727,39 +731,39 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.run_post_process">
-<code class="sig-name descname">run_post_process</code><span class="sig-paren">(</span><em class="sig-param">n_processes</em>, <em class="sig-param">render_paraview=False</em>, <em class="sig-param">extra_cell_constants=False</em>, <em class="sig-param">kde=False</em>, <em class="sig-param">make_images=False</em>, <em class="sig-param">time_indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.run_post_process" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.run_post_process">
+<span class="sig-name descname"><span class="pre">run_post_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_processes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">render_paraview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cell_constants</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.run_post_process" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.save_dataframes">
-<code class="sig-name descname">save_dataframes</code><span class="sig-paren">(</span><em class="sig-param">extra_cell_constants=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.save_dataframes" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.save_dataframes">
+<span class="sig-name descname"><span class="pre">save_dataframes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extra_cell_constants</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.save_dataframes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.PostProcess.PostProcessor.write_post_process_xml">
-<code class="sig-name descname">write_post_process_xml</code><span class="sig-paren">(</span><em class="sig-param">n_processes</em>, <em class="sig-param">debug=False</em>, <em class="sig-param">render_paraview=False</em>, <em class="sig-param">make_images=False</em>, <em class="sig-param">time_indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.write_post_process_xml" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.PostProcessor.write_post_process_xml">
+<span class="sig-name descname"><span class="pre">write_post_process_xml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_processes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">render_paraview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.write_post_process_xml" title="Permalink to this definition">¶</a></dt>
 <dd><p>runs compute-function for all scans an writes result to xml file</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="thesis.main.PostProcess.SD">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">SD</code><a class="headerlink" href="#thesis.main.PostProcess.SD" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.SD">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">SD</span></span><a class="headerlink" href="#thesis.main.PostProcess.SD" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="thesis.main.PostProcess.c">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">c</code><a class="headerlink" href="#thesis.main.PostProcess.c" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.c">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">c</span></span><a class="headerlink" href="#thesis.main.PostProcess.c" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
 </dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.PostProcess.compute">
-<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.compute" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.compute">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_settings</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.compute" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
@@ -767,217 +771,207 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.PostProcess.get_color_dictionary">
-<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">get_color_dictionary</code><span class="sig-paren">(</span><em class="sig-param">cell_df</em>, <em class="sig-param">cell_color_key</em>, <em class="sig-param">cell_colors</em>, <em class="sig-param">round_legend_labels=3</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.get_color_dictionary" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.get_color_dictionary">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">get_color_dictionary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_color_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_legend_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.get_color_dictionary" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="class">
-<dt id="thesis.main.PostProcess.grad">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">grad</code><a class="headerlink" href="#thesis.main.PostProcess.grad" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.grad">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">grad</span></span><a class="headerlink" href="#thesis.main.PostProcess.grad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
 </dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.PostProcess.initialise">
-<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">initialise</code><span class="sig-paren">(</span><em class="sig-param">prefix</em>, <em class="sig-param">_cell_dataframe</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.initialise" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.initialise">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">initialise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_cell_dataframe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.initialise" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.PostProcess.make_images">
-<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">make_images</code><span class="sig-paren">(</span><em class="sig-param">u</em>, <em class="sig-param">conv_factor</em>, <em class="sig-param">compute_settings</em>, <em class="sig-param">visual_conv=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.make_images" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.make_images">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">make_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visual_conv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.make_images" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.PostProcess.make_paraview_images">
-<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">make_paraview_images</code><span class="sig-paren">(</span><em class="sig-param">conv_factor</em>, <em class="sig-param">compute_settings</em>, <em class="sig-param">visual_conv=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.make_paraview_images" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.PostProcess.make_paraview_images">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.PostProcess.</span></span><span class="sig-name descname"><span class="pre">make_paraview_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visual_conv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.make_paraview_images" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
 <div class="section" id="module-thesis.main.MyPlotter">
 <span id="myplotter"></span><h2>MyPlotter<a class="headerlink" href="#module-thesis.main.MyPlotter" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="thesis.main.MyPlotter.Plotter">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">Plotter</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">thesis.main.MyPlotter.</span></span><span class="sig-name descname"><span class="pre">Plotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.activation">
-<code class="sig-name descname">activation</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">R</em>, <em class="sig-param">R_M=860</em>, <em class="sig-param">max=0.125</em>, <em class="sig-param">min=0</em>, <em class="sig-param">n_R=0.55</em>, <em class="sig-param">n_il2=4</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.activation" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.activation">
+<span class="sig-name descname"><span class="pre">activation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">860</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.125</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.55</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_il2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.activation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.calc_cell_activation">
-<code class="sig-name descname">calc_cell_activation</code><span class="sig-paren">(</span><em class="sig-param">R_M=860</em>, <em class="sig-param">max=0.125</em>, <em class="sig-param">min=0</em>, <em class="sig-param">n_R=0.55</em>, <em class="sig-param">n_il2=4</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.calc_cell_activation" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.calc_cell_activation">
+<span class="sig-name descname"><span class="pre">calc_cell_activation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">860</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.125</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.55</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_il2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.calc_cell_activation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_activation_histogramm">
-<code class="sig-name descname">cell_activation_histogramm</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">color='red'</em>, <em class="sig-param">showmax=None</em>, <em class="sig-param">t=None</em>, <em class="sig-param">bins=100</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylog=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_activation_histogramm" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_activation_histogramm">
+<span class="sig-name descname"><span class="pre">cell_activation_histogramm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cummulative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_activation_histogramm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_density_plot">
-<code class="sig-name descname">cell_density_plot</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_density_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_density_plot">
+<span class="sig-name descname"><span class="pre">cell_density_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_density_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_displacement_plot">
-<code class="sig-name descname">cell_displacement_plot</code><span class="sig-paren">(</span><em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">n=False</em>, <em class="sig-param">palette_name='Dark2'</em>, <em class="sig-param">color=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_displacement_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_displacement_plot">
+<span class="sig-name descname"><span class="pre">cell_displacement_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dark2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_displacement_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_heatmap">
-<code class="sig-name descname">cell_heatmap</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">z_name</em>, <em class="sig-param">filter={}</em>, <em class="sig-param">cmap='viridis'</em>, <em class="sig-param">v_range=None</em>, <em class="sig-param">c_lines=None</em>, <em class="sig-param">levels=100</em>, <em class="sig-param">xlog=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">accumulator=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_heatmap" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_heatmap">
+<span class="sig-name descname"><span class="pre">cell_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">x_name</span></em>, <em class="sig-param"><span class="pre">y_name</span></em>, <em class="sig-param"><span class="pre">z_name</span></em>, <em class="sig-param"><span class="pre">filter={}</span></em>, <em class="sig-param"><span class="pre">cmap='viridis'</span></em>, <em class="sig-param"><span class="pre">v_range=None</span></em>, <em class="sig-param"><span class="pre">c_lines=None</span></em>, <em class="sig-param"><span class="pre">levels=100</span></em>, <em class="sig-param"><span class="pre">xlog=False</span></em>, <em class="sig-param"><span class="pre">ylog=False</span></em>, <em class="sig-param"><span class="pre">accumulator=&lt;function</span> <span class="pre">Plotter.&lt;lambda&gt;&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_histogramm">
-<code class="sig-name descname">cell_histogramm</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">quantiles=None</em>, <em class="sig-param">distplot_kwargs=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylog=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_histogramm" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_histogramm">
+<span class="sig-name descname"><span class="pre">cell_histogramm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distplot_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_histogramm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_plot">
-<code class="sig-name descname">cell_plot</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">time=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">condition=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">count=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_plot">
+<span class="sig-name descname"><span class="pre">cell_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">x_name</span></em>, <em class="sig-param"><span class="pre">y_name</span></em>, <em class="sig-param"><span class="pre">legend=False</span></em>, <em class="sig-param"><span class="pre">hue=None</span></em>, <em class="sig-param"><span class="pre">style=None</span></em>, <em class="sig-param"><span class="pre">ci='sd'</span></em>, <em class="sig-param"><span class="pre">time=None</span></em>, <em class="sig-param"><span class="pre">ylim=None</span></em>, <em class="sig-param"><span class="pre">xlim=None</span></em>, <em class="sig-param"><span class="pre">condition=&lt;function</span> <span class="pre">Plotter.&lt;lambda&gt;&gt;</span></em>, <em class="sig-param"><span class="pre">count=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_plot_twinx">
-<code class="sig-name descname">cell_plot_twinx</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">color_axis=True</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">time=None</em>, <em class="sig-param">marker=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot_twinx" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_plot_twinx">
+<span class="sig-name descname"><span class="pre">cell_plot_twinx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot_twinx" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_radial_niche_plot">
-<code class="sig-name descname">cell_radial_niche_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">center_type</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">cell_radius=None</em>, <em class="sig-param">legend=None</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">plot_filter=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_radial_niche_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_radial_niche_plot">
+<span class="sig-name descname"><span class="pre">cell_radial_niche_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">y_name</span></em>, <em class="sig-param"><span class="pre">center_type</span></em>, <em class="sig-param"><span class="pre">hue=None</span></em>, <em class="sig-param"><span class="pre">style=None</span></em>, <em class="sig-param"><span class="pre">xlim=None</span></em>, <em class="sig-param"><span class="pre">ylim=None</span></em>, <em class="sig-param"><span class="pre">ylog=False</span></em>, <em class="sig-param"><span class="pre">ci='sd'</span></em>, <em class="sig-param"><span class="pre">cell_radius=None</span></em>, <em class="sig-param"><span class="pre">legend=None</span></em>, <em class="sig-param"><span class="pre">estimator=None</span></em>, <em class="sig-param"><span class="pre">plot_filter=&lt;function</span> <span class="pre">Plotter.&lt;lambda&gt;&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_radial_niche_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_scatter_plot">
-<code class="sig-name descname">cell_scatter_plot</code><span class="sig-paren">(</span><em class="sig-param">names</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">m=0.05</em>, <em class="sig-param">legend=None</em>, <em class="sig-param">marker='o'</em>, <em class="sig-param">s=0.1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_scatter_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_scatter_plot">
+<span class="sig-name descname"><span class="pre">cell_scatter_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'o'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_scatter_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_slice_plot">
-<code class="sig-name descname">cell_slice_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">axis_name='x'</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_slice_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_slice_plot">
+<span class="sig-name descname"><span class="pre">cell_slice_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_slice_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_steady_state_barplot">
-<code class="sig-name descname">cell_steady_state_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">y_ticks=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_steady_state_barplot">
+<span class="sig-name descname"><span class="pre">cell_steady_state_barplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cummulative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cell_steady_state_plot">
-<code class="sig-name descname">cell_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cell_steady_state_plot">
+<span class="sig-name descname"><span class="pre">cell_steady_state_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cummulative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cells_time_series_plot">
-<code class="sig-name descname">cells_time_series_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cells_time_series_plot">
+<span class="sig-name descname"><span class="pre">cells_time_series_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.cells_time_series_twinx">
-<code class="sig-name descname">cells_time_series_twinx</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">colors_axis=True</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_twinx" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.cells_time_series_twinx">
+<span class="sig-name descname"><span class="pre">cells_time_series_twinx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_twinx" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.compute_cell_distance_metric">
-<code class="sig-name descname">compute_cell_distance_metric</code><span class="sig-paren">(</span><em class="sig-param">source_type_name</em>, <em class="sig-param">metric_dict={'mean_distance': &lt;function mean&gt;}</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_cell_distance_metric" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.compute_cell_distance_metric">
+<span class="sig-name descname"><span class="pre">compute_cell_distance_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">source_type_name</span></em>, <em class="sig-param"><span class="pre">metric_dict={'mean_distance':</span> <span class="pre">&lt;function</span> <span class="pre">mean&gt;}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_cell_distance_metric" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.compute_ci">
-<code class="sig-name descname">compute_ci</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">group_by_columns</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">y_names=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_ci" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.compute_ci">
+<span class="sig-name descname"><span class="pre">compute_ci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_by_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_ci" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.compute_distance_metric">
-<code class="sig-name descname">compute_distance_metric</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">type_name</em>, <em class="sig-param">metrics</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_distance_metric" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.compute_distance_metric">
+<span class="sig-name descname"><span class="pre">compute_distance_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_distance_metric" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.compute_radial_profiles">
-<code class="sig-name descname">compute_radial_profiles</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">center_func=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">n_workers=8</em>, <em class="sig-param">chunksize=32</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_radial_profiles" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.compute_radial_profiles">
+<span class="sig-name descname"><span class="pre">compute_radial_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">y_names</span></em>, <em class="sig-param"><span class="pre">center_func=&lt;function</span> <span class="pre">Plotter.&lt;lambda&gt;&gt;</span></em>, <em class="sig-param"><span class="pre">n_workers=8</span></em>, <em class="sig-param"><span class="pre">chunksize=32</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_radial_profiles" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.count_plot">
-<code class="sig-name descname">count_plot</code><span class="sig-paren">(</span><em class="sig-param">legend=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.count_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.count_plot">
+<span class="sig-name descname"><span class="pre">count_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.count_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.counts_global_twinx">
-<code class="sig-name descname">counts_global_twinx</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">colors_axis=False</em>, <em class="sig-param">ci='sd'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.counts_global_twinx" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.counts_global_twinx">
+<span class="sig-name descname"><span class="pre">counts_global_twinx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.counts_global_twinx" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.empty_plot">
-<code class="sig-name descname">empty_plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.empty_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.empty_plot">
+<span class="sig-name descname"><span class="pre">empty_plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.empty_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.finalize_steady_state_plot">
-<code class="sig-name descname">finalize_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">ax</em>, <em class="sig-param">y_name</em>, <em class="sig-param">ylim</em>, <em class="sig-param">ylog</em>, <em class="sig-param">xlog</em>, <em class="sig-param">x_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.finalize_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.finalize_steady_state_plot">
+<span class="sig-name descname"><span class="pre">finalize_steady_state_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.finalize_steady_state_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.format_scan_index">
-<code class="sig-name descname">format_scan_index</code><span class="sig-paren">(</span><em class="sig-param">index_column</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels">
-<em class="property">static </em><code class="sig-name descname">format_scan_index_ticklabels</code><span class="sig-paren">(</span><em class="sig-param">scan_scale</em>, <em class="sig-param">distance</em>, <em class="sig-param">round_n</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.format_scan_index">
+<span class="sig-name descname"><span class="pre">format_scan_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_column</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></p>
@@ -985,29 +979,39 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.function_plot">
-<code class="sig-name descname">function_plot</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">plot_kwargs={}</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">format_scan_index_ticklabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scan_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.function_plot">
+<span class="sig-name descname"><span class="pre">function_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.function_twinx_overlay">
-<code class="sig-name descname">function_twinx_overlay</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">ylabel=None</em>, <em class="sig-param">sub_divisions=10</em>, <em class="sig-param">plot_args=()</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_twinx_overlay" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.function_twinx_overlay">
+<span class="sig-name descname"><span class="pre">function_twinx_overlay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_divisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_twinx_overlay" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.gca">
-<code class="sig-name descname">gca</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gca" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.gca">
+<span class="sig-name descname"><span class="pre">gca</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gca" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.gcf">
-<code class="sig-name descname">gcf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gcf" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.gcf">
+<span class="sig-name descname"><span class="pre">gcf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gcf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_categorical_color">
-<code class="sig-name descname">get_categorical_color</code><span class="sig-paren">(</span><em class="sig-param">kvp</em>, <em class="sig-param">palette_name='Dark2'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_categorical_color" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_categorical_color">
+<span class="sig-name descname"><span class="pre">get_categorical_color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kvp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dark2'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_categorical_color" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
@@ -1015,9 +1019,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_color_dict">
-<em class="property">static </em><code class="sig-name descname">get_color_dict</code><span class="sig-paren">(</span><em class="sig-param">keys</em>, <em class="sig-param">palette_name='Dark2'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_color_dict" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_color_dict">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">get_color_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dark2'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_color_dict" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
@@ -1025,14 +1029,14 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_continuous_color">
-<code class="sig-name descname">get_continuous_color</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">palette_name='viridids'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_continuous_color" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_continuous_color">
+<span class="sig-name descname"><span class="pre">get_continuous_color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'viridids'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_continuous_color" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_label">
-<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_label" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_label">
+<span class="sig-name descname"><span class="pre">get_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_label" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
@@ -1040,9 +1044,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_max_time_index">
-<code class="sig-name descname">get_max_time_index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_max_time_index" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_max_time_index">
+<span class="sig-name descname"><span class="pre">get_max_time_index</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_max_time_index" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
@@ -1050,9 +1054,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_palette">
-<code class="sig-name descname">get_palette</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">key</em>, <em class="sig-param">palette_name='Dark2'</em>, <em class="sig-param">categorical=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_palette" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_palette">
+<span class="sig-name descname"><span class="pre">get_palette</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dark2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_palette" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
@@ -1060,9 +1064,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_scan_ticks">
-<code class="sig-name descname">get_scan_ticks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_scan_ticks" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_scan_ticks">
+<span class="sig-name descname"><span class="pre">get_scan_ticks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_scan_ticks" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>(typing.List, typing.List)</p>
@@ -1070,104 +1074,104 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.get_subplot_axes">
-<code class="sig-name descname">get_subplot_axes</code><span class="sig-paren">(</span><em class="sig-param">overlay=False</em>, <em class="sig-param">gs_slice=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_subplot_axes" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.get_subplot_axes">
+<span class="sig-name descname"><span class="pre">get_subplot_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs_slice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_subplot_axes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.global_heatmap">
-<code class="sig-name descname">global_heatmap</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">z_name</em>, <em class="sig-param">acc_filter={}</em>, <em class="sig-param">cmap='viridis'</em>, <em class="sig-param">v_range=None</em>, <em class="sig-param">c_lines=None</em>, <em class="sig-param">levels=100</em>, <em class="sig-param">xlog=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">accumulator=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_heatmap" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.global_heatmap">
+<span class="sig-name descname"><span class="pre">global_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">x_name</span></em>, <em class="sig-param"><span class="pre">y_name</span></em>, <em class="sig-param"><span class="pre">z_name</span></em>, <em class="sig-param"><span class="pre">acc_filter={}</span></em>, <em class="sig-param"><span class="pre">cmap='viridis'</span></em>, <em class="sig-param"><span class="pre">v_range=None</span></em>, <em class="sig-param"><span class="pre">c_lines=None</span></em>, <em class="sig-param"><span class="pre">levels=100</span></em>, <em class="sig-param"><span class="pre">xlog=False</span></em>, <em class="sig-param"><span class="pre">ylog=False</span></em>, <em class="sig-param"><span class="pre">accumulator=&lt;function</span> <span class="pre">Plotter.&lt;lambda&gt;&gt;</span></em>, <em class="sig-param"><span class="pre">mask=None</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.global_steady_state_barplot">
-<code class="sig-name descname">global_steady_state_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">bar_spacing=1.1</em>, <em class="sig-param">cat_spacing=1.2</em>, <em class="sig-param">barwidth=0.1</em>, <em class="sig-param">norm=False</em>, <em class="sig-param">y_ticks=True</em>, <em class="sig-param">t_mean=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.global_steady_state_barplot">
+<span class="sig-name descname"><span class="pre">global_steady_state_barplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">barwidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.global_steady_state_plot">
-<code class="sig-name descname">global_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">average=False</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.global_steady_state_plot">
+<span class="sig-name descname"><span class="pre">global_steady_state_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.global_time_series_plot">
-<code class="sig-name descname">global_time_series_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_time_series_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.global_time_series_plot">
+<span class="sig-name descname"><span class="pre">global_time_series_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_time_series_plot" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.load">
-<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.load_single_sim">
-<code class="sig-name descname">load_single_sim</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load_single_sim" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.load_single_sim">
+<span class="sig-name descname"><span class="pre">load_single_sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load_single_sim" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.make_legend">
-<code class="sig-name descname">make_legend</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.make_legend">
+<span class="sig-name descname"><span class="pre">make_legend</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.make_legend_entry">
-<code class="sig-name descname">make_legend_entry</code><span class="sig-paren">(</span><em class="sig-param">ax</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend_entry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.make_legend_entry">
+<span class="sig-name descname"><span class="pre">make_legend_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend_entry" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.plot_twinx_overlay">
-<code class="sig-name descname">plot_twinx_overlay</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">legend_name=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">plot_args=()</em>, <em class="sig-param">y_label=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.plot_twinx_overlay" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.plot_twinx_overlay">
+<span class="sig-name descname"><span class="pre">plot_twinx_overlay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.plot_twinx_overlay" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.prepare_plot">
-<code class="sig-name descname">prepare_plot</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">hue</em>, <em class="sig-param">reduce=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.prepare_plot">
+<span class="sig-name descname"><span class="pre">prepare_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.prepare_twinx_plot">
-<code class="sig-name descname">prepare_twinx_plot</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">y_names</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_twinx_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.prepare_twinx_plot">
+<span class="sig-name descname"><span class="pre">prepare_twinx_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_twinx_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.reduce_df">
-<code class="sig-name descname">reduce_df</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">index_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reduce_df" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.reduce_df">
+<span class="sig-name descname"><span class="pre">reduce_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reduce_df" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
@@ -1175,9 +1179,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.replace_labels">
-<code class="sig-name descname">replace_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.replace_labels" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.replace_labels">
+<span class="sig-name descname"><span class="pre">replace_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.replace_labels" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
@@ -1185,9 +1189,9 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.reset_scan_index">
-<code class="sig-name descname">reset_scan_index</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reset_scan_index" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.reset_scan_index">
+<span class="sig-name descname"><span class="pre">reset_scan_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reset_scan_index" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
@@ -1195,86 +1199,86 @@ produces the xml files necessary for the use of PostProcessor.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.ruse_plot">
-<code class="sig-name descname">ruse_plot</code><span class="sig-paren">(</span><em class="sig-param">IMGPATH</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.ruse_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.ruse_plot">
+<span class="sig-name descname"><span class="pre">ruse_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">IMGPATH</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.ruse_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.savefig">
-<code class="sig-name descname">savefig</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.savefig" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.savefig">
+<span class="sig-name descname"><span class="pre">savefig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.savefig" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.show">
-<code class="sig-name descname">show</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.show" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.show">
+<span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.show" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot">
-<code class="sig-name descname">single_cell_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">linewidth=0.1</em>, <em class="sig-param">units='id'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot">
+<span class="sig-name descname"><span class="pre">single_cell_steady_state_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cummulative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'id'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.steady_state_count">
-<code class="sig-name descname">steady_state_count</code><span class="sig-paren">(</span><em class="sig-param">legend=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.steady_state_count" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.steady_state_count">
+<span class="sig-name descname"><span class="pre">steady_state_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.steady_state_count" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.subplots">
-<code class="sig-name descname">subplots</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">m</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">5)</em>, <em class="sig-param">external_legend='axes'</em>, <em class="sig-param">gridspec_args=None</em>, <em class="sig-param">reset_filter=True</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.subplots" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.subplots">
+<span class="sig-name descname"><span class="pre">subplots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external_legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'axes'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridspec_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.subplots" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.timing_barplot">
-<code class="sig-name descname">timing_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_barplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.timing_barplot">
+<span class="sig-name descname"><span class="pre">timing_barplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_barplot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.timing_lineplot">
-<code class="sig-name descname">timing_lineplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_lineplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.timing_lineplot">
+<span class="sig-name descname"><span class="pre">timing_lineplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_lineplot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.timing_timelineplot">
-<code class="sig-name descname">timing_timelineplot</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_timelineplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.timing_timelineplot">
+<span class="sig-name descname"><span class="pre">timing_timelineplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_timelineplot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="thesis.main.MyPlotter.Plotter.update_rc">
-<code class="sig-name descname">update_rc</code><span class="sig-paren">(</span><em class="sig-param">rc</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.update_rc" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.Plotter.update_rc">
+<span class="sig-name descname"><span class="pre">update_rc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.update_rc" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.MyPlotter.get_distance_matrix">
-<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">get_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.get_distance_matrix" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.get_distance_matrix">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.MyPlotter.</span></span><span class="sig-name descname"><span class="pre">get_distance_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.get_distance_matrix" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.MyPlotter.run_single_step">
-<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">run_single_step</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">dfg</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.run_single_step" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.run_single_step">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.MyPlotter.</span></span><span class="sig-name descname"><span class="pre">run_single_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.run_single_step" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="thesis.main.MyPlotter.split_kwargs">
-<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">split_kwargs</code><span class="sig-paren">(</span><em class="sig-param">kwargs</em>, <em class="sig-param">keys</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.split_kwargs" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="thesis.main.MyPlotter.split_kwargs">
+<span class="sig-prename descclassname"><span class="pre">thesis.main.MyPlotter.</span></span><span class="sig-name descname"><span class="pre">split_kwargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.split_kwargs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -1286,7 +1290,7 @@ produces the xml files necessary for the use of PostProcessor.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="intro/minimal/state_manager_example.html" class="btn btn-neutral float-left" title="Automation with StateManager and post processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intro/contribute/doc.html" class="btn btn-neutral float-left" title="How to extend the documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

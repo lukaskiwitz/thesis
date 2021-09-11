@@ -5,12 +5,17 @@
 
 Welcome to Spatial Simulation's documentation!
 ==============================================
+This is meant to be an internal documentation.
+
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples:
+   :caption: Guide:
 
    intro/intro
+   intro/faq
+   intro/contribute/doc
+
 
 .. toctree::
    :maxdepth: 1

@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,10 +31,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -85,9 +87,10 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Guide:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../intro.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../install.html">Installation Instructions (with anaconda)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../general.html">Overview</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="min_examples.html">Minimal examples</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Single simulation with SimContainer</a><ul>
@@ -99,10 +102,13 @@
 <li class="toctree-l3"><a class="reference internal" href="state_manager_example.html">Automation with StateManager and post processing</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../full_examples.html">Runnig a full example</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/doc.html">How to extend the documentation</a></li>
 </ul>
-<p class="caption"><span class="caption-text">API reference:</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../main.html">main package</a></li>
 </ul>
@@ -182,45 +188,27 @@
 <h2>Setup and running<a class="headerlink" href="#setup-and-running" title="Permalink to this headline">¶</a></h2>
 <p>The following is a minimal example using the box_grid.py scenario.
 It will run a single static simulation and save the cytokine field to file.</p>
-<div class="highlight-default notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">parameters</span> <span class="kn">import</span> <span class="n">cytokines</span><span class="p">,</span> <span class="n">cell_types_dict</span><span class="p">,</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">numeric</span><span class="p">,</span> <span class="n">boundary</span>
-<span class="kn">from</span> <span class="nn">thesis.main.SimContainer</span> <span class="kn">import</span> <span class="n">SimContainer</span>
-<span class="kn">from</span> <span class="nn">thesis.scenarios.box_grid</span> <span class="kn">import</span> <span class="n">setup</span>
-<span class="kn">from</span> <span class="nn">thesis.main.assign_fractions</span> <span class="kn">import</span> <span class="n">assign_fractions</span>
-
-<span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/extra/kiwitz/simcontainer_example/test_1/&quot;</span>
-<span class="n">sc</span> <span class="o">=</span> <span class="n">setup</span><span class="p">(</span>
-    <span class="n">cytokines</span><span class="p">,</span>
-    <span class="n">cell_types_dict</span><span class="p">,</span>
-    <span class="n">boundary</span><span class="p">,</span>
-    <span class="n">geometry</span><span class="p">,</span>
-    <span class="n">numeric</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">,</span>
-    <span class="s2">&quot;&quot;</span><span class="p">)</span>
-
-<span class="n">assign_fractions</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">save_fields</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">save_markers</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="lineno"> 1 </span><span class="kn">from</span> <span class="nn">parameters</span> <span class="kn">import</span> <span class="n">cytokines</span><span class="p">,</span> <span class="n">cell_types_dict</span><span class="p">,</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">numeric</span><span class="p">,</span> <span class="n">boundary</span>
+<span class="lineno"> 2 </span><span class="kn">from</span> <span class="nn">thesis.main.SimContainer</span> <span class="kn">import</span> <span class="n">SimContainer</span>
+<span class="lineno"> 3 </span><span class="kn">from</span> <span class="nn">thesis.scenarios.box_grid</span> <span class="kn">import</span> <span class="n">setup</span>
+<span class="lineno"> 4 </span><span class="kn">from</span> <span class="nn">thesis.main.assign_fractions</span> <span class="kn">import</span> <span class="n">assign_fractions</span>
+<span class="lineno"> 5 </span>
+<span class="lineno"> 6 </span><span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/extra/kiwitz/simcontainer_example/test_1/&quot;</span>
+<span class="lineno"> 7 </span><span class="n">sc</span> <span class="o">=</span> <span class="n">setup</span><span class="p">(</span>
+<span class="lineno"> 8 </span>    <span class="n">cytokines</span><span class="p">,</span>
+<span class="lineno"> 9 </span>    <span class="n">cell_types_dict</span><span class="p">,</span>
+<span class="lineno">10 </span>    <span class="n">boundary</span><span class="p">,</span>
+<span class="lineno">11 </span>    <span class="n">geometry</span><span class="p">,</span>
+<span class="lineno">12 </span>    <span class="n">numeric</span><span class="p">,</span>
+<span class="lineno">13 </span>    <span class="n">path</span><span class="p">,</span>
+<span class="lineno">14 </span>    <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="lineno">15 </span>
+<span class="lineno">16 </span><span class="n">assign_fractions</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">17 </span><span class="n">sc</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="lineno">18 </span><span class="n">sc</span><span class="o">.</span><span class="n">save_fields</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">19 </span><span class="n">sc</span><span class="o">.</span><span class="n">save_markers</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <dl class="simple">
 <dt>Line 6</dt><dd><p>file path for simulation results</p>
 </dd>
@@ -240,163 +228,86 @@ It will run a single static simulation and save the cytokine field to file.</p>
 <h2>Parameters for the box_grid scenario<a class="headerlink" href="#parameters-for-the-box-grid-scenario" title="Permalink to this headline">¶</a></h2>
 <p>The run file imports names from parameters.py, which are required for scenario construction.
 For box_grid.py a basic parameter file looks like this</p>
-<div class="highlight-default notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-<span class="sd">&quot;&quot;&quot;defines cytokines. Currently their parameters can be changed using the scan sample interface.</span>
-<span class="sd">&quot;field_quantity&quot; determines which boundary contitions interact with which fields, </span>
-<span class="sd">the name is only used in IO/post processing.&quot;&quot;&quot;</span>
-
-<span class="n">cytokines</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;IL-2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;field_quantity&quot;</span><span class="p">:</span> <span class="s2">&quot;il2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;k_on&quot;</span><span class="p">:</span> <span class="mf">111.6</span><span class="p">,</span>  <span class="c1"># receptor binding constant 1/(nM*h),</span>
-        <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># Diffusion constant mu^2</span>
-        <span class="s2">&quot;kd&quot;</span><span class="p">:</span> <span class="mf">0.1</span>  <span class="c1"># cytokine decay in medium 1/h</span>
-    <span class="p">}</span>
-<span class="p">]</span>
-
-<span class="sd">&quot;&quot;&quot;Sets up cells types. T</span>
-<span class="sd">The first entry is the default cell type. There the &quot;fraction&quot; entry is meaningless.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="n">R_h</span> <span class="o">=</span> <span class="mf">1e4</span>
-<span class="n">R_l</span> <span class="o">=</span> <span class="mf">1e2</span>
-<span class="n">q</span> <span class="o">=</span> <span class="mi">1</span>
-
-<span class="n">cell_types_dict</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
-     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
-     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e2</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span><span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
-     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
-     <span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sec&quot;</span><span class="p">,</span>
-     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
-     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
-     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e2</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
-     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
-     <span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;abs&quot;</span><span class="p">,</span>
-     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
-     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span>
-     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span><span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
-     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
-     <span class="p">}</span>
-<span class="p">]</span>
-
-<span class="n">boundary</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="sd">&quot;&quot;&quot;defines the variable aspects of the geometry. Unit is micro meters&quot;&quot;&quot;</span>
-<span class="n">geometry</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;margin&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># margin around the cell grid</span>
-    <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># distance between cell centers</span>
-    <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># cell radius</span>
-    <span class="s2">&quot;x_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>  <span class="c1"># dimensions of the cell grid (edge length in um)</span>
-    <span class="s2">&quot;y_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>
-    <span class="s2">&quot;z_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span><span class="c1"># comment out for single cell layer</span>
-    <span class="s2">&quot;norm_area&quot;</span><span class="p">:</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">5</span> <span class="o">**</span> <span class="mi">2</span><span class="c1"># area passed to bc function of outside boundary</span>
-<span class="p">}</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">parameters regarding meshing and fenics. unit_length_exponent is necessary for calculation concentrations. </span>
-<span class="sd">-6  means the simulation is in micro meters.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="n">numeric</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;linear_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;gmres&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;preconditioner&quot;</span><span class="p">:</span> <span class="s2">&quot;hypre_amg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span><span class="c1"># use linear fenics solver</span>
-    <span class="s2">&quot;krylov_atol&quot;</span><span class="p">:</span> <span class="mf">1e-35</span><span class="p">,</span>
-    <span class="s2">&quot;krylov_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span><span class="c1"># linear solver relative tolerance</span>
-    <span class="s2">&quot;newton_atol&quot;</span><span class="p">:</span> <span class="mf">1e-35</span><span class="p">,</span>
-    <span class="s2">&quot;newton_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span><span class="c1"># newton method relative tolerance</span>
-    <span class="s2">&quot;dofs_per_node&quot;</span><span class="p">:</span> <span class="mi">15000</span><span class="p">,</span><span class="c1">#target degrees of freedom per mpi node for pde solving</span>
-    <span class="s2">&quot;max_mpi_nodes&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="c1"># max nodes for fenics solver</span>
-    <span class="s2">&quot;cells_per_worker&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-    <span class="s2">&quot;max_pool_size&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="c1">#max number of worker to extract boundary conditions at runtime</span>
-    <span class="s2">&quot;min_char_length&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># mesh resolution</span>
-    <span class="s2">&quot;max_char_length&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># mesh resolution</span>
-    <span class="s2">&quot;unit_length_exponent&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">6</span>  <span class="c1"># for concentration conversion</span>
-<span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="lineno"> 1 </span><span class="kn">import</span> <span class="nn">os</span>
+<span class="lineno"> 2 </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno"> 3 </span>
+<span class="lineno"> 4 </span><span class="sd">&quot;&quot;&quot;defines cytokines. Currently their parameters can be changed using the scan sample interface.</span>
+<span class="lineno"> 5 </span><span class="sd">&quot;field_quantity&quot; determines which boundary contitions interact with which fields, </span>
+<span class="lineno"> 6 </span><span class="sd">the name is only used in IO/post processing.&quot;&quot;&quot;</span>
+<span class="lineno"> 7 </span>
+<span class="lineno"> 8 </span><span class="n">cytokines</span> <span class="o">=</span> <span class="p">[</span>
+<span class="lineno"> 9 </span>    <span class="p">{</span>
+<span class="lineno">10 </span>        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;IL-2&quot;</span><span class="p">,</span>
+<span class="lineno">11 </span>        <span class="s2">&quot;field_quantity&quot;</span><span class="p">:</span> <span class="s2">&quot;il2&quot;</span><span class="p">,</span>
+<span class="lineno">12 </span>        <span class="s2">&quot;k_on&quot;</span><span class="p">:</span> <span class="mf">111.6</span><span class="p">,</span>  <span class="c1"># receptor binding constant 1/(nM*h),</span>
+<span class="lineno">13 </span>        <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># Diffusion constant mu^2</span>
+<span class="lineno">14 </span>        <span class="s2">&quot;kd&quot;</span><span class="p">:</span> <span class="mf">0.1</span>  <span class="c1"># cytokine decay in medium 1/h</span>
+<span class="lineno">15 </span>    <span class="p">}</span>
+<span class="lineno">16 </span><span class="p">]</span>
+<span class="lineno">17 </span>
+<span class="lineno">18 </span><span class="sd">&quot;&quot;&quot;Sets up cells types. T</span>
+<span class="lineno">19 </span><span class="sd">The first entry is the default cell type. There the &quot;fraction&quot; entry is meaningless.</span>
+<span class="lineno">20 </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="lineno">21 </span><span class="n">R_h</span> <span class="o">=</span> <span class="mf">1e4</span>
+<span class="lineno">22 </span><span class="n">R_l</span> <span class="o">=</span> <span class="mf">1e2</span>
+<span class="lineno">23 </span><span class="n">q</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">24 </span>
+<span class="lineno">25 </span><span class="n">cell_types_dict</span> <span class="o">=</span> <span class="p">[</span>
+<span class="lineno">26 </span>    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+<span class="lineno">27 </span>     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="lineno">28 </span>     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="lineno">29 </span>     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e2</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span><span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
+<span class="lineno">30 </span>     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
+<span class="lineno">31 </span>     <span class="p">},</span>
+<span class="lineno">32 </span>    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sec&quot;</span><span class="p">,</span>
+<span class="lineno">33 </span>     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="lineno">34 </span>     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="lineno">35 </span>     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e2</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
+<span class="lineno">36 </span>     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
+<span class="lineno">37 </span>     <span class="p">},</span>
+<span class="lineno">38 </span>    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;abs&quot;</span><span class="p">,</span>
+<span class="lineno">39 </span>     <span class="s2">&quot;mc&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="lineno">40 </span>     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="lineno">41 </span>     <span class="s2">&quot;il2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Kc&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;amax&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span><span class="s2">&quot;ths&quot;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;bc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;R_saturation&quot;</span><span class="p">},</span>
+<span class="lineno">42 </span>     <span class="s2">&quot;internal_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
+<span class="lineno">43 </span>     <span class="p">}</span>
+<span class="lineno">44 </span><span class="p">]</span>
+<span class="lineno">45 </span>
+<span class="lineno">46 </span><span class="n">boundary</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">47 </span>
+<span class="lineno">48 </span><span class="sd">&quot;&quot;&quot;defines the variable aspects of the geometry. Unit is micro meters&quot;&quot;&quot;</span>
+<span class="lineno">49 </span><span class="n">geometry</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">50 </span>    <span class="s2">&quot;margin&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># margin around the cell grid</span>
+<span class="lineno">51 </span>    <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># distance between cell centers</span>
+<span class="lineno">52 </span>    <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># cell radius</span>
+<span class="lineno">53 </span>    <span class="s2">&quot;x_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>  <span class="c1"># dimensions of the cell grid (edge length in um)</span>
+<span class="lineno">54 </span>    <span class="s2">&quot;y_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>
+<span class="lineno">55 </span>    <span class="s2">&quot;z_grid&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span><span class="c1"># comment out for single cell layer</span>
+<span class="lineno">56 </span>    <span class="s2">&quot;norm_area&quot;</span><span class="p">:</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">5</span> <span class="o">**</span> <span class="mi">2</span><span class="c1"># area passed to bc function of outside boundary</span>
+<span class="lineno">57 </span><span class="p">}</span>
+<span class="lineno">58 </span>
+<span class="lineno">59 </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="lineno">60 </span><span class="sd">parameters regarding meshing and fenics. unit_length_exponent is necessary for calculation concentrations. </span>
+<span class="lineno">61 </span><span class="sd">-6  means the simulation is in micro meters.</span>
+<span class="lineno">62 </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="lineno">63 </span><span class="n">numeric</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">64 </span>    <span class="s2">&quot;linear_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;gmres&quot;</span><span class="p">,</span>
+<span class="lineno">65 </span>    <span class="s2">&quot;preconditioner&quot;</span><span class="p">:</span> <span class="s2">&quot;hypre_amg&quot;</span><span class="p">,</span>
+<span class="lineno">66 </span>    <span class="s2">&quot;linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span><span class="c1"># use linear fenics solver</span>
+<span class="lineno">67 </span>    <span class="s2">&quot;krylov_atol&quot;</span><span class="p">:</span> <span class="mf">1e-35</span><span class="p">,</span>
+<span class="lineno">68 </span>    <span class="s2">&quot;krylov_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span><span class="c1"># linear solver relative tolerance</span>
+<span class="lineno">69 </span>    <span class="s2">&quot;newton_atol&quot;</span><span class="p">:</span> <span class="mf">1e-35</span><span class="p">,</span>
+<span class="lineno">70 </span>    <span class="s2">&quot;newton_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span><span class="c1"># newton method relative tolerance</span>
+<span class="lineno">71 </span>    <span class="s2">&quot;dofs_per_node&quot;</span><span class="p">:</span> <span class="mi">15000</span><span class="p">,</span><span class="c1">#target degrees of freedom per mpi node for pde solving</span>
+<span class="lineno">72 </span>    <span class="s2">&quot;max_mpi_nodes&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="c1"># max nodes for fenics solver</span>
+<span class="lineno">73 </span>    <span class="s2">&quot;cells_per_worker&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+<span class="lineno">74 </span>    <span class="s2">&quot;max_pool_size&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="c1">#max number of worker to extract boundary conditions at runtime</span>
+<span class="lineno">75 </span>    <span class="s2">&quot;min_char_length&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># mesh resolution</span>
+<span class="lineno">76 </span>    <span class="s2">&quot;max_char_length&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># mesh resolution</span>
+<span class="lineno">77 </span>    <span class="s2">&quot;unit_length_exponent&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">6</span>  <span class="c1"># for concentration conversion</span>
+<span class="lineno">78 </span><span class="p">}</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 </div>
 <div class="section" id="results">
 <h2>Results<a class="headerlink" href="#results" title="Permalink to this headline">¶</a></h2>
