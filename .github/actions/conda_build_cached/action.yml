@@ -12,7 +12,7 @@ runs:
       shell: bash
       
     - name: echo input file hash
-      run: echo ${{ hashFiles('fenics_explicit.yml') }}
+      run: echo ${{ hashFiles('/fenics_explicit.yml') }}
       shell: bash
       
     - name: Add conda to system path
