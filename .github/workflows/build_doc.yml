@@ -27,7 +27,7 @@ jobs:
         cache-name: build-cache
       with:
         path: build.yml
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
 
     - name: Install dependencies from build
       if: steps.build-cache.outputs.cache-hit == 'true'
