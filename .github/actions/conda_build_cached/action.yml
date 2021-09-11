@@ -11,6 +11,10 @@ runs:
       run: echo ${{inputs.env-file}}
       shell: bash
       
+    - name: echo input file hash
+      run: echo ${{ hashFiles('./${{inputs.env-file}}') }}
+      shell: bash
+      
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
       shell: bash
@@ -33,7 +37,7 @@ runs:
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./${{inputs.env-file}}') }}-v2
     
     - name: echo cache hit
-      run: ${{steps.build-cache.outputs.cache-hit}}
+      run: echo ${{steps.build-cache.outputs.cache-hit}}
       shell: bash
       
     - name: Install dependencies
