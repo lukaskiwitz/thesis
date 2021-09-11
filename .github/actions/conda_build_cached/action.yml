@@ -29,6 +29,7 @@ runs:
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Install dependencies
+      shell: bash
       run: |
         if [[ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]];
         then
@@ -39,4 +40,3 @@ runs:
         fi
         exit 0
         
-     shell: bash
