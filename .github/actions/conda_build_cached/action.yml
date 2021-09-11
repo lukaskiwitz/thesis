@@ -12,7 +12,7 @@ runs:
       shell: bash
       
     - name: echo input file hash
-      run: echo ${{ hashFiles('./${{inputs.env-file}}') }}
+      run: echo ${{ hashFiles('**/${{inputs.env-file}}') }}
       shell: bash
       
     - name: Add conda to system path
