@@ -2,15 +2,7 @@ name: Build and commit documentation
 
 on: workflow_dispatch
 
-jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1
-    steps:
-    - uses: actions/checkout@v2
-    
-    
+jobs:  
   run-test:
     runs-on: ubuntu-latest
     needs: build-linux
