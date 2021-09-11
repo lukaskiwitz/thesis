@@ -29,7 +29,7 @@ runs:
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Install dependencies
-      run:|
+      run: |
         if [[ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]];
         then
           conda env update --file build.yml --name base
