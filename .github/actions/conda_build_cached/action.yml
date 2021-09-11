@@ -7,6 +7,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    -name: echo input file
+      run: echo ${{inputs.env-file}}
+      shell: bash
+      
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
       shell: bash
@@ -17,7 +21,7 @@ runs:
         cache-name: pkg-cache
       with:
         path: /usr/share/miniconda/pkgs
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles(${{inputs.env-file}}) }}-v2
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Restore build.yml cache
       uses: actions/cache@v2
@@ -26,7 +30,7 @@ runs:
         cache-name: build-cache
       with:
         path: build.yml
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles(${{inputs.env-file}}) }}-v2
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Install dependencies
       shell: bash
