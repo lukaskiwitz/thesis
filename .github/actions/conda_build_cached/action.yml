@@ -17,7 +17,7 @@ runs:
         cache-name: pkg-cache
       with:
         path: /usr/share/miniconda/pkgs
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('${{env-file}}') }}-v2
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Restore build.yml cache
       uses: actions/cache@v2
@@ -26,12 +26,12 @@ runs:
         cache-name: build-cache
       with:
         path: build.yml
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{env-file}}') }}-v2
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{inputs.env-file}}') }}-v2
 
     - name: Install dependencies from input file
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: |
-        conda env update --file ./${{env-file}} --name base
+        conda env update --file ./${{inputs.env-file}} --name base
       shell: bash
 
     - name: Create build yml
