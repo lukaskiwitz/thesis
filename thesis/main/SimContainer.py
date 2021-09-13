@@ -144,11 +144,7 @@ class SimContainer(SimComponent):
         self.register_entites()
 
         for field in self.fields:
-            field.update_parameter_set(self.p)
-            if not (field.remesh_timestep or field.remesh_scan_sample):
-                field.generate_mesh(self.path, load_cache=True)
-            field.update_parameter_set(self.p)
-            field.update_solver(self.get_tmp_path())
+            field.initialize_run(self.p,self.path,self.get_tmp_path())
 
     def set_ext_cache(self, ext_cache: str) -> None:
         for field in self.fields:
@@ -163,7 +159,8 @@ class SimContainer(SimComponent):
                 if fq in [i.field_quantity for i in entity.interactions]:
                     field._add_entity(entity)
 
-            field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
+            if hasattr(field,"domain_template"):
+                field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
 
     def get_entity_by_name(self, name: str) -> Entity:
 
@@ -262,7 +259,7 @@ class SimContainer(SimComponent):
                     field.load_mesh(field.mesh_path + field.file_name + ".xdmf")
                     field.ale(dt, tmp_path)
                     sleep(2)
-                    field.solver.compileSolver(tmp_path)
+                    field.solver.compile(tmp_path)
                 # field.save_mesh(time_index, self.path)
 
     def get_tmp_path(self) -> str:
@@ -330,7 +327,7 @@ class SimContainer(SimComponent):
         for field in self.fields:
             tmp_path = self.get_tmp_path()
             field.path = self.path
-            field.update_solver(tmp_path, p=self.p)
+            field.update_step(self.p, self.path, tmp_path)
             field.step(dt, time_index, tmp_path)
 
         for i, entity in enumerate(self.entity_list):
@@ -462,6 +459,10 @@ class SimContainer(SimComponent):
             self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
 
     def save_markers(self, time_index: int) -> Dict[str, str]:
+
+        raise NotImplementedError
+
+        """TODO dirty solution. this should be on the FieldProblem"""
 
         path_dict = {}
         top_dir = os.path.join(self.get_current_path(), "entity_markers")

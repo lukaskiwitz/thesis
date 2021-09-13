@@ -4,7 +4,7 @@ from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.SimContainer import SimContainer
-
+from typing import Union
 
 class MyScenario:
 
@@ -19,10 +19,11 @@ class MyScenario:
         self.parameter_pool = parameter_pool
         self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
 
-    def get_sim_container(self, p):
+    def get_sim_container(self, p:Union[ParameterSet,None]):
 
         parameter_set = deepcopy(self.global_parameters)
-        parameter_set.update(p, override=True)
+        if p is not None:
+            parameter_set.update(p, override=True)
 
         for locator in self.entity_locators:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)

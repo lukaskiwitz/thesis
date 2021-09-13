@@ -6,8 +6,8 @@ from scipy.constants import N_A
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
 from thesis.main.MyEntityLocator import MyCellGridLocator
-from thesis.main.MyFieldTemplate import MyCytokineTemplate
-from thesis.main.MyGlobalModel import MyPDEModel
+from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
+from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
 from thesis.main.MyInteraction import MyFieldInteractionTemplate
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MyScenario import MyScenario
@@ -53,9 +53,14 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     domain_template = MyBoundingBoxTemplate()
 
     pde_model = MyPDEModel("pde_model")
+    # pde_model = MyODEModel("ode_model")
+
     pde_model.domain_template = domain_template
     for c in cytokines:
+
         cytokine_template = MyCytokineTemplate()
+        # cytokine_template = MyMeanCytokineTemplate()
+
         cytokine_template.name = c["name"]
         cytokine_template.field_quantity = c["field_quantity"]
         pde_model.add_field_template(cytokine_template)

@@ -13,7 +13,7 @@ import pickle as pl
 import signal
 import subprocess as sp
 from abc import *
-from typing import List
+from typing import List, Any
 
 import dill
 import fenics as fcs
@@ -36,6 +36,16 @@ class MySolver(ABC):
         self.p: ParameterSet = ParameterSet("solver_dummy", [])
         self.field_quantity: str = ""
 
+    @abstractmethod
+    def solve(self):pass
+
+    @abstractmethod
+    def compile(self, tmp_path: str):pass
+
+    def kill(self):pass
+
+    def get_solution(self) -> Any: pass
+
 
 class MyDiffusionSolver(MySolver):
     """
@@ -50,10 +60,10 @@ class MyDiffusionSolver(MySolver):
     :var u: stores solution
     :vartype u: fcs.Function
 
-    :var dirichlet: stores dirichlet BCs; set by self.compileSolver()
+    :var dirichlet: stores dirichlet BCs; set by self.compile()
     :vartype dirichlet: List[BC.DirichletBC]
 
-    :var integralBC: stores nonlinear BCs; set by self.compileSolver()
+    :var integralBC: stores nonlinear BCs; set by self.compile()
     :vartype integralBC: List[BC.Integral]
 
     :var dim: mesh dimension
@@ -80,7 +90,7 @@ class MyDiffusionSolver(MySolver):
 
         super().__init__()
 
-    def compileSolver(self, tmp_path: str):
+    def compile(self, tmp_path: str):
 
         def sig_handler(signum, frame):
             if self.process is not None:
@@ -241,4 +251,20 @@ class MyDiffusionSolver(MySolver):
             except (FileNotFoundError, sp.TimeoutExpired, ValueError) as e:
                 self.process.kill()
                 warning("External solver timed out or crashed, restarting worker threads")
-                self.compileSolver(self.tmp_path)
+                self.compile(self.tmp_path)
+
+    def get_solution(self) -> Any:
+
+        return self.u
+
+class MyMeanFieldSolver(MySolver):
+
+    def solve(self):
+        pass
+
+    def compile(self, tmp_path: str):
+        pass
+
+    def get_solution(self) -> Any:
+
+        return 1e-17

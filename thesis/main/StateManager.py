@@ -111,7 +111,7 @@ class StateManager:
 
     def load_xml(self) -> None:
         """loads xml representation from file"""
-        self.element_tree = ET.parse(os.path.join(self.path,"log.xml"))
+        self.element_tree = ET.parse(os.path.join(self.path, "log.xml"))
 
     def get_scan_folder(self, n: int) -> str:
         return self.path + self.scan_folder_pattern.format(n=n)
@@ -182,8 +182,7 @@ class StateManager:
     def _loadCellDump(self) -> None:
         self.cellDump = self.element_tree.getroot().find("/cellDump")
 
-    def add_time_step_to_element_tree(self, sc, scan_index: int, time_index: int, time: float,
-                                      marker_paths: Mapping[str, str]) -> None:
+    def add_time_step_to_element_tree(self, sc, scan_index: int, time_index: int, time: float) -> None:
 
         """
         :param marker_paths: Dictionry of shape {marker_key :marker_name}
@@ -210,16 +209,18 @@ class StateManager:
         step.set("time_index", str(time_index))
         step.set("time", str(time))
 
+        fields = ET.SubElement(step, "Fields")
+
+        for field in self.sim_container.fields:
+            field_element = field.get_result_element(time_index, scan_index, self.sim_container.get_current_path(),
+                                                     self.sim_container.markers, self.sim_container.marker_lookup)
+            fields.insert(0, field_element)
+
         lookup_table_element = ET.SubElement(step, "MarkerLookupTable")
         for k, v in self.sim_container.marker_lookup.items():
             lookup_element = ET.SubElement(lookup_table_element, "MarkerLookup")
             lookup_element.set("key", str(k))
             lookup_element.set("value", str(v))
-
-        for marker_key, marker_path in marker_paths.items():
-            marker_element = ET.SubElement(step, "Marker")
-            marker_element.set("path", marker_path)
-            marker_element.set("marker_key", marker_key)
 
         cells = ET.SubElement(step, "Cells")
         for c in sc.entity_list:
@@ -250,14 +251,6 @@ class StateManager:
 
         time_series.insert(0, self.global_collections.serialize_to_xml())
         time_series.insert(0, self.global_parameters.serialize_to_xml())
-
-        fields = ET.SubElement(step, "Fields")
-
-        for field in self.sim_container.fields:
-            field_element = field.get_result_element(time_index, scan_index, self.sim_container.get_current_path())
-            fields.insert(0,field_element)
-
-
 
         if self.compress_log_file:
             tree = ET.ElementTree(step)
@@ -410,9 +403,8 @@ class StateManager:
             try:
                 def post_step(sc, time_index, t, T):
                     self.estimate_time_remaining(sc, scan_index, time_index, range(n_samples), T)
-                    # result_paths = sc.save_fields(int(time_index - 1))
-                    marker_paths = sc.save_markers(time_index)
-                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t, marker_paths)
+                    # marker_paths = sc.save_markers(time_index)
+                    self.add_time_step_to_element_tree(sc, scan_index, time_index, t)
                     self.write_element_tree()
 
                     import resource

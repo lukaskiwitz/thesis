@@ -2,16 +2,42 @@ import numpy as np
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
-
+from thesis.main.ParameterSet import ParameterSet
 
 class MyEntityLocator:
 
     def __init__(self):
         pass
 
-    def get_entity_list(self, entity_types: [EntityType]) -> [Entity]:
+    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet) -> [Entity]:
         return None
 
+class MyCellListLocator(MyEntityLocator):
+
+    def __init__(self, cell_pos, cell_types):
+
+
+        assert np.array(cell_pos).shape[1] == 3
+        assert len(cell_pos) == len(cell_types)
+
+        self.cell_pos = cell_pos
+        self.cell_types = cell_types
+
+
+    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
+
+        assert issubclass(type(cell_type), CellType)
+
+        cell_list = []
+        for i, p in enumerate(self.cell_pos):
+            r = self.cell_types[i].p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+            assert r is not None and r > 0
+
+            cell = Cell(p, r, [])
+            cell.set_cell_type(self.cell_types[i], None)
+            cell_list.append(cell)
+
+        return cell_list
 
 class MyCellGridLocator(MyEntityLocator):
 
@@ -19,7 +45,7 @@ class MyCellGridLocator(MyEntityLocator):
 
         pass
 
-    def get_entity_list(self, cell_type: CellType, global_p) -> [Cell]:
+    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
 
         assert issubclass(type(cell_type), CellType)
 
