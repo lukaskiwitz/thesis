@@ -25,6 +25,7 @@ from thesis.main.ParameterSet import ParameterSet, ParameterCollection, Physical
 from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.my_debug import message, total_time, warning
+from thesis.main.GlobalResult import ScalarFieldResult, ScalarResult
 
 Element = et.Element
 
@@ -49,11 +50,12 @@ class GlobalProblem(ABC):
 
     def finish_run(self) -> None: pass
 
+    @abstractmethod
     def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None: pass
 
-    def step(self, dt: float, time_index: int, tmp_path: str) -> None:
+    def step(self, t:float, dt: float, time_index: int, tmp_path: str) -> None:
         self.solver.compile(tmp_path)
-        self.solver.solve()
+        self.solver.solve(t, dt)
         self.solver.kill()
 
         self.compute_coupling_properties(tmp_path)
@@ -68,9 +70,10 @@ class GlobalProblem(ABC):
         self.registered_entities.append({"entity": entity, "patch": 0})
 
     @abstractmethod
-    def get_result_element(self) -> Element: pass
+    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:pass
 
-    def save_result_to_file(self): pass
+    @abstractmethod
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str]: pass
 
     def compute_coupling_properties(self, tmp_path: str) -> None: pass
 
@@ -141,23 +144,13 @@ class FieldProblem(GlobalProblem):
 
     def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str]:
 
-        file_name = "field_{fq}".format(fq=self.field_quantity)
-        distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
-        sol = "sol/{fn}_{ti}.xdmf".format(fn=file_name, ti=str(time_index))
 
-        u = self.get_field()
-        if u is not None:
-            u.rename(self.field_quantity, self.field_quantity)
+        result = ScalarFieldResult(path, self.field_quantity)
+        u = self.solver.get_solution()
+        result.set(u)
 
-            with fcs.HDF5File(fcs.MPI.comm_world, path + distplot, "w") as f:
-                f.write(self.get_field(), self.field_name)
-            with fcs.XDMFFile(fcs.MPI.comm_world, path + sol) as f:
-                f.write(self.get_field(), time_index)
-            result = (distplot, sol)
-        else:
-            result = (None, None)
 
-        return result
+        return result.save(time_index)
 
     def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup:Mapping[str, int], time_index: int) -> Dict[str, str]:
 
@@ -418,9 +411,6 @@ class FieldProblem(GlobalProblem):
         with dlf.XDMFFile(path) as f:
             f.write(self.solver.mesh)
 
-    def get_field(self) -> fcs.Function:
-        return self.solver.u
-
     def get_sub_domains(self) -> fcs.MeshFunction:
         return self.solver.boundary_markers
 
@@ -499,11 +489,29 @@ class MeanFieldProblem(GlobalProblem):
         if self.solver is not None:
             self.solver.p.update(p)
 
+    def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+
+        entity_parameters = {}
+
+        for e in self.registered_entities:
+
+            for ep in e["entity"].p.get_collections_by_field_quantity(self.field_quantity)[0].parameters:
+                k = ep.name
+                v = ep.get_in_sim_unit()
+
+                if k in entity_parameters.keys():
+                    entity_parameters[k].append(v)
+                else:
+                    entity_parameters[k] = [v]
+
+        self.solver.entity_parameters = entity_parameters
+        self.solver.global_parameters = {p.name: p.get_in_sim_unit() for p in p.get_collections_by_field_quantity(self.field_quantity)[0].parameters}
+
     def compute_coupling_properties(self, tmp_path: str) -> None:
         for e in self.registered_entities:
             f = get_concentration_conversion(
                 self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
-            surfc = PhysicalParameter("surf_c", 0, to_sim=1 / f)
+            surfc = PhysicalParameter("surf_c", self.solver.get_solution(), to_sim=1 / f)
             surfc.set_in_sim_unit(self.solver.get_solution())
 
             e["entity"].p.update(
@@ -513,8 +521,38 @@ class MeanFieldProblem(GlobalProblem):
                 ])
                 , override=True)
 
-    def get_result_element(self) -> Element:
-        pass
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str]:
+
+        result = ScalarResult(path, self.field_quantity)
+        u = self.solver.get_solution()
+        result.set(u)
+
+        r1 = ScalarResult(path, self.field_quantity)
+        res = result.save(time_index)
+
+        print(r1.load(time_index))
+        return res
+
+    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:
+
+        distplot, sol = self.save_result_to_file(time_index, path)
+
+        d = os.path.split(os.path.split(path)[0])[1]
+        field = et.Element("Field")
+
+        if not field:
+            field = et.Element("Field")
+
+        field.set("field_name", self.field_name)
+
+        if sol is None:
+            field.set("success", str(False))
+        else:
+            field.set("success", str(True))
+            field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
+
+        return field
+
 
 
 def calc_boundary_values(entity: Entity):
@@ -541,3 +579,5 @@ def calc_boundary_values(entity: Entity):
     result = [patch_index, sa, vertex_sum]
 
     return result
+
+

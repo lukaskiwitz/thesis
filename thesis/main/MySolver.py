@@ -19,6 +19,7 @@ import dill
 import fenics as fcs
 import lxml.etree as ET
 import mpi4py.MPI as MPI
+import numpy as np
 
 import thesis.main.BC as BC
 from thesis.main.MySubDomain import MySubDomain
@@ -37,7 +38,7 @@ class MySolver(ABC):
         self.field_quantity: str = ""
 
     @abstractmethod
-    def solve(self):pass
+    def solve(self, t: float, dt: float):pass
 
     @abstractmethod
     def compile(self, tmp_path: str):pass
@@ -206,7 +207,7 @@ class MyDiffusionSolver(MySolver):
         if hasattr(self, "process"):
             self.process.kill()
 
-    def solve(self) -> fcs.Function:
+    def solve(self, t: float, dt: float) -> fcs.Function:
 
         from sys import exit
         def sig_handler(signum, frame):
@@ -259,12 +260,34 @@ class MyDiffusionSolver(MySolver):
 
 class MyMeanFieldSolver(MySolver):
 
-    def solve(self):
-        pass
+    def solve(self, t: float, dt: float):
+        from scipy.constants import N_A
+        from scipy.integrate import odeint
+        import matplotlib.pyplot as plt
+
+        q = np.mean(self.entity_parameters["q"])
+        R = np.mean(self.entity_parameters["R"])
+        kd = self.global_parameters["kd"]
+        Kc = self.global_parameters["Kc"]
+        kon = self.global_parameters["k_on"]
+
+
+        def df(c, t):
+            c = c[0]
+
+            dc = q - (R * kon * Kc * c / (c + Kc)) - c * kd
+
+            return [dc]
+
+
+        r = odeint(df,[0],np.linspace(0,dt,100))
+        # plt.plot(r * 1e15)
+        # plt.show()
+        self.u = r[-1][0]
 
     def compile(self, tmp_path: str):
         pass
 
     def get_solution(self) -> Any:
 
-        return 1e-17
+        return self.u

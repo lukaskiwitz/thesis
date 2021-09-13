@@ -328,7 +328,7 @@ class SimContainer(SimComponent):
             tmp_path = self.get_tmp_path()
             field.path = self.path
             field.update_step(self.p, self.path, tmp_path)
-            field.step(dt, time_index, tmp_path)
+            field.step(self.t, dt, time_index, tmp_path)
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.t, dt)
