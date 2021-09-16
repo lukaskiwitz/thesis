@@ -24,7 +24,7 @@ class MyMeanCytokineTemplate(MyFieldTemplate):
     def get_problem(self) -> MeanFieldProblem:
 
         mean_field_problem = MeanFieldProblem()
-        mean_field_problem.name = self.name
+        mean_field_problem.field_name = self.name
         mean_field_problem.field_quantity = self.field_quantity
         mean_field_problem.solver = MyMeanFieldSolver()
 

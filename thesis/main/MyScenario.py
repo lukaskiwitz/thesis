@@ -19,7 +19,10 @@ class MyScenario:
         self.parameter_pool = parameter_pool
         self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
 
-    def get_sim_container(self, p:Union[ParameterSet,None]):
+    def get_sim_container(self, p:Union[ParameterSet,None], model_index):
+
+
+        global_model =self.global_models[model_index]
 
         parameter_set = deepcopy(self.global_parameters)
         if p is not None:
@@ -28,14 +31,14 @@ class MyScenario:
         for locator in self.entity_locators:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)
 
-        for model in self.global_models:
-            parameter_set.update(model.build_parameter_set(self.parameter_pool))
+
+        parameter_set.update(global_model.build_parameter_set(self.parameter_pool))
 
         sc = SimContainer(parameter_set)
 
-        for model in self.global_models:
-            for p in model.get_problem_list(parameter_set):
-                sc.add_problem(p)
+
+        for p in global_model.get_problem_list(parameter_set):
+            sc.add_problem(p)
 
         for c in cell_list:
             sc.add_entity(c)

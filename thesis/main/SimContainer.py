@@ -84,9 +84,7 @@ class SimContainer(SimComponent):
         self.fields: List[FieldProblem] = []
 
         self.path: str = "./"
-        self.top_path = self.path
-
-        self.scan_path: str = self.path
+        self.relative_path: str = "./"
 
         self.worker_sub_path: str = ""
         self.subdomain_files: List = []
@@ -272,10 +270,8 @@ class SimContainer(SimComponent):
 
     def get_current_path(self) -> str:
 
-        if self.scan_path == "./":
-            return self.path
-        else:
-            return self.scan_path
+        return self.path
+
 
     def _pre_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
 
@@ -326,7 +322,7 @@ class SimContainer(SimComponent):
 
         for field in self.fields:
             tmp_path = self.get_tmp_path()
-            field.path = self.path
+            field.path = self.relative_path
             field.update_step(self.p, self.path, tmp_path)
             field.step(self.t, dt, time_index, tmp_path)
 

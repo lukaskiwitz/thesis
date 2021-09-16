@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import fenics as fcs
 import numpy as np
 from numbers import Number
-
+import mpi4py.MPI as MPI
 import os
 
 class ResultEmptyError(Exception):pass
@@ -61,7 +61,7 @@ class ScalarResult(GlobalResult):
 
         np.save(file,u)
 
-        return None, partial_path
+        return None, partial_path, type(self)
 
     def load(self, time_index: int):
 
@@ -70,7 +70,7 @@ class ScalarResult(GlobalResult):
 
         file = os.path.join(self.path, partial_path)
         if os.path.exists(file):
-            return np.load(file)[time_index-1]# todo assumes 1 as start index
+            self.u =  np.load(file)[time_index-1]# todo assumes 1 as start index
         else:
             raise FileNotFoundError
 
@@ -104,8 +104,25 @@ class ScalarFieldResult(GlobalResult):
             f.write(u, self.field_quantity)
         with fcs.XDMFFile(fcs.MPI.comm_world, os.path.join(self.path, sol)) as f:
             f.write(u, time_index)
-        return (distplot, sol)
+        return (distplot, sol, type(self))
 
-    def load(self):
+    def load(self, time_index, mesh_path):
 
-        raise NotImplementedError
+        comm = MPI.COMM_WORLD
+
+
+        file_name = "field_{fq}".format(fq=self.field_quantity)
+        distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
+        sol = "sol/{fn}_{ti}.xdmf".format(fn=file_name, ti=str(time_index))
+
+        mesh = fcs.Mesh()
+        with fcs.XDMFFile(mesh_path ) as f:
+            f.read(mesh)
+
+        function_space = fcs.FunctionSpace(mesh, "P", 1)
+
+        u: fcs.Function = fcs.Function(function_space)
+        with fcs.HDF5File(comm, os.path.join(self.path,distplot), "r") as f:
+            f.read(u, "/" + self.field_quantity)
+
+        self.u = u

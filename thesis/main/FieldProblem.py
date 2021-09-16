@@ -175,13 +175,16 @@ class FieldProblem(GlobalProblem):
 
     def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:
 
-        distplot, sol = self.save_result_to_file(time_index, path)
+        distplot, sol, result_type = self.save_result_to_file(time_index, path)
 
         d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
 
         if not field:
             field = et.Element("Field")
+
+        field.set("module_name",str(result_type.__module__))
+        field.set("class_name", str(result_type.__name__))
 
         if self.remesh_timestep:
             field.set("mesh_path", self.get_mesh_path(d, time_index, abspath=False))
@@ -194,13 +197,14 @@ class FieldProblem(GlobalProblem):
         field.set("remesh_scan_sample", str(self.remesh_scan_sample))
 
         field.set("field_name", self.field_name)
+        field.set("field_quantity", self.field_quantity)
 
         if sol is None:
             field.set("success", str(False))
         else:
             field.set("success", str(True))
-            field.set("dist_plot_path", "scan_{i}/".format(i=scan_index) + distplot)
-            field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
+            field.set("dist_plot_path", os.path.join(self.path, distplot))
+            field.set("solution_path", os.path.join(self.path, sol))
 
         marker_paths = self.save_markers(path, markers,marker_lookup, time_index)
 
@@ -530,12 +534,11 @@ class MeanFieldProblem(GlobalProblem):
         r1 = ScalarResult(path, self.field_quantity)
         res = result.save(time_index)
 
-        print(r1.load(time_index))
         return res
 
     def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:
 
-        distplot, sol = self.save_result_to_file(time_index, path)
+        distplot, sol,result_type = self.save_result_to_file(time_index, path)
 
         d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
@@ -543,13 +546,18 @@ class MeanFieldProblem(GlobalProblem):
         if not field:
             field = et.Element("Field")
 
+        field.set("module_name", str(result_type.__module__))
+        field.set("class_name", str(result_type.__name__))
+
         field.set("field_name", self.field_name)
+        field.set("field_quantity", self.field_quantity)
 
         if sol is None:
             field.set("success", str(False))
         else:
             field.set("success", str(True))
-            field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
+            # field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
+            field.set("solution_path", os.path.join(self.path, sol))
 
         return field
 
