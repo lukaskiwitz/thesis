@@ -1,27 +1,20 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import getpass
-import KDEpy
-import os
-import multiprocessing as mp
-from skimage.measure import label
-
-def evalutate_kernel_on_grid(kernel,grid_points):
 
 
+def evalutate_kernel_on_grid(kernel, grid_points):
     grid, points = kernel.evaluate(grid_points)
     x, y = np.unique(grid[:, 0]), np.unique(grid[:, 1])
     v = points.reshape(grid_points, grid_points).T
 
-    return x,y,v
+    return x, y, v
 
-def evaluate_kernel_at_points(kernel,points):
+
+def evaluate_kernel_at_points(kernel, points):
     pass
 
-def get_kde_from_df(df, kernel_type, bw, visual = True):
 
+def get_kde_from_df(df, kernel_type, bw, visual=True):
     data = []
 
     if df.shape[0] == 0:
@@ -36,13 +29,12 @@ def get_kde_from_df(df, kernel_type, bw, visual = True):
     data = data.T[0:2].T
 
     if visual:
-        vis_kernel = KDEpy.FFTKDE(kernel_type,bw=bw).fit(data)
-
+        vis_kernel = KDEpy.FFTKDE(kernel_type, bw=bw).fit(data)
 
     return kernel, vis_kernel
 
-def get_cell_df(cell_list):
 
+def get_cell_df(cell_list):
     df = pd.DataFrame()
 
     for cell in cell_list:
@@ -51,7 +43,7 @@ def get_cell_df(cell_list):
         d["y"] = cell.center[1]
         d["z"] = cell.center[2]
 
-        df = df.append(d,ignore_index=True)
+        df = df.append(d, ignore_index=True)
     return df
 
 # def compute_kde(cell_df,kernel_type = "tri", bw = 20,lag = 0):
