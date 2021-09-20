@@ -16,18 +16,6 @@ from thesis.main.PostProcess import PostProcessor, PostProcessComputation
 def to_rgb(h):
     return [int(h[2*i:2*i+2],16)/255 for i in range(3)]
 
-class my_post_process(PostProcessComputation):
-    """Defines a custom computation"""
-
-    def __init__(self):
-        """this name will appear in output dataframe"""
-        self.name = "h1_norm"
-
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        """Calculates the h1 norm, another measure for inhomogeneity"""
-        h1: float = fcs.sqrt(fcs.assemble(fcs.dot(grad*grad_conv, grad*grad_conv)  * fcs.dX)) / mesh_volume
-        return h1
-
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:
@@ -41,11 +29,6 @@ setting filepath to look for sim results. This is setup so that it works on the 
 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6
-
-
-"""appends a custom calculation.
-default computations are defined in PostProcess.py"""
-pp.computations.append(my_post_process())
 
 """Imaging settings"""
 pp.visual_conversion  = 1e3# converts concentrations to pM for paraview visualisation
