@@ -10,7 +10,6 @@ import multiprocessing as mp
 import os
 import random
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import List, Dict
 
 import KDEpy
@@ -27,7 +26,7 @@ import thesis.main.GlobalResult
 import thesis.main.MyError as MyError
 import thesis.main.StateManager as st
 from thesis.main.ParameterSet import ParameterSet
-from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_mesh_volume, get_concentration_conversion, \
+from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
     get_gradient_conversion
 from thesis.main.myDictSorting import groupByKey
 from thesis.main.my_debug import message, warning
@@ -125,7 +124,7 @@ class ComputeSettings:
 
     def set_image_settings(self, image_settings, image_settings_fields):
 
-        if image_settings_fields is not None :
+        if image_settings_fields is not None:
 
             for k, v in image_settings_fields.items():
                 if k == self.field_quantity:
@@ -145,10 +144,8 @@ class ComputeSettings:
     @staticmethod
     def create_from_element(field_element, marker_element, model_index, scan_index, time_indices):
 
-
-        assert isinstance(model_index,int)
+        assert isinstance(model_index, int)
         assert isinstance(scan_index, int)
-
 
         compute_settings: ComputeSettings = ComputeSettings()
 
@@ -178,7 +175,6 @@ class ComputeSettings:
         module = importlib.import_module(field_element.get("module_name"))
         class_ = getattr(module, field_element.get("class_name"))
         compute_settings.loader_class = class_
-
 
         if (not time_indices is None) and not (compute_settings.time_index in time_indices): return None
         compute_settings.time = field_element.getparent().getparent().get("time")
@@ -210,7 +206,7 @@ class PostProcessor:
         self.image_settings_fields = None
 
     def write_post_process_xml(self, n_processes, debug=False, render_paraview=False, make_images=False,
-                               time_indices=None, scan_indicies = None):
+                               time_indices=None, scan_indicies=None):
         """
         runs compute-function for all scans an writes result to xml file
 
@@ -255,18 +251,19 @@ class PostProcessor:
                     compute_settings.tmp_path = tmp_path
                     compute_settings.make_images = make_images
                     compute_settings.render_paraview = render_paraview
-                    compute_settings.computations = [comp  for comp in self.computations if compute_settings.loader_class in comp.compatible_result_type]
+                    compute_settings.computations = [comp for comp in self.computations if
+                                                     compute_settings.loader_class in comp.compatible_result_type]
                     compute_settings.unit_length_exponent = self.unit_length_exponent
                     compute_settings.parameters = et.tostring(parameters)
                     compute_settings.cell_df = self.cell_dataframe.loc[
                         (self.cell_dataframe["time_index"] == compute_settings.time_index) &
-                        (self.cell_dataframe["scan_index"] == compute_settings.scan_index)
+                        (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
+                        (self.cell_dataframe["model_index"] == compute_settings.model_index)
                         ]
                     compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
 
                 scatter_list.append(compute_settings)
 
-        mesh_prefix = self.path
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
         message("distributing to {n_processes} processes".format(n_processes=n_processes))
 
@@ -316,7 +313,6 @@ class PostProcessor:
         result = []
         if self.cell_dataframe.empty:
             raise MyError.DataframeEmptyError("Post Processor Cell Dataframe")
-
 
         for file in in_tree.findall("Scan/Step/File"):
             g_values = file.find("./GlobalResults")
@@ -440,6 +436,8 @@ class PostProcessor:
 
         result["time_index"] = result["time_index"].apply(lambda x: int(x))
         result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
+        result["model_index"] = result["model_index"].apply(lambda x: int(x))
+
         result["time"] = result["time"].apply(lambda x: float(x))
 
         if kde:
@@ -552,7 +550,6 @@ class PostProcessor:
 
 
 class PostProcessComputation(ABC):
-
     add_xml_result = True
     compatible_result_type = []
 
@@ -562,12 +559,12 @@ class PostProcessComputation(ABC):
     @abstractmethod
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs): pass
 
-class FenicsScalarFieldComputation(PostProcessComputation):
 
+
+class FenicsScalarFieldComputation(PostProcessComputation):
     compatible_result_type = [thesis.main.GlobalResult.ScalarFieldResult]
 
     def __init__(self, compute_settings: ComputeSettings):
-
         loader = compute_settings.loader_class(
             os.path.join(compute_settings.path, os.path.dirname(os.path.dirname(compute_settings.solution_path))),
             compute_settings.field_quantity
@@ -575,7 +572,8 @@ class FenicsScalarFieldComputation(PostProcessComputation):
         loader.load(compute_settings.time_index, os.path.join(compute_settings.path, compute_settings.mesh_path))
         self.u = loader.get()
 
-        message("running global computations for step {t} in scan {s}".format(t=compute_settings.time_index, s=compute_settings.scan_index))
+        message("running global computations for step {t} in scan {s}".format(t=compute_settings.time_index,
+                                                                              s=compute_settings.scan_index))
 
         self.path = compute_settings.path
         self.solution_path = compute_settings.solution_path
@@ -589,10 +587,10 @@ class FenicsScalarFieldComputation(PostProcessComputation):
         self.c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
         self.grad_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
 
+
 class ScalarComputation(PostProcessComputation):
 
     def __init__(self, compute_settings: ComputeSettings):
-
         loader = compute_settings.loader_class(
             os.path.join(compute_settings.path, os.path.dirname(os.path.dirname(compute_settings.solution_path))),
             compute_settings.field_quantity
@@ -600,21 +598,21 @@ class ScalarComputation(PostProcessComputation):
         loader.load(compute_settings.time_index)
         self.u = loader.get()
 
-class SD(FenicsScalarFieldComputation):
+        self.c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
+        self.grad_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
 
+
+class SD(FenicsScalarFieldComputation):
     name = "SD"
 
     def __call__(self):
-
         sd: float = np.std(np.array(self.u.vector())) * self.c_conv
 
         return sd
 
 
 class c(FenicsScalarFieldComputation):
-
     name = "Concentration"
-
 
     def __call__(self):
         nodal_values = np.array(self.u.vector())
@@ -624,17 +622,14 @@ class c(FenicsScalarFieldComputation):
 
 
 class mean_c(ScalarComputation):
-
     compatible_result_type = [thesis.main.GlobalResult.ScalarResult]
     name = "Concentration"
 
-
     def __call__(self):
+        return self.u * self.c_conv
 
-        return self.u
 
 class grad(FenicsScalarFieldComputation):
-
     name = "Gradient"
 
     def __call__(self):
@@ -690,8 +685,6 @@ def compute(compute_settings: ComputeSettings) -> str:
     result.set("field_quantity", str(compute_settings.field_quantity))
 
     # result.set("dist_plot_path", str(compute_settings.file_path))
-
-
 
     if compute_settings.success:
 

@@ -53,17 +53,22 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     domain_template = MyBoundingBoxTemplate()
 
     pde_model = MyPDEModel("pde_model")
-    # pde_model = MyODEModel("ode_model")
+    ode_model = MyODEModel("ode_model")
 
     pde_model.domain_template = domain_template
+
     for c in cytokines:
 
         cytokine_template = MyCytokineTemplate()
-        # cytokine_template = MyMeanCytokineTemplate()
-
         cytokine_template.name = c["name"]
         cytokine_template.field_quantity = c["field_quantity"]
         pde_model.add_field_template(cytokine_template)
+
+        mean_cytokine_template = MyMeanCytokineTemplate()
+
+        mean_cytokine_template.name = c["name"]
+        mean_cytokine_template.field_quantity = c["field_quantity"]
+        ode_model.add_field_template(mean_cytokine_template)
 
     na = geometry_dict["norm_area"]
     geometry = ParameterCollection("geometry", [MiscParameter(k, v) for k, v in geometry_dict.items()])
@@ -74,12 +79,11 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
 
     domain_template.bc_list = make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool)
     locator = MyCellGridLocator()
-    # internal_solver = InternalSolver()
 
     scenario = MyScenario(parameter_pool)
 
-    scenario.global_models = [pde_model]
-    # scenario.internal_solvers = [internal_solver]
+    scenario.global_models = [pde_model,ode_model]
+
     scenario.entity_types = cell_types
     scenario.entity_locators = [locator]
 

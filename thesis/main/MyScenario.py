@@ -40,6 +40,9 @@ class MyScenario:
         for p in global_model.get_problem_list(parameter_set):
             sc.add_problem(p)
 
+        for i in self.internal_solvers:
+            sc.add_internal_solver(i)
+
         for c in cell_list:
             sc.add_entity(c)
 

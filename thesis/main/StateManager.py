@@ -109,6 +109,13 @@ class StateManager:
         self.marker_lookup: Mapping[str, int] = {}
         self.debug: bool = False
 
+    def clear_log_files(self):
+
+        for log_file in [ "log.xml", "debug.log"]:
+            file_path = os.path.join(self.path,log_file)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
     def get_scan_folder(self, n: int) -> str:
         return self.path + self.scan_folder_pattern.format(n=n)
 
@@ -445,6 +452,7 @@ class MyScanTree:
 
         self.global_collections: GlobalCollections = GlobalCollections()
         self.global_parameters: GlobalParameters = GlobalParameters()
+
 
     def load_xml(self) -> None:
 

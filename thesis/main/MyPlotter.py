@@ -25,6 +25,7 @@ class Plotter:
         self.gridspec = None
 
         self.t_max = 10
+        self.model_index_key: str = "model_index"
         self.scan_name_key: str = "scan_name_scan_name"
         self.scan_index_key: str = "scan_value"
         self.path_name: str = "path_name"
@@ -330,6 +331,7 @@ class Plotter:
             self.time_key,
             self.time_index_key,
             self.scan_index_key,
+            self.model_index_key,
             # "IL-2_surf_c",
             # "x",
             # "y",
@@ -591,7 +593,7 @@ class Plotter:
         self.get_subplot_axes()
         return None
 
-    def global_time_series_plot(self, y_name, legend=False, hue=None, style=None, **kwargs) -> None:
+    def global_time_series_plot(self, y_name, legend=False, hue=None, style=None,ylim = None, **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, reduce=True, **kwargs)
 
@@ -604,6 +606,7 @@ class Plotter:
 
         ax.set_xlabel(self.get_label(self.time_key))
         ax.set_xlim([0, self.t_max])
+        ax.set_ylim(ylim)
         ax.set_ylabel(self.get_label(y_name))
 
     def global_steady_state_plot(self, y_name, x_name=None, legend=False, ci="sd", hue=None, style=None, ylog=False,

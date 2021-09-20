@@ -262,28 +262,36 @@ class MyMeanFieldSolver(MySolver):
 
     def solve(self, t: float, dt: float):
         from scipy.constants import N_A
-        from scipy.integrate import odeint
+        from scipy.integrate import solve_ivp
         import matplotlib.pyplot as plt
+
+
 
         q = np.mean(self.entity_parameters["q"])
         R = np.mean(self.entity_parameters["R"])
         kd = self.global_parameters["kd"]
-        Kc = self.global_parameters["Kc"]
-        kon = self.global_parameters["k_on"]
+        k_endo = self.global_parameters["k_endo"]
+        k_off = self.global_parameters["k_off"]
+        k_on = self.global_parameters["k_on"]
+
+        KD = k_off / k_on
+
+        V = (20**3) - (4/3)*(np.pi * 5**3)
+        A = 1e9/(V)
+
+        def df(t,c):
+            # c = c[0]
+
+            up = c/(c + KD)
+            if up > 1: up = 1
+
+            dc = A * (q - (k_endo * R * up ))- c * kd
+
+            return dc
 
 
-        def df(c, t):
-            c = c[0]
-
-            dc = q - (R * kon * Kc * c / (c + Kc)) - c * kd
-
-            return [dc]
-
-
-        r = odeint(df,[0],np.linspace(0,dt,100))
-        # plt.plot(r * 1e15)
-        # plt.show()
-        self.u = r[-1][0]
+        r = solve_ivp(df,(0,1e-5), [0], atol = 0.0001 * KD, rtol = 1e-5)
+        self.u = r.y[0,:][-1]
 
     def compile(self, tmp_path: str):
         pass

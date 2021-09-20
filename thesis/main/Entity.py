@@ -256,10 +256,13 @@ class Cell(Entity):
         """
         self.type_name = cell_type.name
         self.interactions = []
-        if isinstance(cell_type.internal_solver, InternalSolver):
-            self.set_internal_solver(internal_solver())
-        else:
+        if internal_solver is None:
             self.set_internal_solver(None)
+        else:
+            if issubclass(internal_solver, InternalSolver):
+                self.set_internal_solver(internal_solver())
+            else:
+                self.set_internal_solver(None)
 
         # miscs = ParameterCollection("misc", [
         #     MiscParameter("type_name", self.type_name),
