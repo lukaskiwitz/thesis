@@ -17,10 +17,10 @@ import dolfin as dlf
 import fenics as fcs
 import lxml.etree as et
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
-from matplotlib.gridspec import GridSpec
 
 import thesis.main.GlobalResult
 import thesis.main.MyError as MyError
@@ -40,7 +40,7 @@ class ComputeSettings:
     :type file_path: str
 
     :param field: field name in h5 file
-    :type field_quantity: str
+    :type field: str
 
     :param cell_data: cell data
     :type cell_data: List[Dict]
@@ -70,6 +70,7 @@ class ComputeSettings:
         self.render_paraview = False
         self.unit_name = "nM"
         self.marker_lookup = {}
+        self.round_legend_labels = 2
 
         self.paraview_settings = {
 
@@ -95,6 +96,7 @@ class ComputeSettings:
             "lookup": {}
 
         }
+
 
     def set_mesh(self, mesh: fcs.Mesh):
         self._mesh = mesh
@@ -909,7 +911,7 @@ def make_images(u, conv_factor, compute_settings, visual_conv=1):
     pad_l = w * compute_settings.pad_l
     pad_r = w * compute_settings.pad_r
 
-    fig = plt.figure(figsize=(w + pad_l + pad_r, h + pad_l + pad_r))
+    fig = plt.figure(figsize=(w+pad_l+pad_r,h+pad_l + pad_r))
 
     vertical = [Size.Fixed(pad_l), Size.Fixed(h), Size.Fixed(pad_r)]
     height = [Size.Fixed(pad_l), Size.Fixed(w), Size.Fixed(pad_r)]

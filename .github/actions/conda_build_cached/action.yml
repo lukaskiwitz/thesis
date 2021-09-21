@@ -1,0 +1,55 @@
+name: 'conda builed cached'
+description: 'caches conda env creation'
+inputs:
+  env-file:  # id of input
+    description: 'name of the conda-yml file'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - name: echo input file
+      run: echo ${{inputs.env-file}}
+      shell: bash
+      
+    - name: echo input file hash
+      run: echo ${{ hashFiles('**/${{fenics_explicit.yml}}') }}
+      shell: bash
+      
+    - name: Add conda to system path
+      run: echo $CONDA/bin >> $GITHUB_PATH
+      shell: bash
+
+    - name: Restore conda package cache
+      uses: actions/cache@v2
+      env:
+        cache-name: pkg-cache
+      with:
+        path: /usr/share/miniconda/pkgs
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('./${{inputs.env-file}}') }}-v2
+
+    - name: Restore build.yml cache
+      uses: actions/cache@v2
+      id: build-cache
+      env:
+        cache-name: build-cache
+      with:
+        path: build.yml
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./${{inputs.env-file}}') }}-v2
+    
+    - name: echo cache hit
+      run: echo ${{steps.build-cache.outputs.cache-hit}}
+      shell: bash
+      
+    - name: Install dependencies
+      shell: bash
+      run: |
+        if [[ "${{steps.build-cache.outputs.cache-hit}}" == 'true' ]];
+        then
+          conda env update --file build.yml --name base
+        else
+          conda env update --file ./${{inputs.env-file}} --name base
+          conda env export --name base > build.yml
+        fi
+        exit 0
+        
