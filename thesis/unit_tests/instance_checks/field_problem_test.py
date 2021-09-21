@@ -12,21 +12,23 @@ class TestSimContainer(unittest.TestCase):
     def scenario1_static_test(self):
 
         scenario = scenario_setup()
-        sc = scenario.get_sim_container(None)
+        sc = scenario.get_sim_container(None, model_index=0)
         sc.path = artifact_path
 
 
         def post_step(sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
 
             for f in sc.fields:
-                f.get_result_element(time_index, 0, sc.path)
+                f.get_result_element(time_index, 0, sc.path, [],{})
 
         sc.post_step = post_step
         sc.initialize()
         sc.run([0,1])
 
     def setUp(self) -> None:
-        rmtree(os.path.abspath(os.path.join(artifact_path,"..")))
+        path = os.path.abspath(os.path.join(artifact_path,".."))
+        if os.path.exists(path):
+            rmtree(path)
     # def tearDown(self):
     #     rmtree(os.path.abspath(os.path.join(artifact_path,"..")))
 
