@@ -135,14 +135,14 @@ class ParameterSet:
         return root
 
     @staticmethod
-    def deserialize_from_xml(element: ET.Element):
+    def deserialize_from_xml(element: ET.Element, parent_tree = None):
 
         parameter_set = ParameterSet("dummy", [])
 
         parameter_set.name = element.get("name")
         for collection in element.findall("ParameterCollection"):
             c = ParameterCollection("", [])
-            c.deserialize_from_xml(collection)
+            c.deserialize_from_xml(collection, parent_tree = parent_tree)
             parameter_set.add_collection(c)
 
         return parameter_set
@@ -268,9 +268,9 @@ class ParameterCollection:
                 root.append(p.serialize_to_xml())
         return root
 
-    def deserialize_from_xml(self, element: ET.Element):
+    def deserialize_from_xml(self, element: ET.Element, parent_tree = None):
 
-        def replace_global(element, globals):
+        def replace_global(element, globals, parent_tree = None):
 
             def get_global_dict(e):
 
@@ -280,8 +280,14 @@ class ParameterCollection:
                 else:
                     return get_global_dict(e.getparent())
 
+
             if "global_key" in element.keys():
-                global_collections = get_global_dict(element)
+
+                if parent_tree is None:
+                    global_collections = get_global_dict(element)
+                else:
+                    global_collections = get_global_dict(parent_tree)
+
                 element = global_collections.find("{tag}[@key='{key}']".format(
                     tag=element.tag,
                     key=element.get("global_key")
@@ -289,20 +295,20 @@ class ParameterCollection:
                 return element
             return element
 
-        element = replace_global(element, "GlobalCollections")
+        element = replace_global(element, "GlobalCollections", parent_tree = parent_tree)
 
         self.name = json.loads(element.get("name"))
         self.field_quantity = json.loads(element.get("field_quantity"))
         self.is_global = json.loads(element.get("is_global"))
 
         for physical in element.findall("PhysicalParameter"):
-            physical = replace_global(physical, "GlobalParameters")
+            physical = replace_global(physical, "GlobalParameters",parent_tree = parent_tree)
             p = PhysicalParameter("", 0)
             p.deserialize_from_xml(physical)
             self.parameters.append(p)
 
         for misc in element.findall("MiscParameter"):
-            misc = replace_global(misc, "GlobalParameters")
+            misc = replace_global(misc, "GlobalParameters",parent_tree = parent_tree)
             p = MiscParameter("", 0)
             p.deserialize_from_xml(misc)
             self.parameters.append(p)

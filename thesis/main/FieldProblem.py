@@ -540,8 +540,8 @@ class MeanFieldProblem(GlobalProblem):
         d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
 
-        if not field:
-            field = et.Element("Field")
+        # if not field:
+        #     field = et.Element("Field")
 
         field.set("module_name", str(result_type.__module__))
         field.set("class_name", str(result_type.__name__))

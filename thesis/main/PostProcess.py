@@ -232,40 +232,50 @@ class PostProcessor:
             model_index = int(model.get("model_index"))
 
             parameters = scan_sample.find("Parameters")
-            self.stateManager.scan_tree.rebuild_timesteps(scan_sample)
+            # self.stateManager.scan_tree.rebuild_timesteps(scan_sample)
+            # self.stateManager.scan_tree.get_timeteps(scan_sample)
 
-            for field_step in model.findall("TimeSeries/Step/Fields/Field"):
-                markers = field_step.findall("../../../Marker")
+            # for field_step in model.findall("TimeSeries/Step/Fields/Field"):
+            for step in model.findall("TimeSeries/Step"):
 
-                compute_settings = ComputeSettings.create_from_element(
-                    field_step,
-                    markers,
-                    model_index,
-                    scan_index,
-                    time_indices)
-
-                if compute_settings is None:
-                    continue
+                if step.get("path") is None:
+                    step = step
                 else:
-                    compute_settings.path = self.path
-                    compute_settings.tmp_path = tmp_path
-                    compute_settings.make_images = make_images
-                    compute_settings.render_paraview = render_paraview
-                    compute_settings.computations = [comp for comp in self.computations if
-                                                     compute_settings.loader_class in comp.compatible_result_type]
-                    compute_settings.unit_length_exponent = self.unit_length_exponent
-                    compute_settings.parameters = et.tostring(parameters)
-                    compute_settings.cell_df = self.cell_dataframe.loc[
-                        (self.cell_dataframe["time_index"] == compute_settings.time_index) &
-                        (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
-                        (self.cell_dataframe["model_index"] == compute_settings.model_index)
-                        ]
-                    compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
+                    step = et.parse(os.path.join(self.path, step.get("path")))
 
-                scatter_list.append(compute_settings)
+                for field_step in step.findall("/Fields/Field"):
+
+                    markers = field_step.findall("../../../Marker")
+                    compute_settings = ComputeSettings.create_from_element(
+                        field_step,
+                        markers,
+                        model_index,
+                        scan_index,
+                        time_indices)
+
+                    if compute_settings is None:
+                        continue
+                    else:
+                        compute_settings.path = self.path
+                        compute_settings.tmp_path = tmp_path
+                        compute_settings.make_images = make_images
+                        compute_settings.render_paraview = render_paraview
+                        compute_settings.computations = [comp for comp in self.computations if
+                                                         compute_settings.loader_class in comp.compatible_result_type]
+                        compute_settings.unit_length_exponent = self.unit_length_exponent
+                        compute_settings.parameters = et.tostring(parameters)
+                        compute_settings.cell_df = self.cell_dataframe.loc[
+                            (self.cell_dataframe["time_index"] == compute_settings.time_index) &
+                            (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
+                            (self.cell_dataframe["model_index"] == compute_settings.model_index)
+                            ]
+                        compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
+
+                    scatter_list.append(compute_settings)
 
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
-        message("distributing to {n_processes} processes".format(n_processes=n_processes))
+        message(
+            "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)))
 
         with mp.Pool(processes=n_processes) as p:
             result_list = p.map(compute, scatter_list)
@@ -429,16 +439,16 @@ class PostProcessor:
         result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices=time_indices,
                                                                         n_processes=n_processes)
 
-        try:
-            result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
-        except:
-            print("")
+        # try:
+        #     result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
+        # except:
+        #     print("")
 
-        result["time_index"] = result["time_index"].apply(lambda x: int(x))
-        result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
-        result["model_index"] = result["model_index"].apply(lambda x: int(x))
-
-        result["time"] = result["time"].apply(lambda x: float(x))
+        # result["time_index"] = result["time_index"].apply(lambda x: int(x))
+        # result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
+        # result["model_index"] = result["model_index"].apply(lambda x: int(x))
+        #
+        # result["time"] = result["time"].apply(lambda x: float(x))
 
         if kde:
             message("running kernel density estimation")
@@ -558,7 +568,6 @@ class PostProcessComputation(ABC):
 
     @abstractmethod
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs): pass
-
 
 
 class FenicsScalarFieldComputation(PostProcessComputation):

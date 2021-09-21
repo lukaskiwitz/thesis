@@ -133,15 +133,14 @@ class StateManager:
 
         scatter_list = []
         for n, scan in enumerate(scans):
-            scan = self.scan_tree.rebuild_timesteps(scan)
-
-            scatter_list.append((n, ET.tostring(scan), time_indices, self.path))
+            steps = self.scan_tree.get_timeteps(scan)
+            for step in steps:
+                scatter_list.append((n, ET.tostring(step), time_indices, self.path))
 
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
 
         message("State Manager: Distributing {total} scans to {n_processes} processes".format(n_processes=n_processes,
                                                                                            total=len(scans)))
-
 
         with mp.Pool(processes=n_processes, initializer=init) as p:
             result = p.map(target, scatter_list)
@@ -661,6 +660,28 @@ class MyScanTree:
 
         return element
 
+    def get_timeteps(self, element: Element) -> None:
+        """
+
+
+        :param element: lxml element with TimeSeries/Step sub elements
+        :return:
+        """
+
+        element_copies = [deepcopy(element) for step in  element.findall(".//TimeSeries/Step")]
+
+        for i, el in enumerate(element_copies):
+            step = el.findall(".//TimeSeries/Step")[i]
+            path = step.get("path")
+            if not path is None:
+                parent = step.getparent()
+
+                [s.getparent().remove(s) for s in el.findall(".//TimeSeries/Step")]
+
+                parent.insert(0,step)
+
+        return element_copies
+
 
 def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
 
@@ -670,11 +691,12 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
 
         result = []
         for model in scan.findall("Model"):
-            for step in model.findall("TimeSeries/Step"):
+            for old_step in model.findall("TimeSeries/Step"):
 
-                # if "path" in step.attrib.keys():
-                #     step = ET.parse(os.path.join(path, step.get("path")))
-                #     step = step.getroot()
+                if "path" in old_step.attrib.keys():
+                    step = ET.parse(os.path.join(path, old_step.get("path")))
+                    # step.getparent().replace(step, et.getroot())
+                    step = step.getroot()
 
                 time_index = step.get("time_index")
                 if (not time_indices is None) and not (int(time_index) in time_indices):
@@ -685,7 +707,7 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
 
                 for cell in step.findall("Cells/Cell"):
 
-                    parameter_set = ParameterSet.deserialize_from_xml(cell.find("ParameterSet"))
+                    parameter_set = ParameterSet.deserialize_from_xml(cell.find("ParameterSet"), parent_tree = old_step)
 
                     p_temp = parameter_set.get_as_dictionary()
                     p = {}
@@ -698,15 +720,15 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
                         elif (isinstance(v, List)):
                             p[k] = pd.Series(v)
                             # pass
-                    p["time_index"] = time_index
-                    p["time"] = time
-                    p["scan_index"] = scan.get("scan_index")
-                    p["model_index"] = model.get("model_index")
+                    p["time_index"] = int(time_index)
+                    p["time"] = float(time)
+                    p["scan_index"] = int(scan.get("scan_index"))
+                    p["model_index"] = int(model.get("model_index"))
                     p["x"] = float(cell.get("x"))
                     p["y"] = float(cell.get("y"))
                     p["z"] = float(cell.get("z"))
-                    p["id"] = cell.get("entity_id")
-                    p["type_name"] = cell.get("type_name")
+                    p["id"] = int(cell.get("entity_id"))
+                    p["type_name"] = str(cell.get("type_name"))
 
                     result.append(p)
         return result
