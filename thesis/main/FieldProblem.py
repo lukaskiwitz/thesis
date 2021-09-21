@@ -20,12 +20,12 @@ import numpy as np
 
 import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
+from thesis.main.GlobalResult import ScalarFieldResult, ScalarResult
 from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.my_debug import message, total_time, warning
-from thesis.main.GlobalResult import ScalarFieldResult, ScalarResult
 
 Element = et.Element
 
@@ -506,7 +506,9 @@ class MeanFieldProblem(GlobalProblem):
                     entity_parameters[k] = [v]
 
         self.solver.entity_parameters = entity_parameters
-        self.solver.global_parameters = {p.name: p.get_in_sim_unit() for p in p.get_collections_by_field_quantity(self.field_quantity)[0].parameters}
+        self.solver.global_parameters = {p.name: p.get_in_sim_unit() for p in
+                                         p.get_collections_by_field_quantity(self.field_quantity)[0].parameters}
+        self.solver.geometry_parameters = {p.name: p.get_in_sim_unit() for p in p.get_collection("geometry").parameters}
 
     def compute_coupling_properties(self, tmp_path: str) -> None:
         for e in self.registered_entities:
