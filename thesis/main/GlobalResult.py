@@ -1,17 +1,20 @@
-from abc import ABC, abstractmethod
-import fenics as fcs
-import numpy as np
-from numbers import Number
-import mpi4py.MPI as MPI
 import os
+from abc import ABC, abstractmethod
+from numbers import Number
+from typing import Tuple
 
-class ResultEmptyError(Exception):pass
+import fenics as fcs
+import mpi4py.MPI as MPI
+import numpy as np
+
+
+class ResultEmptyError(Exception): pass
+
 
 class GlobalResult(ABC):
 
     def __init__(self, directory_path: str, field_quantity: str):
-
-        self.path:str = directory_path
+        self.path: str = directory_path
         self.field_quantity: str = field_quantity
 
     @abstractmethod
@@ -44,14 +47,14 @@ class ScalarResult(GlobalResult):
 
         return self.u
 
-    def save(self, time_index: int):
+    def save(self, time_index: int) -> Tuple[str, str, type]:
 
         file_name = "field_{fq}.npy".format(fq=self.field_quantity)
-        partial_path = "sol/"+file_name
+        partial_path = "sol/" + file_name
 
-        file = os.path.join(self.path,partial_path)
-        if not os.path.exists(os.path.join(self.path,"sol/")):
-            os.makedirs(os.path.join(self.path,"sol/"))
+        file = os.path.join(self.path, partial_path)
+        if not os.path.exists(os.path.join(self.path, "sol/")):
+            os.makedirs(os.path.join(self.path, "sol/"))
 
         if os.path.exists(file) and time_index > 1:
             u = np.load(file)
@@ -92,15 +95,14 @@ class ScalarFieldResult(GlobalResult):
         if self.u is None: raise ResultEmptyError("The result value was not set!")
         return self.u
 
-    def save(self, time_index:int):
-
+    def save(self, time_index: int) -> Tuple[str, str, type]:
         file_name = "field_{fq}".format(fq=self.field_quantity)
         distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
         sol = "sol/{fn}_{ti}.xdmf".format(fn=file_name, ti=str(time_index))
         u = self.get()
 
         u.rename(self.field_quantity, self.field_quantity)
-        with fcs.HDF5File(fcs.MPI.comm_world, os.path.join(self.path,distplot), "w") as f:
+        with fcs.HDF5File(fcs.MPI.comm_world, os.path.join(self.path, distplot), "w") as f:
             f.write(u, self.field_quantity)
         with fcs.XDMFFile(fcs.MPI.comm_world, os.path.join(self.path, sol)) as f:
             f.write(u, time_index)
