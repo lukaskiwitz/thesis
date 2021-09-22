@@ -53,7 +53,7 @@ class GlobalProblem(ABC):
     @abstractmethod
     def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None: pass
 
-    def step(self, t:float, dt: float, time_index: int, tmp_path: str) -> None:
+    def step(self, t: float, dt: float, time_index: int, tmp_path: str) -> None:
         self.solver.compile(tmp_path)
         self.solver.solve(t, dt)
         self.solver.kill()
@@ -70,7 +70,8 @@ class GlobalProblem(ABC):
         self.registered_entities.append({"entity": entity, "patch": 0})
 
     @abstractmethod
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:pass
+    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
+                           marker_lookup: Mapping[str, int]) -> Element: pass
 
     @abstractmethod
     def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str]: pass
@@ -144,15 +145,14 @@ class FieldProblem(GlobalProblem):
 
     def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str]:
 
-
         result = ScalarFieldResult(path, self.field_quantity)
         u = self.solver.get_solution()
         result.set(u)
 
-
         return result.save(time_index)
 
-    def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup:Mapping[str, int], time_index: int) -> Dict[str, str]:
+    def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup: Mapping[str, int],
+                     time_index: int) -> Dict[str, str]:
 
         """TODO dirty solution. this should be on the FieldProblem"""
 
@@ -173,14 +173,15 @@ class FieldProblem(GlobalProblem):
 
         return path_dict
 
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:
+    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
+                           marker_lookup: Mapping[str, int]) -> Element:
 
         distplot, sol, result_type = self.save_result_to_file(time_index, path)
 
         d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
 
-        field.set("module_name",str(result_type.__module__))
+        field.set("module_name", str(result_type.__module__))
         field.set("class_name", str(result_type.__name__))
 
         if self.remesh_timestep:
@@ -203,7 +204,7 @@ class FieldProblem(GlobalProblem):
             field.set("dist_plot_path", os.path.join(self.path, distplot))
             field.set("solution_path", os.path.join(self.path, sol))
 
-        marker_paths = self.save_markers(path, markers,marker_lookup, time_index)
+        marker_paths = self.save_markers(path, markers, marker_lookup, time_index)
 
         for marker_key, marker_path in marker_paths.items():
             marker_element = et.SubElement(field, "Marker")
@@ -535,9 +536,10 @@ class MeanFieldProblem(GlobalProblem):
 
         return res
 
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str], marker_lookup: Mapping[str,int]) -> Element:
+    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
+                           marker_lookup: Mapping[str, int]) -> Element:
 
-        distplot, sol,result_type = self.save_result_to_file(time_index, path)
+        distplot, sol, result_type = self.save_result_to_file(time_index, path)
 
         d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
@@ -559,7 +561,6 @@ class MeanFieldProblem(GlobalProblem):
             field.set("solution_path", os.path.join(self.path, sol))
 
         return field
-
 
 
 def calc_boundary_values(entity: Entity):
@@ -586,5 +587,3 @@ def calc_boundary_values(entity: Entity):
     result = [patch_index, sa, vertex_sum]
 
     return result
-
-

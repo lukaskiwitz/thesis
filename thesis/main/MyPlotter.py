@@ -865,8 +865,6 @@ class Plotter:
                      palette=palette)
 
         self.make_legend_entry(ax)
-
-        ax.set_xlim([0, self.t_max])
         if ylim:
             ax.set_ylim(ylim)
 
