@@ -17,15 +17,16 @@ import dolfin as dlf
 import fenics as fcs
 import lxml.etree as et
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
+from matplotlib.gridspec import GridSpec
 
 import thesis.main.GlobalResult
 import thesis.main.MyError as MyError
 import thesis.main.StateManager as st
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.PostProcessUtil import get_mesh_volume
 from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
     get_gradient_conversion
 from thesis.main.myDictSorting import groupByKey
@@ -196,7 +197,7 @@ class PostProcessor:
 
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
-        self.computations = [c, mean_c, grad, SD, CV]
+        self.computations = [c, mean_c, grad, SD, CV, MeshVolume]
         self.rc = {}
 
         self.image_settings = {
@@ -620,6 +621,13 @@ class SD(FenicsScalarFieldComputation):
         sd: float = np.std(np.array(self.u.vector())) * self.c_conv
 
         return sd
+
+
+class MeshVolume(FenicsScalarFieldComputation):
+    name = "MeshVolume"
+
+    def __call__(self):
+        return get_mesh_volume(self.u.function_space().mesh())
 
 
 class c(FenicsScalarFieldComputation):
