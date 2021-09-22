@@ -164,7 +164,7 @@ class StateManager:
     def apply_sample_flags(self, sc: SimContainer, scan_index: int):
 
         sample = self.get_scan_sample(scan_index)
-        for f in sc.fields:
+        for f in sc.global_problems:
             f.remesh_scan_sample = sample.remesh_scan_sample
             f.remesh_timestep = sample.remesh_timestep
 
@@ -179,7 +179,7 @@ class StateManager:
         sc.p.update(sc.default_sample.p)
         sc.p.update(sample.p)
 
-        for f in sc.fields:
+        for f in sc.global_problems:
             f.apply_sample(sc.default_sample)
             f.apply_sample(sample)
 
@@ -288,10 +288,6 @@ class StateManager:
                 sample_task.start_child("update_sim_container")
                 self.update_sim_container(self.sim_container, scan_index, model_index)
                 sample_task.stop_child("update_sim_container")
-
-                sample_task.start_child("init_xdmf_files")
-                self.sim_container.init_xdmf_files()
-                sample_task.stop_child("init_xdmf_files")
 
                 sample_task.start_child("pre_scan")
                 self.pre_scan(self, scan_index)
@@ -600,7 +596,7 @@ class MyScanTree:
 
         fields = ET.SubElement(step, "Fields")
 
-        for field in sim_container.fields:
+        for field in sim_container.global_problems:
             field_element = field.get_result_element(time_index, scan_index, sim_container.get_current_path(),
                                                      sim_container.markers, sim_container.marker_lookup)
             fields.insert(0, field_element)

@@ -17,11 +17,10 @@ import pandas as pd
 
 from thesis.main.Entity import Entity
 from thesis.main.EntityType import EntityType
-from thesis.main.FieldProblem import FieldProblem
+from thesis.main.FieldProblem import GlobalProblem
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import ParameterSet, MiscParameter
 from thesis.main.ScanContainer import ScanSample
-from thesis.main.SimComponent import SimComponent
 from thesis.main.TaskRecord import ClassRecord
 from thesis.main.my_debug import message, debug
 
@@ -34,14 +33,14 @@ class InternalSolverNotRegisteredError(Exception): pass
 class EntityTypeNotRegisteredError(Exception): pass
 
 
-class SimContainer(SimComponent):
+class SimContainer:
     """
 
     Sim container
 
-    :ivar p:
-    :ivar entity_list:
-    :ivar fields:
+    :ivar p: parmeters set, that get handed down to global problems.
+    :ivar entity_list: List of all entities in the simulation
+    :ivar global_problems: list of global problems in this simulation
     :ivar path:
     :ivar scan_path:
     :ivar worker_sub_path:
@@ -81,16 +80,12 @@ class SimContainer(SimComponent):
     def __init__(self, parameter_set: ParameterSet) -> None:
         self.p: ParameterSet = parameter_set
         self.entity_list: List[Entity] = []
-        self.fields: List[FieldProblem] = []
+        self.global_problems: List[GlobalProblem] = []
 
         self.path: str = "./"
         self.relative_path: str = "./"
 
         self.worker_sub_path: str = ""
-        self.subdomain_files: List = []
-        self.domain_files: List = []
-        self.field_files: List = []
-        self.boundary_markers: List = []
         self.entity_templates: List[EntityType] = []
         self.marker_lookup: Dict[Union[str, int, float], int] = {}
         self.internal_solvers: List[InternalSolver] = []
@@ -116,20 +111,6 @@ class SimContainer(SimComponent):
                     message("removing old logs {log}".format(log=i))
                     os.remove(self.get_current_path() + i)
 
-    def init_xdmf_files(self) -> None:
-
-        """
-
-        Writes directory structure for XDMF and sets up file lists (subdomain_files, domain_files, field_files)
-        """
-
-        os.makedirs(self.path, exist_ok=True)
-        for i in self.fields:
-            self.subdomain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/subdomain_" + i.field_name + ".xdmf"))
-            self.domain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/domain_" + i.field_name + ".xdmf"))
-            self.field_files.append("field_" + i.field_name)
 
     def initialize(self, **kwargs) -> None:
 
@@ -138,26 +119,25 @@ class SimContainer(SimComponent):
         loads subdomain; generates mesh; adds entities to Fields
         """
 
-        self.init_xdmf_files()
         self.register_entites()
 
-        for field in self.fields:
-            field.initialize_run(self.p,self.path,self.get_tmp_path())
+        for field in self.global_problems:
+            field.initialize_run(self.p, self.path, self.get_tmp_path())
 
     def set_ext_cache(self, ext_cache: str) -> None:
-        for field in self.fields:
+        for field in self.global_problems:
             field.ext_cache = ext_cache
 
     def register_entites(self) -> None:
 
-        for field in self.fields:
+        for field in self.global_problems:
             fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
                 if fq in [i.field_quantity for i in entity.interactions]:
                     field._add_entity(entity)
 
-            if hasattr(field,"domain_template"):
+            if hasattr(field, "domain_template"):
                 field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
 
     def get_entity_by_name(self, name: str) -> Entity:
@@ -187,7 +167,7 @@ class SimContainer(SimComponent):
 
         run_task = self.record.start_child("run")
 
-        for field in self.fields:
+        for field in self.global_problems:
             if field.remesh_scan_sample:
                 field.generate_mesh(path=self.get_current_path(), time_index=0, load_cache=False)
 
@@ -225,7 +205,7 @@ class SimContainer(SimComponent):
 
         """
         from time import sleep
-        for field in self.fields:
+        for field in self.global_problems:
             tmp_path = self.get_tmp_path()
 
             if field.moving_mesh == True and field.remesh == True:
@@ -275,7 +255,7 @@ class SimContainer(SimComponent):
 
     def _pre_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
 
-        for field in sc.fields:
+        for field in sc.global_problems:
             if field.remesh_timestep:
                 field.generate_mesh(path=self.get_current_path(), time_index=time_index, load_cache=False)
 
@@ -320,7 +300,7 @@ class SimContainer(SimComponent):
 
         self.apply_type_changes()
 
-        for field in self.fields:
+        for field in self.global_problems:
             tmp_path = self.get_tmp_path()
             field.path = self.relative_path
             field.update_step(self.p, self.path, tmp_path)
@@ -417,7 +397,7 @@ class SimContainer(SimComponent):
         return None
         # raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
 
-    def add_problem(self, field: FieldProblem) -> FieldProblem:
+    def add_problem(self, field: GlobalProblem) -> GlobalProblem:
 
         """
 
@@ -427,7 +407,7 @@ class SimContainer(SimComponent):
 
         """
 
-        self.fields.append(field)
+        self.global_problems.append(field)
         return field
 
     def save_subdomains(self) -> None:
@@ -440,7 +420,7 @@ class SimContainer(SimComponent):
 
         """
 
-        for o, i in enumerate(self.fields):
+        for o, i in enumerate(self.global_problems):
             message("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
             self.subdomain_files[o].write(i.get_sub_domains_vis())
 
@@ -451,8 +431,8 @@ class SimContainer(SimComponent):
 
         :return:
         """
-        for o, i in enumerate(self.fields):
-            self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
+        for o, i in enumerate(self.global_problems):
+            self.domain_files[o].write(self.global_problems[0].get_outer_domain_vis("type_name"))
 
     def save_markers(self, time_index: int) -> Dict[str, str]:
 
@@ -466,7 +446,7 @@ class SimContainer(SimComponent):
             marker_dir = os.path.join(top_dir, marker_key)
             os.makedirs(marker_dir, exist_ok=True)
 
-            marker, new_lookup = self.fields[0].get_sub_domains_vis(marker_key, lookup=self.marker_lookup)
+            marker, new_lookup = self.global_problems[0].get_sub_domains_vis(marker_key, lookup=self.marker_lookup)
             self.marker_lookup.update(new_lookup)
             marker_path = os.path.join(marker_dir, "marker_{n}.xdmf".format(n=time_index))
             with fcs.XDMFFile(fcs.MPI.comm_world, marker_path) as f:
