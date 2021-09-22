@@ -1,35 +1,12 @@
 main package
 ============
 
-Sim container
-------------------------
-.. automodule:: thesis.main.SimContainer
-   :members:
-   :show-inheritance:
 
-FieldProblem
-------------------------
-.. automodule:: thesis.main.FieldProblem
-    :members:
-    :show-inheritance:
+.. toctree::
 
-State Manager
-------------------------
-.. automodule:: thesis.main.StateManager
-    :members:
-    :show-inheritance:
+    api/global_problem
+    api/sim_container
+    api/state_manager
+    api/post_processor
+    api/my_plotter
 
-PostProcessor
-------------------------
-.. automodule:: thesis.main.PostProcess
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-MyPlotter
-------------------------
-.. automodule:: thesis.main.MyPlotter
-    :members:
-    :undoc-members:
-    :show-inheritance:
