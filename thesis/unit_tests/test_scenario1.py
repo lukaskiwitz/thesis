@@ -1,10 +1,10 @@
 from scipy.constants import N_A
 
 from thesis.main.EntityType import CellType
-from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate, MySphereDomainTemplate
+from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
 from thesis.main.MyEntityLocator import MyCellListLocator
-from thesis.main.MyFieldTemplate import MyCytokineTemplate
-from thesis.main.MyGlobalModel import MyPDEModel
+from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
+from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
 from thesis.main.MyInteraction import FieldInteractionType
 from thesis.main.MyInteraction import MyFieldInteractionTemplate
 from thesis.main.MyParameterPool import MyParameterPool
@@ -49,6 +49,11 @@ numeric = {
     "unit_length_exponent": -6
 }
 
+geometry = {
+    "distance": 20,
+    "margin": 20,
+    "rho": 5
+}
 def setup() -> MyScenario:
 
     parameter_pool = MyParameterPool()
@@ -58,30 +63,32 @@ def setup() -> MyScenario:
 
     pde_model = MyPDEModel("pde_model")
     pde_model.domain_template = MyBoundingBoxTemplate()
-
-
     cytokine_template = MyCytokineTemplate()
     cytokine_template.name = "cytokine"
     cytokine_template.field_quantity = "cyt"
-
     pde_model.add_field_template(cytokine_template)
 
+    ode_model = MyODEModel("ode_model")
+    mean_cytokine_template = MyMeanCytokineTemplate()
+    mean_cytokine_template.name = "cytokine"
+    mean_cytokine_template.field_quantity = "cyt"
+    ode_model.add_field_template(mean_cytokine_template)
 
     scenario = MyScenario(parameter_pool)
 
-    scenario.global_models = [pde_model]
+    scenario.global_models = [pde_model, ode_model]
 
-    p = ParameterSet("global",[
-        parameter_pool.get_as_collection({"D":None,"kd":None}),
-        ParameterCollection("geometry",[MiscParameter("margin",20)]),
-        ParameterCollection("numeric", [MiscParameter(k,v) for k,v in numeric.items()])
+    p = ParameterSet("global", [
+        parameter_pool.get_as_collection({"D": None, "kd": None}),
+        ParameterCollection("geometry", [MiscParameter(k, v) for k, v in geometry.items()]),
+        ParameterCollection("numeric", [MiscParameter(k, v) for k, v in numeric.items()])
     ])
     scenario.global_parameters.update(p)
 
 
     cell_type1 = CellType(ParameterSet("cell_dummy",[
         parameter_pool.get_as_collection({"D":None,"R":1e4,"q":0,"k_on":None,"k_off":None,"k_endo":None,"Kc":None},name="cytokine",field_quantity="cyt"),
-        parameter_pool.get_as_collection({"rho": 5}, name="rho")
+        parameter_pool.get_as_collection({"rho": geometry["rho"]}, name="rho")
     ]),"abs",None)
     cell_type1.interactions = [MyFieldInteractionTemplate("cyt", FieldInteractionType.INTEGRAL)]
     cell_type1.p.get_collection("cytokine").set_misc_parameter(MiscParameter("bc_type", "patrick_saturation"))
@@ -89,12 +96,13 @@ def setup() -> MyScenario:
     cell_type2 = CellType(ParameterSet("cell_dummy", [
         parameter_pool.get_as_collection(
             {"D": None, "R": 1e2, "q": 10, "k_on": None, "k_off": None, "k_endo": None, "Kc": None},name ="cytokine", field_quantity="cyt"),
-        parameter_pool.get_as_collection({"rho":5}, name="rho")
+        parameter_pool.get_as_collection({"rho": geometry["rho"]}, name="rho")
     ]), "sec", None)
     cell_type2.interactions = [MyFieldInteractionTemplate("cyt", FieldInteractionType.INTEGRAL)]
     cell_type2.p.get_collection("cytokine").set_misc_parameter(MiscParameter("bc_type","patrick_saturation"))
-    scenario.entity_types = [cell_type1,cell_type2]
-    locator = MyCellListLocator([[-20, 0, 0], [20, 0, 0]], [cell_type1,cell_type2])
+    scenario.entity_types = [cell_type1, cell_type2]
+    locator = MyCellListLocator([[-geometry["distance"] / 2, 0, 0], [geometry["distance"] / 2, 0, 0]],
+                                [cell_type1, cell_type2])
     scenario.entity_locators = [locator]
 
     return scenario
