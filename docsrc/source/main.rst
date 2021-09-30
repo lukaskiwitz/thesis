@@ -3,6 +3,7 @@ main package
 
 
 .. toctree::
+    :maxdepth: 2
 
     api/global_problem
     api/sim_container

@@ -1,5 +1,8 @@
-Sim container
-------------------------
-.. automodule:: thesis.main.SimContainer
-   :members:
-   :show-inheritance:
+SimContainer
+===============
+
+.. autoclass:: thesis.main.SimContainer.SimContainer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
