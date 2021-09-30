@@ -206,6 +206,7 @@ class ComputeSettings:
 class PostProcessor:
 
     def __init__(self, path: str) -> None:
+        self.debug_compute_in_serial = False
         self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
@@ -226,8 +227,7 @@ class PostProcessor:
         }
         self.image_settings_fields = None
 
-    def write_post_process_xml(self, n_processes, debug=False, render_paraview=False, make_images=False,
-                               time_indices=None, scan_indicies=None):
+    def write_post_process_xml(self, n_processes, debug=False, time_indices=None, scan_indicies=None):
         """
         runs compute-function for all scans an writes result to xml file
 
@@ -269,7 +269,7 @@ class PostProcessor:
 
                     for field_step in step.findall("/Fields/Field"):
 
-                        markers = field_step.findall("../../../Marker")
+                        markers = field_step.findall("Marker")
                         compute_settings = ComputeSettings.create_from_element(
                             field_step,
                             markers,
@@ -284,8 +284,6 @@ class PostProcessor:
                         else:
                             compute_settings.path = self.path
                             compute_settings.tmp_path = tmp_path
-                            compute_settings.make_images = make_images
-                            compute_settings.render_paraview = render_paraview
                             compute_settings.computations = [comp for comp in self.computations if
                                                              compute_settings.loader_class in comp.compatible_result_type]
                             compute_settings.unit_length_exponent = self.unit_length_exponent
@@ -304,12 +302,13 @@ class PostProcessor:
         message(
             "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)))
 
-        with mp.Pool(processes=n_processes, initializer=lambda: os.nice(19)) as p:
-            result_list = p.map(compute, scatter_list)
-
-        # result_list = []
-        # for sc in scatter_list:
-        #     result_list.append(compute(sc))
+        if self.debug_compute_in_serial:
+            result_list = []
+            for sc in scatter_list:
+                result_list.append(compute(sc))
+        else:
+            with mp.Pool(processes=n_processes, initializer=lambda: os.nice(19)) as p:
+                result_list = p.map(compute, scatter_list)
 
         element_list = []
         for file in result_list:
@@ -469,17 +468,6 @@ class PostProcessor:
         result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices=time_indices,
                                                                         n_processes=n_processes)
 
-        # try:
-        #     result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
-        # except:
-        #     print("")
-
-        # result["time_index"] = result["time_index"].apply(lambda x: int(x))
-        # result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
-        # result["model_index"] = result["model_index"].apply(lambda x: int(x))
-        #
-        # result["time"] = result["time"].apply(lambda x: float(x))
-
         if kde:
             message("running kernel density estimation")
             r_grouped = result.groupby(["scan_index", "model_index", "replicat_index"], as_index=False)
@@ -515,8 +503,6 @@ class PostProcessor:
                     kde_result = kde_result.append(step)
             result = self._normalize_cell_score(kde_result)
 
-        # return result.drop_duplicates()
-
         return result
 
     def _normalize_cell_score(self, x):
@@ -528,12 +514,7 @@ class PostProcessor:
             i = group[0]
             group = group[1]
 
-            # ids = x.loc[
-            #     (x["type_name"] != group["type_name"][0]) &
-            #     (x["time_index"] == 0)
-            #     ]["id"].unique()
-
-            no_init = group  # group.loc[~group["id"].isin(ids)]
+            no_init = group
 
             for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
@@ -578,11 +559,9 @@ class PostProcessor:
                                      data_columns=self.global_dataframe.columns)
         self.timing_dataframe.to_hdf(os.path.join(self.path, "timing_df.h5"), key="df", mode="w")
 
-    def run_post_process(self, n_processes, render_paraview=False, extra_cell_constants=False, kde=False,
-                         make_images=False, time_indices=None):
+    def run_post_process(self, n_processes, extra_cell_constants=False, kde=False, time_indices=None):
         self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices=time_indices, n_processes=n_processes)
-        self.write_post_process_xml(n_processes, render_paraview=render_paraview, make_images=make_images,
-                                    time_indices=time_indices)
+        self.write_post_process_xml(n_processes, time_indices=time_indices)
         self.global_dataframe = self.get_global_dataframe()
         self.timing_dataframe = self.get_timing_dataframe()
 
@@ -625,6 +604,274 @@ class FenicsScalarFieldComputation(PostProcessComputation):
         self.grad: fcs.Function = fcs.project(fcs.grad(self.u), self.V_vec, solver_type="gmres")
         self.c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
         self.grad_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
+
+
+class ParaviewRender(FenicsScalarFieldComputation):
+    name = "ParaviewRender"
+    add_xml_result = False
+
+    def __init__(self, compute_settings: ComputeSettings):
+
+        self.compute_settings = compute_settings
+        super().__init__(compute_settings)
+
+    def __call__(self, ):
+
+        try:
+            self.make_paraview_images()
+        except FileNotFoundError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except NameError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except AttributeError as e:
+            warning(
+                "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+                    si=self.scan_index, ti=self.time_index))
+
+    def make_paraview_images(self, visual_conv=1):
+
+        conv_factor = self.c_conv
+        compute_settings = self.compute_settings
+
+        conv_factor = conv_factor * visual_conv
+        from thesis.main import __path__ as main_path
+
+        try:
+            for path in os.environ["PARAVIEW_PATH"].split(":"):
+                if os.path.exists(path):
+                    paraview = path
+                    break
+        except KeyError as e:
+            warning("PARAVIEW_PATH env variable not set. cannot render images")
+            return 0
+
+        paraview_script = main_path._path[0] + "/paraview_render_script.py"
+        pvbatch = os.path.join(paraview, "bin/pvbatch")
+
+        import subprocess as sp
+        import json
+        if "type_name" in compute_settings.markers.keys():
+
+            legend_title = compute_settings.legend_title
+            cell_colors = compute_settings.cell_colors
+            round_legend_labels = compute_settings.round_legend_labels
+
+            color_dict, legend_items, labels, categorical = get_color_dictionary(self.compute_settings.cell_df,
+                                                                                 "type_name",
+                                                                                 cell_colors,
+                                                                                 round_legend_labels=round_legend_labels)
+
+            for type_name, entry in color_dict.items():
+                if type_name in compute_settings.marker_lookup.keys():
+                    mesh_function_label = compute_settings.marker_lookup[type_name]
+                    if not str(mesh_function_label) in compute_settings.paraview_settings["lookup"].keys():
+                        compute_settings.paraview_settings["lookup"][str(mesh_function_label)] = [type_name,
+                                                                                                  color_dict[type_name],
+                                                                                                  1]
+
+            xdmf = os.path.join(compute_settings.path, compute_settings.solution_path)
+            marker_path = os.path.join(compute_settings.path, compute_settings.markers["type_name"])
+            settings_path = os.path.join(compute_settings.path,
+                                         "paraview_settings_{f}.json".format(f=compute_settings.field_quantity))
+
+            paraview_settings = compute_settings.paraview_settings
+
+            with open(settings_path, "w") as f:
+                paraview_settings["conversion_factor"] = conv_factor
+                paraview_settings["field_name"] = "{f}({unit_name})".format(
+                    f=compute_settings.field_quantity, unit_name=compute_settings.unit_name
+                )
+                json.dump(paraview_settings, f, indent=1)
+
+            img_path = "images/scan_{scan_index}/{field}/{time_index}/".format(
+                field=compute_settings.field_quantity,
+                scan_index=compute_settings.scan_index,
+                time_index=compute_settings.time_index
+            )
+            img_path = os.path.join(compute_settings.path, img_path)
+
+            os.makedirs(img_path, exist_ok=True)
+            my_env = os.environ.copy()
+            my_env["LD_LIBRARY_PATH"] = os.path.join(paraview, "lib")
+
+            p = sp.Popen([pvbatch, paraview_script, xdmf, marker_path, img_path, settings_path], env=my_env)
+            p.communicate()
+
+
+class SheetPyPlotRender(FenicsScalarFieldComputation):
+    name = "SheetPyPlot"
+    add_xml_result = False
+
+    def __init__(self, compute_settings: ComputeSettings):
+
+        self.compute_settings = compute_settings
+        super().__init__(compute_settings)
+
+    def __call__(self, ):
+
+        try:
+            self.make_images()
+        except FileNotFoundError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except NameError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except AttributeError as e:
+            warning(
+                "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+                    si=self.scan_index, ti=self.time_index))
+
+    def make_images(self, visual_conv=1):
+
+        u = self.u
+        conv_factor = self.c_conv
+        compute_settings = self.compute_settings
+
+        conv_factor = conv_factor * visual_conv
+
+        scan_index = compute_settings.scan_index
+        time_index = compute_settings.time_index
+
+        cell_color_key = compute_settings.cell_color_key
+        legend_title = compute_settings.legend_title
+        cell_colors = compute_settings.cell_colors
+        round_legend_labels = compute_settings.round_legend_labels
+
+        color_dict, legend_items, labels, categorical = get_color_dictionary(self.cell_df, cell_color_key,
+                                                                             cell_colors,
+                                                                             round_legend_labels=round_legend_labels)
+
+        cell_df = self.cell_df.loc[
+            (self.cell_df["scan_index"] == scan_index) &
+            (self.cell_df["time_index"] == time_index)
+            ]
+        u.set_allow_extrapolation(True)
+        rec_mesh, bbox = get_rectangle_plane_mesh(u)
+
+        aspect = abs(bbox[0][0] - bbox[0][1]) / abs(bbox[1][0] - bbox[1][1])
+
+        w = compute_settings.figure_width
+        h = w / aspect
+
+        from mpl_toolkits.axes_grid1 import Divider, Size
+
+        pad_l = w * compute_settings.pad_l
+        pad_r = w * compute_settings.pad_r
+
+        fig = plt.figure(figsize=(w + pad_l + pad_r, h + pad_l + pad_r))
+
+        vertical = [Size.Fixed(pad_l), Size.Fixed(h), Size.Fixed(pad_r)]
+        height = [Size.Fixed(pad_l), Size.Fixed(w), Size.Fixed(pad_r)]
+
+        divider = Divider(fig, (0, 0, 1, 1), height, vertical, aspect=False)
+        pseudo_color_axes = fig.add_axes(divider.get_position(), axes_locator=divider.new_locator(
+            nx=1,
+            ny=1
+        ))
+
+        legend_fig = plt.figure(figsize=(8, 8))
+
+        legend_gs = GridSpec(1, 2, legend_fig)
+        legend_axes = [
+            legend_fig.add_subplot(legend_gs[0]),
+            # legend_fig.add_subplot(legend_gs[1]),
+            # legend_fig.add_subplot(legend_gs[2])
+        ]
+
+        # for index, cell in cell_df.iterrows():
+        #     p = [
+        #         cell["x"],
+        #         cell["y"]
+        #     ]
+        #
+        #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+        #     if not key in color_dict:
+        #         color = "black"
+        #         message("no color provided for key {k}".format(k=key))
+        #     else:
+        #         color = color_dict[key]
+        #
+        #     fig.gca().scatter(p[0],p[1],marker=5, color=color)
+        #     # c = plt.Circle(p, 5, color=color)
+        #     # fig.gca().add_artist(c)
+
+        rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
+        u_slice = fcs.interpolate(u, rev_V)
+
+        mesh = u_slice.function_space().mesh()
+        slice_v = u_slice.compute_vertex_values(mesh) * conv_factor
+
+        triang = dlf.common.plotting.mesh2triang(mesh)
+
+        from matplotlib.cm import ScalarMappable
+        from matplotlib.colors import Normalize
+
+        # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
+
+        vmin = min(slice_v)
+        vmax = max(slice_v)
+
+        norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
+
+        mappable = ScalarMappable(norm=norm_cytokine, cmap="viridis")
+        if hasattr(compute_settings, "colorbar_range"):
+            tpl = compute_settings.colorbar_range
+            mappable.set_clim(tpl[0], tpl[1])
+
+        pseudo_color_axes.tricontourf(triang, slice_v, levels=100, norm=norm_cytokine)
+        pseudo_color_axes.set_xlabel(r"x ($\mu m $)")
+        pseudo_color_axes.set_ylabel(r"y ($\mu m $)")
+
+        for index, cell in cell_df.iterrows():
+            p = [
+                cell["x"],
+                cell["y"]
+            ]
+
+            key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+            if not key in color_dict:
+                color = "black"
+                message("no color provided for key {k}".format(k=key))
+            else:
+                color = color_dict[key]
+
+            c = plt.Circle(p, 5, color=color, transform=fig.gca().transData)
+            pseudo_color_axes.add_artist(c)
+
+        if hasattr(compute_settings, "colorbar_range"):
+            cb_cytokine = legend_fig.colorbar(mappable, ax=legend_axes[0], fraction=0.5, aspect=10)
+            cb_cytokine.set_label("cytokine (nM)")
+        else:
+            cb_cytokine = legend_fig.colorbar(mappable)
+            cb_cytokine.set_label("cytokine (nM)")
+
+        if not categorical:
+            vmin = min(color_dict.keys())
+            vmax = max(color_dict.keys())
+
+            norm = Normalize(vmin=vmin, vmax=vmax)
+            cb = legend_fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors), ax=legend_axes[0], fraction=0.5,
+                                     aspect=10)
+            cb.set_label(cell_color_key)
+        else:
+            legend_axes[0].legend(handles=legend_items, labels=labels, title=legend_title)
+
+        img_path = "images/scan_{scan_index}/{field}/".format(
+            field=compute_settings.field_quantity,
+            scan_index=scan_index
+        )
+        file_name = "{time_index}".format(
+            time_index=time_index
+        )
+        os.makedirs(compute_settings.path + img_path, exist_ok=True)
+        os.makedirs(os.path.join(compute_settings.path + img_path + "/legends/"), exist_ok=True)
+        # fig.tight_layout()
+        # legend_fig.tight_layout()
+        legend_fig.savefig(compute_settings.path + img_path + "/legends/" + file_name + ".pdf")
+        fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
 
 
 class ScalarComputation(PostProcessComputation):
@@ -747,9 +994,8 @@ def compute(compute_settings: ComputeSettings) -> str:
         #         make_images(u, c_conv, compute_settings, visual_conv=compute_settings.additional_conversion)
         #     except RuntimeError as e:
         #         warning("could not make images for scanindex {si} at t = {ti}".format(si=scan_index, ti=time_index))
-        #
+
         # if compute_settings.render_paraview:
-        #
         #     try:
         #         make_paraview_images(c_conv, compute_settings, visual_conv=compute_settings.additional_conversion)
         #     except FileNotFoundError as e:
@@ -847,217 +1093,3 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
         labels.append(type)
 
     return color_dict, legend_items, labels, categorical
-
-
-def make_paraview_images(conv_factor, compute_settings, visual_conv=1):
-    conv_factor = conv_factor * visual_conv
-    from thesis.main import __path__ as main_path
-
-    try:
-        for path in os.environ["PARAVIEW_PATH"].split(":"):
-            if os.path.exists(path):
-                paraview = path
-                break
-    except KeyError as e:
-        warning("PARAVIEW_PATH env variable not set. cannot render images")
-        return 0
-
-    paraview_script = main_path._path[0] + "/paraview_render_script.py"
-    pvbatch = os.path.join(paraview, "bin/pvbatch")
-
-    import subprocess as sp
-    import json
-    if "type_name" in compute_settings.markers.keys():
-
-        legend_title = compute_settings.legend_title
-        cell_colors = compute_settings.cell_colors
-        round_legend_labels = compute_settings.round_legend_labels
-
-        color_dict, legend_items, labels, categorical = get_color_dictionary(cell_dataframe, "type_name",
-                                                                             cell_colors,
-                                                                             round_legend_labels=round_legend_labels)
-
-        for type_name, entry in color_dict.items():
-            if type_name in compute_settings.marker_lookup.keys():
-                mesh_function_label = compute_settings.marker_lookup[type_name]
-                if not str(mesh_function_label) in compute_settings.paraview_settings["lookup"].keys():
-                    compute_settings.paraview_settings["lookup"][str(mesh_function_label)] = [type_name,
-                                                                                              color_dict[type_name], 1]
-
-        xdmf = os.path.join(compute_settings.path, compute_settings.solution_path)
-        marker_path = os.path.join(compute_settings.path, compute_settings.markers["type_name"])
-        settings_path = os.path.join(compute_settings.path,
-                                     "paraview_settings_{f}.json".format(f=compute_settings.field_quantity))
-
-        paraview_settings = compute_settings.paraview_settings
-
-        # for k,v in compute_settings.paraview_settings.items():
-        #         if isinstance(v,Dict):
-        #             pass
-        #         else:
-        #             paraview_settings[k] = v
-
-        with open(settings_path, "w") as f:
-            paraview_settings["conversion_factor"] = conv_factor
-            paraview_settings["field_name"] = "{f}({unit_name})".format(
-                f=compute_settings.field_quantity, unit_name=compute_settings.unit_name
-            )
-            json.dump(paraview_settings, f, indent=1)
-
-        img_path = "images/scan_{scan_index}/{field}/{time_index}/".format(
-            field=compute_settings.field_quantity,
-            scan_index=compute_settings.scan_index,
-            time_index=compute_settings.time_index
-        )
-        img_path = os.path.join(compute_settings.path, img_path)
-
-        os.makedirs(img_path, exist_ok=True)
-        my_env = os.environ.copy()
-        my_env["LD_LIBRARY_PATH"] = os.path.join(paraview, "lib")
-
-        p = sp.Popen([pvbatch, paraview_script, xdmf, marker_path, img_path, settings_path], env=my_env)
-        p.communicate()
-
-
-def make_images(u, conv_factor, compute_settings, visual_conv=1):
-    conv_factor = conv_factor * visual_conv
-
-    scan_index = compute_settings.scan_index
-    time_index = compute_settings.time_index
-
-    cell_color_key = compute_settings.cell_color_key
-    legend_title = compute_settings.legend_title
-    cell_colors = compute_settings.cell_colors
-    round_legend_labels = compute_settings.round_legend_labels
-
-    color_dict, legend_items, labels, categorical = get_color_dictionary(cell_dataframe, cell_color_key, cell_colors,
-                                                                         round_legend_labels=round_legend_labels)
-
-    cell_df = cell_dataframe.loc[
-        (cell_dataframe["scan_index"] == scan_index) &
-        (cell_dataframe["time_index"] == time_index)
-        ]
-    u.set_allow_extrapolation(True)
-    rec_mesh, bbox = get_rectangle_plane_mesh(u)
-
-    aspect = abs(bbox[0][0] - bbox[0][1]) / abs(bbox[1][0] - bbox[1][1])
-
-    w = compute_settings.figure_width
-    h = w / aspect
-
-    from mpl_toolkits.axes_grid1 import Divider, Size
-
-    pad_l = w * compute_settings.pad_l
-    pad_r = w * compute_settings.pad_r
-
-    fig = plt.figure(figsize=(w+pad_l+pad_r,h+pad_l + pad_r))
-
-    vertical = [Size.Fixed(pad_l), Size.Fixed(h), Size.Fixed(pad_r)]
-    height = [Size.Fixed(pad_l), Size.Fixed(w), Size.Fixed(pad_r)]
-
-    divider = Divider(fig, (0, 0, 1, 1), height, vertical, aspect=False)
-    pseudo_color_axes = fig.add_axes(divider.get_position(), axes_locator=divider.new_locator(
-        nx=1,
-        ny=1
-    ))
-
-    legend_fig = plt.figure(figsize=(8, 8))
-
-    legend_gs = GridSpec(1, 2, legend_fig)
-    legend_axes = [
-        legend_fig.add_subplot(legend_gs[0]),
-        # legend_fig.add_subplot(legend_gs[1]),
-        # legend_fig.add_subplot(legend_gs[2])
-    ]
-
-    # for index, cell in cell_df.iterrows():
-    #     p = [
-    #         cell["x"],
-    #         cell["y"]
-    #     ]
-    #
-    #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
-    #     if not key in color_dict:
-    #         color = "black"
-    #         message("no color provided for key {k}".format(k=key))
-    #     else:
-    #         color = color_dict[key]
-    #
-    #     fig.gca().scatter(p[0],p[1],marker=5, color=color)
-    #     # c = plt.Circle(p, 5, color=color)
-    #     # fig.gca().add_artist(c)
-
-    rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
-    u_slice = fcs.interpolate(u, rev_V)
-
-    mesh = u_slice.function_space().mesh()
-    slice_v = u_slice.compute_vertex_values(mesh) * conv_factor
-
-    triang = dlf.common.plotting.mesh2triang(mesh)
-
-    from matplotlib.cm import ScalarMappable
-    from matplotlib.colors import Normalize
-
-    # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
-
-    vmin = min(slice_v)
-    vmax = max(slice_v)
-
-    norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
-
-    mappable = ScalarMappable(norm=norm_cytokine, cmap="viridis")
-    if hasattr(compute_settings, "colorbar_range"):
-        tpl = compute_settings.colorbar_range
-        mappable.set_clim(tpl[0], tpl[1])
-
-    pseudo_color_axes.tricontourf(triang, slice_v, levels=100, norm=norm_cytokine)
-    pseudo_color_axes.set_xlabel(r"x ($\mu m $)")
-    pseudo_color_axes.set_ylabel(r"y ($\mu m $)")
-
-    for index, cell in cell_df.iterrows():
-        p = [
-            cell["x"],
-            cell["y"]
-        ]
-
-        key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
-        if not key in color_dict:
-            color = "black"
-            message("no color provided for key {k}".format(k=key))
-        else:
-            color = color_dict[key]
-
-        c = plt.Circle(p, 5, color=color, transform=fig.gca().transData)
-        pseudo_color_axes.add_artist(c)
-
-    if hasattr(compute_settings, "colorbar_range"):
-        cb_cytokine = legend_fig.colorbar(mappable, ax=legend_axes[0], fraction=0.5, aspect=10)
-        cb_cytokine.set_label("cytokine (nM)")
-    else:
-        cb_cytokine = legend_fig.colorbar(mappable)
-        cb_cytokine.set_label("cytokine (nM)")
-
-    if not categorical:
-        vmin = min(color_dict.keys())
-        vmax = max(color_dict.keys())
-
-        norm = Normalize(vmin=vmin, vmax=vmax)
-        cb = legend_fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors), ax=legend_axes[0], fraction=0.5,
-                                 aspect=10)
-        cb.set_label(cell_color_key)
-    else:
-        legend_axes[0].legend(handles=legend_items, labels=labels, title=legend_title)
-
-    img_path = "images/scan_{scan_index}/{field}/".format(
-        field=compute_settings.field_quantity,
-        scan_index=scan_index
-    )
-    file_name = "{time_index}".format(
-        time_index=time_index
-    )
-    os.makedirs(compute_settings.path + img_path, exist_ok=True)
-    os.makedirs(os.path.join(compute_settings.path + img_path + "/legends/"), exist_ok=True)
-    # fig.tight_layout()
-    # legend_fig.tight_layout()
-    legend_fig.savefig(compute_settings.path + img_path + "/legends/" + file_name + ".pdf")
-    fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
