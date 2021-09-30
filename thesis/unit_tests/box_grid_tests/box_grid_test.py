@@ -133,7 +133,7 @@ class PostProcessingTest(MyTest):
 
         post_processor = PostProcessor(self.path)
         post_processor.unit_length_exponent = -6
-        post_processor.run_post_process(2, make_images=False, render_paraview=False, kde=False)
+        post_processor.run_post_process(2, kde=False)
 
         plotter = Plotter(self.path)
         plotter.subplots(1, 1)
@@ -152,7 +152,7 @@ class PostProcessingTest(MyTest):
 
         post_processor = PostProcessor(self.path)
         post_processor.unit_length_exponent = -6
-        post_processor.run_post_process(2, make_images=False, render_paraview=False, kde=True)
+        post_processor.run_post_process(2, kde=True)
 
         plotter = Plotter(self.path)
         plotter.subplots(1, 1)
@@ -171,7 +171,7 @@ class PostProcessingTest(MyTest):
 
         post_processor = PostProcessor(self.path)
         post_processor.unit_length_exponent = -6
-        post_processor.run_post_process(2, make_images=False, render_paraview=False, kde=False)
+        post_processor.run_post_process(2, kde=False)
 
         plotter = Plotter(self.path)
         plotter.subplots(1, 1)
