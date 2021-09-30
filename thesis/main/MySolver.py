@@ -29,6 +29,7 @@ from thesis.main.my_debug import message, warning
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
+class MeanFieldSolverError(Exception): pass
 
 
 class MySolver(ABC):
@@ -261,37 +262,56 @@ class MyDiffusionSolver(MySolver):
 class MyMeanFieldSolver(MySolver):
 
     def solve(self, t: float, dt: float):
-        from scipy.constants import N_A
         from scipy.integrate import solve_ivp
-        import matplotlib.pyplot as plt
-
-
 
         q = np.mean(self.entity_parameters["q"])
         R = np.mean(self.entity_parameters["R"])
         kd = self.global_parameters["kd"]
-        k_endo = self.global_parameters["k_endo"]
-        k_off = self.global_parameters["k_off"]
         k_on = self.global_parameters["k_on"]
 
-        KD = k_off / k_on
+        d = float(self.geometry_parameters["distance"])
+        rho = float(self.geometry_parameters["rho"])
 
-        V = (20**3) - (4/3)*(np.pi * 5**3)
-        A = 1e9/(V)
+        V = (d ** 3) - (4 / 3) * (np.pi * rho ** 3)
+        A = 1 / (V)  # conversion happens in parameter template definition
 
-        def df(t,c):
+        def df(t, c):
             # c = c[0]
+            bc_type = np.unique(self.entity_parameters["bc_type"])
+            uptake = k_on * R * c
+            if len(bc_type) == 1:
+                bc_type = bc_type[0]
+                if bc_type == "linear":
+                    pass
+                elif bc_type == "R_saturation":
+                    Kc = self.global_parameters["Kc"]
+                    uptake = k_on * R * Kc * c / (Kc + c)
+                elif bc_type == "patrick_saturation":
+                    k_off = self.global_parameters["k_off"]
+                    k_endo = self.global_parameters["k_endo"]  # 1/s
+                    KD = k_off / k_on
+                    try:
+                        uptake = k_endo * R * c / (KD + c)
+                    except TypeError:
+                        KD = float(KD)
+                        k_endo = float(k_endo)
+                        uptake = k_endo * R * c / (KD + c)
 
-            up = c/(c + KD)
-            if up > 1: up = 1
+                elif bc_type == "amax_saturation":
+                    Kc = self.global_parameters["Kc"]
+                    amax = self.global_parameters["amax"]
+                    uptake = amax * c / (Kc + c)
+                else:
+                    raise Exception
 
-            dc = A * (q - (k_endo * R * up ))- c * kd
+            dc = A * (q - uptake) - c * kd
 
             return dc
 
-
-        r = solve_ivp(df,(0,1e-5), [0], atol = 0.0001 * KD, rtol = 1e-5)
-        self.u = r.y[0,:][-1]
+        r = solve_ivp(df, (0, dt), [0], atol=1e-20, rtol=1e-5, method="BDF")
+        # plt.plot(r.t, r.y[0, :])
+        # plt.show()
+        self.u = r.y[0, :][-1]
 
     def compile(self, tmp_path: str):
         pass
