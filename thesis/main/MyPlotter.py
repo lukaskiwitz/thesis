@@ -26,6 +26,7 @@ class Plotter:
 
         self.t_max = 10
         self.model_index_key: str = "model_index"
+        self.model_name_key: str = "model_name"
         self.scan_name_key: str = "scan_name_scan_name"
         self.scan_index_key: str = "scan_value"
         self.path_name: str = "path_name"
@@ -312,6 +313,8 @@ class Plotter:
                 timing_df = self.reset_scan_index(timing_df)
             except FileNotFoundError:
                 pass
+            except KeyError:
+                pass
 
             try:
                 ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
@@ -332,6 +335,7 @@ class Plotter:
             self.time_index_key,
             self.scan_index_key,
             self.model_index_key,
+            self.model_name_key,
             # "IL-2_surf_c",
             # "x",
             # "y",

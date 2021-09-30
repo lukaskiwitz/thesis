@@ -18,10 +18,10 @@ class GlobalResult(ABC):
         self.field_quantity: str = field_quantity
 
     @abstractmethod
-    def save(self):pass
+    def save(self, replicat_index: int): pass
 
     @abstractmethod
-    def load(self):pass
+    def load(self, time_index: int): pass
 
     @abstractmethod
     def get(self):pass
@@ -50,26 +50,26 @@ class ScalarResult(GlobalResult):
     def save(self, time_index: int) -> Tuple[str, str, type]:
 
         file_name = "field_{fq}.npy".format(fq=self.field_quantity)
-        partial_path = "sol/" + file_name
+        partial_path = "sol/"
 
-        file = os.path.join(self.path, partial_path)
-        if not os.path.exists(os.path.join(self.path, "sol/")):
-            os.makedirs(os.path.join(self.path, "sol/"))
+        file = os.path.join(self.path, partial_path + file_name)
+        if not os.path.exists(os.path.join(self.path, partial_path)):
+            os.makedirs(os.path.join(self.path, partial_path))
 
         if os.path.exists(file) and time_index > 1:
             u = np.load(file)
-            u = np.insert(u,len(u),self.u)
+            u = np.insert(u, len(u), self.u)
         else:
             u = np.array([self.u])
 
-        np.save(file,u)
+        np.save(file, u)
 
         return None, partial_path, type(self)
 
     def load(self, time_index: int):
 
         file_name = "field_{fq}.npy".format(fq=self.field_quantity)
-        partial_path = "sol/" + file_name
+        partial_path = ("sol/" + file_name)
 
         file = os.path.join(self.path, partial_path)
         if os.path.exists(file):
@@ -99,6 +99,10 @@ class ScalarFieldResult(GlobalResult):
         file_name = "field_{fq}".format(fq=self.field_quantity)
         distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
         sol = "sol/{fn}_{ti}.xdmf".format(fn=file_name, ti=str(time_index))
+
+        if not os.path.exists(os.path.join(self.path, "sol/")):
+            os.makedirs(os.path.join(self.path, os.path.join(self.path, "sol/")))
+
         u = self.get()
 
         u.rename(self.field_quantity, self.field_quantity)

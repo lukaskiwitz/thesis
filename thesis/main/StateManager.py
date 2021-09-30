@@ -5,6 +5,7 @@ Created on Mon Oct 14 14:34:19 2019
 
 @author: Lukas Kiwitz
 """
+
 import json
 import os
 import time
@@ -119,11 +120,13 @@ class StateManager:
     def get_scan_folder(self, n: int) -> str:
         return self.path + self.scan_folder_pattern.format(n=n)
 
-    def get_cell_ts_data_frame(self, time_indices: List[int] = None,scan_indicies = None, n_processes: int = 1 ) -> pd.DataFrame:
+    def get_cell_ts_data_frame(self, time_indices: List[int] = None, scan_indicies: List[int] = None,
+                               n_processes: int = 1) -> pd.DataFrame:
 
         def init():
             global path
             path = self.path
+            os.nice(19)
 
         result = []
 
@@ -205,18 +208,20 @@ class StateManager:
 
         return deepcopy(sample.p)
 
-    def estimate_time_remaining(self, sc: SimContainer, scan_index: int, time_index: int, S: List, T: List) -> None:
+    def estimate_time_remaining(self, sc: SimContainer, model_index: int, scan_index: int, time_index: int,
+                                replicat_index: int, R: List[int], S: List[int], T: List[int]) -> None:
 
-        sample = self.record.child_tasks["run"].child_tasks["scan_sample"]
+        sample = self.record.child_tasks["run"].child_tasks["global_model"].child_tasks["scan_sample"]
         time_step = sample.child_tasks["SimContainer"].child_tasks["run"].child_tasks["step"]
         step_durations = [i["end"] - i["start"] for i in time_step.history]
         mean_step_duration = gmean(step_durations)
 
         n_steps = (len(T) - time_index)
         n_scans = len(S) - scan_index
+        n_replicats = len(R) - replicat_index
 
         time_series_eta = time.time() + n_steps * mean_step_duration
-        scan_eta = time.time() + (n_scans * len(T) * mean_step_duration + n_steps * mean_step_duration)
+        scan_eta = time.time() + (n_scans * n_replicats * len(T) * mean_step_duration + n_steps * mean_step_duration)
         self.eta_estimates.append([time.time(), scan_eta])
 
         np.save(os.path.join(self.get_records_path(), "eta"), np.array(self.eta_estimates))
@@ -229,112 +234,155 @@ class StateManager:
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
         # message("ETA: {eta}".format(eta = eta))
 
-    def run(self, ext_cache: str = "", model_index=0) -> None:
+    def run(self, ext_cache: str = "", model_names: List[str] = None, number_of_replicats=1) -> None:
 
+        if model_names is None:
+            model_indicies = self.scenario.get_model_indicies()
+        else:
+            model_indicies = [self.scenario.get_model_index(name) for name in model_names]
         run_task = self.record.start_child("run")
-        sample_task = run_task.start_child("scan_sample")
 
-        self.scan_tree.serialize_to_element_tree(self.scan_container)
-        self.scan_container = self.scan_tree.deserialize_from_element_tree()
+        self.model_bar = tqdm(desc="Global Models", total=len(model_indicies), dynamic_ncols=True)
 
-        n_samples = len(self.scan_container.scan_samples)
-        self.scan_bar = tqdm(desc="Parameter Scan", total=n_samples, dynamic_ncols=True)
+        self.scan_bar = tqdm(desc="Parameter Scan", dynamic_ncols=True)
+        self.replicat_bar = tqdm(desc="Replicats ", initial=0, total=number_of_replicats, dynamic_ncols=True)
         self.time_series_bar = tqdm(desc="Time Series   ", initial=0, dynamic_ncols=True)
 
-        self.scan_tree.load_xml()
-        self.scan_tree.write_element_tree()
+        for model_index in model_indicies:
 
-        for scan_index in range(n_samples):
-            if not sample_task.running:
-                sample_task.start()
-            self.time_series_bar.reset()
-            scan_name = self.scan_container.scan_samples[scan_index].p.get_misc_parameter("scan_name",
-                                                                                          "scan_name").get_in_sim_unit()
-            sample_task.info.update({"scan_index": scan_index, "scan_name": scan_name})
-            sample_task.update_child_info()
-            try:
-                def post_step(sc, time_index, t, T):
-                    self.estimate_time_remaining(sc, scan_index, time_index, list(range(n_samples)), T)
-                    self.scan_tree.add_time_step_to_element_tree(sc, model_index, scan_index, time_index, t)
-                    self.scan_tree.write_element_tree()
+            model_task = run_task.start_child("global_model")
 
-                    import resource
+            sample_task = model_task.start_child("scan_sample")
 
-                    rusage = [time_index, scan_index, resource.getrusage(resource.RUSAGE_SELF)]
-                    if self.ruse is None:
-                        self.ruse = [rusage]
-                    else:
-                        self.ruse.append(rusage)
+            self.scan_tree.serialize_to_element_tree(self.scan_container)
+            self.scan_container = self.scan_tree.deserialize_from_element_tree()
+            n_samples = len(self.scan_container.scan_samples)
+            self.scan_bar.total = n_samples
+            self.scan_bar.reset()
 
-                self.scan_container.t = 0
-
-                get_sim_container_task = sample_task.start_child("build_sim_container")
-                self.sim_container = self.scenario.get_sim_container(self.get_scan_sample(scan_index).p,
-                                                                     model_index=model_index)
-                self.sim_container.path = self.path
-
-                self.sim_container.marker_lookup = self.marker_lookup
-                get_sim_container_task.stop()
-                sample_task.add_child(self.sim_container.record)
-
-                self.apply_sample_flags(self.sim_container, scan_index)
-
-                initialize_task = sample_task.start_child("initialize")
-                if not ext_cache == "":
-                    self.sim_container.set_ext_cache(ext_cache)
-                self.sim_container.initialize()
-                initialize_task.stop()
-
-                sample_task.start_child("update_sim_container")
-                self.update_sim_container(self.sim_container, scan_index, model_index)
-                sample_task.stop_child("update_sim_container")
-
-                sample_task.start_child("pre_scan")
-                self.pre_scan(self, scan_index)
-                sample_task.stop_child("pre_scan")
-
-                self.sim_container._post_step = post_step
-
-                # todo not a permantent solution
-                self.sim_container.pre_step = self.pre_step if hasattr(self,
-                                                                       "pre_step") else self.sim_container.pre_step
-                self.sim_container.post_step = self.post_step if hasattr(self,
-                                                                         "post_step") else self.sim_container.post_step
-
-                if self.T is None:
-                    T = np.arange(0, self.N * self.dt, self.dt)
-                    self.time_series_bar.total = len(T) - 1
-                    self.sim_container.run(T)
-                else:
-                    self.time_series_bar.total = len(self.T) - 1
-                    self.sim_container.run(self.T)
-
-                sample_task.start_child("post_scan")
-                self.post_scan(self, scan_index)
-                sample_task.stop_child("post_scan")
-                self.scan_bar.update(1)
-
-            except Exception as e:
-
-                warning("Scan {i} failed.".format(i=scan_index))
-                critical(traceback.format_exc())
-                warning("Continuing to next scan sample")
-                self.scan_bar.update(1)
-                sample_task.reset()
-                if self.debug:
-                    raise e
-                else:
-                    continue
-
-            sample_task.stop()
-            run_task.start_child("write_element_tree")
+            self.scan_tree.load_xml()
             self.scan_tree.write_element_tree()
-            run_task.stop_child("write_element_tree")
 
-        run_task.stop()
+            for scan_index in range(n_samples):
+                if not sample_task.running:
+                    sample_task.start()
+
+                scan_name = self.scan_container.scan_samples[scan_index].p.get_misc_parameter("scan_name",
+                                                                                              "scan_name").get_in_sim_unit()
+                sample_task.info.update({"scan_index": scan_index, "scan_name": scan_name})
+                sample_task.update_child_info()
+                try:
+                    def post_replicat(sc, time_index, replicat_index, t, T):
+
+                        self.replicat_bar.update(1)
+
+                    def pre_replicat(sc, time_index, replicat_index, t, T):
+
+                        self.time_series_bar.reset()
+
+                    def post_step(sc, time_index, replicat_index, t, T):
+
+                        self.estimate_time_remaining(sc, model_index, scan_index, time_index, replicat_index,
+                                                     list(range(number_of_replicats)), list(range(n_samples)), T)
+                        self.scan_tree.add_time_step_to_element_tree(sc, model_index, scan_index, time_index,
+                                                                     replicat_index, t,
+                                                                     model_name=self.scenario.get_model_name(
+                                                                         model_index))
+                        self.scan_tree.write_element_tree()
+
+                        import resource
+
+                        rusage = [model_index, scan_index, time_index, replicat_index,
+                                  resource.getrusage(resource.RUSAGE_SELF)]
+                        if self.ruse is None:
+                            self.ruse = [rusage]
+                        else:
+                            self.ruse.append(rusage)
+
+                    self.scan_container.t = 0
+
+                    get_sim_container_task = sample_task.start_child("build_sim_container")
+                    self.sim_container = self.scenario.get_sim_container(self.get_scan_sample(scan_index).p,
+                                                                         model_index=model_index)
+                    self.sim_container.top_path = self.path
+
+                    self.sim_container.marker_lookup = self.marker_lookup
+                    get_sim_container_task.stop()
+                    sample_task.add_child(self.sim_container.record)
+
+                    self.apply_sample_flags(self.sim_container, scan_index)
+
+                    initialize_task = sample_task.start_child("initialize")
+                    if not ext_cache == "":
+                        self.sim_container.set_ext_cache(ext_cache)
+                    self.sim_container.initialize()
+                    initialize_task.stop()
+
+                    sample_task.start_child("update_sim_container")
+                    self.update_sim_container(self.sim_container, scan_index, model_index)
+                    sample_task.stop_child("update_sim_container")
+
+                    sample_task.start_child("pre_scan")
+                    self.pre_scan(self, scan_index)
+                    sample_task.stop_child("pre_scan")
+
+                    self.sim_container._post_step = post_step
+                    self.sim_container._pre_replicat = pre_replicat
+                    self.sim_container._post_replicat = post_replicat
+
+                    # todo not a permantent solution
+                    self.sim_container.pre_step = self.pre_step if hasattr(self,
+                                                                           "pre_step") else self.sim_container.pre_step
+                    self.sim_container.post_step = self.post_step if hasattr(self,
+                                                                             "post_step") else self.sim_container.post_step
+
+                    self.sim_container.pre_replicat = self.pre_replicat if hasattr(self,
+                                                                                   "pre_replicat") else self.sim_container.pre_replicat
+                    self.sim_container.post_replicat = self.post_replicat if hasattr(self,
+                                                                                     "post_replicat") else self.sim_container.post_replicat
+
+                    self.replicat_bar.reset()
+                    if self.T is None:
+                        T = np.arange(0, self.N * self.dt, self.dt)
+                        self.time_series_bar.total = len(T) - 1
+
+                        self.sim_container.run(T, number_of_replicats=number_of_replicats)
+
+                    else:
+                        self.time_series_bar.total = len(self.T) - 1
+                        self.sim_container.run(self.T, number_of_replicats=number_of_replicats)
+
+                    sample_task.start_child("post_scan")
+                    self.post_scan(self, scan_index)
+                    sample_task.stop_child("post_scan")
+                    self.scan_bar.update(1)
+
+                except Exception as e:
+
+                    warning("Scan {i} failed.".format(i=scan_index))
+                    critical(traceback.format_exc())
+                    warning("Continuing to next scan sample")
+                    self.scan_bar.update(1)
+                    sample_task.reset()
+                    if self.debug:
+                        raise e
+                    else:
+                        continue
+
+                sample_task.stop()
+                run_task.start_child("write_element_tree")
+                self.scan_tree.write_element_tree()
+                run_task.stop_child("write_element_tree")
+
+            self.model_bar.update(1)
+            model_task.stop()
+
+        self.model_bar.close()
         self.scan_bar.close()
         self.time_series_bar.close()
+        self.replicat_bar.close()
 
+        run_task.stop()
         self.save_records()
 
     def get_records_path(self) -> str:
@@ -352,10 +400,12 @@ class StateManager:
         for f in os.listdir(records_path):
             os.remove(os.path.join(records_path, f))
 
-        ti = [r[0] for r in self.ruse]
-        si = [r[1] for r in self.ruse]
+        model_index = [r[0] for r in self.ruse]
+        scan_index = [r[1] for r in self.ruse]
+        time_index = [r[2] for r in self.ruse]
+        replicat_index = [r[3] for r in self.ruse]
 
-        ruse = pd.DataFrame([r[2] for r in self.ruse])
+        ruse = pd.DataFrame([r[4] for r in self.ruse])
         ruse.columns = [
             "ru_utime",
             "ru_stime",
@@ -373,8 +423,11 @@ class StateManager:
             "ru_nsignals",
             "ru_nvcsw",
             "ru_nivcsw"]
-        ruse["time_index"] = ti
-        ruse["scan_index"] = si
+
+        ruse["model_index"] = model_index
+        ruse["scan_index"] = scan_index
+        ruse["time_index"] = time_index
+        ruse["replicat_index"] = replicat_index
 
         ruse.to_hdf(os.path.join(records_path, "ruse.h5"), key="df", mode="w")
 
@@ -501,10 +554,11 @@ class MyScanTree:
 
         return  self.get_scan_element(scan_index).find("Model[@model_index='{m}']".format(m=model_index))
 
-    def create_model_element(self, scan_index:int, model_index:int) -> Element:
+    def create_model_element(self, scan_index: int, model_index: int, model_name: str = "") -> Element:
 
         model = ET.SubElement(self.get_scan_element(scan_index), "Model")
         model.set("model_index", str(model_index))
+        model.set("model_name", str(model_name))
 
         return model
 
@@ -561,26 +615,29 @@ class MyScanTree:
         return names
 
     def add_time_step_to_element_tree(self, sim_container, model_index: int, scan_index: int, time_index: int,
-                                      time: float) -> None:
+                                      replicat_index: int,
+                                      time: float, model_name: str = "") -> None:
 
         """
         :param marker_paths: Dictionary of shape {marker_key :marker_name}
         """
 
-
-
-        scan = self.get_model_element(scan_index,model_index)
+        scan = self.get_model_element(scan_index, model_index)
         if scan is None:
-            scan = self.create_model_element(scan_index,model_index)
+            scan = self.create_model_element(scan_index, model_index, model_name=model_name)
 
-        if scan.find("TimeSeries") is not None:
-            time_series = scan.find("TimeSeries")
+        replicat = ET.SubElement(scan, "Replicat")
+        replicat.set("replicat_index", str(replicat_index))
+
+        if replicat.find("TimeSeries") is not None:
+            time_series = replicat.find("TimeSeries")
         else:
-            time_series = ET.SubElement(scan, "TimeSeries")
+            time_series = ET.SubElement(replicat, "TimeSeries")
 
         if self.compress_log_file:
             path = "./scan_{i}/timestep_logs/".format(i=scan_index)
-            file_name = "step_{mi}_{si}_{ti}.xml".format(si=scan_index, ti=time_index, mi= model_index)
+            file_name = "step_{mi}_{si}_{ti}_{ri}.xml".format(si=scan_index, ti=time_index, mi=model_index,
+                                                              ri=replicat_index)
             os.makedirs(os.path.join(self.path, path), exist_ok=True)
             path = os.path.join(path, file_name)
             substitute_element = ET.SubElement(time_series, "Step")
@@ -589,16 +646,19 @@ class MyScanTree:
 
 
         else:
-
             step = ET.SubElement(time_series, "Step")
+
         step.set("time_index", str(time_index))
         step.set("time", str(time))
 
         fields = ET.SubElement(step, "Fields")
 
         for field in sim_container.global_problems:
-            field_element = field.get_result_element(time_index, scan_index, sim_container.get_current_path(),
-                                                     sim_container.markers, sim_container.marker_lookup)
+            field_element = field.get_result_element(replicat_index, time_index, scan_index,
+                                                     sim_container.markers, sim_container.marker_lookup,
+                                                     sim_container.top_path,
+                                                     os.path.join(sim_container.path,
+                                                                  "replicat_{}".format(replicat_index)))
             fields.insert(0, field_element)
 
         lookup_table_element = ET.SubElement(step, "MarkerLookupTable")
@@ -687,48 +747,55 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
 
         result = []
         for model in scan.findall("Model"):
-            for old_step in model.findall("TimeSeries/Step"):
+            for replicat in model.findall("Replicat"):
+                for old_step in replicat.findall("TimeSeries/Step"):
 
-                if "path" in old_step.attrib.keys():
-                    step = ET.parse(os.path.join(path, old_step.get("path")))
-                    # step.getparent().replace(step, et.getroot())
-                    step = step.getroot()
+                    if "path" in old_step.attrib.keys():
+                        step = ET.parse(os.path.join(path, old_step.get("path")))
+                        # step.getparent().replace(step, et.getroot())
+                        step = step.getroot()
 
-                time_index = step.get("time_index")
-                if (not time_indices is None) and not (int(time_index) in time_indices):
-                    continue
-                time = step.get("time")
+                    time_index = step.get("time_index")
+                    if (not time_indices is None) and not (int(time_index) in time_indices):
+                        continue
+                    time = step.get("time")
 
-                message("State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
+                    message(
+                        "State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
 
-                for cell in step.findall("Cells/Cell"):
+                    for cell in step.findall("Cells/Cell"):
 
-                    parameter_set = ParameterSet.deserialize_from_xml(cell.find("ParameterSet"), parent_tree = old_step)
+                        parameter_set = ParameterSet.deserialize_from_xml(cell.find("ParameterSet"),
+                                                                          parent_tree=old_step)
 
-                    p_temp = parameter_set.get_as_dictionary()
-                    p = {}
-                    import numbers
-                    from typing import List
+                        p_temp = parameter_set.get_as_dictionary()
+                        p = {}
+                        import numbers
+                        from typing import List
 
-                    for k, v in p_temp.items():
-                        if (isinstance(v, str) or isinstance(v, numbers.Number)):
-                            p[k] = v
-                        elif (isinstance(v, List)):
-                            p[k] = pd.Series(v)
-                            # pass
-                    p["time_index"] = int(time_index)
-                    p["time"] = float(time)
-                    p["scan_index"] = int(scan.get("scan_index"))
-                    p["model_index"] = int(model.get("model_index"))
-                    p["x"] = float(cell.get("x"))
-                    p["y"] = float(cell.get("y"))
-                    p["z"] = float(cell.get("z"))
-                    p["id"] = int(cell.get("entity_id"))
-                    p["type_name"] = str(cell.get("type_name"))
+                        for k, v in p_temp.items():
+                            if (isinstance(v, str) or isinstance(v, numbers.Number)):
+                                p[k] = v
+                            elif (isinstance(v, List)):
+                                p[k] = pd.Series(v)
+                                # pass
+                        p["time_index"] = int(time_index)
+                        p["time"] = float(time)
+                        p["scan_index"] = int(scan.get("scan_index"))
+                        p["model_index"] = int(model.get("model_index"))
+                        p["model_name"] = str(model.get("model_name"))
+                        p["replicat_index"] = int(replicat.get("replicat_index"))
 
-                    result.append(p)
+                        p["x"] = float(cell.get("x"))
+                        p["y"] = float(cell.get("y"))
+                        p["z"] = float(cell.get("z"))
+                        p["id"] = int(cell.get("entity_id"))
+                        p["type_name"] = str(cell.get("type_name"))
+
+                        result.append(p)
         return result
     except:
         import traceback
         print(traceback.format_exc())
         return []
+

@@ -1,10 +1,17 @@
 from copy import deepcopy
+from typing import Union, List
 
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.SimContainer import SimContainer
-from typing import Union
+
+
+class ModelIndexOutOfRangeError(Exception): pass
+
+
+class ModelNameNotFoundError(Exception): pass
+
 
 class MyScenario:
 
@@ -19,10 +26,38 @@ class MyScenario:
         self.parameter_pool = parameter_pool
         self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
 
-    def get_sim_container(self, p:Union[ParameterSet,None], model_index):
+    def get_model_indicies(self) -> List[int]:
+        """Gets a list of all available model indices"""
 
+        return range(len(self.global_models))
 
-        global_model =self.global_models[model_index]
+    def get_model_name(self, model_index: int) -> str:
+        """
+        Gets model index for given model name if avaiable
+
+        :raises ModelIndexOutOfRangeError
+        """
+        if model_index < len(self.global_models):
+
+            return self.global_models[model_index].name
+        else:
+            raise ModelIndexOutOfRangeError("Theres is now global model with this index in this scenario")
+
+    def get_model_index(self, model_name: str) -> int:
+        """
+        Returns index of first global model that matches with get_model_name
+
+        :raises ModelNameNotFoundError
+        """
+
+        for i, model in enumerate(self.global_models):
+            if model.name == model_name:
+                return i
+        raise ModelNameNotFoundError("There is no model with this name in this scenario")
+
+    def get_sim_container(self, p: Union[ParameterSet, None], model_index):
+
+        global_model = self.global_models[model_index]
 
         parameter_set = deepcopy(self.global_parameters)
         if p is not None:

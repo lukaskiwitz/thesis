@@ -57,7 +57,7 @@ class GlobalProblem(ABC):
     """
 
     def __init__(self) -> None:
-        self.path: Union[str, None] = None
+        # self.path: Union[str, None] = None
         self.name: str = ""
         self.field_name: str = ""
         self.field_quantity: str = ""
@@ -67,36 +67,40 @@ class GlobalProblem(ABC):
         self.p: ParameterSet = ParameterSet("field_dummy", [])
 
     @abstractmethod
-    def initialize_run(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
         """
         Setup function. Gets called by SimContainer before each run.
 
         :param p: parent parameter set handed down from SimContainer
-        :param path: sub directory path set by parent SimContainer for this problems results
+        :param top_path: top folder for relative path generation
+        :param absolute_path: sub directory path set by parent SimContainer for this problems results
         :param tmp_path: sub directory to store temporary files
 
         """
 
     @abstractmethod
-    def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
         """
         Update task, which is called by SimContainer before a step.
 
         :param p: updated parent parameter set handed down from SimContainer
+        :param time_index: time_index to update for
         :param path: sub directory path set by parent SimContainer for this problems results
         :param tmp_path: sub directory to store temporary files
 
         """
 
     @abstractmethod
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
-                           marker_lookup: Mapping[str, int]) -> Element:
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
         """
         Creates the lxml element, which contains all solution information necessary for post processing.
 
+        :param replicat_index: this steps replicat index
         :param time_index: time index for this step
         :param scan_index: scan index for this step
-        :param path: path to the result directory for this problem
+        :param absolute_path: absolute path to the result directory for this problem
+        :param top_path: top_path to to create relative paths for saving
         :param markers: list of entity properties, which should be exported as mesh functions.
         :param marker_lookup: lookup dict to manually set the mesh function value for exported properties
         :return: lxml result element
@@ -216,7 +220,7 @@ class FieldProblem(GlobalProblem):
         self.outer_domain: Union[DomainEntity, None] = None
         self.solver: Union[MyDiffusionSolver, None] = None
         self.field_quantity: str = ""
-        self.path: Union[str, None] = None
+        # self.path: Union[str, None] = None
         self.ext_cache: str = ""
         self.p: ParameterSet = ParameterSet("field_dummy", [])
         self.remesh_scan_sample: bool = False
@@ -226,40 +230,44 @@ class FieldProblem(GlobalProblem):
         self.boundary_extraction_trials: int = 5
         self.boundary_extraction_timeout: int = 600
 
-    def initialize_run(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
 
         self.update_parameter_set(p)
         if not (self.remesh_timestep or self.remesh_scan_sample):
-            self.generate_mesh(path, load_cache=True)
-        self.update_parameter_set(p)
-        self.update_step(p, path, tmp_path)
+            self.generate_mesh(top_path, load_cache=True)
+        elif self.remesh_scan_sample:
+            self.generate_mesh(path=absolute_path, time_index=0, load_cache=False)
 
-    def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+        self.update_parameter_set(p)
+
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
         """
         updates solver
         """
 
+        if self.remesh_timestep:
+            self.generate_mesh(path, time_index, load_cache=False)
         self.update_bcs(p=p)
         # self.solver.kill()
         # self.solver.compile(tmp_path)
 
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
-                           marker_lookup: Mapping[str, int]) -> Element:
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
 
-        distplot, sol, result_type = self.save_result_to_file(time_index, path)
+        distplot, sol, result_type = self.save_result_to_file(time_index, absolute_path)
 
-        d = os.path.split(os.path.split(path)[0])[1]
         field = et.Element("Field")
 
         field.set("module_name", str(result_type.__module__))
         field.set("class_name", str(result_type.__name__))
 
+        relative_mesh_path = os.path.split(os.path.relpath(absolute_path, top_path))[0]
         if self.remesh_timestep:
-            field.set("mesh_path", self.get_mesh_path(d, time_index, abspath=False))
+            field.set("mesh_path", self.get_mesh_path(relative_mesh_path, time_index, abspath=False))
         elif self.remesh_scan_sample:
-            field.set("mesh_path", self.get_mesh_path(d, 0, abspath=False))
+            field.set("mesh_path", self.get_mesh_path(relative_mesh_path, 0, abspath=False))
         else:
-            field.set("mesh_path", self.get_mesh_path(d, None, abspath=False))
+            field.set("mesh_path", self.get_mesh_path(top_path, None, abspath=False))
 
         field.set("remesh_timestep", str(self.remesh_timestep))
         field.set("remesh_scan_sample", str(self.remesh_scan_sample))
@@ -270,11 +278,13 @@ class FieldProblem(GlobalProblem):
         if sol is None:
             field.set("success", str(False))
         else:
+            relative_path = os.path.relpath(absolute_path, top_path)
             field.set("success", str(True))
-            field.set("dist_plot_path", os.path.join(self.path, distplot))
-            field.set("solution_path", os.path.join(self.path, sol))
+            field.set("dist_plot_path", os.path.join(relative_path, distplot))
+            field.set("solution_path", os.path.join(relative_path, sol))
 
-        marker_paths = self.save_markers(path, markers, marker_lookup, time_index)
+        marker_paths = self.save_markers(absolute_path, markers, marker_lookup, time_index)
+        marker_paths = {k: os.path.relpath(n, top_path) for k, n in marker_paths.items()}
 
         for marker_key, marker_path in marker_paths.items():
             marker_element = et.SubElement(field, "Marker")
@@ -631,13 +641,13 @@ class FieldProblem(GlobalProblem):
 
 class MeanFieldProblem(GlobalProblem):
 
-    def initialize_run(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
 
         self.p.update(p)
         if self.solver is not None:
             self.solver.p.update(p)
 
-    def update_step(self, p: ParameterSet, path: str, tmp_path: str) -> None:
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
 
         entity_parameters = {}
 
@@ -682,12 +692,12 @@ class MeanFieldProblem(GlobalProblem):
 
         return res
 
-    def get_result_element(self, time_index: int, scan_index: int, path: str, markers: List[str],
-                           marker_lookup: Mapping[str, int]) -> Element:
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
 
-        distplot, sol, result_type = self.save_result_to_file(time_index, path)
+        distplot, sol, result_type = self.save_result_to_file(time_index, absolute_path)
 
-        d = os.path.split(os.path.split(path)[0])[1]
+        d = os.path.split(os.path.split(absolute_path)[0])[1]
         field = et.Element("Field")
 
         field.set("module_name", str(result_type.__module__))
@@ -700,10 +710,19 @@ class MeanFieldProblem(GlobalProblem):
             field.set("success", str(False))
         else:
             field.set("success", str(True))
-            # field.set("solution_path", "scan_{i}/".format(i=scan_index) + sol)
-            field.set("solution_path", os.path.join(self.path, sol))
+            field.set("solution_path", os.path.join(os.path.join(os.path.relpath(absolute_path, top_path), sol)))
 
         return field
+
+    def apply_sample(self, sample: ScanSample) -> None:
+
+        """TODO test this implementation with scans"""
+
+        self.p.update(sample.p, override=True)
+        self.solver.p.update(sample.p, override=True)
+
+    def finish_run(self) -> None:
+        pass
 
 
 def calc_boundary_values(entity: Entity):

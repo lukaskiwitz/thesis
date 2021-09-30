@@ -52,8 +52,18 @@ class ComputeSettings:
     :param scan_index: scan index
     :type scan_index: int
 
+    :param model_index: model index
+    :type model_index: int
+
+    :param model_name: name of this global model
+    :type model_name: str
+
+
+    :param replicat_index: replicat index
+    :type replicat_index: int
+
     :param time_index: time index
-    :type time_index: float
+    :type time_index: int
     """
 
     def __init__(self) -> None:
@@ -63,7 +73,11 @@ class ComputeSettings:
         self.field_quantity: str = ""
         self.dynamic: Dict = {}
         self.scan_index: int = 0
-        self.time_index: float = 0
+        self.model_index: int = 0
+        self.model_name: str = ""
+
+        self.replicat_index = None
+        self.time_index: int = 0
         self.tmp_path = ""
         self.figure_width = 8.3 / 4
         self.pad_l = 0.3
@@ -145,7 +159,8 @@ class ComputeSettings:
                 self.__setattr__(k, v)
 
     @staticmethod
-    def create_from_element(field_element, marker_element, model_index, scan_index, time_indices):
+    def create_from_element(field_element, marker_element, model_index, model_name, scan_index, replicat_index,
+                            time_indices):
 
         assert isinstance(model_index, int)
         assert isinstance(scan_index, int)
@@ -171,7 +186,10 @@ class ComputeSettings:
         compute_settings.remesh_scan_sample = True if field_element.get("remesh_scan_sample") == 'True' else False
 
         compute_settings.model_index = model_index
+        compute_settings.model_name = model_name
+
         compute_settings.scan_index = scan_index
+        compute_settings.replicat_index = replicat_index
         compute_settings.time_index = int(field_element.getparent().getparent().get("time_index"))
 
         import importlib
@@ -228,59 +246,65 @@ class PostProcessor:
         scatter_list: List[ComputeSettings] = []
 
         for model in self.stateManager.scan_tree.get_model_elements(scan_indicies):
+            for replicat in model.findall("Replicat"):
 
-            scan_sample = model.getparent()
-            scan_index = int(scan_sample.get("scan_index"))
+                scan_sample = model.getparent()
+                scan_index = int(scan_sample.get("scan_index"))
+                replicat_index = int(replicat.get("replicat_index"))
 
-            model_index = int(model.get("model_index"))
+                model_index = int(model.get("model_index"))
+                model_name = str(model.get("model_name"))
 
-            parameters = scan_sample.find("Parameters")
-            # self.stateManager.scan_tree.rebuild_timesteps(scan_sample)
-            # self.stateManager.scan_tree.get_timeteps(scan_sample)
+                parameters = scan_sample.find("Parameters")
+                # self.stateManager.scan_tree.rebuild_timesteps(scan_sample)
+                # self.stateManager.scan_tree.get_timeteps(scan_sample)
 
-            # for field_step in model.findall("TimeSeries/Step/Fields/Field"):
-            for step in model.findall("TimeSeries/Step"):
+                # for field_step in model.findall("TimeSeries/Step/Fields/Field"):
+                for step in replicat.findall("TimeSeries/Step"):
 
-                if step.get("path") is None:
-                    step = step
-                else:
-                    step = et.parse(os.path.join(self.path, step.get("path")))
-
-                for field_step in step.findall("/Fields/Field"):
-
-                    markers = field_step.findall("../../../Marker")
-                    compute_settings = ComputeSettings.create_from_element(
-                        field_step,
-                        markers,
-                        model_index,
-                        scan_index,
-                        time_indices)
-
-                    if compute_settings is None:
-                        continue
+                    if step.get("path") is None:
+                        step = step
                     else:
-                        compute_settings.path = self.path
-                        compute_settings.tmp_path = tmp_path
-                        compute_settings.make_images = make_images
-                        compute_settings.render_paraview = render_paraview
-                        compute_settings.computations = [comp for comp in self.computations if
-                                                         compute_settings.loader_class in comp.compatible_result_type]
-                        compute_settings.unit_length_exponent = self.unit_length_exponent
-                        compute_settings.parameters = et.tostring(parameters)
-                        compute_settings.cell_df = self.cell_dataframe.loc[
-                            (self.cell_dataframe["time_index"] == compute_settings.time_index) &
-                            (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
-                            (self.cell_dataframe["model_index"] == compute_settings.model_index)
-                            ]
-                        compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
+                        step = et.parse(os.path.join(self.path, step.get("path")))
 
-                    scatter_list.append(compute_settings)
+                    for field_step in step.findall("/Fields/Field"):
+
+                        markers = field_step.findall("../../../Marker")
+                        compute_settings = ComputeSettings.create_from_element(
+                            field_step,
+                            markers,
+                            model_index,
+                            model_name,
+                            scan_index,
+                            replicat_index,
+                            time_indices)
+
+                        if compute_settings is None:
+                            continue
+                        else:
+                            compute_settings.path = self.path
+                            compute_settings.tmp_path = tmp_path
+                            compute_settings.make_images = make_images
+                            compute_settings.render_paraview = render_paraview
+                            compute_settings.computations = [comp for comp in self.computations if
+                                                             compute_settings.loader_class in comp.compatible_result_type]
+                            compute_settings.unit_length_exponent = self.unit_length_exponent
+                            compute_settings.parameters = et.tostring(parameters)
+                            compute_settings.cell_df = self.cell_dataframe.loc[
+                                (self.cell_dataframe["time_index"] == compute_settings.time_index) &
+                                (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
+                                (self.cell_dataframe["model_index"] == compute_settings.model_index) &
+                                (self.cell_dataframe["replicat_index"] == compute_settings.replicat_index)
+                                ]
+                            compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
+
+                        scatter_list.append(compute_settings)
 
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
         message(
             "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)))
 
-        with mp.Pool(processes=n_processes) as p:
+        with mp.Pool(processes=n_processes, initializer=lambda: os.nice(19)) as p:
             result_list = p.map(compute, scatter_list)
 
         # result_list = []
@@ -331,10 +355,11 @@ class PostProcessor:
             g_values = file.find("./GlobalResults")
 
             model_index = int(file.get("model_index"))
+            model_name = str(file.get("model_name"))
             scan_index = int(file.get("scan_index"))
             time_index = int(file.get("time_index"))
-            if time_index == 0:
-                continue
+            replicat_index = int(file.get("replicat_index"))
+
             time = float(file.get("time"))
             field_name = file.get("field_name")
             success = True if file.get("success") == "True" else False
@@ -344,7 +369,9 @@ class PostProcessor:
 
             d = {
                 "model_index": model_index,
+                "model_name": model_name,
                 "scan_index": scan_index,
+                "replicat_index": replicat_index,
                 "time_index": time_index,
                 "success": success,
                 "time": time,
@@ -455,7 +482,7 @@ class PostProcessor:
 
         if kde:
             message("running kernel density estimation")
-            r_grouped = result.groupby(["scan_index"], as_index=False)
+            r_grouped = result.groupby(["scan_index", "model_index", "replicat_index"], as_index=False)
             kde_result = pd.DataFrame()
             for scan_index, ts in r_grouped:
                 kernels = []
@@ -691,9 +718,13 @@ def compute(compute_settings: ComputeSettings) -> str:
 
     model_index = str(compute_settings.model_index)
     result.set("model_index", model_index)
+    result.set("model_name", str(compute_settings.model_name))
 
     scan_index = str(compute_settings.scan_index)
     result.set("scan_index", scan_index)
+    if compute_settings.replicat_index is None:
+        raise ValueError("replicat index cannot not be None")
+    result.set("replicat_index", str(compute_settings.replicat_index))
 
     time_index = str(compute_settings.time_index)
     result.set("time_index", time_index)
