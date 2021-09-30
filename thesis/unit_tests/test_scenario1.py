@@ -95,7 +95,8 @@ def setup() -> MyScenario:
 
     cell_type2 = CellType(ParameterSet("cell_dummy", [
         parameter_pool.get_as_collection(
-            {"D": None, "R": 1e2, "q": 10, "k_on": None, "k_off": None, "k_endo": None, "Kc": None},name ="cytokine", field_quantity="cyt"),
+            {"D": None, "R": 1e2, "q": 1, "k_on": None, "k_off": None, "k_endo": None, "Kc": None}, name="cytokine",
+            field_quantity="cyt"),
         parameter_pool.get_as_collection({"rho": geometry["rho"]}, name="rho")
     ]), "sec", None)
     cell_type2.interactions = [MyFieldInteractionTemplate("cyt", FieldInteractionType.INTEGRAL)]
