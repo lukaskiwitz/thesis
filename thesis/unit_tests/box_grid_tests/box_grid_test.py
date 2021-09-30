@@ -11,7 +11,7 @@ from thesis.main.ParameterSet import ScannablePhysicalParameter
 from thesis.main.PostProcess import PostProcessor
 from thesis.main.ScanContainer import ScanDefintion, ScanType, ScanContainer
 from thesis.main.StateManager import StateManager
-from thesis.scenarios.scenario_box_grid import setup as scenario_setup
+from thesis.scenarios.box_grid import setup as scenario_setup
 
 cytokines = [
     {

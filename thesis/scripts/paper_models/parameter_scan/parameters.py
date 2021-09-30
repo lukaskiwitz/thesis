@@ -97,7 +97,7 @@ else:
 
 
 user = getpass.getuser()
-# model_name = "boxed_static_300"
+# get_model_name = "boxed_static_300"
 
 model_name = "boxed_static"
 name = "distance_scan"

@@ -18,6 +18,7 @@ class Plotter:
         self.main_title = ""
         self.time_key: str = "time"
         self.time_index_key: str = "time_index"
+        self.replicat_index_key: str = "replicat_index"
 
         self.n = 2
         self.m = 2
@@ -750,7 +751,7 @@ class Plotter:
 
         df, ci = self.compute_ci(
             df,
-            [self.scan_index_key, self.time_index_key, hue, style],
+            [self.scan_index_key, self.replicat_index_key, self.model_index_key, self.time_index_key, hue, style],
             ci=ci, estimator=estimator, y_names=[y_name])
 
         if cummulative:

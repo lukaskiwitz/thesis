@@ -18,7 +18,7 @@ logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemod
 import thesis.main.StateManager as StateManager
 from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter, PhysicalParameterTemplate
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
-from thesis.scenarios.scenario_box_grid import setup
+from thesis.scenarios.box_grid import setup
 from thesis.main.assign_fractions import assign_fractions
 
 
