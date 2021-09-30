@@ -1,16 +1,21 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet
 
-class MyEntityLocator:
+
+class MyEntityLocator(ABC):
 
     def __init__(self):
         pass
 
+    @abstractmethod
     def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet) -> [Entity]:
         return None
+
 
 class MyCellListLocator(MyEntityLocator):
 
