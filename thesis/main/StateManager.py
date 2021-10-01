@@ -235,6 +235,7 @@ class StateManager:
         # message("ETA: {eta}".format(eta = eta))
 
     def run(self, ext_cache: str = "", model_names: List[str] = None, number_of_replicats=1) -> None:
+        self.clear_log_files()
 
         if model_names is None:
             model_indicies = self.scenario.get_model_indicies()
