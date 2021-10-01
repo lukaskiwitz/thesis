@@ -197,7 +197,7 @@ class SimContainer:
                 # self.move_cells(time_index, dt)
 
                 run_task.start_child("step")
-                self.step(dt, time_index)
+                self.step(dt, time_index, replicat_index)
                 run_task.stop_child("step")
 
                 # time_index += 1
@@ -314,7 +314,7 @@ class SimContainer:
         """
         return None
 
-    def apply_type_changes(self) -> None:
+    def apply_type_changes(self, replicat_index) -> None:
 
         """
         Applies pending entity type changes. Should be executed between time steps.
@@ -328,7 +328,7 @@ class SimContainer:
                 assert entity_type is not None
 
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
-                entity.set_cell_type(entity_type, internal_solver)
+                entity.set_cell_type(entity_type, internal_solver, replicat_index)
                 entity.change_type = ""
             elif not entity.type_name == "":  # todo very bad solution
                 pass
@@ -339,7 +339,7 @@ class SimContainer:
                 # entity.set_cell_type(entity_type, internal_solver)
                 # entity.change_type = ""
 
-    def step(self, dt: float, time_index: int) -> None:
+    def step(self, dt: float, time_index: int, replicat_index: int) -> None:
 
         """
         advanches simulation by dt
@@ -350,7 +350,7 @@ class SimContainer:
 
         """
 
-        self.apply_type_changes()
+        self.apply_type_changes(replicat_index)
 
         for field in self.global_problems:
             tmp_path = self.get_tmp_path()

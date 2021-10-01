@@ -39,7 +39,7 @@ class MyCellListLocator(MyEntityLocator):
             assert r is not None and r > 0
 
             cell = Cell(p, r, [])
-            cell.set_cell_type(self.cell_types[i], None)
+            cell.set_cell_type(self.cell_types[i], None, 0)
             cell_list.append(cell)
 
         return cell_list
@@ -67,7 +67,7 @@ class MyCellGridLocator(MyEntityLocator):
             assert r is not None and r > 0
 
             cell = Cell(p, r, [])
-            cell.set_cell_type(cell_type, None)
+            cell.set_cell_type(cell_type, None, 0)
             cell_list.append(cell)
 
         return cell_list

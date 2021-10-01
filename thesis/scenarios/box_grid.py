@@ -1,6 +1,8 @@
+import random
 from copy import deepcopy
 from typing import List, Dict
 
+import numpy as np
 from scipy.constants import N_A
 
 from thesis.main.EntityType import CellType
@@ -46,7 +48,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
         parameter_pool.join(custom_pool, override=False)
 
     numeric = ParameterCollection("numeric", [MiscParameter(k, v, is_global=True) for k, v in numeric.items()])
-    cell_types, fractions = make_cell_types(cell_types, cytokines, parameter_pool)
+    cell_types, fractions = _make_cell_types(cell_types, cytokines, parameter_pool)
 
     for ct in cell_types:
         ct.p.add_collection(ParameterCollection("rho", [parameter_pool.get_template("rho")(5)]))
@@ -77,7 +79,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     domain_parameter_set = ParameterSet("domain", [])
     domain_parameter_set.add_collection(geometry)
 
-    domain_template.bc_list = make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool)
+    domain_template.bc_list = _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool)
     locator = MyCellGridLocator()
 
     scenario = MyScenario(parameter_pool)
@@ -94,7 +96,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     return scenario
 
 
-def make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], ParameterCollection):
+def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], ParameterCollection):
     fractions = ParameterCollection("fractions", [], is_global=True)
     cell_types_list = []
 
@@ -145,7 +147,7 @@ def make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], P
     return cell_types_list, fractions
 
 
-def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool):
+def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool):
     domainBC = []
     from thesis.main.BC import OuterIntegral
     from thesis.main.bcFunctions import cellBC
@@ -179,3 +181,40 @@ def make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter
         domainBC.append(outer_integral)
 
     return domainBC
+
+
+def assign_fractions(sc, t):
+    """sets cell types according to the values given in fractions.
+        The pseudo random seed depends on t, so that cell placement is repeatable. """
+
+    ran = random.Random()
+    ran.seed(t)
+
+    for i, e in enumerate(sc.entity_list):
+
+        fractions = sc.p.get_collection("fractions")
+        e.change_type = fractions.parameters[0].name
+
+        draw = ran.random()
+        s = 0
+        for f in fractions.parameters[1:]:
+            s = s + f.get_in_sim_unit()
+            if draw < s:
+                e.change_type = f.name
+                break
+        e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
+
+
+def distribute_receptors(entity_list, replicat_index, type_name, var=1):
+    R = np.unique(
+        [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in entity_list if e.type_name == type_name])
+    assert len(R) == 1
+    E = R[0]
+    np.random.seed(replicat_index)
+
+    tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
+    mean = np.log(E) - 1 / 2 * tmp_sigma ** 2
+    for e in entity_list:
+        if e.type_name == type_name:
+            R_draw = np.random.lognormal(mean, tmp_sigma)
+            e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(R_draw)

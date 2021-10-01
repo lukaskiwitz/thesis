@@ -245,7 +245,7 @@ class Cell(Entity):
             "on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
             c0=self.center[0], c1=self.center[1], c2=self.center[2], r=self.radius)
 
-    def set_cell_type(self, cell_type: CellType, internal_solver: InternalSolver) -> None:
+    def set_cell_type(self, cell_type: CellType, internal_solver: InternalSolver, replicat_index: int) -> None:
         """
 
         sets this cells type from template object
@@ -264,6 +264,7 @@ class Cell(Entity):
             else:
                 self.set_internal_solver(None)
 
+            self.internal_solver.on_type_change(self.p, replicat_index, entity=self)
         # miscs = ParameterCollection("misc", [
         #     MiscParameter("type_name", self.type_name),
         #     # MiscParameter("center", self.center)
