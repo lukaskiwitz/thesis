@@ -1,9 +1,4 @@
-import getpass
-import os
-from scipy.constants import N_A
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -15,8 +10,12 @@ post_process saves the data in pandas dataframes. These can then be used to visu
 seaborn is very convenient for plotting directly from dataframes.
 global_df contains "global" results. These are calculated from cell_df and typically contain averages and statistics.
 """
+f = lambda df: df.loc[df.model_name == "pde_model"]
+
 global_df = pd.read_hdf(path + 'global_df.h5', mode="r")
+global_df = f(global_df)
 cell_df = pd.read_hdf(path + 'cell_df.h5', mode="r")
+cell_df = f(cell_df)
 
 sns.set(rc={'figure.figsize': (14, 6)})
 sns.set_context("talk", font_scale=1, rc={"lines.linewidth": 2.5})

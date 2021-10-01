@@ -28,7 +28,9 @@ setting filepath to look for sim results. This is setup so that it works on the 
 pp = PostProcessor(path)
 pp.unit_length_exponent = -6
 
-"""Imaging settings"""
+
+"""appends a custom calculation.
+default computations are defined in PostProcess.py"""
 pp.visual_conversion  = 1e3# converts concentrations to pM for paraview visualisation
 
 
@@ -87,4 +89,4 @@ pp.image_settings_fields = {
 }
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.run_post_process(threads)
+pp.run_post_process(threads, render_paraview=True, make_images=False, kde=False)

@@ -15,7 +15,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter
+from thesis.main.ParameterSet import ScannablePhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
@@ -38,22 +38,24 @@ class RuleBasedSolver(InternalSolver):
         il2_threshold = p.get_physical_parameter("ths", "IL-2").get_in_post_unit()
         il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
 
-        rand = np.random.uniform(0, 1)
+        l_max = 1 / 3600
 
         def hill(c, ths, invert=False):
 
-            l_max = 1
             n = 4
             if invert:
                 return l_max * (1 - (c ** n / (c ** n + ths ** n))) * dt
             else:
                 return l_max * ((c ** n / (c ** n + ths ** n))) * dt
 
-        il2_cdf = 1 - poisson.cdf(k=1, mu=hill(il2, il2_threshold, invert=True))
+        il2_cdf = 1 - poisson.cdf(k=1, mu=hill(il2, il2_threshold, invert=False))
+        il2_cdf_r = 1 - poisson.cdf(k=1, mu=hill(il2, 2 * il2_threshold, invert=False))
 
         if entity.type_name == "default":
-            if il2_cdf > rand:
+            if il2_cdf > np.random.uniform(0, 1):
                 entity.change_type = "sec"
+            elif il2_cdf_r > np.random.uniform(0, 1):
+                entity.change_type = "abs"
         return p
 
 
@@ -98,28 +100,11 @@ To actually run this scan setup we attach it to the scan_container with add_sing
 s = 10
 scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
 
-# scan over sec/abs ratio
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1 / (v + 1))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v / (v + 1))
-
-f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
-f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
-scan_container.add_single_parameter_scan([f_abs_def, f_sec_def], scan_name="f")
-
-"""
-Templates, as defined in box_grid.py, allow for easy scanning and unit conversion.
-"""
-# scan over diffusion constant
-t_D = parameter_pool.get_template("D")
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-D_def = ScanDefintion(D, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
-# scan_container.add_single_parameter_scan([D_def], scan_name="D")
-
 # scan over secretion rate for sec-cells
 t_q = parameter_pool.get_template("q")
 q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
-# scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
+scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 
 """
 signs up the internal solver with the sim container. 
@@ -139,7 +124,9 @@ stMan.scan_container = scan_container
 stMan.compress_log_file = True
 
 """sets up time range"""
-stMan.T = [0, 3600]
+t_unit = 3600
+stMan.T = np.arange(0, t_unit * 20, t_unit / 5)
+# stMan.T = [0,t_unit,2*t_unit,3*t_unit]
 
 """
 Defines a function which is called by StateManager before a parameter scan. 
@@ -153,6 +140,7 @@ def pre_scan(state_manager, scan_index):
 
 
 stMan.pre_scan = pre_scan
+# stMan.pre_replicat = pre_scan
 
 """Runs the ParameterScan"""
-stMan.run()
+stMan.run(model_names=["ode_model"])

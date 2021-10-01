@@ -100,7 +100,7 @@ else:
 
 
 user = getpass.getuser()
-model_name = "example_min"
+model_name = "full_parameter_scan"
 name = "distance_scan"
 path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"

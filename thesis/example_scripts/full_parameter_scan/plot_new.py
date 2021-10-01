@@ -1,22 +1,20 @@
-from  thesis.main.MyPlotter import Plotter
-from parameters import path, IMGPATH
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-from scipy.constants import golden
+
+from parameters import path, IMGPATH
+from thesis.main.MyPlotter import Plotter
 
 # path = [
-#     '/extra/lukas/example_min/new',
-#     '/extra/lukas/example_min/new_1',
+#     '/extra/lukas/full_parameter_scan/new',
+#     '/extra/lukas/full_parameter_scan/new_1',
 # ]
 
 plotter = Plotter(path)
 
-plotter.scan_scale = np.linspace(10,20,5)
+plotter.scan_scale = np.linspace(10, 20, 5)
 
 plotter.label_replacement.update({
 
-    "kd":"$k_d$",
+    "kd": "$k_d$",
     plotter.time_key: "time (a.u)",
     "sec_amax":"$a_{max}$",
     "sec_q":"$q$",

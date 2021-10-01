@@ -1,9 +1,8 @@
-import os
 import glob
+import os
 from shutil import copyfile, rmtree
 
 from parameters import path
-
 
 for collect, format in [("slice","png"),("volume","png")]:
     imgdir = os.path.join(path, "images")
