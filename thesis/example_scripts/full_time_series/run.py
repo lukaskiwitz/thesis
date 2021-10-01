@@ -143,4 +143,4 @@ stMan.pre_scan = pre_scan
 # stMan.pre_replicat = pre_scan
 
 """Runs the ParameterScan"""
-stMan.run(model_names=["ode_model"])
+stMan.run(model_names=["pde_model", "ode_model"])

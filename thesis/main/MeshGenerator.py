@@ -70,7 +70,6 @@ class MeshGenerator:
             if len(entities) > 0:
                 geom.boolean_difference([domain], entities)
             mesh = pygmsh.generate_mesh(geom)
-            message(mesh)
             meshio.write(mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
 
         else:

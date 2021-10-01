@@ -13,7 +13,9 @@ cytokines = [
         "field_quantity": "il2",
         "k_on": 111.6,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
-        "kd": 0.1  # cytokine decay in medium 1/h
+        "kd": 0.1,  # cytokine decay in medium 1/h
+        "k_endo": 1.1e-3,
+        "k_off": 0.83,
     }
 ]
 
@@ -27,20 +29,21 @@ R_h = 1e4
 R_l = 1e2
 q = 10
 
+bc_type = "patrick_saturation"
 cell_types_dict = [
     {"name": "default",
      "fraction": 0,
-     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": "linear"},
+     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "fraction": 0.05,
-     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "linear"},
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": ""
      },
     {"name": "abs",
      "fraction": 0,
-     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "linear"},
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": ""
      }
 ]
@@ -84,7 +87,7 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": True,  # use linear fenics solver. If your chosen bc_type is not linear, flip it
+    "linear": False,  # use linear fenics solver. If your chosen bc_type is not linear, flip it
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
