@@ -8,11 +8,7 @@ from thesis.main.ParameterSet import ParameterSet
 
 
 class InternalSolver(ABC):
-
-    @abstractmethod
-    def __init__(self):
-        self.name = "InternalSolver"
-        pass
+    name = "InternalSolver"
 
     @abstractmethod
     def on_type_change(self, p: ParameterSet, replicat_index, entity=None): pass
