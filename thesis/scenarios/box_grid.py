@@ -45,7 +45,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
         parameter_pool.add_template(t)
 
     if isinstance(custom_pool, MyParameterPool):
-        parameter_pool.join(custom_pool, override=False)
+        parameter_pool.join(custom_pool, overwrite=False)
 
     numeric = ParameterCollection("numeric", [MiscParameter(k, v, is_global=True) for k, v in numeric.items()])
     cell_types, fractions = _make_cell_types(cell_types, cytokines, parameter_pool)
@@ -74,7 +74,7 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
 
     na = geometry_dict["norm_area"]
     geometry = ParameterCollection("geometry", [MiscParameter(k, v) for k, v in geometry_dict.items()])
-    geometry.set_parameter(PhysicalParameter("norm_area", na, to_sim=1), override=True)
+    geometry.set_parameter(PhysicalParameter("norm_area", na, to_sim=1), overwrite=True)
 
     domain_parameter_set = ParameterSet("domain", [])
     domain_parameter_set.add_collection(geometry)
@@ -168,7 +168,7 @@ def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, paramete
                         parameters.append(MiscParameter(name, value))
 
                 s = ParameterSet("update", [ParameterCollection(cytokines[i]["name"], parameters, field_quantity=key)])
-                outer_integral.p.update(s, override=True)
+                outer_integral.p.update(s, overwrite=True)
                 domainBC.append(outer_integral)
     if len(domainBC) == 0:
         c = cytokines[0]

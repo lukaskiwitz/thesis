@@ -31,7 +31,7 @@ class EntityType:
 
             update_set = update
 
-        entity_type.p.update(update_set, override=True)
+        entity_type.p.update(update_set, overwrite=True)
         return entity_type
 
 

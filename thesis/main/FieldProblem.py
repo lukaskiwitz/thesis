@@ -307,8 +307,8 @@ class FieldProblem(GlobalProblem):
     def apply_sample(self, sample: ScanSample):
 
         self.update_bcs(sample.p)
-        self.p.update(sample.p, override=True)
-        self.solver.p.update(sample.p, override=True)
+        self.p.update(sample.p, overwrite=True)
+        self.solver.p.update(sample.p, overwrite=True)
         self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
 
     def compute_coupling_properties(self, tmp_path: str) -> None:
@@ -381,7 +381,7 @@ class FieldProblem(GlobalProblem):
                 ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
                     physical
                 ], field_quantity=self.field_quantity)])
-                , override=True)
+                , overwrite=True)
 
         message("done pool map with chunksize {}".format(cs))
 
@@ -679,7 +679,7 @@ class MeanFieldProblem(GlobalProblem):
                     ParameterCollection(self.field_name, [surfc],
                                         field_quantity=self.field_quantity)
                 ])
-                , override=True)
+                , overwrite=True)
 
     def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str, type]:
 
@@ -718,8 +718,8 @@ class MeanFieldProblem(GlobalProblem):
 
         """TODO test this implementation with scans"""
 
-        self.p.update(sample.p, override=True)
-        self.solver.p.update(sample.p, override=True)
+        self.p.update(sample.p, overwrite=True)
+        self.solver.p.update(sample.p, overwrite=True)
 
     def finish_run(self) -> None:
         pass

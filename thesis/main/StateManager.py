@@ -187,8 +187,8 @@ class StateManager:
             f.apply_sample(sample)
 
         for e in sc.entity_list:
-            e.p.update(sc.default_sample.p, override=True)
-            e.p.update(sample.p, override=True)
+            e.p.update(sc.default_sample.p, overwrite=True)
+            e.p.update(sample.p, overwrite=True)
 
         for entity_type in sc.default_sample.entity_types:
             sc.add_entity_type(entity_type)

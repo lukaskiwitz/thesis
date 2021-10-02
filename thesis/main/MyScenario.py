@@ -61,7 +61,7 @@ class MyScenario:
 
         parameter_set = deepcopy(self.global_parameters)
         if p is not None:
-            parameter_set.update(p, override=True)
+            parameter_set.update(p, overwrite=True)
 
         for locator in self.entity_locators:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)

@@ -118,7 +118,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
     s = ParameterSet("update",
                      [ParameterCollection(cytokine["name"], parameters, field_quantity=cytokine["field_quantity"])])
     outer_integral = bc.OuterIntegral(q, "true", field_quantity=cytokine["field_quantity"])
-    outer_integral.p.update(s, override=True)
+    outer_integral.p.update(s, overwrite=True)
     outer_integral.p.add_collection(geometry)
     domain_bc = [
         outer_integral

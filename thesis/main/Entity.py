@@ -104,7 +104,7 @@ class Entity:
                     bc.p = p
                 else:
                     if hasattr(i, "p"):
-                        i.p.update(self.p, override=True)
+                        i.p.update(self.p, overwrite=True)
                     else:
                         i.p = self.p
 
@@ -269,7 +269,7 @@ class Cell(Entity):
         #     MiscParameter("type_name", self.type_name),
         #     # MiscParameter("center", self.center)
         # ])
-        self.p.update(cell_type.p, override=True)
+        self.p.update(cell_type.p, overwrite=True)
         for interaction_template in cell_type.interactions:
             interaction = interaction_template.get_interaction()
             self.interactions.append(interaction)
@@ -365,7 +365,7 @@ class DomainSphere(DomainEntity):
                 for i in v:
                     if p:
                         if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, override=False)
+                            i.bc.p.update(p, overwrite=False)
                         else:
                             i.bc.p = p
 
@@ -379,7 +379,7 @@ class DomainSphere(DomainEntity):
                     p = outer_domain_dict[name]
 
                     if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, override=True)
+                        i.bc.p.update(p, overwrite=True)
                     else:
                         i.bc.p = p
 
@@ -473,7 +473,7 @@ class DomainCube(DomainEntity):
                     if p:
                         for ii in i.interactions:
                             if hasattr(ii, "p"):
-                                ii.p.update(p, override=False)
+                                ii.p.update(p, overwrite=False)
                             else:
                                 ii.p = p
 
@@ -486,7 +486,7 @@ class DomainCube(DomainEntity):
                     if name in outer_domain_dict.keys():
                         p = outer_domain_dict[name]
                         if hasattr(ii, "p"):
-                            ii.p.update(p, override=True)
+                            ii.p.update(p, overwrite=True)
                         else:
                             ii.p = p
 

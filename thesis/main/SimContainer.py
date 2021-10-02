@@ -392,7 +392,7 @@ class SimContainer:
         else:
             entity.id = 0
 
-        entity.p.update(MiscParameter("id", entity.id), override=True)
+        entity.p.update(MiscParameter("id", entity.id), overwrite=True)
         self.entity_list.append(entity)
         return entity
 
