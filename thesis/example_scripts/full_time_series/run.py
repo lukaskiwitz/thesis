@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 
-from parameters import cytokines, cell_types_dict, geometry, numeric, path, boundary
+from parameters import cytokines, cell_types_dict, geometry, numeric, path, boundary, ext_cache
 
 os.environ["LOG_PATH"] = path
 LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
@@ -97,12 +97,14 @@ To actually run this scan setup we attach it to the scan_container with add_sing
 """
 
 """log scan space centered around 1"""
-s = 10
-scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
+s = 20
+fc = 5
+e = np.log10(fc) / np.log10(10)
+scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
 # scan over secretion rate for sec-cells
 t_q = parameter_pool.get_template("q")
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
+q = ScannablePhysicalParameter(t_q(10), lambda x, v: v * x)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
 scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 
@@ -125,7 +127,7 @@ stMan.compress_log_file = True
 
 """sets up time range"""
 t_unit = 3600
-stMan.T = np.arange(0, t_unit * 20, t_unit / 5)
+stMan.T = np.arange(0, t_unit * 40, t_unit / 5)
 # stMan.T = [0,t_unit,2*t_unit,3*t_unit]
 
 """
@@ -143,4 +145,4 @@ stMan.pre_scan = pre_scan
 # stMan.pre_replicat = pre_scan
 
 """Runs the ParameterScan"""
-stMan.run(model_names=["pde_model", "ode_model"])
+stMan.run(model_names=["pde_model", "ode_model"], ext_cache=ext_cache)

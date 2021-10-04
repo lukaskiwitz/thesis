@@ -37,7 +37,7 @@ cell_types_dict = [
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
-     "fraction": 0.05,
+     "fraction": 0.005,
      "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": ""
      },
@@ -48,14 +48,6 @@ cell_types_dict = [
      }
 ]
 
-"""
-Sets up boundary conditions and their respective bc_type.
-Here the fields "il6" and "ifng" are explicitly defined. The expression or condition is passed to fenics and should be 
-written in C. near(x[0],{d}) means if value x[0], which is the x-axis, is close to d. d is calculated from the margin, 
-compare line 186 in box_grid.py. Alternatively one could set a value or tolerance here directly.
-If this condition returns true the defined boundary condition is applied. If none is given for the cytokine field the
-standard box is applied.
-"""
 boundary = [
     {"name": "box",
      "expr": "!near(x[0],{d})",
@@ -74,9 +66,9 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 200,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 200,
-    "z_grid": 200,  # comment out for single cell layer
+    "x_grid": 500,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 500,
+    # "z_grid": 200,  # comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
@@ -92,7 +84,7 @@ numeric = {
     "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,  # newton method relative tolerance
-    "dofs_per_node": 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
+    "dofs_per_node": 7500,  # calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": os.cpu_count() / 2,  # max nodes for fenics solver
     "cells_per_worker": 50,
     "max_pool_size": os.cpu_count() / 2,  # max number of worker to extract boundary conditions at runtime
@@ -110,7 +102,7 @@ else:
     extra = "extra"
 
 user = getpass.getuser()
-model_name = "full_time_series"
+model_name = "full_time_series_sheet_2"
 name = "example_1"
 path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 IMGPATH = path + "images/"

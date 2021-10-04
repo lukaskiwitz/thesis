@@ -88,4 +88,7 @@ pp.image_settings_fields = {
 }
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
+from thesis.main.PostProcess import ParaviewRender
+
+pp.computations.append(ParaviewRender)
 pp.run_post_process(threads)

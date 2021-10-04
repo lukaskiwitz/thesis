@@ -13,6 +13,8 @@ plotter = Plotter(path)
 plotter.scan_scale = s = 10
 scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
 
+plotter.max_scans = 100
+
 plotter.label_replacement.update({
 
     "kd": "$k_d$",
@@ -42,14 +44,22 @@ margin_b = 10
 a = (128 - 2 * margin_a) / MM_PER_INCH
 b = (96 - 2 * margin_b) / MM_PER_INCH
 
-plotter.subplots(2, 2, figsize=(a, b), external_legend="axes")
+f = lambda type_name: lambda df: df.loc[df["type_name"] == type_name]
 
-plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key)
-plotter.count_plot(style="type_name", hue=plotter.scan_index_key, ylog=False, legend="brief")
-plotter.cell_steady_state_plot("IL-2_surf_c", hue=plotter.scan_name_key, ylog=False)
-plotter.steady_state_count(style="type_name", legend="brief")
+plotter.subplots(3, 3, figsize=(3 * a, 3 * b), external_legend="axes")
+
+plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_index_key,
+                                legend="brief")
+plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_index_key,
+                                ylim=[0, 0.1])
+
+plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, ylog=False, filter=f("abs"),
+                   subtitle="responder")
+plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, ylog=False, filter=f("sec"),
+                   subtitle="secretors")
+
+plotter.cell_steady_state_plot("IL-2_surf_c", hue="type_name", ylog=False, style=plotter.model_index_key)
+plotter.steady_state_count(hue="type_name", legend="brief", style=plotter.model_index_key)
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection.pdf")
 plotter.show()
-
-plotter.ruse_plot(IMGPATH)
