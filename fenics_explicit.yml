@@ -1,5 +1,4 @@
 name: fenics
-channels:
   - kayarre
   - https://repo.anaconda.com/pkgs/free
   - conda-forge
