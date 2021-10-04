@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 
-from thesis.main.BC import Integral
+from thesis.main.BC import Integral, BC
 
 
 class FieldInteractionType(Enum):
@@ -9,12 +10,13 @@ class FieldInteractionType(Enum):
     OUTERINTERGRAL = 3
 
 
-class MyInteractionTemplate:
+class MyInteractionTemplate(ABC):
 
     def __init__(self):
         self.field_quantity = None
 
-    def get_interaction(self):
+    @abstractmethod
+    def get_interaction(self) -> BC:
         return None
 
 

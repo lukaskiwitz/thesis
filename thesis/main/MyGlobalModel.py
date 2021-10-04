@@ -1,17 +1,19 @@
-from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate, MyFieldTemplate
-from thesis.main.FieldProblem import GlobalProblem, MeanFieldProblem, FieldProblem
-from thesis.main.ParameterSet import ParameterSet
-from thesis.main.MyDomainTemplate import MyDomainTemplate
 from abc import ABC, abstractmethod
 from typing import List
+
+from thesis.main.FieldProblem import GlobalProblem, MeanFieldProblem, FieldProblem
+from thesis.main.MyDomainTemplate import MyDomainTemplate
+from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate, MyFieldTemplate
+from thesis.main.ParameterSet import ParameterSet
+
 
 class MyGlobalModel(ABC):
 
     def __init__(self, name: str):
         self.name: str = name
+        self.field_templates: List[MyFieldTemplate] = []
 
     def build_parameter_set(self, parameter_pool):
-
         p = ParameterSet(self.name, [])
 
         for template in self.field_templates:

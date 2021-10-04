@@ -1,21 +1,23 @@
 import json
+from abc import ABC
 from copy import deepcopy
 from typing import List
 
 import lxml.etree as ET
 
+from thesis.main.BC import BC
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection
 
 
-class EntityType:
+class EntityType(ABC):
 
     def __init__(self, p: ParameterSet, name: str):
 
         self.p = deepcopy(p)
         self.name = name
-        self.internal_solvers: [str] = []
-        self.global_solvers: [str] = []
-        self.interactions = []
+        self.internal_solver_names: List[str] = []
+        self.global_solver_names: List[str] = []
+        self.interactions: List[BC] = []
 
     def get_updated(self, update):
 

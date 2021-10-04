@@ -66,11 +66,9 @@ class MyScenario:
         for locator in self.entity_locators:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)
 
-
         parameter_set.update(global_model.build_parameter_set(self.parameter_pool))
 
         sc = SimContainer(parameter_set)
-
 
         for p in global_model.get_problem_list(parameter_set):
             sc.add_problem(p)

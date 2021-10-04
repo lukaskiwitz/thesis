@@ -330,6 +330,7 @@ class SimContainer:
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
                 entity.set_cell_type(entity_type, internal_solver, replicat_index)
                 entity.change_type = ""
+
     def step(self, dt: float, time_index: int, replicat_index: int) -> None:
 
         """
