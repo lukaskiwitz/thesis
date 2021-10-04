@@ -13,6 +13,7 @@ This is meant to be an internal documentation.
    :caption: Guide:
 
    intro/intro
+   guide/general_code_structure
    intro/faq
    intro/contribute/doc
 
