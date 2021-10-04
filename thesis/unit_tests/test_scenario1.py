@@ -5,8 +5,8 @@ from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
 from thesis.main.MyEntityLocator import MyCellListLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
-from thesis.main.MyInteraction import FieldInteractionType
-from thesis.main.MyInteraction import MyFieldInteractionTemplate
+from thesis.main.MyInteractionTemplate import FieldInteractionType
+from thesis.main.MyInteractionTemplate import MyFieldInteractionTemplate
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, PhysicalParameter, ParameterCollection, \
