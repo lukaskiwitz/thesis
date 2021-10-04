@@ -225,7 +225,7 @@ class Plotter:
 
         values = df[key].unique()
 
-        if len(values) > 5:
+        if len(values) > 5 or (key in self.color_dict.keys() and isinstance(self.color_dict[key], str)):
             return self.get_continuous_color(key, palette_name=palette_name)
         else:
             p = {}
