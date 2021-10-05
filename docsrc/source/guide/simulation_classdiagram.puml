@@ -9,6 +9,7 @@
     GlobalProblem *-- MySolver
     Entity --* SimContainer
     InternalSolver -* Entity
+    InternalSolver -* SimContainer
 
 @enduml
 

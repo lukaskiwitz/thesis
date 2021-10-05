@@ -1,0 +1,9 @@
+@startuml
+    partition run.py {
+    start
+    :scenario = setup();
+    :sim_container = scenario.get_sim_container();
+    :sim_container.initialize();
+    !include simloop.puml
+    end
+@enduml

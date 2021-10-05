@@ -1,0 +1,13 @@
+@startuml
+
+partition GlobalProblem.step() {
+
+    :self.solver.compile();
+    :self.solver.solve();
+    :self.solver.kill();
+    :self.compute_coupling_properties();
+    stop
+
+}
+
+@enduml

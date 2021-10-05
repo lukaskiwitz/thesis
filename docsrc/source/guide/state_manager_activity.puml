@@ -1,0 +1,23 @@
+@startuml
+    partition run.py {
+        :scenario = setup();
+        :state_manager = StateManager()
+        :state_manager.scenario = scenario
+        :state_manager.T = [0, 1];
+
+        partition StateManager.run() {
+
+        while (model_index in model_indicies)
+            while (scan_index scan_samples)
+
+                :self.sim_container =self.scenario.get_sim_container();
+                :self.sim_container.initialize();
+                    :self.update_sim_container();
+                    :self.sim_container.run();
+                    :self.scan_tree.write_element_tree();
+            endwhile
+        endwhile
+        }
+    }
+    end
+@enduml

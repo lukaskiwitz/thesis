@@ -1,0 +1,29 @@
+@startuml
+    partition SimContainer.run() {
+
+        :sim_container.run();
+        while (replicat_index in range(number_of_replicats))
+            while (field in self.global_problems)
+                :field.initialize();
+            endwhile
+            while (time_index in T)
+                  :self.step();
+                  partition SimContainer.step() {
+
+                        :self.apply_type_changes();
+                        while (field in self.global_problems)
+                            :field.update_step();
+                             :field.step();
+                        endwhile
+                        while (entity in self.entity_list)
+                            :entity.step();
+                        endwhile
+                        :self.t = self.t + dt;
+                        stop
+                  }
+            endwhile
+            stop
+        endwhile
+
+    }
+@enduml
