@@ -1,5 +1,5 @@
 @startuml
-    !include classes.puml
+    !include ../puml_src/classes.puml
     remove @unlinked
 
 

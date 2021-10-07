@@ -34,7 +34,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx_autodoc_typehints', 'sphinxcontrib.p
 plantuml = 'java -jar /home/kiwitz//plantuml.jar'
 
 autodoc_typehints = 'signature'
-
+numfig = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

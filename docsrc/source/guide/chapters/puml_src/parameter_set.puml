@@ -1,0 +1,10 @@
+@startuml
+    !include ../puml_src/classes.puml
+    remove @unlinked
+
+    ParameterSet *- ParameterCollection
+    ParameterCollection *- Parameter
+    Parameter <|-- PhysicalParameter
+    Parameter <|-- MiscParameter
+
+@enduml

@@ -16,7 +16,7 @@ The scenario object contains information about the simulation scenario (in the f
 but doesn't instantiate the costly simulation objects at creation.
 
 Instead, when the actual SimConatiner instance ins needed, in custom code or from within StateManager, the
-get_sim_container() method gets invoked on the Scenario instance (:ref:`get_sim_container`).
+get_sim_container() method gets invoked on the Scenario instance (:numref:`get_sim_container`).
 It returns the constructed SimContainer instance, which can run the simulation by invoking its initialize() and run() methods.
 
 This allows all simulation object to be hidden from the user,

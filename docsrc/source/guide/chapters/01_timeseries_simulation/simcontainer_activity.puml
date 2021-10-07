@@ -4,6 +4,6 @@
     :scenario = setup();
     :sim_container = scenario.get_sim_container();
     :sim_container.initialize();
-    !include simloop.puml
+    !include ../puml_src/simloop.puml
     end
 @enduml

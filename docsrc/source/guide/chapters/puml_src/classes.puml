@@ -130,6 +130,62 @@
         List<ParameterTemplate> parameter_templates
     }
 
+    class ParameterSet{
+        update()
+        add_collection()
+        get_collection()
+        get_physical_parameter()
+        get_misc_parameter()
+        serialize_to_xml()
+        deserialize_from_xml()
+        get_as_dictionary()
+
+        List<ParameterCollection> collections
+        String name
+    }
+
+    class ParameterCollection{
+
+        update()
+        set_parameter()
+        get_parameter()
+        serialize_to_xml()
+        deserialize_from_xml()
+
+        List<Parameter> parameters
+        String name
+        String field_quantity
+        Boolean is_global
+
+    }
+
+    abstract class Parameter{
+
+        set_in_sim_unit()
+        get_in_sim_unit()
+        set_in_post_unit()
+        get_in_post_unit()
+        {abstract} serialize_to_xml()
+        {abstract} deserialize_from_xml()
+
+        String name
+        <T> value
+        Boolean is_global
+    }
+
+    class PhysicalParameter{
+
+        Union<Callable, float> to_sim
+        Union<Callable, float> to_post
+        Boolean factor_conversion
+
+    }
+    class MiscParameter{
+
+    }
+
+
+
     abstract class MyGlobalModel{
 
         {abstract} add_field_template()

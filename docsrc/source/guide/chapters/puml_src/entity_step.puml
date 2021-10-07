@@ -6,5 +6,6 @@ partition Entity.step() {
     else
         stop
     endif
+        stop
 }
 @enduml

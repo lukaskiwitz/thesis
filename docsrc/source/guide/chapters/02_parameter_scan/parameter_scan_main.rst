@@ -2,7 +2,7 @@ StateManager
 ============
 
 When SimContainer is used in conjunction with StateManger to run parameter scans and produce xml output for post processing,
-the simulation loop is invoke from with StateManger.run() (:ref:`basic_scan_loop`).
+the simulation loop is invoke from with StateManger.run() (:numref:`basic_scan_loop`).
 
 .. code-block::
     :caption: Basic parameter scan loop in pseudo code. Actual implementation in StateManager.run()
@@ -46,5 +46,8 @@ subclasses of InternalSolver.
 
 .. uml:: state_manager_activity.puml
 
-Solvers for global problems
----------------------------
+
+
+:class:`ScanDefinition` and :class:`ScannablePhysicalParameter`
+------------------------------------------------------------------
+
