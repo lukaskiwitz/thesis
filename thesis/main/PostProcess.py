@@ -25,6 +25,7 @@ from matplotlib.gridspec import GridSpec
 import thesis.main.GlobalResult
 import thesis.main.MyError as MyError
 import thesis.main.StateManager as st
+from thesis.main.GlobalResult import GlobalResult
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.PostProcessUtil import get_mesh_volume
 from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
@@ -82,7 +83,6 @@ class ComputeSettings:
         self.figure_width = 8.3 / 4
         self.pad_l = 0.3
         self.pad_r = 0.1
-        self.render_paraview = False
         self.unit_name = "nM"
         self.marker_lookup = {}
         self.round_legend_labels = 2
@@ -111,33 +111,6 @@ class ComputeSettings:
             "lookup": {}
 
         }
-
-
-    def set_mesh(self, mesh: fcs.Mesh):
-        self._mesh = mesh
-
-    def set_u(self, u: fcs.Function):
-        self._u: fcs.Function = u
-
-    # noinspection PyPep8Naming,PyPep8Naming
-    def set_V(self, V: fcs.FunctionSpace):
-        self._V: fcs.FunctionSpace = V
-
-    def set_boundary_markers(self, bm: fcs.MeshFunction):
-        self._boundary_markers: fcs.MeshFunction = bm
-
-    def get_mesh(self) -> fcs.Mesh:
-        return self._mesh
-
-    def get_u(self) -> fcs.Function:
-        return self._u
-
-    # noinspection PyPep8Naming
-    def get_V(self) -> fcs.FunctionSpace:
-        return self._V
-
-    def get_boundary_markers(self) -> fcs.MeshFunction:
-        return self._boundary_markers
 
     def set_image_settings(self, image_settings, image_settings_fields):
 
@@ -207,7 +180,6 @@ class PostProcessor:
 
     def __init__(self, path: str) -> None:
         self.debug_compute_in_serial = False
-        self.cellDump = []
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
         self.cell_dataframe: pd.DataFrame = pd.DataFrame()
@@ -216,7 +188,7 @@ class PostProcessor:
 
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
-        self.computations = [c, mean_c, grad, SD, CV, MeshVolume]
+        self.computations: List[PostProcessComputation] = [c, mean_c, grad, SD, CV, MeshVolume]
         self.rc = {}
 
         self.image_settings = {
@@ -225,7 +197,6 @@ class PostProcessor:
             "legend_title": "",
             "dpi": 350,
         }
-        self.image_settings_fields = None
 
     def write_post_process_xml(self, n_processes, debug=False, time_indices=None, scan_indicies=None):
         """
@@ -570,7 +541,7 @@ class PostProcessor:
 
 class PostProcessComputation(ABC):
     add_xml_result = True
-    compatible_result_type = []
+    compatible_result_type: List[GlobalResult] = []
 
     @abstractmethod
     def __init__(self): pass
