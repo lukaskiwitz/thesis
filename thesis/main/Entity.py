@@ -17,7 +17,7 @@ import thesis.main.MySubDomain as SD
 from thesis.main.BC import BC, OuterBC
 from thesis.main.EntityType import CellType
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.MySubDomain import CellSubDomain, PeriodicCubeSubDomain
+from thesis.main.MySubDomain import CellSubDomain
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.TaskRecord import TaskRecord
 
@@ -417,10 +417,9 @@ class CompiledSphere(DomainSphere, Entity):
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, interactions, periodic=False, **kwargs):
+    def __init__(self, p1, p2, interactions, **kwargs):
         self.p1 = p1
         self.p2 = p2
-        self.periodic: bool = periodic
 
         self.interactions = interactions
 
@@ -430,26 +429,17 @@ class DomainCube(DomainEntity):
     def __compile_subdomains(self):
         subdomain_dict = {}
 
-        if self.periodic:
-            for i, o in enumerate(self.interactions):
-                s = PeriodicCube(o, self)
-                s.field_quantity = o.field_quantity
-                subdomain_dict["true"] = [s]
-            return subdomain_dict
+        for i, o in enumerate(self.interactions):
+            if isinstance(o, bc.OuterBC):
 
+                e = CompiledCube(o.expr, o, self)
 
-        else:
-            for i, o in enumerate(self.interactions):
-                if isinstance(o, bc.OuterBC):
-
-                    e = CompiledCube(o.expr, o, self)
-
-                    e.field_quantity = o.field_quantity
-                    if o.expr not in subdomain_dict.keys():
-                        subdomain_dict[o.expr] = [e]
-                    else:
-                        subdomain_dict[o.expr].append(e)
-            return subdomain_dict
+                e.field_quantity = o.field_quantity
+                if o.expr not in subdomain_dict.keys():
+                    subdomain_dict[o.expr] = [e]
+                else:
+                    subdomain_dict[o.expr].append(e)
+        return subdomain_dict
 
     def get_subdomains(self, **kwargs):
         subdomains = []
@@ -489,28 +479,6 @@ class DomainCube(DomainEntity):
                             ii.p.update(p, overwrite=True)
                         else:
                             ii.p = p
-
-
-class PeriodicCube(DomainCube, Entity):
-
-    def __init__(self, bc, parent):
-        self.bc = bc
-        self.parent = parent
-
-    def get_subdomain(self):
-
-        sd = PeriodicCubeSubDomain(self.parent.p1, self.parent.p2)
-        return sd
-
-    def get_BC(self, field_quantity: str) -> BC:
-        return self.bc
-
-    def get_surface_area(self):
-        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
-        if p:
-            return p.get_in_sim_unit()
-        else:
-            return None
 
 
 class CompiledCube(DomainCube, Entity):

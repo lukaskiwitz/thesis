@@ -84,42 +84,6 @@ class OuterCube(OuterBoundary):
                 x[2], p1[2]) or near(x[2], p0[2])
 
 
-class PeriodicCubeSubDomain(fcs.SubDomain):
-
-    def __init__(self, p1, p2, **kwargs):
-        self.p1 = p1
-        self.p2 = p2
-        super().__init__(**kwargs)
-
-    def inside(self, x, on_boundary):
-        def near(a, b):
-            return (a - b) < 10e-5
-
-        p1 = self.p2
-        p0 = self.p1
-
-        return bool(on_boundary and (
-                    near(x[0], p1[0]) or near(x[0], p0[0]) or near(x[1], p1[1]) or near(x[1], p0[1]) or near(x[2], p1[
-                2]) or near(x[2], p0[2])))
-
-    def map(self, x, y):
-        pass
-
-        # eps = 1
-
-        # if (x[0] - 200) < eps:
-        # y[0] = x[0] - 200
-        # y[1] = x[1]
-        # y[2] = x[2]
-
-        # if (y[1] - 200) < eps:
-        #     y[1] = x[1] - 200
-        #
-        # if (x[0]) < eps:
-        #     x[0] = y[0] + 200
-        # if x[1] < eps:
-        #     x[1] = y[0] + 200
-
 
 class CellSubDomain(MySubDomain):
 
