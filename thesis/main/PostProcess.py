@@ -59,7 +59,6 @@ class ComputeSettings:
     :param model_name: name of this global model
     :type model_name: str
 
-
     :param replicat_index: replicat index
     :type replicat_index: int
 
@@ -197,6 +196,7 @@ class PostProcessor:
             "legend_title": "",
             "dpi": 350,
         }
+        self.image_settings_fields = {}
 
     def write_post_process_xml(self, n_processes, debug=False, time_indices=None, scan_indicies=None):
         """
@@ -265,7 +265,7 @@ class PostProcessor:
                                 (self.cell_dataframe["model_index"] == compute_settings.model_index) &
                                 (self.cell_dataframe["replicat_index"] == compute_settings.replicat_index)
                                 ]
-
+                        compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
                         scatter_list.append(compute_settings)
 
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
@@ -596,6 +596,7 @@ class ParaviewRender(FenicsScalarFieldComputation):
             warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
                 si=self.scan_index, ti=self.time_index))
         except AttributeError as e:
+            print(e)
             warning(
                 "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
                     si=self.scan_index, ti=self.time_index))
