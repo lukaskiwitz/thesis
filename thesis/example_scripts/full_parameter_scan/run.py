@@ -17,7 +17,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter, PhysicalParameterTemplate, \
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate, \
     MiscParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions, distribute_receptors
@@ -83,8 +83,8 @@ s = 10
 scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
 
 """scan over sec/abs ratio"""
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1 / (v + 1))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v / (v + 1))
+f_sec = ScannableParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1 / (v + 1))
+f_abs = ScannableParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v / (v + 1))
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
@@ -94,21 +94,21 @@ pool = scenario.parameter_pool
 
 """scan over diffusion constant"""
 t_D = pool.get_template("D")
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
 D_def = ScanDefintion(D, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
 
 """scan over secretion rate for sec-cells"""
 t_q = pool.get_template("q")
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
+q = ScannableParameter(t_q(1), lambda x, v: x * v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
 
-R_boundary = ScannablePhysicalParameter(pool.get_template("R")(4e4), lambda x, v: x * v)
+R_boundary = ScannableParameter(pool.get_template("R")(4e4), lambda x, v: x * v)
 domain_R_def = ScanDefintion(R_boundary, "IL-2", scan_space, ScanType.BOUNDARY, boundary_pieces_name="left_boundary",
                              field_quantity="il2")
 
 """scan of cell-cell-distance"""
-distance = ScannablePhysicalParameter(MiscParameter("distance", 20), lambda x, v: (x - 10) * v + 10)
-margin = ScannablePhysicalParameter(MiscParameter("margin", 20), lambda x, v: (x - 10) * v + 10)
+distance = ScannableParameter(MiscParameter("distance", 20), lambda x, v: (x - 10) * v + 10)
+margin = ScannableParameter(MiscParameter("margin", 20), lambda x, v: (x - 10) * v + 10)
 scan_space = np.linspace(10, 30, 5)
 distance_def = ScanDefintion(distance, "geometry", scan_space, ScanType.GLOBAL)
 margin_def = ScanDefintion(margin, "geometry", scan_space, ScanType.GLOBAL)
@@ -121,12 +121,12 @@ scan_container.add_single_parameter_scan([domain_R_def], scan_name="boundary_R")
 
 for bc, linear in [("linear", True), ("patrick_saturation", False)]:
     bc_def = lambda t: ScanDefintion(
-        ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc), "IL-2", scan_space,
+        ScannableParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc), "IL-2", scan_space,
         ScanType.ENTITY,
         field_quantity="il2", entity_type=t
     )
     linear_def = ScanDefintion(
-        ScannablePhysicalParameter(MiscParameter("linear", True, is_global=True), lambda x, v: linear),
+        ScannableParameter(MiscParameter("linear", True, is_global=True), lambda x, v: linear),
         "numeric", scan_space, ScanType.GLOBAL)
 
     scan_container.add_single_parameter_scan([distance_def,margin_def], scan_name = "distance", remesh_scan_sample = True)

@@ -15,7 +15,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
@@ -86,7 +86,7 @@ abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
 """
-Sets up a parameter scan. ScannablePhysicalParameter takes a function with two arguments, 
+Sets up a parameter scan. ScannableParameter takes a function with two arguments, 
 here conveniently a lambda function, to set the given PhysicalParameter according to input. 
 A simpler definition would be 'lambda x, v: v'. 
 scan_space sets up the values which are in the end inserted into the lambda function. ScanDefinition then combines
@@ -99,8 +99,8 @@ s = 10
 scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
 
 # scan over sec/abs ratio
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1 / (v + 1))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v / (v + 1))
+f_sec = ScannableParameter(PhysicalParameter("sec", 1, is_global=True), lambda x, v: 1 / (v + 1))
+f_abs = ScannableParameter(PhysicalParameter("abs", 1, is_global=True), lambda x, v: v / (v + 1))
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
@@ -111,13 +111,13 @@ Templates, as defined in box_grid.py, allow for easy scanning and unit conversio
 """
 # scan over diffusion constant
 t_D = parameter_pool.get_template("D")
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
 D_def = ScanDefintion(D, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
 # scan_container.add_single_parameter_scan([D_def], scan_name="D")
 
 # scan over secretion rate for sec-cells
 t_q = parameter_pool.get_template("q")
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
+q = ScannableParameter(t_q(1), lambda x, v: x * v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
 # scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 

@@ -15,7 +15,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ScannablePhysicalParameter
+from thesis.main.ParameterSet import ScannableParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
@@ -88,7 +88,7 @@ abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
 """
-Sets up a parameter scan. ScannablePhysicalParameter takes a function with two arguments, 
+Sets up a parameter scan. ScannableParameter takes a function with two arguments, 
 here conveniently a lambda function, to set the given PhysicalParameter according to input. 
 A simpler definition would be 'lambda x, v: v'. 
 scan_space sets up the values which are in the end inserted into the lambda function. ScanDefinition then combines
@@ -104,7 +104,7 @@ scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, i
 
 # scan over secretion rate for sec-cells
 t_q = parameter_pool.get_template("q")
-q = ScannablePhysicalParameter(t_q(10), lambda x, v: v * x)
+q = ScannableParameter(t_q(10), lambda x, v: v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
 scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 
