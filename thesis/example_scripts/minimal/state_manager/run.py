@@ -2,7 +2,9 @@ from parameters import cytokines, cell_types_dict, geometry, numeric, boundary
 from thesis.main.StateManager import StateManager
 from thesis.scenarios.box_grid import setup, assign_fractions
 
-path = "/extra/kiwitz/statemanager_example/test_1/"
+"""Define paths for result folder structure"""
+solution_path = "/extra/kiwitz/statemanager_example/test_1/"
+
 scenario = setup(
     cytokines,
     cell_types_dict,
@@ -10,7 +12,7 @@ scenario = setup(
     geometry,
     numeric)
 
-stMan = StateManager(path)
+stMan = StateManager(solution_path)
 stMan.scenario = scenario
 stMan.T = [0, 1]
 

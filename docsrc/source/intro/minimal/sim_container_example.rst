@@ -8,21 +8,27 @@ The following is a minimal example using the box_grid.py scenario.
 It will run a single static simulation and save the cytokine field to file.
 
 
-.. literalinclude:: ../../../../thesis/example_scripts/sim_container/run.py
+.. literalinclude:: ../../../../thesis/example_scripts/minimal/sim_container/run.py
     :linenos:
 
 Line 6
     file path for simulation results
-Line 7-14
+Line 9-14
     Call to setup function, which constructs the sim container, given some scenario specific parameters
-Line 16
-    Initially distributes cell types
-Line 17
-    Runs the simulation from timeindex 0 to 1
-Line 18
-    Saves the result of timeindex 1 to file
 Line 19
-    Saves the default markers (IL-2_surf_c and type_name) of timeindex 1 to file
+    Gets sim container from scenario for model_index = 0 (pde model)
+Line 20/21
+    Set file paths for pde model
+Line 23
+    Initially distributes cell types
+Line 25
+    Initializes sim objects
+Line 26
+    Runs the simulation from timeindex 0 to 1
+Line 27
+    Saves the result of timeindex 1 to file
+Line 30-41
+    Repeats same process for ode model
 
 Parameters for the box_grid scenario
 ------------------------------------
@@ -30,7 +36,7 @@ Parameters for the box_grid scenario
 The run file imports names from parameters.py, which are required for scenario construction.
 For box_grid.py a basic parameter file looks like this
 
-.. literalinclude:: ../../../../thesis/example_scripts/sim_container/parameters.py
+.. literalinclude:: ../../../../thesis/example_scripts/minimal/sim_container/parameters.py
     :linenos:
 
 
@@ -41,16 +47,20 @@ The resulting file structure will look like this
 
 .. code-block::
 
-    ├── test_1
-    │   ├── cache
-    │   ├── entity_markers
-    │   │   ├── IL-2_surf_c
-    │   │   └── type_name
-    │   ├── sol
-    │   │   ├── distplot
-    │   │   ├── field_IL-2_1.h5
-    │   │   └── field_IL-2_1.xdmf
-    │   └── solver_tmpil2
+    └── test_1
+        ├── ode_model
+        │   └── sol
+        └── pde_model
+            ├── mesh
+            │   ├── boundary_markers.h5
+            │   ├── mesh_il2.h5
+            │   └── mesh_il2.xdmf
+            ├── sol
+            │   ├── distplot
+            │   ├── field_il2_0.h5
+            │   └── field_il2_0.xdmf
+            └── solver_tmpil2
+
 
 cache
     simulation mesh. In this case only one mesh is produced
