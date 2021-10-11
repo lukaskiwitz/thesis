@@ -16,7 +16,7 @@ logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemod
                     format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
 import thesis.main.StateManager as StateManager
-from thesis.main.ParameterSet import ScannablePhysicalParameter, PhysicalParameter, PhysicalParameterTemplate
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup
 from thesis.main.assign_fractions import assign_fractions
@@ -62,19 +62,19 @@ t_koff = pool.get_template("k_off")
 from parameters import R_h, q
 from parameters import rat as ratio, f_sec as fs, f_abs as fr
 
-R_constant = ScannablePhysicalParameter(t_R(R_h), lambda x, v: (5e3 * 0.9) / fr(v))
-R = ScannablePhysicalParameter(t_R(R_h), lambda x, v: x * v)
-q_constant = ScannablePhysicalParameter(t_q(q), lambda x, v: (30 * 0.1) / fs(v))
+R_constant = ScannableParameter(t_R(R_h), lambda x, v: (5e3 * 0.9) / fr(v))
+R = ScannableParameter(t_R(R_h), lambda x, v: x * v)
+q_constant = ScannableParameter(t_q(q), lambda x, v: (30 * 0.1) / fs(v))
 
-q = ScannablePhysicalParameter(t_q(q), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
+q = ScannableParameter(t_q(q), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
+kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
 
-kendo = ScannablePhysicalParameter(t_kendo(1.1e-3), lambda x, v: x * v)
-koff = ScannablePhysicalParameter(t_koff(0.83), lambda x, v: x * v)
+kendo = ScannableParameter(t_kendo(1.1e-3), lambda x, v: x * v)
+koff = ScannableParameter(t_koff(0.83), lambda x, v: x * v)
 
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", ratio, is_global=True), lambda x, v: fs(v))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", ratio, is_global=True), lambda x, v: fr(v))
+f_sec = ScannableParameter(PhysicalParameter("sec", ratio, is_global=True), lambda x, v: fs(v))
+f_abs = ScannableParameter(PhysicalParameter("abs", ratio, is_global=True), lambda x, v: fr(v))
 
 """Retrieves entity types from sim container"""
 default = scenario.get_entity_type_by_name("default")
@@ -113,13 +113,13 @@ from thesis.main.ParameterSet import MiscParameter
 d = lambda x, v: (x - 10) * v + 10
 f = lambda n, d: np.ceil(n ** (1 / 3) * d + d)
 
-distance = ScannablePhysicalParameter(MiscParameter("distance", 20), d)
-margin = ScannablePhysicalParameter(MiscParameter("margin", 20), d)
+distance = ScannableParameter(MiscParameter("distance", 20), d)
+margin = ScannableParameter(MiscParameter("margin", 20), d)
 n = 200
 
-x_grid = ScannablePhysicalParameter(MiscParameter("x_grid", 100), lambda x, v: f(n, d(20, v)))
-y_grid = ScannablePhysicalParameter(MiscParameter("y_grid", 100), lambda x, v: f(n, d(20, v)))
-z_grid = ScannablePhysicalParameter(MiscParameter("z_grid", 100), lambda x, v: f(n, d(20, v)))
+x_grid = ScannableParameter(MiscParameter("x_grid", 100), lambda x, v: f(n, d(20, v)))
+y_grid = ScannableParameter(MiscParameter("y_grid", 100), lambda x, v: f(n, d(20, v)))
+z_grid = ScannableParameter(MiscParameter("z_grid", 100), lambda x, v: f(n, d(20, v)))
 
 distance_def = ScanDefintion(distance, "geometry", scan_space_2, ScanType.GLOBAL)
 margin_def = ScanDefintion(margin, "geometry", scan_space_2, ScanType.GLOBAL)
@@ -129,12 +129,12 @@ z_def = ScanDefintion(z_grid, "geometry", scan_space_2, ScanType.GLOBAL)
 
 for bc, linear in [("linear", True), ("patrick_saturation", False)]:
     bc_def = lambda t: ScanDefintion(
-        ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc), "IL-2", scan_space,
+        ScannableParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc), "IL-2", scan_space,
         ScanType.ENTITY,
         field_quantity="il2", entity_type=t
     )
     linear_def = ScanDefintion(
-        ScannablePhysicalParameter(MiscParameter("linear", True, is_global=True), lambda x, v: linear),
+        ScannableParameter(MiscParameter("linear", True, is_global=True), lambda x, v: linear),
         "numeric", scan_space, ScanType.GLOBAL)
 
     scan_container.add_single_parameter_scan(

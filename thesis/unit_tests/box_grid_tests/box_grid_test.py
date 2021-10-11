@@ -7,7 +7,7 @@ from shutil import rmtree
 import numpy as np
 
 from thesis.main.MyPlotter import Plotter
-from thesis.main.ParameterSet import ScannablePhysicalParameter
+from thesis.main.ParameterSet import ScannableParameter
 from thesis.main.PostProcess import PostProcessor
 from thesis.main.ScanContainer import ScanDefintion, ScanType, ScanContainer
 from thesis.main.StateManager import StateManager
@@ -112,7 +112,7 @@ class PostProcessingTest(MyTest):
     def get_scan_container(self, scenario):
         pool = scenario.parameter_pool
         t_q = pool.get_template("q")
-        q = ScannablePhysicalParameter(t_q(10), lambda x, v: v * x)
+        q = ScannableParameter(t_q(10), lambda x, v: v * x)
         sec = scenario.get_entity_type_by_name("sec")
         scan_space = np.linspace(5, 15, 4)
         sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2",

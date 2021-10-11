@@ -6,7 +6,7 @@ import lxml.etree as ET
 
 from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscParameter, PhysicalParameterTemplate, \
-    ScannablePhysicalParameter
+    ScannableParameter
 
 
 class ScanContainer:
@@ -49,7 +49,7 @@ class ScanContainer:
                 assert isinstance(d, ScanDefintion)
 
                 if add_axis:
-                    axis = ScannablePhysicalParameter(
+                    axis = ScannableParameter(
                         PhysicalParameterTemplate(MiscParameter("value", 0, is_global=True))(0),
                         lambda x, v: v
                     )
@@ -92,23 +92,23 @@ class ScanContainer:
         """
 
         if len(a1) == 3:
-            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+            a1_axis = ScanDefintion(ScannableParameter(
                 PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
                 lambda x, v: v
             ), "axis", a1[2], ScanType.GLOBAL)
         else:
-            a1_axis = ScanDefintion(ScannablePhysicalParameter(
+            a1_axis = ScanDefintion(ScannableParameter(
                 PhysicalParameterTemplate(MiscParameter(a1[1], 0, is_global=True))(0),
                 lambda x, v: v
             ), "axis", range(max([len(i.scan_space) for i in a1[0]])), ScanType.GLOBAL)
 
         if len(a2) == 3:
-            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+            a2_axis = ScanDefintion(ScannableParameter(
                 PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
                 lambda x, v: v
             ), "axis", a2[2], ScanType.GLOBAL)
         else:
-            a2_axis = ScanDefintion(ScannablePhysicalParameter(
+            a2_axis = ScanDefintion(ScannableParameter(
                 PhysicalParameterTemplate(MiscParameter(a2[1], 0, is_global=True))(0),
                 lambda x, v: v
             ), "axis", range(max([len(i.scan_space) for i in a2[0]])), ScanType.GLOBAL)
@@ -185,7 +185,7 @@ class ScanSample:
         self.entity_types: List[EntityType] = entity_types
         self.outer_domain_parameter_dict = {}
         for k, v in outer_domain_dict.items():
-            # assert isinstance(v,ScannablePhysicalParameter)
+            # assert isinstance(v,ScannableParameter)
             self.outer_domain_parameter_dict[k] = ParameterSet("dummy", [v])
 
     def serialize_to_xml(self, sub_path: str):
@@ -249,7 +249,7 @@ class ScanDefintion:
     def __init__(self, scannable, collection_name, scan_space, scan_type: ScanType,
                  entity_type=None, boundary_pieces_name=None, field_quantity=""):
 
-        assert isinstance(scannable, ScannablePhysicalParameter)
+        assert isinstance(scannable, ScannableParameter)
 
         self.scannable = scannable
         self.collection_name = collection_name

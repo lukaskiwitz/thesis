@@ -17,14 +17,12 @@ os.environ["LOG_PATH"] = path
 
 from thesis.main.StateManager import StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter, PhysicalParameterTemplate
+from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
 
-import KDEpy
 import matplotlib.pyplot as plt
-import seaborn as sns
 from thesis.main.Entity import Cell
 
 
@@ -86,7 +84,6 @@ class ResponseTimeSolver(InternalSolver):
 def updateState(sc, t):
 
     from thesis.main.MyKDE import get_kde_from_df, evalutate_kernel_on_grid, get_cell_df
-    import pandas as pd
 
     for i, e in enumerate(sc.entity_list):
         e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
@@ -186,7 +183,6 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 
 from thesis.scenarios.box_grid import get_parameter_templates
 
-
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 
 t_D = templates["D"]
@@ -195,21 +191,21 @@ t_q = templates["q"]
 t_kd = templates["kd"]
 t_amax = templates["amax"]
 
+# R = ScannableParameter(t_R(40000), lambda x, v: x * v)
+q = ScannableParameter(t_q(100), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
+kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
+amax = ScannableParameter(t_amax(100), lambda x, v: x * v)
 
-# R = ScannablePhysicalParameter(t_R(40000), lambda x, v: x * v)
-q = ScannablePhysicalParameter(t_q(100), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
-amax = ScannablePhysicalParameter(t_amax(100),  lambda x, v: x * v)
-
-c_s = ScannablePhysicalParameter(PhysicalParameter("strength", 0.1 ,to_sim = 1), lambda x,v: v)
-f = ScannablePhysicalParameter(PhysicalParameter("Treg", 0.1, is_global=True,to_sim = 1),lambda x,v: v)
-# bw = ScannablePhysicalParameter(PhysicalParameter("bw", 10 ,to_sim = 1), lambda x,v: x*v)
+c_s = ScannableParameter(PhysicalParameter("strength", 0.1, to_sim=1), lambda x, v: v)
+f = ScannableParameter(PhysicalParameter("Treg", 0.1, is_global=True, to_sim=1), lambda x, v: v)
+# bw = ScannableParameter(PhysicalParameter("bw", 10 ,to_sim = 1), lambda x,v: x*v)
 
 
 default = sc.get_entity_type_by_name("default")
 effector = sc.get_entity_type_by_name("effector")
 treg = sc.get_entity_type_by_name("Treg")
+
 
 # for v in np.logspace(-1,1,10):
 #
@@ -239,7 +235,7 @@ treg = sc.get_entity_type_by_name("Treg")
 def sim_parameter_scan(scanable,collection_name, field_quantity, scan_space, scan_name = None):
 
     result = []
-    assert isinstance(scanable,ScannablePhysicalParameter)
+    assert isinstance(scanable, ScannableParameter)
     for v in scan_space:
 
         sim_parameters = [
@@ -253,7 +249,7 @@ def sim_parameter_scan(scanable,collection_name, field_quantity, scan_space, sca
 def entity_scan(entities,scanable,collection_name,field_quantity,scan_space, scan_name = None):
 
     result = []
-    assert isinstance(scanable, ScannablePhysicalParameter)
+    assert isinstance(scanable, ScannableParameter)
     for v in scan_space:
         entity_types = []
         for e in entities:

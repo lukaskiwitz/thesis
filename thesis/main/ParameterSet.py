@@ -685,26 +685,26 @@ class MiscParameter(Parameter):
         return type(value)
 
 
-class ScannablePhysicalParameter:
+class ScannableParameter:
     """
-    Container class that combine a physical parameter with a function for scanning over parameter ranges.
+    Container class that combine parameter with a function for scanning over parameter ranges.
 
     :ivar p: base physical parameter
     :ivar f: scaling function; Must have signature f(x,v), were x is the base parameter value and v is the scaling parameter
     :ivar in_sim: wether to use sim or post units for scaling function
 
-    :vartype p: PhysicalParameter
+    :vartype p: Parameter
     :vartype f: Callable
     :vartype in_sim: bool
     """
 
-    def __init__(self, p: PhysicalParameter, f: Callable, in_sim: bool = False):
+    def __init__(self, p: Parameter, f: Callable, in_sim: bool = False):
 
         self.p = deepcopy(p)
         self.f = f
         self.in_sim = in_sim
 
-    def __call__(self, v) -> PhysicalParameter:
+    def __call__(self, v) -> Parameter:
         """
         Gets parameter object with value scaled according to scaling function f(x,v)
 

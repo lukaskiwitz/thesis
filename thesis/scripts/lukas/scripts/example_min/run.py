@@ -13,7 +13,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
+from thesis.main.ParameterSet import MiscParameter, ScannableParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
@@ -103,22 +103,21 @@ t_q = templates["q"]
 t_kd = templates["kd"]
 t_amax = templates["amax"]
 
-R = ScannablePhysicalParameter(t_R(40000), lambda x, v: x * v)
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-amax = ScannablePhysicalParameter(t_amax(100), lambda x, v: x * v)
-bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
-is_linear = ScannablePhysicalParameter(MiscParameter("linear", True,is_global = True), lambda x, v: v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
-f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
+R = ScannableParameter(t_R(40000), lambda x, v: x * v)
+q = ScannableParameter(t_q(1), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
+amax = ScannableParameter(t_amax(100), lambda x, v: x * v)
+bc_type = ScannableParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
+is_linear = ScannableParameter(MiscParameter("linear", True, is_global=True), lambda x, v: v)
+kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
+f = ScannableParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 """Retrieves entity types from sim container"""
 default = sc.get_entity_type_by_name("default")
 abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
-
-for v in np.logspace(-1,1,1):
+for v in np.logspace(-1, 1, 1):
     """Scans over parameters that are associated with a field"""
     sim_parameters = [
     ]
