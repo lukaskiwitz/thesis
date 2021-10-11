@@ -62,6 +62,22 @@
         Dict outer_domain_parameter_dict
     }
 
+    class ScanDefinition {
+
+        ScannableParameter scannable
+        String collection_name
+        String field_quantity
+        List<float> scan_space
+        ScanType scan_type
+        EntityType entity_type
+        Dict boundary_pieces_name
+    }
+    enum ScanType {
+        GLOBAL
+        ENTITY
+        BOUNDARY
+    }
+
     abstract class GlobalProblem {
          {abstract} apply_sample()
          {abstract} compute_coupling_properties()
@@ -115,7 +131,7 @@
         List<MyGlobalModel> global_models
         List<type> internal_solvers
         List<EntityType> entity_type
-        List<MyEntityLocator> self.entity_locators
+        List<MyEntityLocator> entity_locators
         List<MyParameterPool> parameter_pool
         List<ParameterSet> global_parameters
     }
@@ -184,6 +200,15 @@
 
     }
 
+    class ScannableParameter {
+
+        __call__()
+
+        Parameter p
+        Callable f
+        Boolean in_sim
+
+    }
 
 
     abstract class MyGlobalModel{
@@ -229,5 +254,86 @@
         List<String> global_solver_names
         List<BC> interactions
     }
+
+    class PostProcessor {
+
+        run_post_process()
+        write_post_process_xml()
+        save_dataframes()
+        get_global_dataframe()
+        get_timing_dataframe()
+        get_cell_dataframe()
+
+        Boolean debug_compute_in_serial
+        String out_tree_path
+        String path
+        DataFrame cell_dataframe
+        DataFrame global_dataframe
+        DataFrame timing_dataframe
+        Int unit_length_exponent
+        List<PostProcessComputation> computations
+        Dict rc
+        Dict image_settings
+
+    }
+
+    class ComputeSettings{
+
+        {static} create_from_element()
+        set_image_settings()
+
+        String file_path
+        String field_quantity
+        Dict dynamic
+        Int scan_index
+        Int model_index
+        String model_name
+        Int replicat_index
+        Int time_index
+        String tmp_path
+        String unit_name
+        Dict marker_lookup
+        Int round_legend_labels
+        Dict paraview_settings
+
+
+    }
+
+
+    abstract class PostProcessComputation {
+
+        {abstract} __init__()
+        {abstract} __call__()
+
+        {static} Boolean add_xml_result
+        {static} List<GlobalResult> compatible_result_type
+
+    }
+
+    class FenicsScalarFieldComputation{
+
+        __init__()
+
+        String path
+        String solution_path
+        Int scan_index
+        Int time_index
+        DataFrame cell_df
+        ParameterSet p
+        Function V_vec
+        Function grad
+        Function u
+        Float c_conv
+        Float grad_conv
+    }
+    
+    class ScalarComputation{
+        __init__()
+        
+        Array u
+        Float c_conv
+        Float grad_conv
+    }
+
 
 @enduml

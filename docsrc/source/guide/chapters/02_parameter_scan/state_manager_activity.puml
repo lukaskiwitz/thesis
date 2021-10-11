@@ -2,8 +2,8 @@
     partition run.py {
         :scenario = setup();
         :state_manager = StateManager()
-        :state_manager.scenario = scenario
-        :state_manager.T = [0, 1];
+        state_manager.scenario = scenario
+        state_manager.T = [0,1];
 
         partition StateManager.run() {
 

@@ -1,27 +1,32 @@
 Time series simulation with SimContainer
 ========================================
 
-The simulation of a single timeseries (with replicats) is handled by SimContainer.
-At its core it is an aggregate of the Entity, EntityType, ParameterSet, GlobalProblem and InternalSolver classes,
+The simulation of a single timeseries (with replicats) is handled by :class:`SimContainer`.
+At its core it is an aggregate of the :class:`Entity`, :class:`EntityType`, :class:`ParameterSet`,
+:class:`GlobalProblem` and :class:`InternalSolver` classes,
 to bundle simulation objects and provide an abstract interface for higher level code.
-The SimContainer object can be build manually or, usually, retrieved from a scenario object.
+The :class:`SimContainer` object can be build manually or, usually, retrieved from a scenario object.
 
-The UML diagram (:numref:`test_uml`) illustrates the code structure around SimConatiner and its relation to StateManager.
+The UML diagram (:numref:`test_uml`) illustrates the code structure around :class:`SimConatiner`
+and its relation to :class:`StateManager`.
 The class hierarchy behind the abstract base classes has been omitted for clarity,
 but that is where much of the actual implementation can be found.
 
 .. uml:: simulation_classdiagram.puml
-    :caption: Coarse package class hierarchy involved in the simulation. The main classes are SimContainer and StateManager,
+    :caption: Coarse package class hierarchy involved in the simulation. The main classes are
+        :class:`SimContainer` and :class:`StateManager`,
         that manage timeseries and parameter scan simulation. The implementation details for different problems and numerical
         frameworks are hidden in abstracts classes (denoted with A in their class diagram),
-        that represent the actual simulation objects (Entity, GlobalProblem, MySolver, InternalSolver).
-        Concrete implementations for a given mathematical/numerical form can be found in subclasses that derive from abstract base classes (ABC).
+        that represent the actual simulation objects (:class:`Entity`, :class:`GlobalProblem`, :class:`MySolver`,
+        :class:`InternalSolver`).
+        Concrete implementations for a given mathematical/numerical form can be found in subclasses
+        that derive from the abstract base class (:term:`ABC`).
     :name: test_uml
 
 
-When the SimContainer.run() method is invoked,
+When the :py:func:`SimContainer.run()` method is invoked,
 the basic simulation loop starts. It executes the pre/post hooks but primarily calls the step
-method for each timestep. SimContainer.step() iterates over all global problems (a.k.a fields),in turn calling their step methods,
+method for each timestep. :py:func:`SimContainer.step()` iterates over all global problems (a.k.a fields),in turn calling their step methods,
 and then over all entities.
 The program flow  is illustrated in the activity diagram (:numref:`basic_sim_loop_activity`) and pseudo code snippet (:numref:`basic_sim_loop_class`) below.
 
@@ -38,7 +43,7 @@ The program flow  is illustrated in the activity diagram (:numref:`basic_sim_loo
 
 .. code-block::
     :name: basic_sim_loop_class
-    :caption: Basic simulation loop in pseudo code. Actual implementation in SimContainer.run() and step()
+    :caption: Basic simulation loop in pseudo code. Actual implementation in :py:func:`SimContainer.run()` and :py:func:`step()`
 
     def run(self, T, number_of_replicats = 1):
 
@@ -77,7 +82,7 @@ The program flow  is illustrated in the activity diagram (:numref:`basic_sim_loo
 
         self.t = self.t + dt
 
-The step methods of GlobalProblem (rather its subclasses) and Entity (same) actually advance
+The step methods of :class:`GlobalProblem` (rather its subclasses) and Entity (same) actually advance
 the simulation by one timestep for each global problem (pde-field) and each entity (cell model) respectively.
 
 
@@ -90,6 +95,7 @@ Global solver
         The solver is "compiled", its :py:func:`solve` method invoked
         and the coupling properties are computed on each entity from the result.
     :name: global_problem_step
+
 The call to :py:func:`field.step` in :numref:`basic_sim_loop_activity`
 invokes the :py:func:`step` method defined in the :class:`GlobalProblem`
 ABC (:numref:`global_problem_step`). The solver object is a member of the :class:`GlobalProblem` instance

@@ -41,9 +41,9 @@ MiscParameter
     :undoc-members:
     :show-inheritance:
 
-ScannablePhysicalParameter
+ScannableParameter
 --------------------------
-.. autoclass:: thesis.main.ParameterSet.ScannablePhysicalParameter
+.. autoclass:: thesis.main.ParameterSet.ScannableParameter
     :members:
     :undoc-members:
     :show-inheritance:
