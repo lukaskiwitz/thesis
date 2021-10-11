@@ -265,7 +265,6 @@ class PostProcessor:
                                 (self.cell_dataframe["model_index"] == compute_settings.model_index) &
                                 (self.cell_dataframe["replicat_index"] == compute_settings.replicat_index)
                                 ]
-                            compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
 
                         scatter_list.append(compute_settings)
 
