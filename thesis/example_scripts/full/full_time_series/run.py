@@ -35,21 +35,37 @@ class RuleBasedSolver(InternalSolver):
 
     def step(self, t1, t2, dt, p, entity=None, **kwargs):
 
-        il2_threshold = p.get_physical_parameter("ths", "IL-2").get_in_post_unit()
-        il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
+        def activation(c, R, R_M=860, max=0.125, min=0, n_R=0.55, n_il2=4):
 
-        l_max = 1 / 3600
+            def rec(R):
+                ec50 = (max - min) * (1 - np.power(R, n_R) / (np.power(R_M, n_R) + np.power(R, n_R))) + min
+                return ec50
 
-        def hill(c, ths, invert=False):
+            ec50 = rec(R)
+            a = c ** n_il2 / (ec50 ** n_il2 + c ** n_il2)
 
-            n = 4
-            if invert:
-                return l_max * (1 - (c ** n / (c ** n + ths ** n))) * dt
+            if isinstance(R, float) and R == 0:
+                return 0
+            if isinstance(R, float) and isinstance(c, float):
+                return a
             else:
-                return l_max * ((c ** n / (c ** n + ths ** n))) * dt
+                a[R == 0] = 0
+                return a
 
-        il2_cdf = 1 - poisson.cdf(k=1, mu=hill(il2, il2_threshold, invert=False))
-        il2_cdf_r = 1 - poisson.cdf(k=1, mu=hill(il2, 2 * il2_threshold, invert=False))
+        # il2_threshold = p.get_physical_parameter("ths", "IL-2").get_in_post_unit()
+        il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
+        il2R = p.get_physical_parameter("R", "IL-2").get_in_post_unit()
+
+        def hill(c, R, invert=False, l_max=1 / 3600, R_M=860):
+
+            n = 10
+            if invert:
+                return l_max * (1 - activation(c, R, R_M=R_M)) * dt
+            else:
+                return l_max * (activation(c, R, R_M=R_M)) * dt
+
+        il2_cdf = 1 - poisson.cdf(k=1, mu=hill(il2, il2R, invert=False, R_M=860))
+        il2_cdf_r = 1 - poisson.cdf(k=1, mu=hill(il2, il2R, invert=False, R_M=860, l_max=3 / 3600))
 
         if entity.type_name == "default":
             if il2_cdf > np.random.uniform(0, 1):
@@ -97,16 +113,17 @@ To actually run this scan setup we attach it to the scan_container with add_sing
 """
 
 """log scan space centered around 1"""
-s = 20
+s = 3
 fc = 5
 e = np.log10(fc) / np.log10(10)
-scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
+# scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
+scan_space = np.linspace(50, 150, s)
 
 # scan over secretion rate for sec-cells
 t_q = parameter_pool.get_template("q")
 q = ScannableParameter(t_q(10), lambda x, v: v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
-scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
+# scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 
 """
 signs up the internal solver with the sim container. 
@@ -127,8 +144,8 @@ stMan.compress_log_file = True
 
 """sets up time range"""
 t_unit = 3600
-stMan.T = np.arange(0, t_unit * 40, t_unit / 5)
-# stMan.T = [0,t_unit,2*t_unit,3*t_unit]
+stMan.T = np.arange(0, t_unit * 20, t_unit / 5)
+# stMan.T = [0,t_unit,2*t_unit]
 
 """
 Defines a function which is called by StateManager before a parameter scan. 
@@ -145,4 +162,4 @@ stMan.pre_scan = pre_scan
 # stMan.pre_replicat = pre_scan
 
 """Runs the ParameterScan"""
-stMan.run(model_names=["pde_model", "ode_model"], ext_cache=ext_cache)
+stMan.run(model_names=["pde_model", "ode_model"], ext_cache=ext_cache, number_of_replicats=10)

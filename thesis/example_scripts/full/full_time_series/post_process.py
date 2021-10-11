@@ -58,7 +58,7 @@ pp.image_settings = {
             # "opacity_range": [0.001, 0.05],  # opacity range for volume rendering (nM), can be commented out
             "volume_camera_pos": [800, 70, -110],
             # camera position in spherical coords. around center of data bounding box
-            "volume_raytracing": True,  # Raytracing on off
+            "volume_raytracing": False,  # Raytracing on off
             "volume_raytracing_progressive_passes": 0,  # better image quality; use with caution
             "volume_raytracing_samples": 8,  # better image quality
             "volume_raytracing_ambient_samples": 2,
@@ -89,6 +89,5 @@ pp.image_settings_fields = {
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
 from thesis.main.PostProcess import ParaviewRender
-
 pp.computations.append(ParaviewRender)
 pp.run_post_process(threads)

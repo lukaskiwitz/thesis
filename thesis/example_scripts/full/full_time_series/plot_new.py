@@ -11,8 +11,8 @@ from thesis.main.MyPlotter import Plotter
 plotter = Plotter(path)
 
 plotter.scan_scale = s = 10
-scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
-
+# scan_space = np.concatenate([np.logspace(-1, 0, int(s / 2)), np.logspace(0, 1, int(s / 2) + 1)[1:]])
+scan_space = np.linspace(80, 100, s)
 plotter.max_scans = 100
 
 plotter.label_replacement.update({
@@ -58,8 +58,8 @@ plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, yl
 plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, ylog=False, filter=f("sec"),
                    subtitle="secretors")
 
-plotter.cell_steady_state_plot("IL-2_surf_c", hue="type_name", ylog=False, style=plotter.model_index_key)
-plotter.steady_state_count(hue="type_name", legend="brief", style=plotter.model_index_key)
+plotter.cell_steady_state_plot("IL-2_surf_c", hue="type_name", ylog=False, style=plotter.model_index_key, xlog=False)
+plotter.steady_state_count(hue="type_name", legend="brief", style=plotter.model_index_key, xlog=False)
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection.pdf")
 plotter.show()

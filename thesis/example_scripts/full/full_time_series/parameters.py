@@ -27,17 +27,18 @@ The internal_solver attaches the user defined solver by name.
 """
 R_h = 1e4
 R_l = 1e2
-q = 10
+q = 100
 
 bc_type = "patrick_saturation"
 cell_types_dict = [
     {"name": "default",
      "fraction": 0,
-     "il2": {"R": R_l, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": bc_type},
+     "il2": {"R": R_h, "q": 5, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "fraction": 0.005,
+     # "fraction": 0.05,
      "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": ""
      },
@@ -66,8 +67,8 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 500,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 500,
+    "x_grid": 300,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 300,
     # "z_grid": 200,  # comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
@@ -102,7 +103,7 @@ else:
     extra = "extra"
 
 user = getpass.getuser()
-model_name = "full_time_series_sheet_2"
+model_name = "full_time_series_sheet_small"
 name = "example_1"
 path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 IMGPATH = path + "images/"
