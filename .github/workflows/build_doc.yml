@@ -9,6 +9,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: install plantuml v1.2021.12
       run: |
+        sudo apt install graphviz
         wget -O ~/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2021.12/plantuml-1.2021.12.jar
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
