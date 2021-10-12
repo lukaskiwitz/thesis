@@ -1,0 +1,51 @@
+name: Unit tests
+
+on: workflow_dispatch
+
+jobs:  
+  run-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Add conda to system path
+      run: echo $CONDA/bin >> $GITHUB_PATH
+      shell: bash
+      
+    - name: Restore conda package cache
+      uses: actions/cache@v2
+      env:
+        cache-name: pkg-cache
+      with:
+        path: /usr/share/miniconda/pkgs
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
+
+    - name: Restore build.yml cache
+      uses: actions/cache@v2
+      id: build-cache
+      env:
+        cache-name: build-cache
+      with:
+        path: build.yml
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('fenics_explicit.yml') }}-v2
+
+    - name: Install dependencies from build
+      if: steps.build-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: conda env update --file build.yml --name base
+    - name: Install dependencies from fenics_explicit and export build.yml
+      if: steps.build-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+          conda env update --file ./fenics_explicit.yml --name base
+          conda env export --name base > build.yml
+    - name: Set env variables
+      run: | 
+        conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
+
+    - name: Install package
+      run: pip install -e .
+
+    - name: Run test-scenario tests
+      run: python -m unittest thesis/unit_tests/scenario_1_tests/*
+    - name: Run box grid tests
+       run: python -m unittest thesis/unit_tests/box_grid_tests/*
