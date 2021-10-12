@@ -31,7 +31,8 @@ release = 'v0.1a'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx_autodoc_typehints', 'sphinxcontrib.plantuml']
-plantuml = 'java -jar /home/kiwitz//plantuml.jar'
+
+plantuml = 'java -jar {}'.format(os.path.expanduser("~/plantuml.jar"))
 
 autodoc_typehints = 'signature'
 numfig = True
