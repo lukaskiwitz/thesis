@@ -770,6 +770,34 @@ class PhysicalParameterTemplate(ParameterTemplate):
         return p
 
 
+class MiscParameterTemplate(ParameterTemplate):
+    """
+    Object factory for misc parameters
+
+    :ivar p: misc parameter prototype
+    :ivar name: template name
+
+    :vartype p: MiscParameter
+    :vartype name: str
+    """
+
+    def __init__(self, parameter: MiscParameter):
+        self.p: MiscParameter = parameter
+        self.name: str = parameter.name
+
+    def __call__(self, value: Any = None) -> MiscParameter:
+        """
+        Returns physical parameter object
+
+        :param value: parameter value
+        """
+        p = deepcopy(self.p)
+        if value is not None:
+            p.set_in_post_unit(value)
+
+        return p
+
+
 class GlobalParameters:
     """
     Container class ot store global parameters
