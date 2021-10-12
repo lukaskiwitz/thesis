@@ -1,16 +1,10 @@
-name: documentation
-
+name: Unit tests
 on: workflow_dispatch
-
 jobs:  
   run-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: install plantuml v1.2021.12
-      run: |
-        sudo apt install graphviz
-        wget -O ~/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2021.12/plantuml-1.2021.12.jar
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
       shell: bash
@@ -49,15 +43,7 @@ jobs:
     - name: Install package
       run: pip install -e .
 
-    - name: make html
-      run: |
-        cd docsrc
-        make html
-        
-    - name: Deploy to master branch
-      uses: peaceiris/actions-gh-pages@v3
-      if: ${{ github.ref == 'refs/heads/master' }}
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docsrc/build/html
-        enable_jekyll: false
+    - name: Run test-scenario tests
+      run: python -m unittest thesis/unit_tests/scenario_1_tests/*
+    - name: Run box grid tests
+      run: python -m unittest thesis/unit_tests/box_grid_tests/*

@@ -1,3 +1,6 @@
+[![Unit tests](https://github.com/lukaskiwitz/thesis/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/lukaskiwitz/thesis/actions/workflows/unit_tests.yml)
+[![documentation](https://github.com/lukaskiwitz/thesis/actions/workflows/build_doc.yml/badge.svg)](https://github.com/lukaskiwitz/thesis/actions/workflows/build_doc.yml)
+
 <h1>
 Documentation
 </h1>
