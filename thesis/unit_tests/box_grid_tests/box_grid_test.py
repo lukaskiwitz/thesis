@@ -123,7 +123,7 @@ class PostProcessingTest(MyTest):
 
         return scan_container
 
-    def static_test(self):
+    def test_static(self):
         stMan = self.set_up_statemanager()
         stMan.scan_tree.compress_log_file = True
 
@@ -142,7 +142,7 @@ class PostProcessingTest(MyTest):
         plotter.make_legend()
         plotter.savefig(os.path.join(self.path, "images/") + "plot.png")
 
-    def timeseries_test(self):
+    def test_timeseries(self):
         stMan = self.set_up_statemanager()
         stMan.scan_tree.compress_log_file = True
         t_unit = 3600
@@ -160,7 +160,7 @@ class PostProcessingTest(MyTest):
         plotter.make_legend()
         plotter.savefig(os.path.join(self.path, "images/") + "plot.png")
 
-    def scan_test(self):
+    def test_scan(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
         stMan.scan_tree.compress_log_file = True

@@ -11,7 +11,7 @@ from thesis.main.ParameterSet import ScannableParameter
 from thesis.main.PostProcess import PostProcessor
 from thesis.main.ScanContainer import ScanDefintion, ScanType, ScanContainer
 from thesis.main.StateManager import StateManager
-from thesis.unit_tests.test_scenario1 import setup as scenario_setup
+from thesis.unit_tests.scenario1 import setup as scenario_setup
 
 
 class MyTest(unittest.TestCase):
@@ -38,7 +38,7 @@ class MyTest(unittest.TestCase):
 
 class StaticSimContainerTest(MyTest):
 
-    def static_pde_test(self):
+    def test_static_pde(self):
 
         scenario = scenario_setup()
         sc = scenario.get_sim_container(None, model_index=0)
@@ -56,7 +56,7 @@ class StaticSimContainerTest(MyTest):
         sc.initialize()
         sc.run([0, 1])
 
-    def static_ode_test(self):
+    def test_static_ode(self):
 
         scenario = scenario_setup()
         sc = scenario.get_sim_container(None, model_index=1)
@@ -77,7 +77,7 @@ class StaticSimContainerTest(MyTest):
 
 class TimeSeriesSimContainerTest(MyTest):
 
-    def pde_test(self):
+    def test_pde(self):
 
         scenario = scenario_setup()
         sc = scenario.get_sim_container(None, model_index=0)
@@ -97,7 +97,7 @@ class TimeSeriesSimContainerTest(MyTest):
         T = np.arange(0, tu * 10, tu)
         sc.run(T)
 
-    def ode_test(self):
+    def test_ode(self):
 
         scenario = scenario_setup()
         sc = scenario.get_sim_container(None, model_index=1)
@@ -140,7 +140,7 @@ class StateManagerTest(MyTest):
 
         return scan_container
 
-    def timeseries_pde_test(self):
+    def test_timeseries_pde(self):
         stMan = self.set_up_statemanager()
         stMan.scan_tree.compress_log_file = True
         t_unit = 3600
@@ -148,7 +148,7 @@ class StateManagerTest(MyTest):
         stMan.clear_log_files()
         stMan.run(model_names=["pde_model"])
 
-    def timeseries_ode_test(self):
+    def test_timeseries_ode(self):
         stMan = self.set_up_statemanager()
         stMan.scan_tree.compress_log_file = True
         t_unit = 3600
@@ -156,7 +156,7 @@ class StateManagerTest(MyTest):
         stMan.clear_log_files()
         stMan.run(model_names=["ode_model"])
 
-    def scan_pde_test(self):
+    def test_scan_pde(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
         stMan.scan_tree.compress_log_file = True
@@ -165,7 +165,7 @@ class StateManagerTest(MyTest):
         stMan.clear_log_files()
         stMan.run(model_names=["pde_model"])
 
-    def scan_ode_test(self):
+    def test_scan_ode(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
         stMan.scan_tree.compress_log_file = True
@@ -197,7 +197,7 @@ class PostProcessingTest(MyTest):
 
         return scan_container
 
-    def timeseries_ode_test(self):
+    def test_timeseries_ode(self):
         stMan = self.set_up_statemanager()
         stMan.scan_tree.compress_log_file = True
         t_unit = 3600
@@ -215,7 +215,7 @@ class PostProcessingTest(MyTest):
         plotter.make_legend()
         plotter.savefig(os.path.join(self.path, "images/") + "plot.png")
 
-    def scan_ode_test(self):
+    def test_scan_ode(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
         stMan.scan_tree.compress_log_file = True
