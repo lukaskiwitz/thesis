@@ -7,7 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
+    - name: install plantuml v1.2021.12
+      run: |
+        wget -O plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2021.12/plantuml-1.2021.12.jar
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
       shell: bash
@@ -33,15 +35,12 @@ jobs:
       if: steps.build-cache.outputs.cache-hit == 'true'
       shell: bash
       run: conda env update --file build.yml --name base
-
-
     - name: Install dependencies from fenics_explicit and export build.yml
       if: steps.build-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
           conda env update --file ./fenics_explicit.yml --name base
           conda env export --name base > build.yml
-
     - name: Set env variables
       run: | 
         conda env config vars set LD_LIBRARY_PATH=~/anaconda3/envs/base/lib
