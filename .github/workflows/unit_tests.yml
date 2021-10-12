@@ -1,7 +1,5 @@
 name: Unit tests
-
 on: workflow_dispatch
-
 jobs:  
   run-test:
     runs-on: ubuntu-latest
@@ -48,4 +46,4 @@ jobs:
     - name: Run test-scenario tests
       run: python -m unittest thesis/unit_tests/scenario_1_tests/*
     - name: Run box grid tests
-       run: python -m unittest thesis/unit_tests/box_grid_tests/*
+      run: python -m unittest thesis/unit_tests/box_grid_tests/*
