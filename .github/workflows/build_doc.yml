@@ -8,10 +8,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install plantuml
+      id: plantuml
       uses: pozetroninc/github-action-get-latest-release@master
       with:
         repository: plantuml/plantuml
         excludes: prerelease, draft
+    - name: rename plantuml.jar
+      run: cp ${{ steps.plantuml.outputs.release }} ~/plantuml.jar
     - name: Add conda to system path
       run: echo $CONDA/bin >> $GITHUB_PATH
       shell: bash
