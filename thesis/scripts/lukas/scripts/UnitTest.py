@@ -10,26 +10,26 @@ import os
 import time
 from copy import deepcopy
 
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.constants import N_A
-
 import BC as bc
 import Entity
 import FieldProblem as fp
 import MySolver
 import SimContainer as SC
+import matplotlib.pyplot as plt
+import numpy as np
 from bcFunctions import cellBC_il2, outerBC_il2_unitTest
 from my_debug import message
+from scipy.constants import N_A
 
-def u_exact_1(x,p):
+
+def u_exact_1(x, p):
     R = p["R_il2"]
     q = p["q_il2"]
     k_on = p["k_on"]
     rho = p["rho"]
-    D= p["D"]
-    
-    return q*rho/(np.linalg.norm(x)*(k_on*R+D*4*np.pi*rho))
+    D = p["D"]
+
+    return q * rho / (np.linalg.norm(x) * (k_on * R + D * 4 * np.pi * rho))
 
 def du_dr_exact_1_(x,p):
     R = p["R_il2"]
@@ -196,9 +196,9 @@ def test3(p_global):
         end = time.time()
         message("time: "+str(end-start)+"s for step number "+str(n))
         sc.saveFields(n)
-    
-    u_1 = sc.fields[0].getField()
-    x_1= np.linspace(p_global["rho"],p_global["radius"],100)
+
+    u_1 = sc.global_problems[0].getField()
+    x_1 = np.linspace(p_global["rho"], p_global["radius"], 100)
 #    x_1= np.linspace(p_global["rho"],0.2,100)
     y_1 = [10**9*u_1([0,0,i]) for i in x_1]
     y_1_e = [10**9*u_exact_1(i,p_cell) for i in x_1]

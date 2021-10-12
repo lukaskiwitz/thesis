@@ -1,0 +1,339 @@
+@startuml
+    class SimContainer{
+
+        add_problem()
+        add_entity_type()
+        add_internal_solver()
+        add_entity()
+        initialize()
+        run()
+        step()
+        apply_type_changes()
+        pre_replicat()
+        pre_step()
+        post_replicat()
+        post_step()
+
+        ParameterSet p
+        List<Entity> entity_list
+        List<GlobalProblems> global_problems
+        List<EntityType> entity_templates
+        List<InternalSolver> internal_solvers
+        String top_path
+        String path
+        float t
+        ScanSampe default_sample
+
+    }
+
+    class StateManager{
+        + run()
+        + post_scan()
+        + pre_scan()
+        + update_sim_container()
+        + get_cell_ts_data_frame()
+
+        + String path
+        + ElementTree element_tree
+        + ScanContainer scan_container
+        + SimContainer sim_container
+        + List<float> T
+    }
+
+    class ScanContainer{
+
+        add_sample()
+        add_single_parameter_scan()
+        serialize_to_xml()
+        deserialize_from_xml()
+
+        List<ScanSample> scan_samples
+    }
+
+    class ScanSample {
+
+        serialize_to_xml()
+        deserialize_from_xml()
+
+        ParameterSet p
+        Boolean remesh_scan_sample
+        Boolean remesh_timestep
+        List<EntityType> entity_types
+        Dict outer_domain_parameter_dict
+    }
+
+    class ScanDefinition {
+
+        ScannableParameter scannable
+        String collection_name
+        String field_quantity
+        List<float> scan_space
+        ScanType scan_type
+        EntityType entity_type
+        Dict boundary_pieces_name
+    }
+    enum ScanType {
+        GLOBAL
+        ENTITY
+        BOUNDARY
+    }
+
+    abstract class GlobalProblem {
+         {abstract} apply_sample()
+         {abstract} compute_coupling_properties()
+         {abstract} finish_run()
+         {abstract} get_result_element()
+         {abstract} initialize_run()
+         {abstract} save_result_to_file()
+         {abstract} update_step()
+         step()
+
+         String path
+         String name
+         String field_name
+         String field_quantity
+         List<Entity> registered_entites
+         MySolver solver
+         ParameterSet p
+
+    }
+    abstract class Entity{
+        {abstract} step()
+        {abstract} BC get_interaction()
+        {abstract} update_bcs()
+        {abstract} set_internal_solver()
+
+        String name
+        InternalSolver internal_solver
+        String type_name
+        List<BC> interactions
+        ParameterSet p
+    }
+
+    abstract class MySolver {
+        {abstract} solve()
+        {abstract} compile()
+        get_solution()
+
+        ParameterSet p
+        String field_quantity
+    }
+    abstract class InternalSolver {
+        {static} String name
+
+        {abstract} on_type_change()
+        {abstract} ParameterSet step()
+    }
+
+    class Scenario{
+        get_sim_container()
+
+        List<MyGlobalModel> global_models
+        List<type> internal_solvers
+        List<EntityType> entity_type
+        List<MyEntityLocator> entity_locators
+        List<MyParameterPool> parameter_pool
+        List<ParameterSet> global_parameters
+    }
+
+
+    class MyParameterPool{
+        join()
+        add_template()
+        get_template()
+        get_as_collection()
+
+        List<ParameterTemplate> parameter_templates
+    }
+
+    class ParameterSet{
+        update()
+        add_collection()
+        get_collection()
+        get_physical_parameter()
+        get_misc_parameter()
+        serialize_to_xml()
+        deserialize_from_xml()
+        get_as_dictionary()
+
+        List<ParameterCollection> collections
+        String name
+    }
+
+    class ParameterCollection{
+
+        update()
+        set_parameter()
+        get_parameter()
+        serialize_to_xml()
+        deserialize_from_xml()
+
+        List<Parameter> parameters
+        String name
+        String field_quantity
+        Boolean is_global
+
+    }
+
+    abstract class Parameter{
+
+        set_in_sim_unit()
+        get_in_sim_unit()
+        set_in_post_unit()
+        get_in_post_unit()
+        {abstract} serialize_to_xml()
+        {abstract} deserialize_from_xml()
+
+        String name
+        <T> value
+        Boolean is_global
+    }
+
+    class PhysicalParameter{
+
+        Union<Callable, float> to_sim
+        Union<Callable, float> to_post
+        Boolean factor_conversion
+
+    }
+    class MiscParameter{
+
+    }
+
+    class ScannableParameter {
+
+        __call__()
+
+        Parameter p
+        Callable f
+        Boolean in_sim
+
+    }
+
+
+    abstract class MyGlobalModel{
+
+        {abstract} add_field_template()
+        {abstract} get_problem_list()
+        build_parameter_set()
+
+        String name
+        List<MyFieldTemplate> field_templates
+
+    }
+    abstract class MyEntityLocator{
+        {abstract} get_entity_list()
+    }
+    abstract class MyInteractionTemplate{
+
+        {abstract} get_interaction()
+
+        String field_quantity
+    }
+    abstract class MyFieldTemplate{
+        {abstract} get_problem()
+        {abstract} build_parameter_collection()
+
+        String name
+        String field_quantity
+        ParameterSet p
+    }
+    abstract class ParameterTemplate{
+
+        {abstract} __init__()
+        {abstract} __call__()
+
+        String name
+    }
+    abstract class EntityType{
+
+        get_updated()
+        ParameterSet p
+        String name
+        List<String> internal_solver_names
+        List<String> global_solver_names
+        List<BC> interactions
+    }
+
+    class PostProcessor {
+
+        run_post_process()
+        write_post_process_xml()
+        save_dataframes()
+        get_global_dataframe()
+        get_timing_dataframe()
+        get_cell_dataframe()
+
+        Boolean debug_compute_in_serial
+        String out_tree_path
+        String path
+        DataFrame cell_dataframe
+        DataFrame global_dataframe
+        DataFrame timing_dataframe
+        Int unit_length_exponent
+        List<PostProcessComputation> computations
+        Dict rc
+        Dict image_settings
+
+    }
+
+    class ComputeSettings{
+
+        {static} create_from_element()
+        set_image_settings()
+
+        String file_path
+        String field_quantity
+        Dict dynamic
+        Int scan_index
+        Int model_index
+        String model_name
+        Int replicat_index
+        Int time_index
+        String tmp_path
+        String unit_name
+        Dict marker_lookup
+        Int round_legend_labels
+        Dict paraview_settings
+
+
+    }
+
+
+    abstract class PostProcessComputation {
+
+        {abstract} __init__()
+        {abstract} __call__()
+
+        {static} Boolean add_xml_result
+        {static} List<GlobalResult> compatible_result_type
+
+    }
+
+    class FenicsScalarFieldComputation{
+
+        __init__()
+
+        String path
+        String solution_path
+        Int scan_index
+        Int time_index
+        DataFrame cell_df
+        ParameterSet p
+        Function V_vec
+        Function grad
+        Function u
+        Float c_conv
+        Float grad_conv
+    }
+    
+    class ScalarComputation{
+        __init__()
+        
+        Array u
+        Float c_conv
+        Float grad_conv
+    }
+
+
+@enduml

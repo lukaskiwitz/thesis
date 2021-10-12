@@ -1,0 +1,18 @@
+@startuml
+    !include ../puml_src/classes.puml
+    remove @unlinked
+
+    StateManager *- SimContainer
+    StateManager *-- ScanContainer
+    ScanContainer *- ScanSample
+    SimContainer *- GlobalProblem
+    GlobalProblem *-- MySolver
+    Entity --* SimContainer
+    InternalSolver -* Entity
+    InternalSolver -* SimContainer
+
+@enduml
+
+
+
+

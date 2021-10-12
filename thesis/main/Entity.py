@@ -6,6 +6,7 @@ Created on Fri Jun  7 12:22:13 2019
 @author: Lukas Kiwitz
 """
 
+from abc import *
 from typing import List, Dict
 
 import fenics as fcs
@@ -16,7 +17,7 @@ import thesis.main.MySubDomain as SD
 from thesis.main.BC import BC, OuterBC
 from thesis.main.EntityType import CellType
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.MySubDomain import CellSubDomain, PeriodicCubeSubDomain
+from thesis.main.MySubDomain import CellSubDomain
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.TaskRecord import TaskRecord
 
@@ -48,11 +49,13 @@ class Entity:
         self.name: str = "default"
         self.fieldQuantities: List[str] = []
         self.internal_solver: InternalSolver = None
-        self.bc_list = []
+        # self.bc_list = []
         self.id: int = 0
         self.change_type = ""
         self.type_name = None
         self.task_record = TaskRecord("Entity")
+        self.interactions = []
+        self.p = ParameterSet("Entity_dummy", [])
 
     def move(self, dt):
         pass
@@ -70,7 +73,7 @@ class Entity:
 
         self.internal_solver = solver
 
-    def get_BC(self, field_quantity: str) -> BC:
+    def get_interaction(self, field_quantity: str) -> BC:
 
         """
         returns boundary condition for field_quantity
@@ -80,7 +83,7 @@ class Entity:
 
         """
 
-        for i in self.bc_list:
+        for i in self.interactions:
             if i.field_quantity == field_quantity:
                 return i
 
@@ -93,16 +96,15 @@ class Entity:
 
         """
         if p or hasattr(self, "p"):
-            self.fieldQuantities = []
-            for i in self.bc_list:
+
+            for i in self.interactions:
                 fq = i.field_quantity
-                self.fieldQuantities.append(fq)
 
                 if p:
                     bc.p = p
                 else:
                     if hasattr(i, "p"):
-                        i.p.update(self.p, override=True)
+                        i.p.update(self.p, overwrite=True)
                     else:
                         i.p = self.p
 
@@ -168,13 +170,14 @@ class Cell(Entity):
         """
         super().__init__()
         self.p = ParameterSet("Cell_dummy", [])
+        self.interactions = []
         self.center: List[float] = center
         self.offset = [0, 0, 0]
 
         self.velocity = np.zeros(np.shape(center))
 
         self.radius = radius
-        self.bc_list: List[BC] = bc_list
+        # self.bc_list: List[BC] = bc_list
 
     def move(self, dt):
 
@@ -242,7 +245,7 @@ class Cell(Entity):
             "on_boundary && abs((sqrt(pow(x[0]-c0,2)+pow(x[1]-c1,2)+pow(x[2]-c2,2))-r) <= 10e-2)",
             c0=self.center[0], c1=self.center[1], c2=self.center[2], r=self.radius)
 
-    def set_cell_type(self, cell_type: CellType, internal_solver: InternalSolver) -> None:
+    def set_cell_type(self, cell_type: CellType, internal_solver: InternalSolver, replicat_index: int) -> None:
         """
 
         sets this cells type from template object
@@ -252,16 +255,25 @@ class Cell(Entity):
 
         """
         self.type_name = cell_type.name
-        if cell_type.internal_solver:
-            self.set_internal_solver(internal_solver())
-        else:
+        self.interactions = []
+        if internal_solver is None:
             self.set_internal_solver(None)
+        else:
+            if issubclass(internal_solver, InternalSolver):
+                self.set_internal_solver(internal_solver())
+            else:
+                self.set_internal_solver(None)
 
+            self.internal_solver.on_type_change(self.p, replicat_index, entity=self)
         # miscs = ParameterCollection("misc", [
         #     MiscParameter("type_name", self.type_name),
         #     # MiscParameter("center", self.center)
         # ])
-        self.p.update(cell_type.p, override=True)
+        self.p.update(cell_type.p, overwrite=True)
+        for interaction_template in cell_type.interactions:
+            interaction = interaction_template.get_interaction()
+            self.interactions.append(interaction)
+
         # self.p.update(ParameterSet("dummy", [miscs]),override=True)
 
     def change_entity_type(self, type_name: str):
@@ -279,10 +291,18 @@ class DomainEntity(Entity):
     """
 
     def __init__(self, **kwargs):
-        pass
+        super().__init__(**kwargs)
 
     def getState(self, parameter_name="q", field_quantity="il2", in_post=True) -> float:
         return 0
+
+    @abstractmethod
+    def apply_sample(self, outer_domain_dict) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_subdomains(self, **kwargs) -> List:
+        raise NotImplementedError
 
 
 class DomainSphere(DomainEntity):
@@ -345,7 +365,7 @@ class DomainSphere(DomainEntity):
                 for i in v:
                     if p:
                         if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, override=False)
+                            i.bc.p.update(p, overwrite=False)
                         else:
                             i.bc.p = p
 
@@ -359,7 +379,7 @@ class DomainSphere(DomainEntity):
                     p = outer_domain_dict[name]
 
                     if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, override=True)
+                        i.bc.p.update(p, overwrite=True)
                     else:
                         i.bc.p = p
 
@@ -379,7 +399,7 @@ class CompiledSphere(DomainSphere, Entity):
 
         box = "abs((sqrt(pow(x[0]-{c0},2)+pow(x[1]-{c1},2)+pow(x[2]-{c2},2))-{r}))<= 10e-2".format(
             c0=c[0], c1=c[1], c2=c[2],
-           r=self.parent.radius)
+            r=self.parent.radius)
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
@@ -397,39 +417,29 @@ class CompiledSphere(DomainSphere, Entity):
 
 class DomainCube(DomainEntity):
 
-    def __init__(self, p1, p2, bc_list, periodic = False, **kwargs):
+    def __init__(self, p1, p2, interactions, **kwargs):
         self.p1 = p1
         self.p2 = p2
-        self.periodic: bool = periodic
 
+        self.interactions = interactions
 
-        self.bc_list = bc_list
         self.subdomainDict = self.__compile_subdomains()
         super().__init__(**kwargs)
 
     def __compile_subdomains(self):
         subdomain_dict = {}
 
-        if self.periodic:
-            for i, o in enumerate(self.bc_list):
-                s = PeriodicCube(o,self)
-                s.field_quantity = o.field_quantity
-                subdomain_dict["true"] = [s]
-            return subdomain_dict
+        for i, o in enumerate(self.interactions):
+            if isinstance(o, bc.OuterBC):
 
+                e = CompiledCube(o.expr, o, self)
 
-        else:
-            for i, o in enumerate(self.bc_list):
-                if isinstance(o, bc.OuterBC):
-
-                    e = CompiledCube(o.expr, o, self)
-
-                    e.field_quantity = o.field_quantity
-                    if o.expr not in subdomain_dict.keys():
-                        subdomain_dict[o.expr] = [e]
-                    else:
-                        subdomain_dict[o.expr].append(e)
-            return subdomain_dict
+                e.field_quantity = o.field_quantity
+                if o.expr not in subdomain_dict.keys():
+                    subdomain_dict[o.expr] = [e]
+                else:
+                    subdomain_dict[o.expr].append(e)
+        return subdomain_dict
 
     def get_subdomains(self, **kwargs):
         subdomains = []
@@ -451,53 +461,30 @@ class DomainCube(DomainEntity):
             for k, v in self.subdomainDict.items():
                 for i in v:
                     if p:
-                        if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, override=False)
-                        else:
-                            i.bc.p = p
+                        for ii in i.interactions:
+                            if hasattr(ii, "p"):
+                                ii.p.update(p, overwrite=False)
+                            else:
+                                ii.p = p
 
     def apply_sample(self, outer_domain_dict) -> None:
 
         for k, v in self.subdomainDict.items():
             for i in v:
-                name = i.bc.name
-                if name in outer_domain_dict.keys():
-
-                    p = outer_domain_dict[name]
-
-                    if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, override=True)
-                    else:
-                        i.bc.p = p
-
-
-class PeriodicCube(DomainCube, Entity):
-
-    def __init__(self, bc, parent):
-        self.bc = bc
-        self.parent = parent
-
-    def get_subdomain(self):
-
-        sd = PeriodicCubeSubDomain(self.parent.p1,self.parent.p2)
-        return sd
-
-
-    def get_BC(self, field_quantity: str) -> BC:
-        return self.bc
-
-    def get_surface_area(self):
-        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
-        if p:
-            return p.get_in_sim_unit()
-        else:
-            return None
+                for ii in i.interactions:
+                    name = ii.name
+                    if name in outer_domain_dict.keys():
+                        p = outer_domain_dict[name]
+                        if hasattr(ii, "p"):
+                            ii.p.update(p, overwrite=True)
+                        else:
+                            ii.p = p
 
 
 class CompiledCube(DomainCube, Entity):
 
     def __init__(self, expr, bc, parent):
-        self.bc = bc
+        self.interactions = [bc]
         self.parent = parent
         self.expr = expr
 
@@ -514,14 +501,14 @@ class CompiledCube(DomainCube, Entity):
         return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
-        # self.bc.p = self.p
-        return self.bc
+
+        for i in self.interactions:
+            if i.field_quantity == field_quantity:
+                return i
 
     def get_surface_area(self):
-        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        p = self.interactions[0].p.get_physical_parameter("norm_area", "geometry")
         if p:
             return p.get_in_sim_unit()
         else:
             return None
-
-

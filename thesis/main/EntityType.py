@@ -1,18 +1,23 @@
 import json
+from abc import ABC
 from copy import deepcopy
 from typing import List
 
 import lxml.etree as ET
 
+from thesis.main.BC import BC
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection
 
 
-class EntityType:
+class EntityType(ABC):
 
     def __init__(self, p: ParameterSet, name: str):
 
         self.p = deepcopy(p)
         self.name = name
+        self.internal_solver_names: List[str] = []
+        self.global_solver_names: List[str] = []
+        self.interactions: List[BC] = []
 
     def get_updated(self, update):
 
@@ -28,7 +33,7 @@ class EntityType:
 
             update_set = update
 
-        entity_type.p.update(update_set, override=True)
+        entity_type.p.update(update_set, overwrite=True)
         return entity_type
 
 
@@ -38,6 +43,7 @@ class CellType(EntityType):
         self.p = deepcopy(p)
         self.name = name
         self.internal_solver = solver_name
+        self.interactions = []
 
     def serialize_to_xml(self):
         root = ET.Element("CellType")
@@ -52,4 +58,3 @@ class CellType(EntityType):
         self.internal_solver = json.loads(element.get("internal_solver_name"))
 
         self.p = ParameterSet.deserialize_from_xml(element.find("ParameterSet"))
-

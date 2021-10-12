@@ -2,12 +2,11 @@ import random
 import sys
 
 import numpy as np
+
 from parameters import cytokines, cell_types_dict, geometry, numeric
 from parameters import path, ext_cache
-
-import thesis.main.StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter, \
+from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter, PhysicalParameter, \
     PhysicalParameterTemplate
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
@@ -76,17 +75,17 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 
 from thesis.scenarios.box_grid import t_R, t_q
 
-R = ScannablePhysicalParameter(t_R(4000), lambda x, v: x * v)
-q = ScannablePhysicalParameter(t_q(1), lambda x, v: x * v)
-# D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
+R = ScannableParameter(t_R(4000), lambda x, v: x * v)
+q = ScannableParameter(t_q(1), lambda x, v: x * v)
+# D = ScannableParameter(t_D(10), lambda x, v: x * v)
 
 p_diff = PhysicalParameterTemplate(PhysicalParameter("p", 0.1, to_sim=1, is_global=True))
-p = ScannablePhysicalParameter(p_diff(0.1), lambda x, v: v)
+p = ScannableParameter(p_diff(0.1), lambda x, v: v)
 
 Tn = sc.get_entity_type_by_name("Tn")
 
 # for v in np.logspace(-1,1,4):
-for v in [0.9]:#np.linspace(0.1, 0.9, 2):
+for v in [0.9]:  # np.linspace(0.1, 0.9, 2):
     sim_parameters = [
         ParameterCollection("probs", [p(v)])
     ]

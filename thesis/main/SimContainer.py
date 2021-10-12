@@ -7,91 +7,89 @@ Created on Fri Jun  7 12:21:51 2019
 """
 
 import os
-import time
 from typing import *
 
 #
-import fenics as fcs
 import lxml.etree as et
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from thesis.main.Entity import Entity
-from thesis.main.EntityType import CellType, EntityType
-from thesis.main.FieldProblem import FieldProblem
+from thesis.main.EntityType import EntityType
+from thesis.main.FieldProblem import GlobalProblem
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ParameterSet
-from thesis.main.SimComponent import SimComponent
-from thesis.main.my_debug import message, total_time, debug
-from thesis.main.TaskRecord import TaskRecord, ClassRecord
+from thesis.main.ParameterSet import ParameterSet, MiscParameter
+from thesis.main.ScanContainer import ScanSample
+from thesis.main.TaskRecord import ClassRecord
+from thesis.main.my_debug import message, debug
+
+Element = et.Element
 
 
-class SimContainer(SimComponent):
+class InternalSolverNotRegisteredError(Exception): pass
+
+
+class EntityTypeNotRegisteredError(Exception): pass
+
+
+class SimContainer:
     """
 
-    Sim container
+    Container to hold all simulation object. Can be used as standalone or aggregate with
+    StateManager.
 
-    :ivar p:
-    :ivar entity_list:
-    :ivar fields:
-    :ivar path:
-    :ivar scan_path:
+    :ivar p: parmeters set, that get handed down to global problems.
+    :ivar entity_list: List of all entities in the simulation
+    :ivar global_problems: list of global problems in this simulation
+
+    :ivar top_path: path to the top level directory to serve as reference for ext_cache
+    :ivar path: (sub) path to simulation results
+    :ivar relative_path:
     :ivar worker_sub_path:
-    :ivar subdomain_files:
-    :ivar domain_files:
-    :ivar field_files:
-    :ivar boundary_marker:
-    :ivar entity_templates:
-    :ivar marker_lookup:
-    :ivar internal_solvers:
-    :ivar t:
-    :ivar _time_log_df:
-    :ivar record:
-    :ivar orig_stdout:
-    :ivar markers: properties to mark
+
+    :ivar entity_templates: list of available entity templates
+    :ivar internal_solvers: list of available internal solvers
+    :ivar marker_lookup: lookup dict to manually set the mesh function value for exported properties
+    :ivar markers: list of entity properties, which should be exported as mesh functions
+    :ivar t: current time
+    :ivar record: Class record object to store execution timing data
+
+    :ivar default_sample: scan sample to reset sim object before each parameter scan
 
     :vartype p: Parameterset
     :vartype entity_list: List[Entity]
-    :vartype fields: List[FieldProblem]
-    :vartype path: str
+    :vartype global_problems: List[GlobalProblem]
+    :vartype relative_path: str
     :vartype scan_path: str
     :vartype worker_sub_path: str
-    :vartype subdomain_files: List
-    :vartype domain_files: List
-    :vartype field_files: List
-    :vartype boundary_marker: List[fcs.MeshFunction]
     :vartype entity_templates: List[EntityType]
-    :vartype marker_lookup: Mapping[str,int]
     :vartype internal_solvers: List[InternalSolver]
-    :vartype t: int
-    :vartype _time_log_df: pd.DataFrame
-    :vartype record: ClassRecord
-    :vartype orig_stdout:
+    :vartype marker_lookup: Mapping[str,int]
     :vartype markers: List[str]
+    :vartype t: float
+    :vartype record: ClassRecord
     """
 
     def __init__(self, parameter_set: ParameterSet) -> None:
+
         self.p: ParameterSet = parameter_set
         self.entity_list: List[Entity] = []
-        self.fields: List[FieldProblem] = []
-        self.path: str = "./"
-        self.scan_path: str = self.path
+        self.global_problems: List[GlobalProblem] = []
 
+        self.top_path: str = "./"
+        self.path: str = "./"
+        self.relative_path: str = "./"
         self.worker_sub_path: str = ""
-        self.subdomain_files: List = []
-        self.domain_files: List = []
-        self.field_files: List = []
-        self.boundary_markers: List = []
+
         self.entity_templates: List[EntityType] = []
-        self.marker_lookup: Mapping[str, int] = {}
         self.internal_solvers: List[InternalSolver] = []
+        self.marker_lookup: Dict[Union[str, int, float], int] = {}
         self.t: float = 0
         self._time_log_df: pd.DataFrame = pd.DataFrame()
         self.record: ClassRecord = ClassRecord("SimContainer")
-        self.orig_stdout = None
-        self.markers: List[str] = ["type_name", "IL-2_surf_c"]
 
-        # self.unit_length_exponent: int = 1
+        self.markers: List[str] = ["type_name", "IL-2_surf_c"]
+        self.default_sample: ScanSample = None
 
     def init_logs(self) -> None:
 
@@ -106,49 +104,51 @@ class SimContainer(SimComponent):
                     message("removing old logs {log}".format(log=i))
                     os.remove(self.get_current_path() + i)
 
-    def init_xdmf_files(self) -> None:
+    def initialize(self) -> None:
 
         """
 
-        Writes directory structure for XDMF and sets up file lists (subdomain_files, domain_files, field_files)
+        Setup task before simulation.
+        Registers entities with global problems.
         """
 
-        os.makedirs(self.path, exist_ok=True)
-        for i in self.fields:
-            self.subdomain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/subdomain_" + i.field_name + ".xdmf"))
-            self.domain_files.append(
-                fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "cache/domain_" + i.field_name + ".xdmf"))
-            self.field_files.append("field_" + i.field_name)
+        self.register_entites()
 
-    def initialize(self, **kwargs) -> None:
+    def set_ext_cache(self, ext_cache: str) -> None:
+        """
+        Sets the external cache directory for all global_problems.
+        TODO some abstraction to differentiate between spatial and mean field classes
+
+        :param ext_cache: external cache directory path
+        """
+
+        for field in self.global_problems:
+            field.ext_cache = ext_cache
+
+    def register_entites(self) -> None:
 
         """
 
-        loads subdomain; generates mesh; adds entities to Fields
+        Registers entities with global problems based on matching field_quantity values
+        between GlobalProblem and Entity interactions.
+
         """
-
-        self.init_xdmf_files()
-
-        self.ext_boundary_markers = kwargs["load_subdomain"] if "load_subdomain" in kwargs else self.path + "cache/"
-
-        for field in self.fields:
-            field.update_parameter_set(self.p)
-
+        for field in self.global_problems:
             fq = field.field_quantity
             for entity in self.entity_list:
                 entity.update_bcs()
-                if fq in entity.fieldQuantities:
-                    field.add_entity(entity)
-            field.generate_mesh(cache=True, path=self.path, path_prefix="cache", **kwargs)
-            field.update_solver(self.get_tmp_path())
+                if fq in [i.field_quantity for i in entity.interactions]:
+                    field._add_entity(entity)
+
+            if hasattr(field, "domain_template"):
+                field.set_outer_domain(field.domain_template.get_domain(self.p, field.registered_entities))
 
     def get_entity_by_name(self, name: str) -> Entity:
 
         """
 
-        returns first entity with name
-        :param name:
+        Returns first entity with that matches given name
+
 
         """
 
@@ -156,52 +156,71 @@ class SimContainer(SimComponent):
             if i.name == name:
                 return i
 
-    def get_entity_by_type(self, type: CellType) -> Entity:
+    def get_entities_by_type(self, entity_type: EntityType) -> Entity:
 
         """
-        TODO
         returns all entities of type
-        maybe add EntityType <- CellType, ... classes
 
-        :param type:
+        :param entity_type:
         """
 
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def run(self, T: List[float]) -> None:
+    def run(self, T: List[float], number_of_replicats: int = 1) -> None:
+        """
+        Runs the simulation of given time range.
+        :param T: time range; dt is calculated from the differences of successive elements.
+        """
 
         run_task = self.record.start_child("run")
 
-        self.t = T[0]
-        for time_index, t in enumerate(T[1:]):
-            run_task.info.update({"time_index": time_index})
-            run_task.update_child_info()
+        for replicat_index in range(number_of_replicats):
 
-            self._pre_step(self, time_index + 1, T[time_index + 1], T)  # internal use
+            # self.path = os.path.join(original_path, "replicat_{}".format(replicat_index))
+            for field in self.global_problems:
+                field.initialize_run(self.p, self.top_path, self.path, self.get_tmp_path())
 
-            self.pre_step(self, time_index + 1, T[time_index + 1], T)  # user defined
+            self._pre_replicat(self, 0 + 1, replicat_index, T[0 + 1], T)  # internal use
+            self.pre_replicat(self, 0 + 1, replicat_index, T[0 + 1], T)  # user defined
 
-            dt = t - T[time_index]
+            self.t = T[0]
+            for time_index, t in enumerate(T[1:]):
+                run_task.info.update({"time_index": time_index})
+                run_task.update_child_info()
 
-            self.move_cells(time_index, dt)
+                self._pre_step(self, time_index + 1, replicat_index, T[time_index + 1], T)  # internal use
 
-            run_task.start_child("step")
-            self.step(dt, time_index)
-            run_task.stop_child("step")
+                self.pre_step(self, time_index + 1, replicat_index, T[time_index + 1], T)  # user defined
 
-            time_index += 1
-            assert t == self.t
+                dt = t - T[time_index]
 
-            self._post_step(self, time_index, t, T)  # internal use
+                # self.move_cells(time_index, dt)
 
-            self.post_step(self, time_index, t, T)  # user defined
+                run_task.start_child("step")
+                self.step(dt, time_index, replicat_index)
+                run_task.stop_child("step")
+
+                # time_index += 1
+                assert t == self.t
+
+                self._post_step(self, time_index, replicat_index, t, T)  # internal use
+
+                self.post_step(self, time_index, replicat_index, t, T)  # user defined
+
+            self._post_replicat(self, T[-1], replicat_index, t, T)  # internal use
+            self.post_replicat(self, T[-1], replicat_index, t, T)  # user defined
 
         run_task.stop()
 
     def move_cells(self, time_index: int, dt: float) -> None:
 
+        return None
+        """
+        TODO: the code below needs to be reworked, because some of the field have been removed
+
+        """
         from time import sleep
-        for field in self.fields:
+        for field in self.global_problems:
             tmp_path = self.get_tmp_path()
 
             if field.moving_mesh == True and field.remesh == True:
@@ -233,11 +252,14 @@ class SimContainer(SimComponent):
                     field.load_mesh(field.mesh_path + field.file_name + ".xdmf")
                     field.ale(dt, tmp_path)
                     sleep(2)
-                    field.solver.compileSolver(tmp_path)
+                    field.solver.compile(tmp_path)
                 # field.save_mesh(time_index, self.path)
 
     def get_tmp_path(self) -> str:
-
+        """
+        gets current temporary directory
+        :return:tmp dir path
+        """
         tmp_path = os.path.join(
             os.path.join(self.path, self.worker_sub_path),
             "solver_tmp")
@@ -246,25 +268,58 @@ class SimContainer(SimComponent):
 
     def get_current_path(self) -> str:
 
-        if self.scan_path == "./":
-            return self.path
-        else:
-            return self.scan_path
+        """Returns current path"""
 
-    def _pre_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
+        return self.path
+
+    def _pre_replicat(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        pass
+
+    def _post_replicat(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float,
+                       T: List[float]) -> None:
+        pass
+
+    def pre_replicat(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        pass
+
+    def post_replicat(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        pass
+
+    def _pre_step(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        pass
+
+    def _post_step(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        pass
+
+    def pre_step(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+
+        """
+        This method can be overwritten to call custom code before each time step. Must have this signature.
+
+        :param sc: this SimContainer
+        :param time_index: current time index
+        :param t: current time
+        :param T: complete time range
+        """
         return None
 
-    def _post_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
+    def post_step(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
+        """
+        This method can be overwritten to call custom code after each time step. Must have this signature.
+
+        :param sc: this SimContainer
+        :param time_index: current time index
+        :param t: current time
+        :param T: complete time range
+        """
         return None
 
-    def pre_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
-        return None
+    def apply_type_changes(self, replicat_index) -> None:
 
-    def post_step(self, sc: 'SimContainer', time_index: int, t: float, T: List[float]) -> None:
-        return None
+        """
+        Applies pending entity type changes. Should be executed between time steps.
 
-    def apply_type_changes(self) -> None:
-
+        """
         for i, entity in enumerate(self.entity_list):
             entity.get_surface_area()
             if not entity.change_type == "":
@@ -273,41 +328,40 @@ class SimContainer(SimComponent):
                 assert entity_type is not None
 
                 internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
-                entity.set_cell_type(entity_type, internal_solver)
+                entity.set_cell_type(entity_type, internal_solver, replicat_index)
                 entity.change_type = ""
-            elif not entity.type_name == "":  # todo very bad solution
-                pass
-                # entity_type = self.get_entity_type_by_name(entity.type_name)
-                # assert entity_type is not None
-                #
-                # internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
-                # entity.set_cell_type(entity_type, internal_solver)
-                # entity.change_type = ""
 
-    def step(self, dt: float, time_index: int) -> None:
+    def step(self, dt: float, time_index: int, replicat_index: int) -> None:
 
         """
         advanches simulation by dt
 
-        :param dt:
+        :param dt: delta t for this timestep
+        :param time_index: time index for this timestep
+        :param replicat_index: index for this replicat
 
         """
 
-        self.apply_type_changes()
+        self.apply_type_changes(replicat_index)
 
-        for field in self.fields:
+        for field in self.global_problems:
             tmp_path = self.get_tmp_path()
-            # field.unit_length_exponent = self.unit_length_exponent
-            field.update_solver(tmp_path, p=self.p)
-            field.step(dt, time_index, tmp_path)
+            # field.path = self.relative_path
+            field.update_step(self.p, self.path, time_index, tmp_path)
+            field.step(self.t, dt, time_index, tmp_path)
 
         for i, entity in enumerate(self.entity_list):
             entity.step(self.t, dt)
 
         self.t = self.t + dt
 
-    def get_number_of_entites(self) -> Dict[int,str]:
+    def get_number_of_entities(self) -> Dict[str, int]:
 
+        """
+        Return the number of entities per entity type
+
+        :return: dictionary with entity type names as keys
+        """
         result = {}
         for e in self.entity_list:
 
@@ -322,14 +376,14 @@ class SimContainer(SimComponent):
                 result[name] += 1
             else:
                 result[name] = 1
+
         return result
 
-    def add_entity(self, entity: Entity) -> None:
+    def add_entity(self, entity: Entity) -> Entity:
 
         """
-        adds entity to simulation
+        Adds entity to simulation
 
-        :param entity:
         """
 
         entity.p.update(self.p)
@@ -338,13 +392,15 @@ class SimContainer(SimComponent):
             entity.id = self.entity_list[-1].id + 1
         else:
             entity.id = 0
+
+        entity.p.update(MiscParameter("id", entity.id), overwrite=True)
         self.entity_list.append(entity)
+        return entity
 
-    def add_entity_type(self, template: EntityType) -> None:
+    def add_entity_type(self, template: EntityType) -> EntityType:
         """
-        adds entity template to simulation
+        Adds entity template to simulation
 
-        :param template: the entity type register with simcontainer
         """
         # if template not in self.entity_templates:
         #     self.entity_templates.append(template)
@@ -356,45 +412,55 @@ class SimContainer(SimComponent):
             self.entity_templates.append(template)
         else:
             i = self.entity_templates.index(self.get_entity_type_by_name(template.name))
+            # todo quick fix!
+            template.interactions = self.entity_templates[i].interactions
+
             self.entity_templates[i] = template
 
-    def add_internal_solver(self, internal_solver: InternalSolver) -> None:
+        return template
 
+    def add_internal_solver(self, internal_solver: InternalSolver) -> InternalSolver:
+
+        """
+        Registers and internal solver object
+
+        :return:
+        """
         if not self.get_internal_solver_by_name(internal_solver.name):
             self.internal_solvers.append(internal_solver)
         else:
             i = self.internal_solvers.index(self.get_internal_solver_by_name(internal_solver.name))
             self.internal_solvers[i] = internal_solver
 
-    def get_internal_solver_by_name(self, name: str) -> None:
+        return internal_solver
+
+    def get_internal_solver_by_name(self, name: str) -> Union[InternalSolver, None]:
+
+        """Returns first internal solver that matches name"""
 
         for s in self.internal_solvers:
             if s.name == name:
                 return s
-
-        debug("could not find internal solver {n}".format(n=name))
         return None
+        # raise InternalSolverNotRegisteredError("could not find internal solver {n}".format(n=name))
 
-    def get_entity_type_by_name(self, name: str) -> EntityType:
+    def get_entity_type_by_name(self, name: str) -> Union[EntityType, None]:
         for e in self.entity_templates:
             if e.name == name:
                 return e
-        message("could not find entity type {n}".format(n=name))
         return None
+        # raise EntityTypeNotRegisteredError("could not find entity type {n}".format(n=name))
 
-    def add_field(self, field: FieldProblem) -> None:
-
-        """
-
-        adds field to simulation
-
-        :param field:
+    def add_problem(self, field: GlobalProblem) -> GlobalProblem:
 
         """
 
-        field.update_parameter_set(self.p)
-        # field.unit_length_exponent = self.unit_length_exponent
-        self.fields.append(field)
+        Adds global problem to simulation
+
+        """
+
+        self.global_problems.append(field)
+        return field
 
     def save_subdomains(self) -> None:
 
@@ -406,82 +472,53 @@ class SimContainer(SimComponent):
 
         """
 
-        for o, i in enumerate(self.fields):
+        for o, i in enumerate(self.global_problems):
             message("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
             self.subdomain_files[o].write(i.get_sub_domains_vis())
 
     def save_domain(self) -> None:
 
         """
-        saves Mesh Function with outer domains colored according to field.get_outer_domain_vis
+        Saves Mesh Function with outer domains colored according to field.get_outer_domain_vis
 
+        """
+
+        for o, i in enumerate(self.global_problems):
+            self.domain_files[o].write(self.global_problems[0].get_outer_domain_vis("type_name"))
+
+    # def save_markers(self, time_index: int) -> Dict[str, str]:
+    #
+    #     raise NotImplementedError
+    #
+    #     """TODO dirty solution. this should be on the FieldProblem"""
+    #
+    #     path_dict = {}
+    #     top_dir = os.path.join(self.get_current_path(), "entity_markers")
+    #     for marker_key in self.markers:
+    #         marker_dir = os.path.join(top_dir, marker_key)
+    #         os.makedirs(marker_dir, exist_ok=True)
+    #
+    #         marker, new_lookup = self.global_problems[0].get_sub_domains_vis(marker_key, lookup=self.marker_lookup)
+    #         self.marker_lookup.update(new_lookup)
+    #         marker_path = os.path.join(marker_dir, "marker_{n}.xdmf".format(n=time_index))
+    #         with fcs.XDMFFile(fcs.MPI.comm_world, marker_path) as f:
+    #             f.write(marker)
+    #         path_dict[marker_key] = marker_path
+    #
+    #     return path_dict
+
+    def to_xml(self) -> Element:
+        raise NotImplementedError
+        pass
+
+    def from_xml(self, e: Element):
+        raise NotImplementedError
+        pass
+
+    def set_parameters(self, p: ParameterSet):
+
+        """
+        Sets parameter set for sim container
         :return:
         """
-        for o, i in enumerate(self.fields):
-            self.domain_files[o].write(self.fields[0].get_outer_domain_vis("type_name"))
-
-    def save_markers(self, time_index: int) -> Mapping[str,str]:
-
-        path_dict = {}
-        top_dir = os.path.join(self.get_current_path(), "entity_markers")
-        for marker_key in self.markers:
-            marker_dir = os.path.join(top_dir, marker_key)
-            os.makedirs(marker_dir, exist_ok=True)
-
-            marker, new_lookup = self.fields[0].get_sub_domains_vis(marker_key, lookup=self.marker_lookup)
-            self.marker_lookup.update(new_lookup)
-            marker_path = os.path.join(marker_dir, "marker_{n}.xdmf".format(n=time_index))
-            with fcs.XDMFFile(fcs.MPI.comm_world, marker_path) as f:
-                f.write(marker)
-            path_dict[marker_key] = marker_path
-
-        return path_dict
-
-    def save_fields(self, n: int) -> Mapping[str,Tuple[str,str,int]]:
-
-        """
-
-        saves results for each element in self.fields as xdmf file with index n
-
-        :param n:
-
-        """
-        os.makedirs(self.get_current_path() + "sol/distplot", exist_ok=True)
-        result: Dict = {}
-
-        for o, i in enumerate(self.fields):
-
-            # markers = i.get_sub_domains_vis(marker_lookup = self.marker_lookup)
-            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "markers_{n}.xdmf".format(n=n)) as f:
-            #     f.write(markers[0])
-            #
-            # with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + "il2_{n}.xdmf".format(n=n)) as f:
-            #     f.write(markers[1])
-
-            distplot = "sol/distplot/" + self.field_files[o] + "_" + str(n) + "_distPlot.h5"
-
-            sol = "sol/" + self.field_files[o] + "_" + str(n) + ".xdmf"
-            u = i.get_field()
-            if u is not None:
-                u.rename(i.field_quantity, i.field_quantity)
-
-                with fcs.HDF5File(fcs.MPI.comm_world, self.get_current_path() + distplot, "w") as f:
-                    f.write(i.get_field(), i.field_name)
-                with fcs.XDMFFile(fcs.MPI.comm_world, self.get_current_path() + sol) as f:
-                    f.write(i.get_field(), n)
-                result[i.field_name] = (distplot, sol, o)
-            else:
-                result[i.field_name] = (None, None, o)
-        return result
-
-    def to_xml(self) -> et.Element:
-        raise NotImplementedError
-        pass
-
-    def from_xml(self, e: et.Element):
-        raise NotImplementedError
-        pass
-
-    def set_parameters(self, set: ParameterSet):
-
-        self.p = set
+        self.p = p

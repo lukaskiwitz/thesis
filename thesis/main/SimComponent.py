@@ -12,11 +12,12 @@ class SimComponent:
     def from_xml(self, e: et.Element) -> None:
 
         pass
+
     def get_parameter(self):
 
         pass
 
-    def update_parameter_set(self,parameter_set: ParameterSet):
+    def update_parameter_set(self, parameter_set: ParameterSet):
 
         if self.p == None:
 
@@ -25,4 +26,3 @@ class SimComponent:
         else:
 
             self.p.update_down(parameter_set)
-

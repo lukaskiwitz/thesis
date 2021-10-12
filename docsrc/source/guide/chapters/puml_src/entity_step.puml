@@ -1,0 +1,11 @@
+@startuml
+partition Entity.step() {
+
+    if (self.internal_solver is not None)
+        :self.internal_solver.step();
+    else
+        stop
+    endif
+        stop
+}
+@enduml

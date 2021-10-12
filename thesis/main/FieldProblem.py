@@ -9,213 +9,309 @@ import multiprocessing
 import multiprocessing as mp
 import os
 import time
+from abc import ABC, abstractmethod
+from numbers import Number
+from typing import *
 
 import dolfin as dlf
 import fenics as fcs
+import lxml.etree as et
 import numpy as np
 
 import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
-from thesis.main.MySolver import MySolver
+from thesis.main.GlobalResult import ScalarFieldResult, ScalarResult
+from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion
+from thesis.main.ScanContainer import ScanSample
 from thesis.main.my_debug import message, total_time, warning
 
+Element = et.Element
 
-class FieldProblem:
+
+class BoundaryConcentrationError(Exception): pass
+
+
+class GlobalProblem(ABC):
     """
+    Abstract base class for all global problems.
+    New global models should be implemented by subclassing from this class and implementing all its abstract methods.
 
-    :var field_name: string to identify this field
+
+    :ivar path: file path to result directory for this problem
+    :ivar name: nonunique string identifier
+    :ivar field_name: string to identify this field
+    :ivar field_quantity: physical properties associated with this field
+    :ivar registered_entities: entities that interact with this field
+    :ivar solver: solver to be used for this field
+    :ivar p: parameter dict to be handed down
+
+    :vartype path: st
     :vartype field_name: str
-
-    :var res: desired mesh resolution (currently not used)
-    :vartype res: int
-
-    :var mesh_cache: path for mesh storage (optional)
-    :vartype mesh_cache: str
-
-    :var registered_entities: entities that interact with this field
-    :vartype registered_entities: List[Entity]
-
-    :var outer_domain: outside domain
-    :vartype outer_domain: DomainEntity
-
-    :var solver: solver to be used for this field
-    :vartype solver: MySolver
-
-    :var field_quantity: physical properties associated with this field
     :vartype field_quantity: str
-
-    :var ext_cache: path to folder containing pre generated mesh
-    :vartype ext_cache: str
-
-    :var p: parameter dict to be handed down
-    :vartype p: Dict
-
+    :vartype registered_entities: List[Entity]
+    :vartype solver: MySolver
+    :vartype p: ParameterSet
 
     """
 
     def __init__(self) -> None:
+        # self.path: Union[str, None] = None
+        self.name: str = ""
+        self.field_name: str = ""
+        self.field_quantity: str = ""
 
-        self.mesh_path = ""
-        self.path_prefix = ""
-        self.field_name = ""
-        self.mesh_cached = ""
-        self.registered_entities = []
-        self.outer_domain = None
-        self.solver = None
-        self.field_quantity = ""
-        self.ext_cache = ""
+        self.registered_entities: List[Mapping[str, Union[Entity, int]]] = []
+        self.solver: Union[MySolver, None] = None
         self.p: ParameterSet = ParameterSet("field_dummy", [])
-        # self.unit_length_exponent: int = 1
-        self.moving_mesh = False
-        self.ale = False
-        self.remesh = False
 
-        self.boundary_extraction_trials = 5
-        self.boundary_extraction_timeout = 600
+    @abstractmethod
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
+        """
+        Setup function. Gets called by SimContainer before each run.
 
-    def add_entity(self, entity: Entity) -> None:
+        :param p: parent parameter set handed down from SimContainer
+        :param top_path: top folder for relative path generation
+        :param absolute_path: sub directory path set by parent SimContainer for this problems results
+        :param tmp_path: sub directory to store temporary files
+
+        """
+
+    @abstractmethod
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
+        """
+        Update task, which is called by SimContainer before a step.
+
+        :param p: updated parent parameter set handed down from SimContainer
+        :param time_index: time_index to update for
+        :param path: sub directory path set by parent SimContainer for this problems results
+        :param tmp_path: sub directory to store temporary files
+
+        """
+
+    @abstractmethod
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
+        """
+        Creates the lxml element, which contains all solution information necessary for post processing.
+
+        :param replicat_index: this steps replicat index
+        :param time_index: time index for this step
+        :param scan_index: scan index for this step
+        :param absolute_path: absolute path to the result directory for this problem
+        :param top_path: top_path to to create relative paths for saving
+        :param markers: list of entity properties, which should be exported as mesh functions.
+        :param marker_lookup: lookup dict to manually set the mesh function value for exported properties
+        :return: lxml result element
+
+        """
+
+    @abstractmethod
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str, type]:
+        """
+        saves the results from this problem to file, in its corresponding sub directory.
+        Should use a GlobalResults loader/saver, to be compatible with PostProcessor
+
+        :param time_index: this steps time index
+        :param path: path to result sub directory
+        :return: Tupel containing
+        """
+
+    @abstractmethod
+    def finish_run(self) -> None: """
+    
+        Defines cleanup actions. Will be called by sim container after each run (time series).
+        
+        """
+
+    @abstractmethod
+    def apply_sample(self, sample: ScanSample) -> None:
+        """
+        Applies the settings from a scan sample object to this global problem
+
+        :param sample: Scan sample to be applied
+        """
+
+    @abstractmethod
+    def compute_coupling_properties(self, tmp_path: str) -> None: """
+
+            Sets the values in the parameter sets of registered entities,
+             which mediate the coupling between this problem and the entities.
+
+            :param tmp_path: path to a directory which can be used to store store intermediate results 
+            """
+
+    def step(self, t: float, dt: float, time_index: int, tmp_path: str) -> None:
+        """
+        Computes result for a timestep with lenght dt. Should not be overwritten,
+        new functionality should be implement by implementing compile, solver,
+        kill and compute_coupling_properties methods.
+
+        :param t: current  time
+        :param dt: timestep length
+        :param time_index: time index corresponding to this timestep
+        :param tmp_path: sub directory to store temprary results
+
+        """
+
+        self.solver.compile(tmp_path)
+        self.solver.solve(t, dt)
+        self.solver.kill()
+
+        self.compute_coupling_properties(tmp_path)
+
+    def _add_entity(self, entity: Entity) -> None:
         """
         :param entity:  entity to be added
 
         """
         self.registered_entities.append({"entity": entity, "patch": 0})
 
-    def get_mesh_path(self, time_index=None, local=False, full = True):
-
-        result = ""
-
-        dynamic_mesh = self.moving_mesh or self.remesh
-
-        if (not time_index is None) and (dynamic_mesh):
-            file = self.file_name + "_{t}" + ".xdmf"
-        else:
-            file = self.file_name + ".xdmf"
-
-        if (not self.ext_cache == "") and ((local == False) or (not dynamic_mesh)):
-            result = self.ext_cache
-            os.makedirs(os.path.join(self.path,result),exist_ok=True)
-        else:
-            if local:
-                result = self.path_prefix
-            else:
-                result = os.path.join(self.path,self.path_prefix)
-
-        os.makedirs(os.path.join(self.path,self.path_prefix), exist_ok=True)
-
-        if full:
-            return (os.path.join(result,file)).format(field=self.field_name, t=time_index)
-        else:
-            return file.format(field=self.field_name, t=time_index)
-
-    def remove_entity(self, entity) -> None:
+    def unregister_entity(self, entity: Entity) -> None:
         """
-        TODO
-        """
-        pass
+        unregisters entity from this problem
 
-    #        self.registered_entities.remove(entity)
-    def is_registered(self, entity) -> None:
-        """TODO"""
-        pass
-
-    def set_solver(self, solver: MySolver) -> None:
+        :param entity: entity to unregister
         """
 
-        sets solver
-        :param solver:
+        raise NotImplementedError
 
+    def is_registered(self, entity: Entity) -> bool:
+        """
+        checks weather a entity is registered with this problem
+
+        :param entity: entity to check
         """
 
-        solver.field_quantity = self.field_quantity
-        self.solver = solver
-
-    def set_outer_domain(self, domain: DomainEntity) -> None:
-        """sets outer domain
-        :param domain: domain object
-        """
-        self.outer_domain = domain
-
-    def generate_mesh(self, path="", path_prefix="", file_name="mesh_{field}", time_index = None, **kwargs) -> None:
-        """
-        generates mesh
-
-        :param path_prefix: path to store mesh data
-
-        """
-        self.file_name = file_name
-        self.path_prefix = path_prefix
-        self.path = path
-
-        mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain, **kwargs)
-        mesh_gen.entityList = self.registered_entities
-        mesh_gen.dim = 3
+        raise NotImplementedError
 
 
-        if self.moving_mesh or self.ale or self.remesh:
-            self.ext_cache = ""
-            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index,local=True))
-        else:
-            mesh_path = os.path.join(path, self.get_mesh_path(time_index=time_index))
+class FieldProblem(GlobalProblem):
+    """
 
-        # self.mesh_path = mesh_path
-        if not kwargs["cache"] or (self.mesh_cached == "" and self.ext_cache == ""):
+    Sets up a mesh based boundary value problem from registered entities and outer domain attributes,
+     to be solved with a given solver.
+     This class is meant to aggregate with SimContainer to automate the simulation pipeline.
 
-            mesh, boundary_markers = mesh_gen.meshGen(self.p,
-                                                      load=False,
-                                                      load_subdomain=False,
-                                                      path=mesh_path,
-                                                     )
-            self.mesh_cached = file_name.format(field=self.field_name)
-        else:
-            mesh, boundary_markers = mesh_gen.meshGen(self.p,
-                                                      load=True,
-                                                      load_subdomain=True,
-                                                      path=mesh_path,
-                                                    )
-        self.solver.mesh = mesh
-        self.solver.boundary_markers = boundary_markers
-        self.solver.p = self.p
+    :ivar path: file path to result directory for this problem
+    :ivar ext_cache: path to folder containing pre generated mesh
+    :ivar outer_domain: Domain Entity which represents the simulation domain
+    :ivar solver: solver to be used for this field
+    :ivar remesh_scan_sample: flag to trigger remeshing at the beginning of a parameter scan
+    :ivar remesh_timestep: flag to trigger remeshing before each timestep
+    :ivar moving_mesh: flag that indicates that the mesh is change during simulation
 
-    def apply_sample(self, sample):
+    :vartype ext_cache: str
+    :vartype outer_domain: DomainEntity
+    :vartype solver: MyDiffusionSolver
 
-        self.update_bcs(sample.p)
-        self.p.update(sample.p, override=True)
-        self.solver.p.update(sample.p, override = True)
-        self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
+    :vartype remesh_scan_sample: bool
+    :vartype remesh_timestep: bool
+    :vartype moving_mesh: bool
 
-    def update_parameter_set(self, p):
-        self.p.update(p)
-        self.solver.p.update(p)
-        self.outer_domain.update_bcs(p)
 
-    def update_bcs(self, p=None) -> None:
-        """
-        updates boundary conditions for all child objects
+    """
 
-        """
+    def __init__(self) -> None:
 
-        self.solver.field_quantity = self.field_quantity
-        self.outer_domain.update_bcs(p=p)
-        for i in self.registered_entities:
-            i["entity"].update_bcs()
-        subdomains = self.outer_domain.get_subdomains(field_quantity=self.field_quantity)
-        for e in self.registered_entities:
-            subdomains.append(e)
-        self.solver.subdomains = subdomains
+        self.field_name: str = ""
+        self.registered_entities: List[Mapping[str, Union[Entity, int]]] = []
+        self.outer_domain: Union[DomainEntity, None] = None
+        self.solver: Union[MyDiffusionSolver, None] = None
+        self.field_quantity: str = ""
+        # self.path: Union[str, None] = None
+        self.ext_cache: str = ""
+        self.p: ParameterSet = ParameterSet("field_dummy", [])
+        self.remesh_scan_sample: bool = False
+        self.remesh_timestep: bool = False
+        self.moving_mesh: bool = False
 
-    def update_solver(self, tmp_path, p=None) -> None:
+        self.boundary_extraction_trials: int = 5
+        self.boundary_extraction_timeout: int = 600
+
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
+
+        self.update_parameter_set(p)
+        if not (self.remesh_timestep or self.remesh_scan_sample):
+            self.generate_mesh(top_path, load_cache=True)
+        elif self.remesh_scan_sample:
+            self.generate_mesh(path=absolute_path, time_index=0, load_cache=False)
+
+        self.update_parameter_set(p)
+
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
         """
         updates solver
         """
 
+        if self.remesh_timestep:
+            self.generate_mesh(path, time_index, load_cache=False)
         self.update_bcs(p=p)
-        pass
         # self.solver.kill()
-        # self.solver.compileSolver(tmp_path)
+        # self.solver.compile(tmp_path)
 
-    def get_boundary_concentrations(self, tmp_path: str) -> None:
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
+
+        distplot, sol, result_type = self.save_result_to_file(time_index, absolute_path)
+
+        field = et.Element("Field")
+
+        field.set("module_name", str(result_type.__module__))
+        field.set("class_name", str(result_type.__name__))
+
+        relative_mesh_path = os.path.split(os.path.relpath(absolute_path, top_path))[0]
+        if self.remesh_timestep:
+            field.set("mesh_path", self.get_mesh_path(relative_mesh_path, time_index, abspath=False))
+        elif self.remesh_scan_sample:
+            field.set("mesh_path", self.get_mesh_path(relative_mesh_path, 0, abspath=False))
+        else:
+            field.set("mesh_path", self.get_mesh_path(top_path, None, abspath=False))
+
+        field.set("remesh_timestep", str(self.remesh_timestep))
+        field.set("remesh_scan_sample", str(self.remesh_scan_sample))
+
+        field.set("field_name", self.field_name)
+        field.set("field_quantity", self.field_quantity)
+
+        if sol is None:
+            field.set("success", str(False))
+        else:
+            relative_path = os.path.relpath(absolute_path, top_path)
+            field.set("success", str(True))
+            field.set("dist_plot_path", os.path.join(relative_path, distplot))
+            field.set("solution_path", os.path.join(relative_path, sol))
+
+        marker_paths = self.save_markers(absolute_path, markers, marker_lookup, time_index)
+        marker_paths = {k: os.path.relpath(n, top_path) for k, n in marker_paths.items()}
+
+        for marker_key, marker_path in marker_paths.items():
+            marker_element = et.SubElement(field, "Marker")
+            marker_element.set("path", marker_path)
+            marker_element.set("marker_key", marker_key)
+
+        return field
+
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str, type]:
+
+        result = ScalarFieldResult(path, self.field_quantity)
+        u = self.solver.get_solution()
+        result.set(u)
+
+        return result.save(time_index)
+
+    def finish_run(self) -> None:
+        pass
+
+    def apply_sample(self, sample: ScanSample):
+
+        self.update_bcs(sample.p)
+        self.p.update(sample.p, overwrite=True)
+        self.solver.p.update(sample.p, overwrite=True)
+        self.outer_domain.apply_sample(sample.outer_domain_parameter_dict)
+
+    def compute_coupling_properties(self, tmp_path: str) -> None:
 
         def init(_mesh, _markers, _solution):
 
@@ -231,7 +327,6 @@ class FieldProblem:
             global vertex_values
             vertex_values = u.compute_vertex_values(_mesh)
 
-        ds = fcs.Measure("ds", domain=self.solver.mesh, subdomain_data=self.solver.boundary_markers)
         entity_list = [[e["patch"], self.get_entity_surface_area(e)] for e in self.registered_entities]
         pn = os.cpu_count()
 
@@ -252,20 +347,24 @@ class FieldProblem:
         ))
         start = time.time()
 
-        for i in range(self.boundary_extraction_trials+1):
-            with mp.Pool(processes=pn, initializer=init,initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-                result_async = pool.map_async(target, entity_list, chunksize=chunksize)
+        for i in range(self.boundary_extraction_trials + 1):
+            with mp.Pool(processes=pn, initializer=init,
+                         initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
+                result_async = pool.map_async(calc_boundary_values, entity_list, chunksize=chunksize)
                 try:
                     result = result_async.get(self.boundary_extraction_timeout)
                 except multiprocessing.TimeoutError as e:
                     if i == self.boundary_extraction_trials:
-                        raise e
+                        raise BoundaryConcentrationError(
+                            "failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
                     message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
                     continue
             break
 
-        f = get_concentration_conversion(self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
+        f = get_concentration_conversion(
+            self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
         end = time.time()
+
         total_time(end - start, pre="Cell concentration extracted in ")
 
         for i, (patch, sa, value) in enumerate(result):
@@ -282,106 +381,201 @@ class FieldProblem:
                 ParameterSet("update_dummy", [ParameterCollection("{f}".format(f=self.field_name), [
                     physical
                 ], field_quantity=self.field_quantity)])
-                , override=True)
+                , overwrite=True)
 
-    def get_boundary_gradients(self) -> None:
+        message("done pool map with chunksize {}".format(cs))
+
+    def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup: Mapping[str, int],
+                     time_index: int) -> Dict[str, str]:
+
+        """
+        Creates a mesh function from entity parameter values
+
+        :param path: path to store the mesh function
+        :param properties_to_mark: list of entity properties, which should be exported as mesh functions.
+        :param marker_lookup: lookup dict to manually set the mesh function value for exported properties
+        :param time_index: time index for this step
+        :return:
+        """
+
+        path_dict = {}
+
+        top_dir = os.path.join(path, "entity_markers")
+        for marker_key in properties_to_mark:
+            marker_dir = os.path.join(top_dir, marker_key)
+            os.makedirs(marker_dir, exist_ok=True)
+
+            marker, new_lookup = self.get_sub_domains_vis(marker_key, lookup=marker_lookup)
+            if new_lookup is not None:
+                marker_lookup.update(new_lookup)
+            marker_path = os.path.join(marker_dir, "marker_{n}.xdmf".format(n=time_index))
+            with fcs.XDMFFile(fcs.MPI.comm_world, marker_path) as f:
+                f.write(marker)
+            path_dict[marker_key] = marker_path
+
+        return path_dict
+
+    def get_mesh_path(self, path: str, time_index: int = None, abspath: bool = False) -> str:
+
+        """
+        Gets mesh path in the current simulation state
+
+        :param path: path to simulation sub directory
+        :param time_index: time index for this step
+        :param abspath: weather should be relative to path
+        :return: absolute or relative mesh path to mesh
+        """
+
+        file_name = "mesh_{fq}".format(fq=self.field_quantity)
+        result = self._get_mesh_dir(path)
+        if not time_index is None:
+            file = file_name + "_{t}" + ".xdmf"
+            file = file.format(t=time_index)
+        else:
+            file = file_name + ".xdmf"
+
+        if abspath:
+            return os.path.abspath(os.path.join(path, os.path.join(result, file)))
+        else:
+            return os.path.join(result, file)
+
+    def get_boundary_markers_path(self, path: str, time_index: int = None, abspath: bool = False) -> str:
+
+        """
+        Gets boundary markers path in the current simulation state
+
+        :param path: path to simulation sub directory
+        :param time_index: time index for this step
+        :param abspath: weather should be relative to path
+        :return: absolute or relative path to boundary markers
+        """
+
+        file_name = "boundary_markers"
+        result = self._get_mesh_dir(path)
+        if not time_index is None:
+            file = file_name + "_{t}" + ".h5".format(t=time_index)
+            file = file.format(t=time_index)
+        else:
+            file = file_name + ".h5"
+
+        if abspath:
+            return os.path.abspath(os.path.join(path, os.path.join(result, file)))
+        else:
+            return os.path.join(result, file)
+
+    def _get_mesh_dir(self, path: str) -> str:
+
+        if self.remesh_scan_sample or self.remesh_timestep:
+            result = os.path.join(path, "cache")
+        else:
+            if self.ext_cache == "":
+                result = os.path.join(path, "mesh")
+            else:
+                result = self.ext_cache
+        return result
+
+    def set_solver(self, solver: MySolver) -> None:
+        """
+
+        Sets the solver, which is used to solver this global problem
+
+        :param solver:
 
         """
 
-        computes average gradient over each entity and stores results in p["surf_g_{field}"]
+        solver.field_quantity = self.field_quantity
+        self.solver = solver
 
+    def set_outer_domain(self, domain: DomainEntity) -> None:
+        """Sets the outer domain object for this global problem
+
+        :param domain: outer domain object
+        """
+        self.outer_domain = domain
+
+    def generate_mesh(self, path, time_index=None, load_cache=True) -> None:
+        """
+        Generates the mesh and boundary markers based on registered entities and outer domain.
+        Mesh settings should be stored in the geometry and numeric parameter collections.
+
+        :param path: path to hand to get_mesh_path/get_boundary_markers_path
+        :param time_index: this steps time index. Only considered for remeshing or moving mesh
+        :param load_cache: weather cached files should be loaded if present
+        """
+
+        mesh_gen = mshGen.MeshGenerator(outer_domain=self.outer_domain)
+        mesh_gen.entityList = self.registered_entities
+        mesh_gen.dim = 3
+
+        mesh_path = self.get_mesh_path(path, time_index=time_index, abspath=True)
+        subdomain_path = self.get_boundary_markers_path(path, time_index=time_index, abspath=True)
+
+        mesh, boundary_markers = mesh_gen.meshGen(self.p, mesh_path, subdomain_path, load_mesh=load_cache,
+                                                  load_subdomain=load_cache)
+
+        self.solver.mesh = mesh
+        self.solver.boundary_markers = boundary_markers
+        self.solver.p = self.p
+
+    def update_parameter_set(self, p: ParameterSet) -> None:
+
+        """
+        Updates problem, outer domain and solver parameter set
+
+        """
+        self.p.update(p)
+        if self.solver is not None:
+            self.solver.p.update(p)
+        self.outer_domain.update_bcs(p=p)
+
+    def update_bcs(self, p: ParameterSet = None) -> None:
+
+        """
+        Updates boundary conditions for outer domain and registered entities.
 
         """
 
-    # noinspection PyPep8Naming
-    def step(self, dt: float, time_index: int, tmp_path: str) -> None:
+        self.solver.field_quantity = self.field_quantity
+        self.outer_domain.update_bcs(p=p)
+        for i in self.registered_entities:
+            i["entity"].update_bcs()
+        subdomains = self.outer_domain.get_subdomains(field_quantity=self.field_quantity)
+        for e in self.registered_entities:
+            subdomains.append(e)
+        self.solver.subdomains = subdomains
+
+    def load_mesh(self, path: str) -> None:
+
         """
-        runs timestep
+        Loads mesh into solver.mesh field
+        :param path: mesh path
 
-        :param dT: delta t for this timestep
         """
-
-        message("Solving Field Problem")
-        try:
-
-            self.solver.compileSolver(tmp_path)
-            self.solver.solve()
-            self.solver.kill()
-        except Exception as e:
-            self.u = None
-            self.solver.u = None
-            return None
-
-        message("Computing Boundary Concentrations")
-        self.get_boundary_concentrations(tmp_path)
-        self.compute_boundary_term()
-
-        # message("Computing Boundary Gradients")
-        # self.get_boundary_gradients()
-
-    def load_mesh(self, path):
 
         with dlf.XDMFFile(path) as f:
             f.read(self.solver.mesh)
 
-    def save_mesh(self, time_index: int, path: str):
+    def save_mesh(self, time_index: int, path: str) -> None:
 
-        path = path + self.get_mesh_path(time_index, local=True)
+        """
+        Saves mesh to path.
+        :param time_index: this steps time index
+        :param path: mesh path
+
+        """
+        path = self.get_mesh_path(path, time_index, abspath=True)
         with dlf.XDMFFile(path) as f:
             f.write(self.solver.mesh)
 
-    def ale(self, dt, tmp_path):
-
-        mesh = self.solver.mesh
-
-        b_mesh = fcs.BoundaryMesh(mesh, "exterior")
-
-        b_map = b_mesh.entity_map(0)
-        b_coords = b_mesh.coordinates()
-
-        for i, entity in enumerate(self.registered_entities):
-
-            patch = entity["patch"]
-            cell = entity["entity"]
-            mc = cell.p.get_physical_parameter("mc", "motility")
-            message("mc: {mc}".format(mc=mc))
-            cell.velocity = np.random.normal(0, np.sqrt(2 * 1 * 60 * dt), 3)
-            cell.move(dt)
-
-            # message("patch {p}".format(p = patch))
-            verts = np.array([], dtype=int)
-            for facet in fcs.SubsetIterator(self.solver.boundary_markers, patch):
-                for vertex_index in facet.entities(0):
-                    verts = np.insert(verts, 0, b_map.where_equal(vertex_index)[0])
-
-            for i in np.unique(verts):
-                x = b_coords[i]
-
-                x[0] += cell.offset[0]
-                x[1] += cell.offset[1]
-                x[2] += cell.offset[2]
-
-            # mesh.snap_boundary(cell.get_compiled_subdomain())
-
-        dlf.ALE.move(mesh, b_mesh)
-        # mesh.smooth(10)
-
-        # with fcs.XDMFFile(tmp_path + "/b_mesh.xdmf") as f:
-        #     f.write(b_mesh)
-
-    def get_field(self) -> fcs.Function:
-        return self.solver.u
-
-    def get_sub_domains(self) -> fcs.MeshFunction:
-        return self.solver.boundary_markers
-
-    def get_sub_domains_vis(self, marker_key, lookup=None) -> fcs.MeshFunction:
+    def get_sub_domains_vis(self, marker_key: str, lookup: Dict[Union[str, int, float], int] = None) -> Tuple[
+        fcs.MeshFunction, Dict[Union[str, int, float], int]]:
         """
 
-        save meshfunction that labels cells by type_name
+        Save meshfunction that labels cells by marker key
 
-        :param {type_name:label}
-
+        :param marker_key: Either a attribute of the entity object (id, type_name,...) or a key in ParameterSet.get_as_dictionary()
+        :param lookup: lookup dict to manually set the mesh function value for exported properties
+        :return: Mesh function and update lookup dictionary
         """
         lookup = {} if lookup is None else lookup
 
@@ -394,16 +588,16 @@ class FieldProblem:
             e = o["entity"]
             p = o["patch"]
 
-            if hasattr(e,marker_key):
-                value = getattr(e,marker_key)
+            if hasattr(e, marker_key):
+                value = getattr(e, marker_key)
             elif marker_key in e.p.get_as_dictionary():
                 value = e.p.get_as_dictionary()[marker_key]
             else:
                 continue
 
-            from numbers import Number
-            if isinstance(value,Number):
+            if isinstance(value, Number):
                 value = float(value)
+                lookup = None
             elif value in lookup:
                 value = lookup[value]
             else:
@@ -415,19 +609,25 @@ class FieldProblem:
 
         return marker, lookup
 
-    def get_entity_surface_area(self, e):
+    def get_entity_surface_area(self, e: Entity) -> float:
+
+        """
+        Returns entity surface area. TODO Currently very pedestrian implementation.
+        """
 
         if not "surface_area" in e.keys():
             return None
         return e["surface_area"]
 
-    def get_outer_domain_vis(self, parameter_name="q") -> fcs.MeshFunction:
+    def get_outer_domain_vis(self, parameter_name: str = "q") -> fcs.MeshFunction:
         """
 
-        gets MeshFunction that has outer domain surfaces labeled by entity.getState(key)
+        Gets MeshFunction that has outer domain surfaces labeled by entity.getState()
 
-        :param key: key to pass to getState()
+        :param parameter_name: key to pass to getState()
+        :return: Mesh function that labels domain pieces
         """
+
         mesh = self.solver.mesh
         boundary_markers = fcs.MeshFunction("double", mesh, mesh.topology().dim() - 1)
         boundary_markers.set_all(0)
@@ -438,30 +638,94 @@ class FieldProblem:
                                                                           field_quantity=self.field_quantity))
         return self.solver.boundary_markers
 
-    def compute_boundary_term(self):
+
+class MeanFieldProblem(GlobalProblem):
+
+    def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
+
+        self.p.update(p)
+        if self.solver is not None:
+            self.solver.p.update(p)
+
+    def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
+
+        entity_parameters = {}
 
         for e in self.registered_entities:
-            entity = e["entity"]
-            for bc in entity.bc_list:
-                fq = bc.field_quantity
-                try:
-                    u = entity.p.get_physical_parameter_by_field_quantity("surf_c", fq).get_in_sim_unit()
-                except:
-                    pass
 
-                g = bc.q(u, entity.p.get_as_dictionary(in_sim=True, with_collection_name=False,field_quantity = fq),
-                         1) * entity.p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit()
-                ule = self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int)
+            for ep in e["entity"].p.get_collections_by_field_quantity(self.field_quantity)[0].parameters:
+                k = ep.name
+                v = ep.get_in_sim_unit()
 
-                rate_conversion = entity.p.get_physical_parameter_by_field_quantity("q", fq).to_sim
+                if k in entity_parameters.keys():
+                    entity_parameters[k].append(v)
+                else:
+                    entity_parameters[k] = [v]
 
-                boundary = PhysicalParameter("boundary", 0, to_sim=rate_conversion)
-                boundary.set_in_sim_unit(g)
+        self.solver.entity_parameters = entity_parameters
+        self.solver.global_parameters = {p.name: p.get_in_sim_unit() for p in
+                                         p.get_collections_by_field_quantity(self.field_quantity)[0].parameters}
+        self.solver.geometry_parameters = {p.name: p.get_in_sim_unit() for p in p.get_collection("geometry").parameters}
 
-                entity.p.get_collections_by_field_quantity(fq)[0].set_parameter(boundary, override=True)
+    def compute_coupling_properties(self, tmp_path: str) -> None:
+        for e in self.registered_entities:
+            f = get_concentration_conversion(
+                self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
+            surfc = PhysicalParameter("surf_c", self.solver.get_solution(), to_sim=1 / f)
+            surfc.set_in_sim_unit(self.solver.get_solution())
+
+            e["entity"].p.update(
+                ParameterSet("update_dummy", [
+                    ParameterCollection(self.field_name, [surfc],
+                                        field_quantity=self.field_quantity)
+                ])
+                , overwrite=True)
+
+    def save_result_to_file(self, time_index: int, path: str) -> Tuple[str, str, type]:
+
+        result = ScalarResult(path, self.field_quantity)
+        u = self.solver.get_solution()
+        result.set(u)
+
+        r1 = ScalarResult(path, self.field_quantity)
+        res = result.save(time_index)
+
+        return res
+
+    def get_result_element(self, replicat_index: int, time_index: int, scan_index: int, markers: List[str],
+                           marker_lookup: Mapping[str, int], top_path: str, absolute_path: str) -> Element:
+
+        distplot, sol, result_type = self.save_result_to_file(time_index, absolute_path)
+
+        d = os.path.split(os.path.split(absolute_path)[0])[1]
+        field = et.Element("Field")
+
+        field.set("module_name", str(result_type.__module__))
+        field.set("class_name", str(result_type.__name__))
+
+        field.set("field_name", self.field_name)
+        field.set("field_quantity", self.field_quantity)
+
+        if sol is None:
+            field.set("success", str(False))
+        else:
+            field.set("success", str(True))
+            field.set("solution_path", os.path.join(os.path.join(os.path.relpath(absolute_path, top_path), sol)))
+
+        return field
+
+    def apply_sample(self, sample: ScanSample) -> None:
+
+        """TODO test this implementation with scans"""
+
+        self.p.update(sample.p, overwrite=True)
+        self.solver.p.update(sample.p, overwrite=True)
+
+    def finish_run(self) -> None:
+        pass
 
 
-def target(entity):
+def calc_boundary_values(entity: Entity):
     patch_index = entity[0]
     sa = entity[1]
     if sa == None:
@@ -479,8 +743,7 @@ def target(entity):
     try:
         values = vertex_values.take(verts)
     except TypeError as e:
-        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi = patch_index))
-        raise e
+        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi=patch_index))
 
     vertex_sum = values.sum() / len(verts)
     result = [patch_index, sa, vertex_sum]

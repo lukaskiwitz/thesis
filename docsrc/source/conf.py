@@ -25,14 +25,17 @@ author = 'Lukas Kiwitz'
 # The full version, including alpha/beta/rc tags
 release = 'v0.1a'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx_autodoc_typehints']
+extensions = ['sphinx.ext.autodoc', 'sphinx_autodoc_typehints', 'sphinxcontrib.plantuml']
 
+plantuml = 'java -jar {}'.format(os.path.expanduser("~/plantuml.jar"))
+
+autodoc_typehints = 'signature'
+numfig = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

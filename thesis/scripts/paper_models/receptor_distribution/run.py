@@ -42,7 +42,7 @@ def update_state(sim_container, t):
     v = sim_container.p.get_physical_parameter("v", "v").get_in_sim_unit()
     R_per_cell = sim_container.p.get_physical_parameter("R_per_cell", "v").get_in_sim_unit()
 
-    n_entities = sim_container.get_number_of_entites()
+    n_entities = sim_container.get_number_of_entities()
     sec_n = n_entities["sec"] if "sec" in n_entities.keys() else 0
     abs_n = n_entities["abs"] if "abs" in n_entities.keys() else 0
 

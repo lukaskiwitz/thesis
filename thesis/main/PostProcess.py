@@ -5,10 +5,11 @@ Created on Wed Oct 16 12:56:59 2019
 
 @author: Lukas Kiwitz
 """
+import json
 import multiprocessing as mp
 import os
 import random
-import json
+from abc import ABC, abstractmethod
 from typing import List, Dict
 
 import KDEpy
@@ -16,20 +17,22 @@ import dolfin as dlf
 import fenics as fcs
 import lxml.etree as et
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 import mpi4py.MPI as MPI
 import numpy as np
 import pandas as pd
+from matplotlib.gridspec import GridSpec
 
+import thesis.main.GlobalResult
+import thesis.main.MyError as MyError
 import thesis.main.StateManager as st
-from thesis.main.PostProcessUtil import get_concentration_conversion, get_gradient_conversion, get_mesh_volume, \
-    get_rectangle_plane_mesh
+from thesis.main.GlobalResult import GlobalResult
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.PostProcessUtil import get_mesh_volume
+from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
+    get_gradient_conversion
 from thesis.main.myDictSorting import groupByKey
 from thesis.main.my_debug import message, warning
-import thesis.main.MyError as MyError
 
-from copy import deepcopy
 
 class ComputeSettings:
     """
@@ -50,25 +53,35 @@ class ComputeSettings:
     :param scan_index: scan index
     :type scan_index: int
 
+    :param model_index: model index
+    :type model_index: int
+
+    :param model_name: name of this global model
+    :type model_name: str
+
+    :param replicat_index: replicat index
+    :type replicat_index: int
+
     :param time_index: time index
-    :type time_index: float
+    :type time_index: int
     """
 
-    # def __init__(self, file_path: str, field: str, mesh: fcs.Mesh, u: fcs.Function, cell_data: List[Dict],
-    #              boundary_markers: fcs.MeshFunction, dynamic: Dict, scan_index: int, time_index: float) -> None:
     def __init__(self) -> None:
         self.file_path: str = ""
         """file path to volume file
         """
-        self.field: str = ""
+        self.field_quantity: str = ""
         self.dynamic: Dict = {}
         self.scan_index: int = 0
-        self.time_index: float = 0
+        self.model_index: int = 0
+        self.model_name: str = ""
+
+        self.replicat_index = None
+        self.time_index: int = 0
         self.tmp_path = ""
-        self.figure_width = 8.3/4
+        self.figure_width = 8.3 / 4
         self.pad_l = 0.3
         self.pad_r = 0.1
-        self.render_paraview = False
         self.unit_name = "nM"
         self.marker_lookup = {}
         self.round_legend_labels = 2
@@ -87,49 +100,85 @@ class ComputeSettings:
             "axis_ticks": True,
             "axis_edges": True,
             "field_color_preset": "Cool to Warm",
-            "volume_camera_pos": [850,70,-110],
+            "volume_camera_pos": [850, 70, -110],
             "volume_raytracing": True,
             "volume_raytracing_progressive_passes": 0,
             "volume_raytracing_samples": 2,
             "volume_raytracing_ambient_samples": 2,
             "volume_raytracing_light_scale": 1,
-            "marker_view_uniform_opacity":True,
-            "lookup":{}
+            "marker_view_uniform_opacity": True,
+            "lookup": {}
 
         }
 
+    def set_image_settings(self, image_settings, image_settings_fields):
 
-    def set_mesh(self, mesh: fcs.Mesh):
-        self._mesh = mesh
+        if image_settings_fields is not None:
 
-    def set_u(self, u: fcs.Function):
-        self._u: fcs.Function = u
+            for k, v in image_settings_fields.items():
+                if k == self.field_quantity:
+                    if isinstance(v, Dict):
+                        for kk, vv in v.items():
+                            image_settings[kk].update(vv)
+                    else:
+                        image_settings[k] = v
 
-    # noinspection PyPep8Naming,PyPep8Naming
-    def set_V(self, V: fcs.FunctionSpace):
-        self._V: fcs.FunctionSpace = V
+        for k, v in image_settings.items():
+            if isinstance(v, Dict):
+                if hasattr(self, k) and isinstance(self.__getattribute__(k), Dict):
+                    self.__getattribute__(k).update(v)
+            else:
+                self.__setattr__(k, v)
 
-    def set_boundary_markers(self, bm: fcs.MeshFunction):
-        self._boundary_markers: fcs.MeshFunction = bm
+    @staticmethod
+    def create_from_element(field_element, marker_element, model_index, model_name, scan_index, replicat_index,
+                            time_indices):
 
-    def get_mesh(self) -> fcs.Mesh:
-        return self._mesh
+        assert isinstance(model_index, int)
+        assert isinstance(scan_index, int)
 
-    def get_u(self) -> fcs.Function:
-        return self._u
+        compute_settings: ComputeSettings = ComputeSettings()
 
-    # noinspection PyPep8Naming
-    def get_V(self) -> fcs.FunctionSpace:
-        return self._V
+        if field_element.get("success") == "False":
+            compute_settings.success = False
+        else:
+            compute_settings.success = True
 
-    def get_boundary_markers(self) -> fcs.MeshFunction:
-        return self._boundary_markers
+        compute_settings.markers = {e.get("marker_key"): e.get("path") for e in marker_element}
+        marker_lookup = field_element.findall("../../MarkerLookupTable/MarkerLookup")
+        compute_settings.marker_lookup = {e.get("key"): e.get("value") for e in marker_lookup}
+
+        compute_settings.file_path = field_element.get("dist_plot_path")
+        compute_settings.solution_path = field_element.get("solution_path")
+
+        compute_settings.field_quantity = field_element.get("field_quantity")
+        compute_settings.field_name = field_element.get("field_name")
+        compute_settings.mesh_path = field_element.get("mesh_path")
+        compute_settings.remesh_timestep = True if field_element.get("remesh_timestep") == 'True' else False
+        compute_settings.remesh_scan_sample = True if field_element.get("remesh_scan_sample") == 'True' else False
+
+        compute_settings.model_index = model_index
+        compute_settings.model_name = model_name
+
+        compute_settings.scan_index = scan_index
+        compute_settings.replicat_index = replicat_index
+        compute_settings.time_index = int(field_element.getparent().getparent().get("time_index"))
+
+        import importlib
+        module = importlib.import_module(field_element.get("module_name"))
+        class_ = getattr(module, field_element.get("class_name"))
+        compute_settings.loader_class = class_
+
+        if (not time_indices is None) and not (compute_settings.time_index in time_indices): return None
+        compute_settings.time = field_element.getparent().getparent().get("time")
+
+        return compute_settings
 
 
 class PostProcessor:
 
     def __init__(self, path: str) -> None:
-        self.cellDump = []
+        self.debug_compute_in_serial = False
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
         self.cell_dataframe: pd.DataFrame = pd.DataFrame()
@@ -138,7 +187,7 @@ class PostProcessor:
 
         self.cell_stats: pd.DataFrame = pd.DataFrame()
         self.unit_length_exponent: int = 1
-        self.computations = [c(), grad(), SD(), CV()]
+        self.computations: List[PostProcessComputation] = [c, mean_c, grad, SD, CV, MeshVolume]
         self.rc = {}
 
         self.image_settings = {
@@ -147,11 +196,9 @@ class PostProcessor:
             "legend_title": "",
             "dpi": 350,
         }
-        self.image_settings_fields = None
-        self.visual_conversion = 1 #conversion factor from nano molar
+        self.image_settings_fields = {}
 
-
-    def write_post_process_xml(self, n_processes, debug=False, render_paraview = False, make_images=False, time_indices = None):
+    def write_post_process_xml(self, n_processes, debug=False, time_indices=None, scan_indicies=None):
         """
         runs compute-function for all scans an writes result to xml file
 
@@ -162,89 +209,76 @@ class PostProcessor:
 
         # initializes state manager from scan log
         self.stateManager = st.StateManager(self.path)
-        self.stateManager.load_xml()
-
+        self.stateManager.scan_tree.load_xml()
 
         tmp_path = self.path + "tmp/"
         os.makedirs(tmp_path, exist_ok=True)
 
         scatter_list: List[ComputeSettings] = []
 
+        for model in self.stateManager.scan_tree.get_model_elements(scan_indicies):
+            for replicat in model.findall("Replicat"):
 
-        # loads timestep logs
+                scan_sample = model.getparent()
+                scan_index = int(scan_sample.get("scan_index"))
+                replicat_index = int(replicat.get("replicat_index"))
 
-        for scan_index, scan_sample in enumerate(self.stateManager.element_tree.findall("ScanContainer/ScanSample")):
-            parameters = scan_sample.find("Parameters")
-            self.stateManager.rebuild_tree(scan_sample)
-            for field_step in scan_sample.findall("TimeSeries/Step/Fields/Field"):
+                model_index = int(model.get("model_index"))
+                model_name = str(model.get("model_name"))
 
-                markers = field_step.findall("../../Marker")
-                compute_settings: ComputeSettings = ComputeSettings()
-                if field_step.get("success") == "False":
-                    compute_settings.success = False
-                else:
-                    compute_settings.success = True
-                compute_settings.additional_conversion = self.visual_conversion
-                self.render_paraview = render_paraview
-                compute_settings.markers = {e.get("marker_key"): e.get("path") for e in markers}
+                parameters = scan_sample.find("Parameters")
+                # self.stateManager.scan_tree.rebuild_timesteps(scan_sample)
+                # self.stateManager.scan_tree.get_timeteps(scan_sample)
 
-                marker_lookup = field_step.findall("../../MarkerLookupTable/MarkerLookup")
-                compute_settings.marker_lookup = {e.get("key"): e.get("value") for e in marker_lookup}
+                # for field_step in model.findall("TimeSeries/Step/Fields/Field"):
+                for step in replicat.findall("TimeSeries/Step"):
 
-                compute_settings.path = self.path
-                compute_settings.file_path = field_step.get("dist_plot_path")
-                compute_settings.solution_path = field_step.get("solution_path")
-
-                compute_settings.field = field_step.get("field_name")
-                compute_settings.mesh_path = field_step.get("mesh_path")
-                compute_settings.dynamic_mesh = True if field_step.get("dynamic_mesh") == 'True' else False
-
-                compute_settings.parameters = et.tostring(parameters)
-                compute_settings.scan_index = int(scan_index)
-                compute_settings.time_index = int(field_step.getparent().getparent().get("time_index"))
-                if (not time_indices is None) and not (compute_settings.time_index in time_indices):
-                    continue
-                compute_settings.time = field_step.getparent().getparent().get("time")
-                compute_settings.make_images = make_images
-                compute_settings.render_paraview = render_paraview
-                compute_settings.tmp_path = tmp_path
-                compute_settings.unit_length_exponent = self.unit_length_exponent
-                compute_settings.cell_df = self.cell_dataframe.loc[
-                    (self.cell_dataframe["time_index"] == compute_settings.time_index)&
-                    (self.cell_dataframe["scan_index"] == compute_settings.scan_index)
-                ]
-
-
-                image_settings = deepcopy(self.image_settings)
-
-                if hasattr(self,"image_settings_fields") and isinstance(self.image_settings_fields,Dict):
-                    for k,v in self.image_settings_fields.items():
-                        if k == compute_settings.field:
-                            if isinstance(v,Dict):
-                                for kk,vv in v.items():
-                                    image_settings[kk].update(vv)
-                            else:
-                                image_settings[k] = v
-
-
-                for k, v in image_settings.items():
-                    if isinstance(v,Dict):
-                        if hasattr(compute_settings,k) and isinstance(compute_settings.__getattribute__(k),Dict):
-                            compute_settings.__getattribute__(k).update(v)
+                    if step.get("path") is None:
+                        step = step
                     else:
-                        compute_settings.__setattr__(k, v)
+                        step = et.parse(os.path.join(self.path, step.get("path")))
 
-                compute_settings.computations = self.computations
+                    for field_step in step.findall("/Fields/Field"):
 
-                scatter_list.append(compute_settings)
+                        markers = field_step.findall("Marker")
+                        compute_settings = ComputeSettings.create_from_element(
+                            field_step,
+                            markers,
+                            model_index,
+                            model_name,
+                            scan_index,
+                            replicat_index,
+                            time_indices)
 
-        mesh_prefix = self.path
+                        if compute_settings is None:
+                            continue
+                        else:
+                            compute_settings.path = self.path
+                            compute_settings.tmp_path = tmp_path
+                            compute_settings.computations = [comp for comp in self.computations if
+                                                             compute_settings.loader_class in comp.compatible_result_type]
+                            compute_settings.unit_length_exponent = self.unit_length_exponent
+                            compute_settings.parameters = et.tostring(parameters)
+                            compute_settings.cell_df = self.cell_dataframe.loc[
+                                (self.cell_dataframe["time_index"] == compute_settings.time_index) &
+                                (self.cell_dataframe["scan_index"] == compute_settings.scan_index) &
+                                (self.cell_dataframe["model_index"] == compute_settings.model_index) &
+                                (self.cell_dataframe["replicat_index"] == compute_settings.replicat_index)
+                                ]
+                        compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
+                        scatter_list.append(compute_settings)
+
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
-        message("distributing to {n_processes} processes".format(n_processes=n_processes))
+        message(
+            "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)))
 
-
-        with mp.Pool(processes=n_processes, initializer=initialise(mesh_prefix,self.cell_dataframe)) as p:
-            result_list = p.map(compute, scatter_list)
+        if self.debug_compute_in_serial:
+            result_list = []
+            for sc in scatter_list:
+                result_list.append(compute(sc))
+        else:
+            with mp.Pool(processes=n_processes, initializer=lambda: os.nice(19)) as p:
+                result_list = p.map(compute, scatter_list)
 
         element_list = []
         for file in result_list:
@@ -286,46 +320,49 @@ class PostProcessor:
         if self.cell_dataframe.empty:
             raise MyError.DataframeEmptyError("Post Processor Cell Dataframe")
 
-        for scan in in_tree.findall("Scan"):
+        for file in in_tree.findall("Scan/Step/File"):
+            g_values = file.find("./GlobalResults")
 
+            model_index = int(file.get("model_index"))
+            model_name = str(file.get("model_name"))
+            scan_index = int(file.get("scan_index"))
+            time_index = int(file.get("time_index"))
+            replicat_index = int(file.get("replicat_index"))
 
-            for step in scan.findall("Step"):
+            time = float(file.get("time"))
+            field_name = file.get("field_name")
+            success = True if file.get("success") == "True" else False
 
-                for file in step.findall("File"):
-                    g_values = file.find("./GlobalResults")
-                    scan_index = int(file.get("scan_index"))
-                    time_index = int(file.get("time_index"))
-                    if time_index == 0:
-                        continue
-                    time = float(file.get("time"))
-                    field_name = file.get("field_name")
-                    success = True if file.get("success") == "True" else False
+            filter = lambda x: (x["time_index"] == time_index) & \
+                               (x["scan_index"] == scan_index)
 
-                    filter = lambda x: (x["time_index"] == time_index) & \
-                                       (x["scan_index"] == scan_index)
+            d = {
+                "model_index": model_index,
+                "model_name": model_name,
+                "scan_index": scan_index,
+                "replicat_index": replicat_index,
+                "time_index": time_index,
+                "success": success,
+                "time": time,
+                "field_name": field_name,
+                "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                    "{field}_surf_c".format(field=field_name)].mean(),
+                "surf_c_std": self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                    "{field}_surf_c".format(field=field_name)].std(),
+                "surf_c_cv": self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                                 "{field}_surf_c".format(field=field_name)].std() /
+                             self.cell_dataframe.loc[filter(self.cell_dataframe)][
+                                 "{field}_surf_c".format(field=field_name)].mean()
 
-                    d = {
-                        "scan_index": scan_index,
-                        "time_index": time_index,
-                        "success":success,
-                        "time": time,
-                        "field_name": field_name,
-                        "surf_c": self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].mean(),
-                        "surf_c_std":self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].std(),
-                        "surf_c_cv": self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].std()/self.cell_dataframe.loc[filter(self.cell_dataframe)][
-                            "{field}_surf_c".format(field=field_name)].mean()
+            }
+            parameter_set = ParameterSet.deserialize_from_xml(
+                file.find("Parameters/ParameterSet[@name='dynamic']"))
 
-                    }
-                    parameter_set = ParameterSet.deserialize_from_xml(file.find("Parameters/ParameterSet[@name='dynamic']"))
+            d.update(parameter_set.get_as_dictionary())
 
-                    d.update(parameter_set.get_as_dictionary())
-
-                    for v in g_values:
-                        d.update({v.tag: float(v.text)})
-                    result.append(d)
+            for v in g_values:
+                d.update({v.tag: float(v.text)})
+            result.append(d)
 
         return pd.DataFrame(result)
 
@@ -358,7 +395,6 @@ class PostProcessor:
         df["end"] = df["end"].sub(offset)
         df["duration"] = df["end"] - df["start"]
         df["name"] = df["task"].map(lambda x: x.split(":")[-1])
-
 
         return df
 
@@ -394,25 +430,17 @@ class PostProcessor:
 
         return kernels
 
-    def get_cell_dataframe(self, kde=False, time_indices = None, n_processes = 1):
+    def get_cell_dataframe(self, kde=False, time_indices=None, n_processes=1):
 
         self.stateManager = st.StateManager(self.path)
-        self.stateManager.load_xml()
+        self.stateManager.scan_tree.load_xml()
 
-        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices = time_indices, n_processes = n_processes)
-
-        try:
-            result = result.groupby("id").apply(lambda x: x.ffill().bfill()).drop_duplicates()
-        except:
-            print("")
-
-        result["time_index"] = result["time_index"].apply(lambda x: int(x))
-        result["scan_index"] = result["scan_index"].apply(lambda x: int(x))
-        result["time"] = result["time"].apply(lambda x: float(x))
+        result: pd.DataFrame = self.stateManager.get_cell_ts_data_frame(time_indices=time_indices,
+                                                                        n_processes=n_processes)
 
         if kde:
             message("running kernel density estimation")
-            r_grouped = result.groupby(["scan_index"], as_index=False)
+            r_grouped = result.groupby(["scan_index", "model_index", "replicat_index"], as_index=False)
             kde_result = pd.DataFrame()
             for scan_index, ts in r_grouped:
                 kernels = []
@@ -424,8 +452,7 @@ class PostProcessor:
 
                 for time_index, step in ts.groupby(["time_index"]):
 
-
-                    for type_name, kernel in kernels[time_index-1].items():
+                    for type_name, kernel in kernels[time_index - 1].items():
                         positions = np.array([step["x"], step["y"], step["z"]]).T
 
                         scores = kernel.evaluate(positions).T
@@ -433,7 +460,6 @@ class PostProcessor:
                         scores.index = step.index
 
                         step.insert(step.shape[1], "{type_name}_score".format(type_name=type_name), scores)
-
 
                     for type_name, kernel in kernels[0].items():
                         positions = np.array([step["x"], step["y"], step["z"]]).T
@@ -447,9 +473,6 @@ class PostProcessor:
                     kde_result = kde_result.append(step)
             result = self._normalize_cell_score(kde_result)
 
-
-        # return result.drop_duplicates()
-
         return result
 
     def _normalize_cell_score(self, x):
@@ -461,12 +484,7 @@ class PostProcessor:
             i = group[0]
             group = group[1]
 
-            # ids = x.loc[
-            #     (x["type_name"] != group["type_name"][0]) &
-            #     (x["time_index"] == 0)
-            #     ]["id"].unique()
-
-            no_init = group  # group.loc[~group["id"].isin(ids)]
+            no_init = group
 
             for old in pd.Series(group.columns).str.extract("(.*_score)").dropna()[0].unique():
                 new = "{old}_norm".format(old=old)
@@ -491,12 +509,12 @@ class PostProcessor:
 
         return des
 
-    def save_dataframes(self, extra_cell_constants = False):
+    def save_dataframes(self, extra_cell_constants=False):
 
         df = self.cell_dataframe
         ids = df["id_id"]
         if extra_cell_constants:
-            cell_df_constant = df.loc[:, (df == df.iloc[0]).all()].iloc[0,:]
+            cell_df_constant = df.loc[:, (df == df.iloc[0]).all()].iloc[0, :]
             cell_df = df.loc[:, (df != df.iloc[0]).any()]
             cell_df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
             cell_df_constant.to_hdf(os.path.join(self.path, "cell_constants_df.h5"), key="df", mode="w")
@@ -507,78 +525,398 @@ class PostProcessor:
                 message("Saving the cell_df to hdf failed, falling back to pickling...")
                 df.to_pickle(os.path.join(self.path, "cell_df.pkl"))
 
-        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w", data_columns=self.global_dataframe.columns)
-        self.timing_dataframe.to_hdf(os.path.join(self.path,"timing_df.h5"), key="df", mode="w")
+        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w",
+                                     data_columns=self.global_dataframe.columns)
+        self.timing_dataframe.to_hdf(os.path.join(self.path, "timing_df.h5"), key="df", mode="w")
 
-    def run_post_process(self, n_processes, render_paraview = False, extra_cell_constants = False, kde=False, make_images=False, time_indices = None):
-        self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices = time_indices, n_processes= n_processes)
-        self.write_post_process_xml(n_processes, render_paraview = render_paraview, make_images=make_images, time_indices = time_indices)
+    def run_post_process(self, n_processes, extra_cell_constants=False, kde=False, time_indices=None):
+        self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices=time_indices, n_processes=n_processes)
+        self.write_post_process_xml(n_processes, time_indices=time_indices)
         self.global_dataframe = self.get_global_dataframe()
         self.timing_dataframe = self.get_timing_dataframe()
 
-        self.save_dataframes(extra_cell_constants = extra_cell_constants)
+        self.save_dataframes(extra_cell_constants=extra_cell_constants)
 
 
-class PostProcessComputation():
+class PostProcessComputation(ABC):
     add_xml_result = True
+    compatible_result_type: List[GlobalResult] = []
 
-    def __init__(self):
-        self.name = "PostProcessComputation"
+    @abstractmethod
+    def __init__(self): pass
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        return 0
+    @abstractmethod
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs): pass
 
 
-class SD(PostProcessComputation):
+class FenicsScalarFieldComputation(PostProcessComputation):
+    compatible_result_type = [thesis.main.GlobalResult.ScalarFieldResult]
 
-    def __init__(self):
-        self.name = "SD"
+    def __init__(self, compute_settings: ComputeSettings):
+        loader = compute_settings.loader_class(
+            os.path.join(compute_settings.path, os.path.dirname(os.path.dirname(compute_settings.solution_path))),
+            compute_settings.field_quantity
+        )
+        loader.load(compute_settings.time_index, os.path.join(compute_settings.path, compute_settings.mesh_path))
+        self.u = loader.get()
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        sd: float = np.std(np.array(u.vector())) * c_conv
+        message("running global computations for step {t} in scan {s}".format(t=compute_settings.time_index,
+                                                                              s=compute_settings.scan_index))
+
+        self.path = compute_settings.path
+        self.solution_path = compute_settings.solution_path
+        self.scan_index = compute_settings.scan_index
+        self.time_index = compute_settings.time_index
+        self.cell_df = compute_settings.cell_df
+        self.p = ParameterSet.deserialize_from_xml(et.fromstring(compute_settings.parameters))
+
+        self.V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(self.u.function_space().mesh(), "P", 1)
+        self.grad: fcs.Function = fcs.project(fcs.grad(self.u), self.V_vec, solver_type="gmres")
+        self.c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
+        self.grad_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
+
+
+class ParaviewRender(FenicsScalarFieldComputation):
+    name = "ParaviewRender"
+    add_xml_result = False
+
+    def __init__(self, compute_settings: ComputeSettings):
+
+        self.compute_settings = compute_settings
+        super().__init__(compute_settings)
+
+    def __call__(self, ):
+
+        try:
+            self.make_paraview_images()
+        except FileNotFoundError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except NameError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except AttributeError as e:
+            print(e)
+            warning(
+                "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+                    si=self.scan_index, ti=self.time_index))
+
+    def make_paraview_images(self, visual_conv=1):
+
+        conv_factor = self.c_conv
+        compute_settings = self.compute_settings
+
+        conv_factor = conv_factor * visual_conv
+        from thesis.main import __path__ as main_path
+
+        try:
+            for path in os.environ["PARAVIEW_PATH"].split(":"):
+                if os.path.exists(path):
+                    paraview = path
+                    break
+        except KeyError as e:
+            warning("PARAVIEW_PATH env variable not set. cannot render images")
+            return 0
+
+        paraview_script = main_path._path[0] + "/paraview_render_script.py"
+        pvbatch = os.path.join(paraview, "bin/pvbatch")
+
+        import subprocess as sp
+        import json
+        if "type_name" in compute_settings.markers.keys():
+
+            legend_title = compute_settings.legend_title
+            cell_colors = compute_settings.cell_colors
+            round_legend_labels = compute_settings.round_legend_labels
+
+            color_dict, legend_items, labels, categorical = get_color_dictionary(self.compute_settings.cell_df,
+                                                                                 "type_name",
+                                                                                 cell_colors,
+                                                                                 round_legend_labels=round_legend_labels)
+
+            for type_name, entry in color_dict.items():
+                if type_name in compute_settings.marker_lookup.keys():
+                    mesh_function_label = compute_settings.marker_lookup[type_name]
+                    if not str(mesh_function_label) in compute_settings.paraview_settings["lookup"].keys():
+                        compute_settings.paraview_settings["lookup"][str(mesh_function_label)] = [type_name,
+                                                                                                  color_dict[type_name],
+                                                                                                  1]
+
+            xdmf = os.path.join(compute_settings.path, compute_settings.solution_path)
+            marker_path = os.path.join(compute_settings.path, compute_settings.markers["type_name"])
+            settings_path = os.path.join(compute_settings.path,
+                                         "paraview_settings_{f}.json".format(f=compute_settings.field_quantity))
+
+            paraview_settings = compute_settings.paraview_settings
+
+            with open(settings_path, "w") as f:
+                paraview_settings["conversion_factor"] = conv_factor
+                paraview_settings["field_name"] = "{f}({unit_name})".format(
+                    f=compute_settings.field_quantity, unit_name=compute_settings.unit_name
+                )
+                json.dump(paraview_settings, f, indent=1)
+
+            img_path = "images/scan_{scan_index}/{field}/{time_index}/".format(
+                field=compute_settings.field_quantity,
+                scan_index=compute_settings.scan_index,
+                time_index=compute_settings.time_index
+            )
+            img_path = os.path.join(compute_settings.path, img_path)
+
+            os.makedirs(img_path, exist_ok=True)
+            my_env = os.environ.copy()
+            my_env["LD_LIBRARY_PATH"] = os.path.join(paraview, "lib")
+
+            p = sp.Popen([pvbatch, paraview_script, xdmf, marker_path, img_path, settings_path], env=my_env)
+            p.communicate()
+
+
+class SheetPyPlotRender(FenicsScalarFieldComputation):
+    name = "SheetPyPlot"
+    add_xml_result = False
+
+    def __init__(self, compute_settings: ComputeSettings):
+
+        self.compute_settings = compute_settings
+        super().__init__(compute_settings)
+
+    def __call__(self, ):
+
+        try:
+            self.make_images()
+        except FileNotFoundError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except NameError as e:
+            warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+                si=self.scan_index, ti=self.time_index))
+        except AttributeError as e:
+            warning(
+                "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+                    si=self.scan_index, ti=self.time_index))
+
+    def make_images(self, visual_conv=1):
+
+        u = self.u
+        conv_factor = self.c_conv
+        compute_settings = self.compute_settings
+
+        conv_factor = conv_factor * visual_conv
+
+        scan_index = compute_settings.scan_index
+        time_index = compute_settings.time_index
+
+        cell_color_key = compute_settings.cell_color_key
+        legend_title = compute_settings.legend_title
+        cell_colors = compute_settings.cell_colors
+        round_legend_labels = compute_settings.round_legend_labels
+
+        color_dict, legend_items, labels, categorical = get_color_dictionary(self.cell_df, cell_color_key,
+                                                                             cell_colors,
+                                                                             round_legend_labels=round_legend_labels)
+
+        cell_df = self.cell_df.loc[
+            (self.cell_df["scan_index"] == scan_index) &
+            (self.cell_df["time_index"] == time_index)
+            ]
+        u.set_allow_extrapolation(True)
+        rec_mesh, bbox = get_rectangle_plane_mesh(u)
+
+        aspect = abs(bbox[0][0] - bbox[0][1]) / abs(bbox[1][0] - bbox[1][1])
+
+        w = compute_settings.figure_width
+        h = w / aspect
+
+        from mpl_toolkits.axes_grid1 import Divider, Size
+
+        pad_l = w * compute_settings.pad_l
+        pad_r = w * compute_settings.pad_r
+
+        fig = plt.figure(figsize=(w + pad_l + pad_r, h + pad_l + pad_r))
+
+        vertical = [Size.Fixed(pad_l), Size.Fixed(h), Size.Fixed(pad_r)]
+        height = [Size.Fixed(pad_l), Size.Fixed(w), Size.Fixed(pad_r)]
+
+        divider = Divider(fig, (0, 0, 1, 1), height, vertical, aspect=False)
+        pseudo_color_axes = fig.add_axes(divider.get_position(), axes_locator=divider.new_locator(
+            nx=1,
+            ny=1
+        ))
+
+        legend_fig = plt.figure(figsize=(8, 8))
+
+        legend_gs = GridSpec(1, 2, legend_fig)
+        legend_axes = [
+            legend_fig.add_subplot(legend_gs[0]),
+            # legend_fig.add_subplot(legend_gs[1]),
+            # legend_fig.add_subplot(legend_gs[2])
+        ]
+
+        # for index, cell in cell_df.iterrows():
+        #     p = [
+        #         cell["x"],
+        #         cell["y"]
+        #     ]
+        #
+        #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+        #     if not key in color_dict:
+        #         color = "black"
+        #         message("no color provided for key {k}".format(k=key))
+        #     else:
+        #         color = color_dict[key]
+        #
+        #     fig.gca().scatter(p[0],p[1],marker=5, color=color)
+        #     # c = plt.Circle(p, 5, color=color)
+        #     # fig.gca().add_artist(c)
+
+        rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
+        u_slice = fcs.interpolate(u, rev_V)
+
+        mesh = u_slice.function_space().mesh()
+        slice_v = u_slice.compute_vertex_values(mesh) * conv_factor
+
+        triang = dlf.common.plotting.mesh2triang(mesh)
+
+        from matplotlib.cm import ScalarMappable
+        from matplotlib.colors import Normalize
+
+        # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
+
+        vmin = min(slice_v)
+        vmax = max(slice_v)
+
+        norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
+
+        mappable = ScalarMappable(norm=norm_cytokine, cmap="viridis")
+        if hasattr(compute_settings, "colorbar_range"):
+            tpl = compute_settings.colorbar_range
+            mappable.set_clim(tpl[0], tpl[1])
+
+        pseudo_color_axes.tricontourf(triang, slice_v, levels=100, norm=norm_cytokine)
+        pseudo_color_axes.set_xlabel(r"x ($\mu m $)")
+        pseudo_color_axes.set_ylabel(r"y ($\mu m $)")
+
+        for index, cell in cell_df.iterrows():
+            p = [
+                cell["x"],
+                cell["y"]
+            ]
+
+            key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
+            if not key in color_dict:
+                color = "black"
+                message("no color provided for key {k}".format(k=key))
+            else:
+                color = color_dict[key]
+
+            c = plt.Circle(p, 5, color=color, transform=fig.gca().transData)
+            pseudo_color_axes.add_artist(c)
+
+        if hasattr(compute_settings, "colorbar_range"):
+            cb_cytokine = legend_fig.colorbar(mappable, ax=legend_axes[0], fraction=0.5, aspect=10)
+            cb_cytokine.set_label("cytokine (nM)")
+        else:
+            cb_cytokine = legend_fig.colorbar(mappable)
+            cb_cytokine.set_label("cytokine (nM)")
+
+        if not categorical:
+            vmin = min(color_dict.keys())
+            vmax = max(color_dict.keys())
+
+            norm = Normalize(vmin=vmin, vmax=vmax)
+            cb = legend_fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors), ax=legend_axes[0], fraction=0.5,
+                                     aspect=10)
+            cb.set_label(cell_color_key)
+        else:
+            legend_axes[0].legend(handles=legend_items, labels=labels, title=legend_title)
+
+        img_path = "images/scan_{scan_index}/{field}/".format(
+            field=compute_settings.field_quantity,
+            scan_index=scan_index
+        )
+        file_name = "{time_index}".format(
+            time_index=time_index
+        )
+        os.makedirs(compute_settings.path + img_path, exist_ok=True)
+        os.makedirs(os.path.join(compute_settings.path + img_path + "/legends/"), exist_ok=True)
+        # fig.tight_layout()
+        # legend_fig.tight_layout()
+        legend_fig.savefig(compute_settings.path + img_path + "/legends/" + file_name + ".pdf")
+        fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
+
+
+class ScalarComputation(PostProcessComputation):
+
+    def __init__(self, compute_settings: ComputeSettings):
+        loader = compute_settings.loader_class(
+            os.path.join(compute_settings.path, os.path.dirname(os.path.dirname(compute_settings.solution_path))),
+            compute_settings.field_quantity
+        )
+        loader.load(compute_settings.time_index)
+        self.u = loader.get()
+
+        self.c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
+        self.grad_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
+
+
+class SD(FenicsScalarFieldComputation):
+    name = "SD"
+
+    def __call__(self):
+        sd: float = np.std(np.array(self.u.vector())) * self.c_conv
 
         return sd
 
 
-class c(PostProcessComputation):
+class MeshVolume(FenicsScalarFieldComputation):
+    name = "MeshVolume"
 
-    def __init__(self):
-        self.name = "Concentration"
+    def __call__(self):
+        return get_mesh_volume(self.u.function_space().mesh())
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        nodal_values = np.array(u.vector())
+
+class c(FenicsScalarFieldComputation):
+    name = "Concentration"
+
+    def __call__(self):
+        nodal_values = np.array(self.u.vector())
 
         mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])
-        return mean_c * c_conv
+        return mean_c * self.c_conv
 
 
-class grad(PostProcessComputation):
+class mean_c(ScalarComputation):
+    compatible_result_type = [thesis.main.GlobalResult.ScalarResult]
+    name = "Concentration"
 
-    def __init__(self):
-        self.name = "Gradient"
+    def __call__(self):
+        return self.u * self.c_conv
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        g = np.reshape(grad.vector().vec().array, (u.vector().vec().size, 3))
+
+class grad(FenicsScalarFieldComputation):
+    name = "Gradient"
+
+    def __call__(self):
+        g = np.reshape(self.grad.vector().vec().array, (self.u.vector().vec().size, 3))
         g = np.transpose(g)
 
         my_grad = np.sqrt(np.power(g[0], 2) + np.power(g[1], 2) + np.power(g[2], 2))
-        my_grad = np.mean(my_grad) * grad_conv
+        my_grad = np.mean(my_grad) * self.grad_conv
 
         return my_grad
 
-class CV(PostProcessComputation):
+
+class CV(FenicsScalarFieldComputation):
     """Defines a custom computation"""
 
-    def __init__(self):
-        """this name will appear in output dataframe"""
-        self.name = "CV"
+    name = "CV"
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        nodal_values = np.array(u.vector())
-        sd: float = np.std(nodal_values) * c_conv
-        mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])*c_conv
+    def __call__(self):
+        nodal_values = np.array(self.u.vector())
+        sd: float = np.std(nodal_values) * self.c_conv
+        mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0]) * self.c_conv
 
-        return sd/mean_c
+        return sd / mean_c
 
 
 def compute(compute_settings: ComputeSettings) -> str:
@@ -593,110 +931,69 @@ def compute(compute_settings: ComputeSettings) -> str:
     :return:
     """
 
-    try:
-        mesh = fcs.Mesh()
-        with fcs.XDMFFile(os.path.join(mesh_prefix, compute_settings.mesh_path)) as f:
-            f.read(mesh)
-    except Exception as e:
-        print("")
-
-    mesh_volume = get_mesh_volume(mesh)
-    function_space = fcs.FunctionSpace(mesh, "P", 1)
-
     result: et.Element = et.Element("File")
     result.append(et.fromstring(compute_settings.parameters))
+
+    model_index = str(compute_settings.model_index)
+    result.set("model_index", model_index)
+    result.set("model_name", str(compute_settings.model_name))
+
     scan_index = str(compute_settings.scan_index)
     result.set("scan_index", scan_index)
+    if compute_settings.replicat_index is None:
+        raise ValueError("replicat index cannot not be None")
+    result.set("replicat_index", str(compute_settings.replicat_index))
+
     time_index = str(compute_settings.time_index)
     result.set("time_index", time_index)
     result.set("time", str(compute_settings.time))
     result.set("success", str(compute_settings.success))
     global_results: et.Element = et.SubElement(result, "GlobalResults")
-    result.set("field_name", str(compute_settings.field))
+    result.set("field_name", str(compute_settings.field_name))
+    result.set("field_quantity", str(compute_settings.field_quantity))
+
+    # result.set("dist_plot_path", str(compute_settings.file_path))
 
     if compute_settings.success:
-        u: fcs.Function = fcs.Function(function_space)
-        with fcs.HDF5File(comm, os.path.join(compute_settings.path, compute_settings.file_path), "r") as f:
-            f.read(u, "/" + compute_settings.field)
 
-        result.set("dist_plot_path", str(compute_settings.file_path))
+        # mesh_volume = get_mesh_volume(u.function_space().mesh())
+        # mesh_volume_element = et.SubElement(global_results, "MeshVolume")
+        # mesh_volume_element.text = str(mesh_volume)
 
+        # if compute_settings.make_images:
+        #     try:
+        #         make_images(u, c_conv, compute_settings, visual_conv=compute_settings.additional_conversion)
+        #     except RuntimeError as e:
+        #         warning("could not make images for scanindex {si} at t = {ti}".format(si=scan_index, ti=time_index))
 
+        # if compute_settings.render_paraview:
+        #     try:
+        #         make_paraview_images(c_conv, compute_settings, visual_conv=compute_settings.additional_conversion)
+        #     except FileNotFoundError as e:
+        #         warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+        #             si=scan_index, ti=time_index))
+        #     except NameError as e:
+        #         warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
+        #             si=scan_index, ti=time_index))
+        #     except AttributeError as e:
+        #         warning(
+        #             "could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
+        #                 si=scan_index, ti=time_index))
 
-        message("running global computations for step {t} in scan {s}".format(t=time_index, s=scan_index))
+        for computation in compute_settings.computations:
 
-        mesh_volume_element = et.SubElement(global_results, "MeshVolume")
-        mesh_volume_element.text = str(mesh_volume)
-
-        p = ParameterSet.deserialize_from_xml(et.fromstring(compute_settings.parameters))
-
-        V_vec: fcs.VectorFunctionSpace = fcs.VectorFunctionSpace(mesh, "P", 1)
-
-        grad: fcs.Function = fcs.project(fcs.grad(u), V_vec, solver_type="gmres")
-
-        c_conv = get_concentration_conversion(compute_settings.unit_length_exponent)
-        g_conv = get_gradient_conversion(compute_settings.unit_length_exponent)
-
-        if compute_settings.make_images:
-            try:
-                make_images(u, c_conv, compute_settings, visual_conv = compute_settings.additional_conversion)
-            except RuntimeError as e:
-                warning("could not make images for scanindex {si} at t = {ti}".format(si = scan_index, ti = time_index))
-
-
-        if compute_settings.render_paraview:
-
-            try:
-                make_paraview_images(c_conv, compute_settings,  visual_conv = compute_settings.additional_conversion)
-            except FileNotFoundError as e:
-                warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(si=scan_index, ti=time_index))
-            except NameError as e:
-                warning("could not render paraview images for scanindex {si} at t = {ti}. pvbatch not found".format(
-                    si=scan_index, ti=time_index))
-            except AttributeError as e:
-                warning(e)
-                warning("could not render paraview images for scanindex {si} at t = {ti}. Running data from old simulation?".format(
-                    si=scan_index, ti=time_index))
-
-
-        for comp in compute_settings.computations:
+            comp = computation(compute_settings)
 
             assert isinstance(comp, PostProcessComputation)
             try:
                 if comp.add_xml_result:
 
-                    comp_result = comp(
-                        u,
-                        grad,
-                        c_conv,
-                        g_conv,
-                        mesh_volume,
-                        V=function_space,
-                        V_vec=V_vec,
-                        path = compute_settings.path,
-                        solution_path = compute_settings.solution_path,
-                        scan_index = compute_settings.scan_index,
-                        time_index = compute_settings.time_index,
-                        cell_df = compute_settings.cell_df,
-                        p = p
-                    )
+                    comp_result = comp()
 
                 else:
-                    comp(
-                        u,
-                        grad,
-                        c_conv,
-                        g_conv,
-                        mesh_volume,
-                        V=function_space,
-                        V_vec=V_vec,
-                        path=compute_settings.path,
-                        scan_index=compute_settings.scan_index,
-                        time_index=compute_settings.time_index,
-                        cell_df=compute_settings.cell_df,
-                        p=p)
+                    comp()
             except Exception as e:
-                message("could not perform post process computation: {name}".format(name = comp.name))
+                message("could not perform post process computation: {name}".format(name=comp.name))
                 raise e
                 break
 
@@ -715,18 +1012,8 @@ def compute(compute_settings: ComputeSettings) -> str:
     return filename
 
 
-def initialise(prefix, _cell_dataframe):
-
-    global mesh_prefix
-    mesh_prefix = prefix
-
-    global cell_dataframe
-    cell_dataframe = _cell_dataframe
-
-
 def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labels=3):
     cell_color_key = cell_color_key
-
 
     if isinstance(cell_colors, Dict):
         categorical = True
@@ -767,231 +1054,13 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
         legend_color_dict = color_dict
 
     ms = plt.rcParams['legend.fontsize']
-    ms = ms if not isinstance(ms,str) else 5
+    ms = ms if not isinstance(ms, str) else 5
 
     for type, color in legend_color_dict.items():
         legend_items.append(
-            plt.Line2D([0], [0], marker='o', color='w',markersize=ms,
+            plt.Line2D([0], [0], marker='o', color='w', markersize=ms,
                        markerfacecolor=color, markeredgewidth=0, linewidth=0)
         )
         labels.append(type)
 
-    return color_dict, legend_items,labels, categorical
-
-
-def make_paraview_images(conv_factor, compute_settings,  visual_conv = 1):
-
-    conv_factor = conv_factor * visual_conv
-    from thesis.main import __path__ as main_path
-
-    try:
-        for path in os.environ["PARAVIEW_PATH"].split(":"):
-            if os.path.exists(path):
-                paraview = path
-                break
-    except KeyError as e:
-        warning("PARAVIEW_PATH env variable not set. cannot render images")
-        return 0
-
-    paraview_script = main_path._path[0] + "/paraview_render_script.py"
-    pvbatch = os.path.join(paraview, "bin/pvbatch")
-
-    import subprocess as sp
-    import json
-    if "type_name" in compute_settings.markers.keys():
-
-
-        legend_title = compute_settings.legend_title
-        cell_colors = compute_settings.cell_colors
-        round_legend_labels = compute_settings.round_legend_labels
-
-        color_dict, legend_items, labels, categorical = get_color_dictionary(cell_dataframe, "type_name",
-                                                                             cell_colors,
-                                                                             round_legend_labels=round_legend_labels)
-
-        for type_name, entry in color_dict.items():
-            if type_name in compute_settings.marker_lookup.keys():
-                mesh_function_label = compute_settings.marker_lookup[type_name]
-                if not str(mesh_function_label) in compute_settings.paraview_settings["lookup"].keys():
-                    compute_settings.paraview_settings["lookup"][str(mesh_function_label)] = [type_name,color_dict[type_name],1]
-
-
-        xdmf = os.path.join(compute_settings.path, compute_settings.solution_path)
-        marker_path = os.path.join(compute_settings.path, compute_settings.markers["type_name"])
-        settings_path = os.path.join(compute_settings.path, "paraview_settings_{f}.json".format(f = compute_settings.field))
-
-
-        paraview_settings = compute_settings.paraview_settings
-
-        # for k,v in compute_settings.paraview_settings.items():
-        #         if isinstance(v,Dict):
-        #             pass
-        #         else:
-        #             paraview_settings[k] = v
-
-        with open(settings_path,"w") as f:
-            paraview_settings["conversion_factor"] = conv_factor
-            paraview_settings["field_name"] = "{f}({unit_name})".format(
-                f = compute_settings.field, unit_name = compute_settings.unit_name
-            )
-            json.dump(paraview_settings, f, indent=1)
-
-        img_path = "images/scan_{scan_index}/{field}/{time_index}/".format(
-            field=compute_settings.field,
-            scan_index=compute_settings.scan_index,
-            time_index = compute_settings.time_index
-        )
-        img_path = os.path.join(compute_settings.path, img_path)
-
-        os.makedirs(img_path,exist_ok=True)
-        my_env = os.environ.copy()
-        my_env["LD_LIBRARY_PATH"] = os.path.join(paraview,"lib")
-
-        p = sp.Popen([pvbatch, paraview_script, xdmf, marker_path, img_path, settings_path], env = my_env)
-        p.communicate()
-
-def make_images(u, conv_factor, compute_settings, visual_conv = 1):
-
-    conv_factor = conv_factor * visual_conv
-
-    scan_index = compute_settings.scan_index
-    time_index = compute_settings.time_index
-
-    cell_color_key = compute_settings.cell_color_key
-    legend_title = compute_settings.legend_title
-    cell_colors = compute_settings.cell_colors
-    round_legend_labels = compute_settings.round_legend_labels
-
-    color_dict, legend_items, labels, categorical = get_color_dictionary(cell_dataframe, cell_color_key, cell_colors,
-                                                                 round_legend_labels=round_legend_labels)
-
-    cell_df = cell_dataframe.loc[
-        (cell_dataframe["scan_index"] == scan_index) &
-        (cell_dataframe["time_index"] == time_index)
-        ]
-    u.set_allow_extrapolation(True)
-    rec_mesh, bbox = get_rectangle_plane_mesh(u)
-
-    aspect = abs(bbox[0][0]-bbox[0][1]) / abs(bbox[1][0]-bbox[1][1])
-
-    w = compute_settings.figure_width
-    h = w / aspect
-
-    from mpl_toolkits.axes_grid1 import Divider, Size
-
-    pad_l = w * compute_settings.pad_l
-    pad_r = w * compute_settings.pad_r
-
-    fig = plt.figure(figsize=(w+pad_l+pad_r,h+pad_l + pad_r))
-
-    vertical = [Size.Fixed(pad_l), Size.Fixed(h),Size.Fixed(pad_r)]
-    height = [Size.Fixed(pad_l), Size.Fixed(w),Size.Fixed(pad_r)]
-
-    divider = Divider(fig, (0, 0, 1, 1), height, vertical, aspect=False)
-    pseudo_color_axes = fig.add_axes(divider.get_position(),axes_locator=divider.new_locator(
-        nx=1,
-        ny=1
-    ))
-
-    legend_fig = plt.figure(figsize=(8,8))
-
-    legend_gs = GridSpec(1,2, legend_fig)
-    legend_axes = [
-        legend_fig.add_subplot(legend_gs[0]),
-        # legend_fig.add_subplot(legend_gs[1]),
-        # legend_fig.add_subplot(legend_gs[2])
-    ]
-
-    # for index, cell in cell_df.iterrows():
-    #     p = [
-    #         cell["x"],
-    #         cell["y"]
-    #     ]
-    #
-    #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
-    #     if not key in color_dict:
-    #         color = "black"
-    #         message("no color provided for key {k}".format(k=key))
-    #     else:
-    #         color = color_dict[key]
-    #
-    #     fig.gca().scatter(p[0],p[1],marker=5, color=color)
-    #     # c = plt.Circle(p, 5, color=color)
-    #     # fig.gca().add_artist(c)
-
-    rev_V = fcs.FunctionSpace(rec_mesh, "P", 1)
-    u_slice = fcs.interpolate(u, rev_V)
-
-    mesh = u_slice.function_space().mesh()
-    slice_v = u_slice.compute_vertex_values(mesh) * conv_factor
-
-    triang = dlf.common.plotting.mesh2triang(mesh)
-
-    from matplotlib.cm import ScalarMappable
-    from matplotlib.colors import Normalize
-
-    # plt.tricontourf(triang, slice_v, levels=np.linspace(0, 0.1, 100))
-
-
-    vmin = min(slice_v)
-    vmax = max(slice_v)
-
-    norm_cytokine = Normalize(vmin=vmin, vmax=vmax)
-
-    mappable = ScalarMappable(norm=norm_cytokine, cmap="viridis")
-    if hasattr(compute_settings,"colorbar_range"):
-        tpl = compute_settings.colorbar_range
-        mappable.set_clim(tpl[0], tpl[1])
-
-    pseudo_color_axes.tricontourf(triang, slice_v, levels=100, norm = norm_cytokine)
-    pseudo_color_axes.set_xlabel(r"x ($\mu m $)")
-    pseudo_color_axes.set_ylabel(r"y ($\mu m $)")
-
-    for index, cell in cell_df.iterrows():
-        p = [
-            cell["x"],
-            cell["y"]
-        ]
-
-        key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
-        if not key in color_dict:
-            color = "black"
-            message("no color provided for key {k}".format(k=key))
-        else:
-            color = color_dict[key]
-
-        c = plt.Circle(p, 5, color=color, transform = fig.gca().transData)
-        pseudo_color_axes.add_artist(c)
-
-
-
-    if hasattr(compute_settings, "colorbar_range"):
-        cb_cytokine = legend_fig.colorbar(mappable, ax = legend_axes[0],fraction = 0.5, aspect = 10)
-        cb_cytokine.set_label("cytokine (nM)")
-    else:
-        cb_cytokine = legend_fig.colorbar(mappable)
-        cb_cytokine.set_label("cytokine (nM)")
-
-    if not categorical:
-        vmin = min(color_dict.keys())
-        vmax = max(color_dict.keys())
-
-        norm = Normalize(vmin=vmin, vmax=vmax)
-        cb = legend_fig.colorbar(ScalarMappable(norm=norm, cmap=cell_colors),ax = legend_axes[0], fraction = 0.5, aspect = 10)
-        cb.set_label(cell_color_key)
-    else:
-        legend_axes[0].legend(handles=legend_items,labels=labels, title=legend_title )
-
-    img_path = "images/scan_{scan_index}/{field}/".format(
-        field=compute_settings.field,
-        scan_index=scan_index
-    )
-    file_name = "{time_index}".format(
-        time_index=time_index
-    )
-    os.makedirs(compute_settings.path + img_path, exist_ok=True)
-    os.makedirs(os.path.join(compute_settings.path + img_path +"/legends/"),exist_ok=True)
-    # fig.tight_layout()
-    # legend_fig.tight_layout()
-    legend_fig.savefig(compute_settings.path + img_path +"/legends/"+ file_name + ".pdf")
-    fig.savefig(compute_settings.path + img_path + file_name + ".png", dpi=compute_settings.dpi)
+    return color_dict, legend_items, labels, categorical

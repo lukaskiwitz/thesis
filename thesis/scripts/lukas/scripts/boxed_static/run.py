@@ -12,8 +12,7 @@ from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_
 os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
-from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
+from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
@@ -51,7 +50,6 @@ sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ex
 from thesis.scenarios.box_grid import get_parameter_templates
 from parameters import numeric
 
-
 templates = get_parameter_templates(numeric["unit_length_exponent"])
 
 t_D = templates["D"]
@@ -60,14 +58,14 @@ t_q = templates["q"]
 t_kd = templates["kd"]
 t_amax = templates["amax"]
 
-R = ScannablePhysicalParameter(t_R(40000), lambda x, v: x * v)
-q = ScannablePhysicalParameter(t_q(10), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-amax = ScannablePhysicalParameter(t_amax(1), lambda x, v: x * v)
-bc_type = ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
-is_linear = ScannablePhysicalParameter(MiscParameter("linear", True,is_global = True), lambda x, v: v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
-f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
+R = ScannableParameter(t_R(40000), lambda x, v: x * v)
+q = ScannableParameter(t_q(10), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
+amax = ScannableParameter(t_amax(1), lambda x, v: x * v)
+bc_type = ScannableParameter(MiscParameter("bc_type", "linear"), lambda x, v: v)
+is_linear = ScannableParameter(MiscParameter("linear", True, is_global=True), lambda x, v: v)
+kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
+f = ScannableParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 """Retrieves entity types from sim container"""
 naive = sc.get_entity_type_by_name("naive")
@@ -75,8 +73,7 @@ abs = sc.get_entity_type_by_name("abs")
 sec = sc.get_entity_type_by_name("sec")
 
 
-def sim_parameter_scan(scanable,collection_name, field_quantity, scan_space, scan_name = None):
-
+def sim_parameter_scan(scanable, collection_name, field_quantity, scan_space, scan_name=None):
     result = []
     for v in scan_space:
 

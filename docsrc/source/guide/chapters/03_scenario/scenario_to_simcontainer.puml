@@ -1,0 +1,20 @@
+@startuml
+    !include ../puml_src/classes.puml
+    remove @unlinked
+
+
+    Scenario *-- MyGlobalModel
+    MyGlobalModel *-- MyFieldTemplate
+
+
+    Scenario <- InternalSolver
+    EntityType -* Scenario
+    Scenario *-- MyEntityLocator
+    Scenario *-- MyParameterPool
+    MyParameterPool *-- ParameterTemplate
+
+@enduml
+
+
+
+

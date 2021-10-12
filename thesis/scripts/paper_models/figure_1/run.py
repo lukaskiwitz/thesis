@@ -4,9 +4,6 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-import random
-
-import numpy as np
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 from thesis.main.assign_fractions import assign_fractions
 
@@ -19,9 +16,7 @@ logging.basicConfig(filename=LOG_PATH+"debug.log",level=logging.INFO,filemode="w
 os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
-from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter
-from thesis.main.ScanContainer import ScanContainer, ScanSample
+from thesis.main.ScanContainer import ScanContainer
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
 

@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from typing import List, Dict
+from typing import Dict
 
 import numpy as np
 from scipy.constants import N_A
@@ -13,10 +13,9 @@ import thesis.main.SimContainer as SC
 from thesis.main.EntityType import CellType
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter, MiscParameter, \
     PhysicalParameterTemplate
-from PostProcessUtil import get_concentration_conversion as get_cc
+from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
 from thesis.main.bcFunctions import cellBC
 from thesis.main.my_debug import message
-import fenics as fcs
 
 """Sets up parameter templates. This are callable object, which return a full copy of themselves 
 with a new value (set in post units). This is so that conversion information has to be specified only one."""
@@ -75,7 +74,6 @@ def get_cuboid_domain(x, y, z, margin):
 
 
 def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
-
     message("---------------------------------------------------------------")
     message("Setup")
     message("---------------------------------------------------------------")
@@ -91,8 +89,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
     domain_parameter_set.add_collection(geometry)
     domain_parameter_set.name = "domain"
 
-
-    def q(u, p, fq, area = 1):
+    def q(u, p, fq, area=1):
 
         if p["scenario"] == "high_density":
 
@@ -101,14 +98,13 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
             D = p["D"]
             N = p["N"]
 
-
-            return -k_on*u*N*R/(area*D)
+            return -k_on * u * N * R / (area * D)
 
         elif p["scenario"] == "low_density":
-            
+
             return 0
         else:
-            raise  Exception
+            raise Exception
 
     parameters = []
 
@@ -119,23 +115,22 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
         else:
             parameters.append(MiscParameter(name, value))
 
-
-    s = ParameterSet("update",[ParameterCollection(cytokine["name"], parameters, field_quantity=cytokine["field_quantity"])])
+    s = ParameterSet("update",
+                     [ParameterCollection(cytokine["name"], parameters, field_quantity=cytokine["field_quantity"])])
     outer_integral = bc.OuterIntegral(q, "true", field_quantity=cytokine["field_quantity"])
-    outer_integral.p.update(s, override=True)
+    outer_integral.p.update(s, overwrite=True)
     outer_integral.p.add_collection(geometry)
     domain_bc = [
         outer_integral
     ]
 
     domain = thesis.main.Entity.DomainSphere(
-        [0,0,0],
+        [0, 0, 0],
         geometry_dict["radius"], domain_bc)
 
     sc = SC.SimContainer(global_parameter)
 
     """FieldProblems"""
-
 
     solver = thesis.main.MySolver.MyDiffusionSolver()
     solver.timeout = 60 ** 2
@@ -150,7 +145,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
         fieldProblem.ext_cache = ext_cache
 
     fieldProblem.set_outer_domain(domain)
-    sc.add_field(fieldProblem)
+    sc.add_problem(fieldProblem)
 
     """top level path"""
     sc.path = path
@@ -159,7 +154,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
 
     cell_bcs = [bc.Integral(cellBC, field_quantity=cytokine["field_quantity"])]
 
-    cell = Entity.Cell([0,0,0], geometry_dict["rho"], cell_bcs)
+    cell = Entity.Cell([0, 0, 0], geometry_dict["rho"], cell_bcs)
     cell.change_type = "cell"
     cell.p.add_parameter_with_collection(MiscParameter("id", 1))
     sc.add_entity(cell)
@@ -169,9 +164,7 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
     t_q = templates["q"]
     t_R = templates["R"]
 
-
-    p = [t_R(1e2),t_q(10)]
-
+    p = [t_R(1e2), t_q(10)]
 
     collection = ParameterCollection(cytokine["name"], p)
     collection.field_quantity = cytokine["field_quantity"]
@@ -179,7 +172,6 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
 
     cell_type = CellType(cell_p_set, "cell", "")
     sc.add_entity_type(cell_type)
-
 
     message("initializing sim container")
     """sets external path for subdomain markers"""
@@ -197,7 +189,6 @@ def setup(cytokine, boundary, geometry_dict, numeric, path, ext_cache=""):
 
 
 def make_global_parameters(cytokine: Dict, geometry: Dict, numeric: Dict, templates) -> ParameterSet:
-
     t_k_on = templates["k_on"]
     t_D = templates["D"]
     t_kd = templates["kd"]
@@ -210,7 +201,6 @@ def make_global_parameters(cytokine: Dict, geometry: Dict, numeric: Dict, templa
 
     numeric_c = ParameterCollection("numeric", [], is_global=True)
     global_parameter.add_collection(numeric_c)
-
 
     p = [t_R(0), t_q(0)]
     p.append(t_k_on(cytokine["k_on"]))

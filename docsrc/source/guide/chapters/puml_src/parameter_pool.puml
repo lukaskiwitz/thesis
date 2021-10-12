@@ -1,0 +1,8 @@
+@startuml
+    !include ../puml_src/classes.puml
+    remove @unlinked
+
+    MyParameterPool *-- ParameterTemplate
+    MyParameterPool ..> ParameterCollection
+    Parameter -* ParameterCollection
+@enduml

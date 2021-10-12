@@ -9,12 +9,14 @@ This is meant to be an internal documentation.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Guide:
 
    intro/intro
+   guide/guide
    intro/faq
    intro/contribute/doc
+   intro/glossary
 
 
 .. toctree::

@@ -1,18 +1,17 @@
-import os
 import time as t
 import logging
 import mpi4py.MPI as MPI
-from time import sleep
-import contextlib
-import sys
 from tqdm import tqdm
-from tqdm.contrib import DummyTqdmFile
+import logging
+import time as t
+
+import mpi4py.MPI as MPI
+from tqdm import tqdm
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-import os
 
 # so = se = open(os.environ["LOG_PATH"]+"full.log", 'w', 0)
 # # re-open stdout without buffering
@@ -36,7 +35,6 @@ import os
 #         sys.stdout, sys.stderr = orig_out_err
 
 
-import os
 # class OutputFilter:
 #
 #     def __init__(self, stream):
@@ -65,6 +63,7 @@ def debug(text):
     if rank == 0:
         logging.debug(text)
 
+
 def warning(text: str):
     if rank == 0:
         logging.warning(text)
@@ -76,11 +75,12 @@ def critical(text):
         logging.critical(text)
         tqdm.write(get_cli_format(text))
 
-def get_cli_format(text):
 
+def get_cli_format(text):
     l = t.localtime(t.time())
     text = "{h}:{m}:{s}: {message}".format(h=l.tm_hour, m=l.tm_min, s=l.tm_sec, message=text)
     return text
+
 
 def total_time(time: float, pre="", post=""):
     l = t.gmtime(time)
@@ -91,5 +91,3 @@ def total_time(time: float, pre="", post=""):
         s=l.tm_sec
     )
     message(pre + text + post)
-
-

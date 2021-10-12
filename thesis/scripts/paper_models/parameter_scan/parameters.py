@@ -49,14 +49,19 @@ cell_types_dict = [
      }
 ]
 
+d = lambda x, v: (x-10) * v + 10
+f = lambda n,d : np.ceil(n**(1/3) * d + d)
+grid = f(2000,d(20,1))
+
+
 """defines the variable aspects of the geometry. Unit is micro meters"""
 geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 300,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 300,
-    "z_grid":300,# comment out for single cell layer
+    "x_grid": grid,  # dimensions of the cell grid (edge length in um)
+    "y_grid": grid,
+    "z_grid":grid,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
 }
 
@@ -72,7 +77,7 @@ numeric = {
     "krylov_rtol": 1e-5,# linear solver relative tolerance
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
+    "dofs_per_node": 15000,#calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": int(os.cpu_count()/2),# max nodes for fenics solver
     "cells_per_worker": 50,
     "max_pool_size": 16,#max number of worker to extract boundary conditions at runtime
@@ -92,10 +97,11 @@ else:
 
 
 user = getpass.getuser()
-model_name = "boxed_static_300"
-# model_name = "boxed_static_200"
-name = "test_3"
-path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
+# get_model_name = "boxed_static_300"
+
+model_name = "boxed_static"
+name = "distance_scan"
+path = "/{extra}/{u}/paper_models/prelim_{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
 IMGPATH = path + "images/"
 
 """

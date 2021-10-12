@@ -4,35 +4,31 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-import random
-
 import numpy as np
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
+
 import logging
 
 os.environ["LOG_PATH"] = path
 LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH,exist_ok=True)
-logging.basicConfig(filename=LOG_PATH+"debug.log",level=logging.INFO,filemode="w", format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
+os.makedirs(LOG_PATH, exist_ok=True)
+logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
+                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
 import thesis.main.StateManager as StateManager
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter, PhysicalParameter
-from thesis.main.ScanContainer import ScanContainer, ScanSample, ScanDefintion, ScanType
-from thesis.main.SimContainer import SimContainer
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate
+from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup
-import mpi4py.MPI as MPI
 from thesis.main.assign_fractions import assign_fractions
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
+
 
 def updateState(sc, t):
-
     assign_fractions(sc, t)
+
     sc.apply_type_changes()
 
-
-    R = np.unique([e.p.get_physical_parameter("R","IL-2").get_in_post_unit() for e in sc.entity_list if e.type_name == "abs"])
+    R = np.unique(
+        [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in sc.entity_list if e.type_name == "abs"])
     assert len(R) == 1
     E = R[0]
     var = 1
@@ -42,107 +38,122 @@ def updateState(sc, t):
     for e in sc.entity_list:
         if e.type_name == "abs":
             R_draw = np.random.lognormal(mean, tmp_sigma)
-            e.p.get_physical_parameter("R","IL-2").set_in_post_unit(R_draw)
-
-
-
+            e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(R_draw)
 
 
 scan_container = ScanContainer()
 
-sc: SimContainer = setup(cytokines, cell_types_dict, [], geometry, numeric, path, ext_cache)
+from thesis.main.MyParameterPool import MyParameterPool
 
+custom_pool = MyParameterPool()
+custom_pool.add_template(PhysicalParameterTemplate(PhysicalParameter("my_p", 1, to_sim=1e-4)))
+scenario = setup(cytokines, cell_types_dict, [], geometry, numeric, custom_pool=custom_pool)
+pool = scenario.parameter_pool
 
-from thesis.scenarios.box_grid import get_parameter_templates
-from parameters import numeric
-
-
-templates = get_parameter_templates(numeric["unit_length_exponent"])
-
-t_D = templates["D"]
-t_R = templates["R"]
-t_q = templates["q"]
-t_kd = templates["kd"]
-t_amax = templates["amax"]
-t_Kc = templates["Kc"]
-t_kendo = templates["k_endo"]
-t_koff = templates["k_off"]
+t_D = pool.get_template("D")
+t_R = pool.get_template("R")
+t_q = pool.get_template("q")
+t_kd = pool.get_template("kd")
+t_amax = pool.get_template("amax")
+t_Kc = pool.get_template("Kc")
+t_kendo = pool.get_template("k_endo")
+t_koff = pool.get_template("k_off")
 
 from parameters import R_h, q
 from parameters import rat as ratio, f_sec as fs, f_abs as fr
 
-R_constant = ScannablePhysicalParameter(t_R(R_h), lambda x, v: (5e3 * 0.9)/fr(v))
-R = ScannablePhysicalParameter(t_R(R_h), lambda x, v: x * v)
-q_constant = ScannablePhysicalParameter(t_q(q), lambda x, v:(30 * 0.1)/fs(v))
+R_constant = ScannableParameter(t_R(R_h), lambda x, v: (5e3 * 0.9) / fr(v))
+R = ScannableParameter(t_R(R_h), lambda x, v: x * v)
+q_constant = ScannableParameter(t_q(q), lambda x, v: (30 * 0.1) / fs(v))
 
+q = ScannableParameter(t_q(q), lambda x, v: x * v)
+D = ScannableParameter(t_D(10), lambda x, v: x * v)
+kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
 
-q = ScannablePhysicalParameter(t_q(q), lambda x, v: x * v)
-D = ScannablePhysicalParameter(t_D(10), lambda x, v: x * v)
-kd = ScannablePhysicalParameter(t_kd(0.1), lambda x, v: x * v)
+kendo = ScannableParameter(t_kendo(1.1e-3), lambda x, v: x * v)
+koff = ScannableParameter(t_koff(0.83), lambda x, v: x * v)
 
-kendo = ScannablePhysicalParameter(t_kendo(1.1e-3), lambda x, v: x * v)
-koff = ScannablePhysicalParameter(t_koff(0.83), lambda x, v: x * v)
-
-
-f_sec = ScannablePhysicalParameter(PhysicalParameter("sec", ratio, is_global=True), lambda x,v: fs(v))
-f_abs = ScannablePhysicalParameter(PhysicalParameter("abs", ratio, is_global=True), lambda x,v: fr(v))
-
+f_sec = ScannableParameter(PhysicalParameter("sec", ratio, is_global=True), lambda x, v: fs(v))
+f_abs = ScannableParameter(PhysicalParameter("abs", ratio, is_global=True), lambda x, v: fr(v))
 
 """Retrieves entity types from sim container"""
-naive = sc.get_entity_type_by_name("naive")
-abs = sc.get_entity_type_by_name("abs")
-sec = sc.get_entity_type_by_name("sec")
+default = scenario.get_entity_type_by_name("default")
+abs = scenario.get_entity_type_by_name("abs")
+sec = scenario.get_entity_type_by_name("sec")
 
-# s = 4
-# scan_space = np.concatenate([np.logspace(-1,0,int(s/2)), np.logspace(0,1,int(s/2)+1)[1:]])
+s = 4
+fc = 10
+e = np.log10(fc) / np.log10(10)
+scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
+
+fc = 10
+e = np.log10(fc) / np.log10(10)
+scan_space_2 = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
 scan_space = [0.1,1,10]
+scan_space_2 = [0.1,1,10]
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
-q_constant_def = ScanDefintion(q_constant,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
-R_constant_df = ScanDefintion(R_constant,"IL-2",scan_space,ScanType.ENTITY, field_quantity="il2",entity_type=abs)
+q_constant_def = ScanDefintion(q_constant, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
+R_constant_df = ScanDefintion(R_constant, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=abs)
 
 f_abs_def = ScanDefintion(f_abs, "fractions", scan_space, ScanType.GLOBAL)
 
-D_def = ScanDefintion(D,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
-kd_def = ScanDefintion(kd,"IL-2",  scan_space, ScanType.GLOBAL, field_quantity = "il2")
+D_def = ScanDefintion(D, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
+kd_def = ScanDefintion(kd, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
 
-sec_q_def = ScanDefintion(q,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = sec)
-abs_R_def = ScanDefintion(R,"IL-2",  scan_space, ScanType.ENTITY, field_quantity = "il2", entity_type = abs)
+sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
+abs_R_def = ScanDefintion(R, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=abs)
 
+kendo_def = ScanDefintion(kendo, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
+koff_def = ScanDefintion(koff, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
 
-kendo_def = ScanDefintion(kendo, "IL-2", scan_space, ScanType.GLOBAL, field_quantity = "il2")
-koff_def = ScanDefintion(koff, "IL-2", scan_space, ScanType.GLOBAL, field_quantity = "il2")
+from thesis.main.ParameterSet import MiscParameter
 
+d = lambda x, v: (x - 10) * v + 10
+f = lambda n, d: np.ceil(n ** (1 / 3) * d + d)
 
-for bc, linear in [("linear",True),("patrick_saturation",False)]:
+distance = ScannableParameter(MiscParameter("distance", 20), d)
+margin = ScannableParameter(MiscParameter("margin", 20), d)
+n = 200
 
+x_grid = ScannableParameter(MiscParameter("x_grid", 100), lambda x, v: f(n, d(20, v)))
+y_grid = ScannableParameter(MiscParameter("y_grid", 100), lambda x, v: f(n, d(20, v)))
+z_grid = ScannableParameter(MiscParameter("z_grid", 100), lambda x, v: f(n, d(20, v)))
+
+distance_def = ScanDefintion(distance, "geometry", scan_space_2, ScanType.GLOBAL)
+margin_def = ScanDefintion(margin, "geometry", scan_space_2, ScanType.GLOBAL)
+x_def = ScanDefintion(x_grid, "geometry", scan_space_2, ScanType.GLOBAL)
+y_def = ScanDefintion(y_grid, "geometry", scan_space_2, ScanType.GLOBAL)
+z_def = ScanDefintion(z_grid, "geometry", scan_space_2, ScanType.GLOBAL)
+
+for bc, linear in [("linear", True), ("patrick_saturation", False)]:
     bc_def = lambda t: ScanDefintion(
-        ScannablePhysicalParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc),"IL-2",scan_space,ScanType.ENTITY,
+        ScannableParameter(MiscParameter("bc_type", "linear"), lambda x, v: bc), "IL-2", scan_space,
+        ScanType.ENTITY,
         field_quantity="il2", entity_type=t
     )
-    linear_def = ScanDefintion(ScannablePhysicalParameter(MiscParameter("linear", True, is_global = True), lambda x, v: linear),
-                               "numeric", scan_space, ScanType.GLOBAL)
+    linear_def = ScanDefintion(
+        ScannableParameter(MiscParameter("linear", True, is_global=True), lambda x, v: linear),
+        "numeric", scan_space, ScanType.GLOBAL)
+
+    scan_container.add_single_parameter_scan(
+        [margin_def, x_def, y_def, z_def, bc_def(sec), bc_def(abs), linear_def, distance_def], scan_name="distance",
+        remesh_scan_sample=True)
 
     if linear == False:
         scan_container.add_single_parameter_scan([kendo_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "kendo")
         scan_container.add_single_parameter_scan([koff_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "Koff")
 
+
     scan_container.add_single_parameter_scan([D_def,bc_def(sec),bc_def(abs),linear_def],scan_name = "D")
-    scan_container.add_single_parameter_scan([kd_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "kd")
+    scan_container.add_single_parameter_scan([kd_def, bc_def(sec), bc_def(abs), linear_def], scan_name="kd")
 
     scan_container.add_single_parameter_scan([sec_q_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "sec_q")
     scan_container.add_single_parameter_scan([abs_R_def,bc_def(sec),bc_def(abs),linear_def], scan_name = "abs_R")
 
-    scan_container.add_single_parameter_scan([f_abs_def, f_sec_def,bc_def(sec),q_constant_def,R_constant_df,bc_def(abs),linear_def], scan_name = "ratio")
-
-stMan = StateManager.StateManager(path)
-stMan.sim_container = sc
-stMan.scan_container = scan_container
-stMan.dt = 1
-
-# stMan.T = [0,1]
-stMan.T = list(range(11))
+    scan_container.add_single_parameter_scan(
+        [f_abs_def, f_sec_def, bc_def(sec), q_constant_def, R_constant_df, bc_def(abs), linear_def], scan_name="ratio")
 
 
 def pre_scan(state_manager, scan_index):
@@ -153,18 +164,18 @@ def pre_step(sc, time_index, t, T):
     updateState(sc, time_index)
 
 
+stMan = StateManager.StateManager(path)
+stMan.scenario = scenario
+
+stMan.marker_lookup = {"default": 1, "sec": 2, "abs": 3}
+
+stMan.compress_log_file = True
 stMan.pre_scan = pre_scan
-sc.pre_step = pre_step
+stMan.pre_step = pre_step
 
+stMan.scan_container = scan_container
+# stMan.T = [0, 1, 2]
+stMan.T = range(11)
 
-"""Runs the ParameterScan"""
-stMan.sim_container.save_domain()
-stMan.run()
-
-import json
-records = stMan.record.gather_records()
-records_path = os.path.join(stMan.path, "records")
-os.makedirs(records_path,exist_ok=True)
-
-with open(os.path.join(records_path,"dump.json"),"w") as f:
-    json.dump(records,f)
+stMan.run(ext_cache=ext_cache)
+# stMan.run()

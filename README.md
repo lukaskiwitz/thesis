@@ -1,4 +1,10 @@
 <h1>
+Documentation
+</h1>
+A documentation is hosted at https://lukaskiwitz.github.io/thesis/
+
+
+<h1>
     Requirements
 </h1>
 

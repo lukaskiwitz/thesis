@@ -2,12 +2,11 @@ import random
 import sys
 
 import numpy as np
+
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
 from setup import setup
-
-import thesis.main.StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannablePhysicalParameter
+from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
 
@@ -55,12 +54,12 @@ scan_container = ScanContainer()
 
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
 
-# R = ScannablePhysicalParameter(R(1000), lambda x, v: x * v)
-# q = ScannablePhysicalParameter(q(1), lambda x, v: x * v)
-# D = ScannablePhysicalParameter(D(10), lambda x, v: x * v)
-# kd = ScannablePhysicalParameter(kd(0.1), lambda x, v: x * v)
-th = ScannablePhysicalParameter(MiscParameter("threshold", 0.06), lambda x, v: x * v)
-f = ScannablePhysicalParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
+# R = ScannableParameter(R(1000), lambda x, v: x * v)
+# q = ScannableParameter(q(1), lambda x, v: x * v)
+# D = ScannableParameter(D(10), lambda x, v: x * v)
+# kd = ScannableParameter(kd(0.1), lambda x, v: x * v)
+th = ScannableParameter(MiscParameter("threshold", 0.06), lambda x, v: x * v)
+f = ScannableParameter(MiscParameter("sec", 0.1, is_global=True), lambda x, v: v)
 
 default = sc.get_entity_type_by_name("default")
 
