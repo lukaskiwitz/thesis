@@ -1,4 +1,4 @@
-name: Build and commit documentation
+name: documentation
 
 on: workflow_dispatch
 
