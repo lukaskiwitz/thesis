@@ -1,3 +1,5 @@
+[![documentation](https://github.com/lukaskiwitz/thesis/actions/workflows/build_doc.yml/badge.svg)](https://github.com/lukaskiwitz/thesis/actions/workflows/build_doc.yml)
+
 <h1>
 Documentation
 </h1>
