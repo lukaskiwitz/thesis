@@ -71,14 +71,16 @@ class ParameterSet:
 
     def add_collection(self, collection: 'ParameterCollection') -> None:
         """
-        Adds a collection to this parameter set. Name must be unique.
+        Adds a collection to this parameter set.
 
         :param collection: collection to add
 
         """
-        assert self.get_collection(collection.name) is None
 
-        self.collections.append(collection)
+        if self.get_collection(collection.name) is None:
+            self.collections.append(collection)
+        else:
+            self.get_collection(collection.name).update(collection, overwrite=True)
 
     def get_collection(self, name: str) -> Union['ParameterCollection', None]:
 
