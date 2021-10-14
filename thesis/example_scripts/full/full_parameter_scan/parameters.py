@@ -20,41 +20,32 @@ cytokines = [
 """Sets up cells types. T
 The first entry is the default cell type. There the "fraction" entry is meaningless.
 """
+
+R_l = 1e2
 R_h = 1e4
-R_l = 0
 q = 10
 
-lol = [1,2,3]
-v = 1/10
+v = 0.5
+
+f_sec = lambda i: 0.04
+f_n = lambda i: -1 * (f_sec(v * i) - 1) * (i * v) / (1 + i * v)
+f_abs = lambda i: -1 * (f_sec(v * i) - 1) / (1 + (i * v))
 
 cell_types_dict = [
-    {"name": "default",
-     "mc":0,
-     "fraction": 0,
-     "il2": {"R": 0, "q": 0, "Kc": 0.01,"ths":0.01, "bc_type": "R_saturation"},
-     "misc":{"lol":lol},
-     "internal_solver": "RuleBasedSolver"
+    {"name": "naive",
+     "fraction": f_n(v),
+     "il2": {"q": 0, "R": R_l, "amax": 0, "Kc": 0.01, "bc_type": "R_saturation"},
+     "internal_solver": ""
      },
     {"name": "sec",
-     "mc":0,
-     "fraction": v / (v + 1),
-     "il2": {"R": R_l, "q": q, "Kc": 0.01, "ths":0.01, "bc_type": "R_saturation"},
-     "misc":{"lol":lol},
-     "internal_solver": "RuleBasedSolver"
+     "fraction": f_sec(v),
+     "il2": {"q": q, "R": R_l, "amax": 0, "Kc": 0.01, "bc_type": "R_saturation"},
+     "internal_solver": ""
      },
     {"name": "abs",
-     "mc":0,
-     "fraction": 1/(v+1),
-     "il2": {"R": R_h, "q": 0, "Kc": 0.01,"ths":0.01, "bc_type": "R_saturation"},
-     "misc":{"lol":lol,"my_p":1},
-     "internal_solver": "RuleBasedSolver"
-     }
-]
-
-boundary = [
-    {"name": "left_boundary",
-     "expr":"near(x[0],0)",
-     "il2":{"q":0, "R":0, "Kc":0.01, "bc_type": "R_saturation"},
+     "fraction": f_abs(v),
+     "il2": {"q": 0, "R": R_h, "amax": 0, "Kc": 0.01, "bc_type": "R_saturation"},
+     "internal_solver": ""
      }
 ]
 
@@ -65,8 +56,8 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 150,  # dimensions of the cell grid (edge length in um)
     "y_grid": 150,
-    "z_grid": 150,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
+    "z_grid": 150,  # comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
 """
@@ -75,16 +66,16 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 """
 numeric = {
     "linear_solver": "gmres",
-    "preconditioner": "hypre_amg",
-    "linear": False,# use linear fenics solver
+    "preconditioner": "amg",
+    "linear": False,  # use linear fenics solver
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,# linear solver relative tolerance
+    "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#calc_boundary_values degrees of freedom per mpi node for pde solving
-    "max_mpi_nodes": os.cpu_count()/2,# max nodes for fenics solver
+    "newton_rtol": 1e-5,  # newton method relative tolerance
+    "dofs_per_node": 2 * 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
+    "max_mpi_nodes": int(os.cpu_count()),  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count()/2,#max number of worker to extract boundary conditions at runtime
+    "max_pool_size": 16,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
     "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion
@@ -93,6 +84,7 @@ numeric = {
 """
 absolute paths
 """
+
 if os.path.isdir("/extra2"):
     extra = "extra2"
 else:
@@ -101,8 +93,8 @@ else:
 
 user = getpass.getuser()
 model_name = "full_parameter_scan"
-name = "distance_scan"
-path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
+name = "version_1"
+path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 IMGPATH = path + "images/"
 
 """
