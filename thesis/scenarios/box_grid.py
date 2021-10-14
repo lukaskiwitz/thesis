@@ -156,7 +156,8 @@ def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, paramete
     for piece in boundary:
         for key, line in piece.items():
             if key in [c["field_quantity"] for c in cytokines]:
-                outer_integral = OuterIntegral(cellBC, piece["expr"], p=deepcopy(domain_parameter_set),
+                expr = piece["expr"]
+                outer_integral = OuterIntegral(cellBC, expr, p=deepcopy(domain_parameter_set),
                                                field_quantity=key, name=piece["name"])
 
                 i = [c["field_quantity"] for c in cytokines].index(key)
@@ -210,6 +211,8 @@ def distribute_receptors(entity_list, replicat_index, type_name, var=1):
         [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in entity_list if e.type_name == type_name])
     assert len(R) == 1
     E = R[0]
+    if E == 0:
+        return None
     np.random.seed(replicat_index)
 
     tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
