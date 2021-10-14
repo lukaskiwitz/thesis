@@ -4,7 +4,6 @@ import seaborn as sns
 
 from parameters import path
 
-# path = "/extra/brunner/thesis/kinetic/standard/5_delayed/run0/"
 """
 post_process saves the data in pandas dataframes. These can then be used to visualise the results.
 seaborn is very convenient for plotting directly from dataframes.
