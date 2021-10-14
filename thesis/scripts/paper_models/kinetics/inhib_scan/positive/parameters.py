@@ -140,7 +140,7 @@ hdd = "extra2" if os.path.exists("/extra2") else "extra"
 
 user = getpass.getuser()
 
-model_name = "Treg_scan"
+model_name = "inhib_scan"
 name = "positive"
 path = "/{extra}/{u}/paper_models/kinetics/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = hdd)
 IMGPATH = path + "images/"

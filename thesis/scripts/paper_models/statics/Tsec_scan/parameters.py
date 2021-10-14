@@ -42,7 +42,7 @@ cell_types_dict = [
      },
     {
      "name": "Tsec",
-     "fraction": 0.1,
+     "fraction": 0.2,
      "il2": {"R": 1e2, "q": 30, "bc_type": "linear", "global_q": True}, #"R_saturation"
      "misc": {"sigma":0,
               "gamma": 1,
