@@ -46,20 +46,18 @@ b = (96 - 2 * margin_b) / MM_PER_INCH
 
 f = lambda type_name: lambda df: df.loc[df["type_name"] == type_name]
 
-plotter.subplots(3, 3, figsize=(3 * a, 3 * b), external_legend="axes")
+plotter.subplots(2, 2, figsize=(2 * a, 2 * b), external_legend="axes")
 
-plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_index_key,
+plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_name_key,
                                 legend="brief")
-plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_index_key,
+plotter.global_time_series_plot("Concentration", hue=plotter.scan_index_key, style=plotter.model_name_key,
                                 ylim=[0, 0.1])
 
-plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, ylog=False, filter=f("abs"),
+plotter.count_plot(style=plotter.model_name_key, hue=plotter.scan_index_key, ylog=False, filter=f("abs"),
                    subtitle="responder")
-plotter.count_plot(style=plotter.model_index_key, hue=plotter.scan_index_key, ylog=False, filter=f("sec"),
+plotter.count_plot(style=plotter.model_name_key, hue=plotter.scan_index_key, ylog=False, filter=f("sec"),
                    subtitle="secretors")
 
-plotter.cell_steady_state_plot("IL-2_surf_c", hue="type_name", ylog=False, style=plotter.model_index_key, xlog=False)
-plotter.steady_state_count(hue="type_name", legend="brief", style=plotter.model_index_key, xlog=False)
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection.pdf")
 plotter.show()

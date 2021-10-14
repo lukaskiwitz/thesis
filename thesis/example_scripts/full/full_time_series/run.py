@@ -15,8 +15,7 @@ os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
 from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import ScannableParameter
-from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
+from thesis.main.ScanContainer import ScanContainer
 from thesis.scenarios.box_grid import setup, assign_fractions
 
 from scipy.stats import poisson
@@ -32,6 +31,7 @@ class RuleBasedSolver(InternalSolver):
 
     def on_type_change(self, p, replicat_index, entity=None):
         pass
+
 
     def step(self, t1, t2, dt, p, entity=None, **kwargs):
 
@@ -98,32 +98,11 @@ scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric)
 """Imports the parameter Templates"""
 parameter_pool = scenario.parameter_pool
 
-"""Retrieves an entity type from scenario for scanning"""
+"""Retrieves an entity type from 03_scenario for scanning"""
 default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
-"""
-Sets up a parameter scan. ScannableParameter takes a function with two arguments, 
-here conveniently a lambda function, to set the given PhysicalParameter according to input. 
-A simpler definition would be 'lambda x, v: v'. 
-scan_space sets up the values which are in the end inserted into the lambda function. ScanDefinition then combines
-both while defining on which entity this scan should be applied to with ScanType.[...].
-To actually run this scan setup we attach it to the scan_container with add_single_parameter_scan.
-"""
-
-"""log scan space centered around 1"""
-s = 3
-fc = 5
-e = np.log10(fc) / np.log10(10)
-# scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
-scan_space = np.linspace(50, 150, s)
-
-# scan over secretion rate for sec-cells
-t_q = parameter_pool.get_template("q")
-q = ScannableParameter(t_q(10), lambda x, v: v)
-sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
-# scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
 
 """
 signs up the internal solver with the sim container. 
@@ -144,22 +123,20 @@ stMan.compress_log_file = True
 
 """sets up time range"""
 t_unit = 3600
-stMan.T = np.arange(0, t_unit * 20, t_unit / 5)
-# stMan.T = [0,t_unit,2*t_unit]
+stMan.T = np.arange(0, t_unit * 10, t_unit / 5)
 
 """
 Defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types.
-With access to state_manager this can be used for any manipulation of the system pre scan.
+With access to state_manager this can be used for any manipulation of the system pre replicate.
 """
 
 
-def pre_scan(state_manager, scan_index):
-    update_state(state_manager.sim_container, 0)
+def pre_replicat(sim_container, time_index, replicat_index, t, T):
+    update_state(sim_container, replicat_index)
 
 
-stMan.pre_scan = pre_scan
-# stMan.pre_replicat = pre_scan
+stMan.pre_replicat = pre_replicat
 
 """Runs the ParameterScan"""
-stMan.run(model_names=["pde_model", "ode_model"], ext_cache=ext_cache, number_of_replicats=10)
+stMan.run(model_names=["pde_model", "ode_model"], ext_cache=ext_cache, number_of_replicats=3)
