@@ -331,6 +331,18 @@ class SimContainer:
                 entity.set_cell_type(entity_type, internal_solver, replicat_index)
                 entity.change_type = ""
 
+    def reapply_entity_types(self, replicat_index):
+
+        for i, entity in enumerate(self.entity_list):
+            entity.get_surface_area()
+
+            debug("changing type for entity {id}".format(id=entity.id))
+            entity_type = self.get_entity_type_by_name(entity.type_name)
+            assert entity_type is not None
+
+            internal_solver = self.get_internal_solver_by_name(entity_type.internal_solver)
+            entity.set_cell_type(entity_type, internal_solver, replicat_index)
+
     def step(self, dt: float, time_index: int, replicat_index: int) -> None:
 
         """
