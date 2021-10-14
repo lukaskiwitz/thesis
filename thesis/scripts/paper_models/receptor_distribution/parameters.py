@@ -24,10 +24,11 @@ The first entry is the default cell type. There the "fraction" entry is meaningl
 """
 Receptors per cell have to be edited in run.py as "RpC" variable!!!
 """
-q = 30
+q = 5
 
 
 cell_types_dict = [
+
     {"name": "naive",
      "fraction": 0,
      "il2": {"q": 0, "R":0, "amax": 0, "Kc": 0.01,"bc_type": "linear"},
@@ -50,10 +51,10 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 300,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 300,
-    "z_grid":300,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
+    "x_grid": 100,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 100,
+    "z_grid": 100,  # comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
 """
@@ -84,19 +85,16 @@ absolute paths
 if os.path.isdir("/extra2"):
     extra = "extra2"
 else:
-    extra ="extra"
+    extra = "extra"
 
 user = getpass.getuser()
-model_name = "receptor_distribution_box_300"
-name = "test_5"
+model_name = "receptor_distribution"
+name = "test_1"
 
-
-
-path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
+path = "/{extra}/{u}/paper_models/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 IMGPATH = path + "images/"
 
 """
 relative to path; best to leave this alone
 """
 ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
-

@@ -4,13 +4,11 @@ import sys
 sys.path.append("/home/lukas/thesis/main/")
 sys.path.append("/home/lukas/thesis/scenarios/")
 
-import numpy as np
 from parameters import path
 
 os.environ["LOG_PATH"] = path
 
-from thesis.main.PostProcess import PostProcessor, PostProcessComputation
-
+from thesis.main.PostProcess import PostProcessor
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:
@@ -36,6 +34,5 @@ pp.image_settings = {
     # "colorbar_range":(0.6,1.3)
 }
 
-
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.run_post_process(threads, make_images=False, kde=False, extra_cell_constants=False)
+pp.run_post_process(threads)

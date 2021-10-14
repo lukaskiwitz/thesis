@@ -1,10 +1,7 @@
-import pandas as pd
-
-from thesis.main.MyPlotter import Plotter
-from parameters import path, IMGPATH
-import matplotlib.pyplot as plt
 import numpy as np
-import os
+
+from parameters import path, IMGPATH
+from thesis.main.MyPlotter import Plotter
 
 # path = '/extra/kiwitz/thesis_models/receptor_distribution_box_300/f_new_test_3_non_linear/'
 # IMGPATH = os.path.join(path,"images") + "/"
@@ -50,24 +47,24 @@ plotter.scan_scale = plotter.global_df.v_v.unique()
 f = lambda df: df
 stat_max = lambda df: df.loc[df.activation > 0.5]
 
-b = 8.3/6
+b = 8.3 / 2
 a = np.sqrt(2) * b * 1.2
 
-plotter.subplots(2,3, external_legend="axes", figsize=(a, b))
+plotter.subplots(2, 3, external_legend="axes", figsize=(a, b))
 plotter.filter = f
 
-plotter.global_steady_state_plot("Concentration","v_v",xlog=False)
-plotter.global_steady_state_plot("SD","v_v",xlog=False,style=True, legend="brief")
+plotter.global_steady_state_plot("Concentration", "v_v", xlog=False, style=plotter.model_name_key)
+# plotter.global_steady_state_plot("SD","v_v",xlog=False,style=True, legend="brief")
 
-plotter.filter =  lambda df: df.loc[(df.numeric_linear == True) ]
+plotter.filter = lambda df: df.loc[(df.numeric_linear == True)]
 
-
-plotter.cell_steady_state_plot("activation",x_name="v_v", hue="type_name",
+plotter.cell_steady_state_plot("activation", x_name="v_v", hue="type_name", style=plotter.model_name_key,
                                xlog=False,
-                               ci=None,xlim = [0,1], legend="brief", categorical = False)
-plotter.cell_plot("v_v","activation", filter=lambda df: df.loc[(df.type_name == "abs")],
-                               xlog=False, hue="min_distance", palette_name="plasma", condition=stat_max, count=True,
-                               ci=None,legend=None,xlim = [0,1], categorical = False,overlay = True)
+                               ci=None, xlim=[0, 1], legend="brief", categorical=False)
+plotter.cell_plot("v_v", "activation", filter=lambda df: df.loc[(df.type_name == "abs")],
+                  style=plotter.model_name_key,
+                  xlog=False, hue="min_distance", palette_name="plasma", condition=stat_max, count=True,
+                  ci=None, legend=None, xlim=[0, 1], categorical=False, overlay=True)
 
 
 plotter.make_legend()
