@@ -108,7 +108,11 @@ def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], 
 
         for c in cytokines:
             if c["field_quantity"] in ct.keys():
-                ct_dict = ct[c["field_quantity"]]
+
+                ct_dict = deepcopy(c)
+                ct_dict.update(ct[c["field_quantity"]])
+                del ct_dict["name"]
+                del ct_dict["field_quantity"]
                 p = []
 
                 for k, v in ct_dict.items():
@@ -154,7 +158,7 @@ def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, paramete
     import fenics as fcs
 
     for piece in boundary:
-        for key, line in piece.items():
+        for key, piece_line in piece.items():
             if key in [c["field_quantity"] for c in cytokines]:
                 expr = piece["expr"]
                 outer_integral = OuterIntegral(cellBC, expr, p=deepcopy(domain_parameter_set),
@@ -162,6 +166,11 @@ def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, paramete
 
                 i = [c["field_quantity"] for c in cytokines].index(key)
                 parameters = []
+                line = {c["field_quantity"]: c for c in deepcopy(cytokines)}[key]
+                del line["name"]
+                del line["field_quantity"]
+
+                line.update(piece_line)
                 for name, value in line.items():
                     if parameter_pool.get_template(name) is not None:
                         parameters.append(parameter_pool.get_template(name)(value))
