@@ -491,20 +491,20 @@ class CompiledCube(DomainCube, Entity):
     def get_subdomain(self):
 
         box = "near(x[0],{p1x}) || near(x[0],{p0x}) || near(x[1],{p1y}) || near(x[1],{p0y}) || near(x[2],{p1z}) || near(x[2],{p0z})".format(
-            p1x=self.parent.p1[0],
-            p0x=self.parent.p2[0],
-            p1y=self.parent.p1[1],
-            p0y=self.parent.p2[1],
-            p1z=self.parent.p1[2],
-            p0z=self.parent.p2[2],
+            p0x=self.parent.p1[0],
+            p1x=self.parent.p2[0],
+            p0y=self.parent.p1[1],
+            p1y=self.parent.p2[1],
+            p0z=self.parent.p1[2],
+            p1z=self.parent.p2[2],
         )
         expr = self.expr.format(
-            p1x=self.parent.p1[0],
-            p0x=self.parent.p2[0],
-            p1y=self.parent.p1[1],
-            p0y=self.parent.p2[1],
-            p1z=self.parent.p1[2],
-            p0z=self.parent.p2[2],
+            p0x=self.parent.p1[0],
+            p1x=self.parent.p2[0],
+            p0y=self.parent.p1[1],
+            p1y=self.parent.p2[1],
+            p0z=self.parent.p1[2],
+            p1z=self.parent.p2[2],
         )
         return fcs.CompiledSubDomain(expr + "&&(" + box + ") && on_boundary")
 
