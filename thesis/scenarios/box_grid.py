@@ -34,7 +34,16 @@ templates = {
     "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
     "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
     "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9)),
-    "mc": PhysicalParameterTemplate(PhysicalParameter("mc", 0, to_sim=1))
+    "mc": PhysicalParameterTemplate(PhysicalParameter("mc", 0, to_sim=1)),
+
+    "gamma": PhysicalParameterTemplate(PhysicalParameter("gamma", 0.1, to_sim=1, is_global=True)),
+    "R_start": PhysicalParameterTemplate(PhysicalParameter("R_start", 20000, to_sim=N_A ** -1 * 1e9)),
+    "pSTAT5": PhysicalParameterTemplate(PhysicalParameter("pSTAT5", 0, to_sim=1)),
+    "EC50": PhysicalParameterTemplate(PhysicalParameter("EC50", 0, to_sim=1 / get_cc(ule))),
+    "global_q": PhysicalParameterTemplate(PhysicalParameter("global_q", True, to_sim=1, is_global=True)),
+    "KD": PhysicalParameterTemplate(PhysicalParameter("KD", 7.437e-12, to_sim=1 / get_cc(ule))),  # post = nM
+    "nu": PhysicalParameterTemplate(PhysicalParameter("nu", 1, to_sim=1 / 60 ** 2, is_global=True)),  # receptors/s
+    "eta": PhysicalParameterTemplate(PhysicalParameter("eta", 1, to_sim=1 / 60 ** 2, is_global=True)),
 }
 
 
