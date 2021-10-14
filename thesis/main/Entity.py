@@ -498,7 +498,15 @@ class CompiledCube(DomainCube, Entity):
             p1z=self.parent.p1[2],
             p0z=self.parent.p2[2],
         )
-        return fcs.CompiledSubDomain(self.expr + "&&(" + box + ") && on_boundary")
+        expr = self.expr.format(
+            p1x=self.parent.p1[0],
+            p0x=self.parent.p2[0],
+            p1y=self.parent.p1[1],
+            p0y=self.parent.p2[1],
+            p1z=self.parent.p1[2],
+            p0z=self.parent.p2[2],
+        )
+        return fcs.CompiledSubDomain(expr + "&&(" + box + ") && on_boundary")
 
     def get_BC(self, field_quantity):
 
