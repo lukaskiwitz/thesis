@@ -5,7 +5,6 @@ from parameters import path, IMGPATH
 from thesis.main.MyPlotter import Plotter
 from thesis.main.my_debug import message
 
-path = path
 plotter = Plotter(path)
 message("dataset loaded")
 

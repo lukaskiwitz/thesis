@@ -42,9 +42,11 @@ b = (96 - 2 * margin_b) / MM_PER_INCH
 c_lim = [0, 0.02]
 plotter.subplots(2, 2, figsize=(a, b), external_legend="axes")
 
-plotter.global_steady_state_plot("Concentration", hue=plotter.scan_name_key, ylog=False, xlog=False, legend="brief",
+plotter.global_steady_state_plot("Concentration", hue=plotter.scan_name_key, style=plotter.model_name_key, ylog=False,
+                                 xlog=False, legend="brief",
                                  ci="sd", average=True, ylim=c_lim)
-plotter.cell_steady_state_plot("IL-2_surf_c", hue=plotter.scan_name_key, ylog=False, xlog=False, ylim=c_lim)
+plotter.cell_steady_state_plot("IL-2_surf_c", hue=plotter.scan_name_key, style=plotter.model_name_key, ylog=False,
+                               xlog=False, ylim=c_lim)
 plotter.steady_state_count(hue=plotter.scan_name_key, style="type_name", legend="brief", xlog=False)
 plotter.make_legend()
 plotter.savefig(IMGPATH + "collection.pdf")
