@@ -135,8 +135,8 @@ for run in [run_no]:
     """sets up time range"""
 
     dt = 3600  # 1h
-    length = 80
-    max_T = dt * 80
+    length = 100
+    max_T = dt * 100
 
     myRange = np.arange(0, length)
     def exp_func(x, a, b, c):

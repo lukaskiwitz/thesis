@@ -29,7 +29,7 @@ save_plot = True
 
 hdd = "extra2" if os.path.exists("/extra2") else "extra"
 user = getpass.getuser()
-model_name = "Tsec_scan"
+model_name = "inhib_scan"
 saving_string = "/{extra}/{u}/paper_models/kinetics/{mn}/pSTAT5.png".format(u=user, mn=model_name, extra = hdd)
 
 sns.set(rc={'figure.figsize': (7, 6)})

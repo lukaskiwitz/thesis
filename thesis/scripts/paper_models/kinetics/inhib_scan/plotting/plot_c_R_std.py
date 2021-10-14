@@ -8,8 +8,8 @@ import os
 save_figure = True
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
 user = getpass.getuser()
-model_name = "Tsec_scan"
-saving_string = "/{extra}/{u}/paper_models/kinetics/{mn}/Tsec_c_R_std_test.png".format(u=user, mn=model_name, extra = hdd)
+model_name = "inhib_scan"
+saving_string = "/{extra}/{u}/paper_models/kinetics/{mn}/inhib_scan_c_R_std.png".format(u=user, mn=model_name, extra = hdd)
 
 # run range
 myRange = np.arange(0,1,1)

@@ -102,7 +102,7 @@ for run in [run_no]:
     scan_gamma = 100
     gamma_def = ScanDefintion(gamma, "IL-2", [scan_gamma], ScanType.GLOBAL, field_quantity="il2")
 
-    scan_space = np.around(np.linspace(0.01, 1, 10), 3)
+    scan_space = np.around(np.linspace(0.01, 1, 20), 3)
 
     Tsec_fraction = ScannableParameter(PhysicalParameter("Tsec_fraction", 1, is_global=True), lambda x, v: v)
     Tsec_def = ScanDefintion(Tsec_fraction, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
@@ -132,8 +132,8 @@ for run in [run_no]:
     """sets up time range"""
 
     dt = 3600  # 1h
-    length = 2
-    max_T = dt * 2
+    length = 100
+    max_T = dt * 100
 
     myRange = np.arange(0, length)
     def exp_func(x, a, b, c):

@@ -53,12 +53,12 @@ for run in np.arange(1):
     sliced_cell_df = cell_df.loc[(cell_df["type_name"] == "Th")]
     activation_df = pd.DataFrame(columns=fraction_list, index=timepoints)
     for f, frac in enumerate(fraction_list[:-1]):
-        message("calculating for Tsec_fraction = " + str(frac))
-        amount_of_cells = len(sliced_cell_df.loc[(sliced_cell_df["IL-2_Tsec_fraction"] == frac), "id_id"].unique())
+        message("calculating for Treg_fraction = " + str(frac))
+        amount_of_cells = len(sliced_cell_df.loc[(sliced_cell_df["IL-2_Treg_fraction"] == frac), "id_id"].unique())
         activation_list = []
         for t, time in enumerate(timepoints):
             activation_list.append(len(sliced_cell_df.loc[(np.abs(sliced_cell_df["time"] - float(time)) < 0.0001) &
-                                                   (sliced_cell_df["IL-2_Tsec_fraction"] == frac) &
+                                                   (sliced_cell_df["IL-2_Treg_fraction"] == frac) &
                                                    (sliced_cell_df["pSTAT5"] >= cell_df.loc[(cell_df["type_name"] == "Th"), "misc_Km_pos"].unique()[
                                                          0])]) / amount_of_cells)
         activation_df[frac] = activation_list

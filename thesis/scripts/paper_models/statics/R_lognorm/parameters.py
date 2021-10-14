@@ -27,13 +27,13 @@ cell_types_dict = [
 
      "name": "Tnaive",
      "fraction": 0,
-     "il2": {"R": 1e2, "q": 0, "bc_type": "linear", "global_q": False},  # [Receptor number per cell, secretion in molecules/s]
-     "misc": {"sigma":1,
+     "il2": {"R": 1e2, "q": 0, "bc_type": "linear", "global_q": True},  # [Receptor number per cell, secretion in molecules/s]
+     "misc": {"gamma": 1,
               "states":[],
               "hill_factor": 3,
-              "Km_pos": 7e-1,
-              "Km_neg": 1e-7,
-              "pSTAT5_signal": True,
+              "Km_pos": 1e-11,
+              "Km_neg": 3e-13,
+              "pSTAT5_signal": False,
               "KD": 7.437e-3,
               "nu": 1e-3,
               "name": "Tnaive"},
@@ -41,9 +41,9 @@ cell_types_dict = [
      },
     {
      "name": "Tsec",
-     "fraction": 0.2,
-     "il2": {"R": 1e2, "q": 10, "bc_type": "linear", "global_q": False}, #"R_saturation"
-     "misc": {"sigma": 1,
+     "fraction": 0.25,
+     "il2": {"R": 1e2, "q": 3, "bc_type": "linear", "global_q": True}, #"R_saturation"
+     "misc": {"gamma": 1,
               "states":[],
               "hill_factor": 3,
               "Km_pos": 0.65,
@@ -52,27 +52,28 @@ cell_types_dict = [
               "KD": 7.437e-3,
               "nu": 1e-3,
               "name": "Tsec"},
-     "internal_solver": "kineticSolver"
+     "internal_solver": ""
      },
     {
      "name": "Th",
-     "fraction": 0.8,
-     "il2": {"R": 1e3, "q": 0, "bc_type": "linear", "global_q": False}, # "R_saturation"
-     "misc": {"sigma": 2.5,
+     "fraction": 0.75,
+     "il2": {"R": 1e2, "q": 0, "bc_type": "linear", "global_q": True},
+     "misc": {"gamma": 1,
               "states":[0,0,0,0,0,0],
               "pos_half_time": 1,
               "neg_half_time": 1,
               "hill_factor": 3,
               "Km_pos": 0.65,
               "Km_neg": 0.75,
-              "R_start_neg": 1e3,
-              "R_start_pos": 1e3,
+              "R_start_neg": 5e3,
+              "R_start_pos": 5e3,
               "pSTAT5_signal": True,
               "KD": 7.437e-3,
+              "k_endo": 1.1e-3,
               "nu": 1e-3,
               "pSTAT5": 0,
               "name": "Th"},
-     "internal_solver": "kineticSolver"
+     "internal_solver": ""
      },
 ]
 
@@ -81,9 +82,9 @@ geometry = {
     "margin": 40,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 280,  # dimensions of the cell grid
-    "y_grid": 280,
-    # "z_grid": 280,# comment out for single cell layer
+    "x_grid": 240,  # dimensions of the cell grid
+    "y_grid": 240,
+    # "z_grid": 240,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 
@@ -120,9 +121,8 @@ hdd = "extra2" if os.path.exists("/extra2") else "extra"
 
 user = getpass.getuser()
 
-model_name = "Tsec_scan"
-name = "positive"
-path = "/{extra}/{u}/paper_models/kinetics/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = hdd)
+model_name = "R_lognorm"
+path = "/{extra}/{u}/paper_models/statics/{mn}/".format(u=user, mn=model_name, extra = hdd)
 IMGPATH = path + "images/"
 
-ext_cache = r"../../{mn}_ext_cache/".format(mn=model_name)
+ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
