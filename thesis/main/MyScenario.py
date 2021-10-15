@@ -25,6 +25,7 @@ class MyScenario:
         self.entity_locators = []
         self.parameter_pool = parameter_pool
         self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
+        self.markers = []
 
     def get_model_indicies(self) -> List[int]:
         """Gets a list of all available model indices"""
@@ -84,6 +85,8 @@ class MyScenario:
 
         default = deepcopy(ScanSample(parameter_set.collections, self.entity_types, {}))
         sc.default_sample = default
+
+        sc.markers = list(set(sc.markers + self.markers))
 
         return sc
 
