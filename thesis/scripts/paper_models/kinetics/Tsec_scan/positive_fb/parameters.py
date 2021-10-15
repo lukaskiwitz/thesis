@@ -83,7 +83,7 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 280,  # dimensions of the cell grid
     "y_grid": 280,
-    # "z_grid": 280,# comment out for single cell layer
+    "z_grid": 280,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 

@@ -28,7 +28,7 @@ get_dataframes = []#[[]]*3
 message("loading dataframe")
 from parameters import path
 
-for run in np.arange(1):
+for run in myRange:
     path = path + "/run" + str(run) + "/"
     save_path = path
 

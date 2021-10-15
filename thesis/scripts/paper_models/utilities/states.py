@@ -245,8 +245,11 @@ class updateState():
             else:
                 message("Cells q = 0")
         else:
-            q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("q", "IL-2").get_in_post_unit()
-            message("Cells q: " + str(q))
+            if len(Tsec_draws) != 0:
+                q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("q", "IL-2").get_in_post_unit()
+                message("Cells q: " + str(q))
+            else:
+                message("Cells q: 0")
             q_il2_sum = None
         return Tsec_draws, Th_draws, Treg_draws, q_il2_sum
 
