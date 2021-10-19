@@ -598,7 +598,7 @@ class Plotter:
         self.get_subplot_axes()
         return None
 
-    def global_time_series_plot(self, y_name, legend=False, hue=None, style=None,ylim = None, **kwargs) -> None:
+    def global_time_series_plot(self, y_name, legend=False, hue=None, style=None, ylim=None, **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, reduce=True, **kwargs)
 

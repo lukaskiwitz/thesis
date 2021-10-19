@@ -29,6 +29,8 @@ from thesis.main.my_debug import message, warning
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
+
+
 class MeanFieldSolverError(Exception): pass
 
 
@@ -39,12 +41,12 @@ class MySolver(ABC):
         self.field_quantity: str = ""
 
     @abstractmethod
-    def solve(self, t: float, dt: float):pass
+    def solve(self, t: float, dt: float): pass
 
     @abstractmethod
-    def compile(self, tmp_path: str):pass
+    def compile(self, tmp_path: str): pass
 
-    def kill(self):pass
+    def kill(self): pass
 
     def get_solution(self) -> Any: pass
 
@@ -258,6 +260,7 @@ class MyDiffusionSolver(MySolver):
     def get_solution(self) -> Any:
 
         return self.u
+
 
 class MyMeanFieldSolver(MySolver):
 

@@ -27,20 +27,18 @@ class MyGlobalModel(ABC):
     @abstractmethod
     def get_problem_list(self, p: ParameterSet) -> List[GlobalProblem]: pass
 
+
 class MyODEModel(MyGlobalModel):
 
     def __init__(self, name: str):
-
         self.name: str = name
         self.field_templates: List[MyMeanCytokineTemplate] = []
 
     def add_field_template(self, field_template: MyMeanCytokineTemplate):
-
         assert isinstance(field_template, MyMeanCytokineTemplate)
         self.field_templates.append(field_template)
 
     def get_problem_list(self, p: ParameterSet) -> List[MeanFieldProblem]:
-
         problem_list: List[MeanFieldProblem] = []
 
         for templates in self.field_templates:
@@ -53,19 +51,16 @@ class MyODEModel(MyGlobalModel):
 class MyPDEModel(MyGlobalModel):
 
     def __init__(self, name: str):
-
         super().__init__(name)
         self.field_templates: List[MyCytokineTemplate] = []
         self.domain_template: MyDomainTemplate = None
 
     def add_field_template(self, field_template: MyCytokineTemplate):
-
         assert isinstance(field_template, MyFieldTemplate)
         self.field_templates.append(field_template)
 
     def get_problem_list(self, p: ParameterSet) -> List[FieldProblem]:
-
-        problem_list: List[FieldProblem]= []
+        problem_list: List[FieldProblem] = []
 
         for templates in self.field_templates:
             field_problem = templates.get_problem()
@@ -73,4 +68,3 @@ class MyPDEModel(MyGlobalModel):
             field_problem.domain_template = self.domain_template
 
         return problem_list
-

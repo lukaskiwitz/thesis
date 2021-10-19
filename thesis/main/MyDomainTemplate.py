@@ -20,7 +20,7 @@ class MyDomainTemplate:
 
 class MyBoxDomainTemplate(MyDomainTemplate):
 
-    def __init__(self,p1,p2):
+    def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
 
@@ -53,9 +53,8 @@ class MyBoundingBoxTemplate(MyDomainTemplate):
 
 class MySphereDomainTemplate(MyDomainTemplate):
 
-    def __init__(self,c,r):
-
-        assert len(c) ==3
+    def __init__(self, c, r):
+        assert len(c) == 3
 
         self.c = c
         self.r = r

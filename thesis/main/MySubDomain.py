@@ -84,7 +84,6 @@ class OuterCube(OuterBoundary):
                 x[2], p1[2]) or near(x[2], p0[2])
 
 
-
 class CellSubDomain(MySubDomain):
 
     def __init__(self, c, r):

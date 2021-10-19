@@ -24,10 +24,11 @@ class GlobalResult(ABC):
     def load(self, time_index: int): pass
 
     @abstractmethod
-    def get(self):pass
+    def get(self): pass
 
     @abstractmethod
-    def set(self):pass
+    def set(self): pass
+
 
 class ScalarResult(GlobalResult):
 
@@ -37,7 +38,7 @@ class ScalarResult(GlobalResult):
 
     def set(self, u: float):
 
-        assert isinstance(u,Number)
+        assert isinstance(u, Number)
 
         self.u = u
 
@@ -73,21 +74,20 @@ class ScalarResult(GlobalResult):
 
         file = os.path.join(self.path, partial_path)
         if os.path.exists(file):
-            self.u =  np.load(file)[time_index-1]# todo assumes 1 as start index
+            self.u = np.load(file)[time_index - 1]  # todo assumes 1 as start index
         else:
             raise FileNotFoundError
 
 
 class ScalarFieldResult(GlobalResult):
 
-
-    def __init__(self,  *args):
+    def __init__(self, *args):
         super().__init__(*args)
         self.u: fcs.Function = None
 
     def set(self, u):
 
-        assert isinstance(u,fcs.Function)
+        assert isinstance(u, fcs.Function)
         self.u = u
 
     def get(self):
@@ -116,19 +116,18 @@ class ScalarFieldResult(GlobalResult):
 
         comm = MPI.COMM_WORLD
 
-
         file_name = "field_{fq}".format(fq=self.field_quantity)
         distplot = "sol/distplot/{fn}_{ti}_distPlot.h5".format(fn=file_name, ti=str(time_index))
         sol = "sol/{fn}_{ti}.xdmf".format(fn=file_name, ti=str(time_index))
 
         mesh = fcs.Mesh()
-        with fcs.XDMFFile(mesh_path ) as f:
+        with fcs.XDMFFile(mesh_path) as f:
             f.read(mesh)
 
         function_space = fcs.FunctionSpace(mesh, "P", 1)
 
         u: fcs.Function = fcs.Function(function_space)
-        with fcs.HDF5File(comm, os.path.join(self.path,distplot), "r") as f:
+        with fcs.HDF5File(comm, os.path.join(self.path, distplot), "r") as f:
             f.read(u, "/" + self.field_quantity)
 
         self.u = u

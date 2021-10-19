@@ -116,7 +116,7 @@ class StateManager:
             file_path = os.path.join(self.path, log_file)
             if os.path.exists(file_path):
                 os.remove(file_path)
-                
+
     def get_scan_folder(self, n: int) -> str:
         return self.path + self.scan_folder_pattern.format(n=n)
 
@@ -143,7 +143,7 @@ class StateManager:
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
 
         message("State Manager: Distributing {total} scans to {n_processes} processes".format(n_processes=n_processes,
-                                                                                           total=len(scans)))
+                                                                                              total=len(scans)))
 
         with mp.Pool(processes=n_processes, initializer=init) as p:
             result = p.map(target, scatter_list)
@@ -502,7 +502,6 @@ class MyScanTree:
         self.global_collections: GlobalCollections = GlobalCollections()
         self.global_parameters: GlobalParameters = GlobalParameters()
 
-
     def load_xml(self) -> None:
 
         """loads xml representation from file"""
@@ -511,7 +510,7 @@ class MyScanTree:
             parser = etree.XMLParser(remove_blank_text=True)
             self.element_tree = etree.parse(file_path, parser)
 
-    def get_scan_elements(self, scan_indicies = None):
+    def get_scan_elements(self, scan_indicies=None):
 
         root = self.getroot()
         scans = []
@@ -523,13 +522,13 @@ class MyScanTree:
 
         return scans
 
-    def get_scan_element(self, scan_index = None):
+    def get_scan_element(self, scan_index=None):
 
         scan = self.getroot().find("./ScanContainer/ScanSample[@scan_index='{i}']".format(i=scan_index))
 
         return scan
 
-    def get_model_elements(self, scan_indicies = None, model_indicies = None):
+    def get_model_elements(self, scan_indicies=None, model_indicies=None):
 
         scans = []
         models = []
@@ -537,23 +536,22 @@ class MyScanTree:
         root = self.getroot()
         if scan_indicies is not None:
             for si in scan_indicies:
-                scans = scans + (root.findall("ScanContainer/ScanSample[@scan_index = '{si}']".format(si = si)))
+                scans = scans + (root.findall("ScanContainer/ScanSample[@scan_index = '{si}']".format(si=si)))
         else:
             scans = root.findall("ScanContainer/ScanSample")
 
             for scan in scans:
                 if model_indicies is not None:
                     for mi in model_indicies:
-                        models = models + scan.findall("Model[@model_index = '{mi}']".format(mi = mi))
+                        models = models + scan.findall("Model[@model_index = '{mi}']".format(mi=mi))
                 else:
                     models = models + scan.findall("Model")
 
-
         return models
 
-    def get_model_element(self, scan_index:int, model_index:int) -> Element:
+    def get_model_element(self, scan_index: int, model_index: int) -> Element:
 
-        return  self.get_scan_element(scan_index).find("Model[@model_index='{m}']".format(m=model_index))
+        return self.get_scan_element(scan_index).find("Model[@model_index='{m}']".format(m=model_index))
 
     def create_model_element(self, scan_index: int, model_index: int, model_name: str = "") -> Element:
 
@@ -725,7 +723,7 @@ class MyScanTree:
         :return:
         """
 
-        element_copies = [deepcopy(element) for step in  element.findall(".//TimeSeries/Step")]
+        element_copies = [deepcopy(element) for step in element.findall(".//TimeSeries/Step")]
 
         for i, el in enumerate(element_copies):
             step = el.findall(".//TimeSeries/Step")[i]
@@ -735,15 +733,14 @@ class MyScanTree:
 
                 [s.getparent().remove(s) for s in el.findall(".//TimeSeries/Step")]
 
-                parent.insert(0,step)
+                parent.insert(0, step)
 
         return element_copies
 
 
 def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
-
     try:
-        n_scans, scan, time_indices,path = mp_input
+        n_scans, scan, time_indices, path = mp_input
         scan = ET.fromstring(scan)
 
         result = []
@@ -799,4 +796,3 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
         import traceback
         print(traceback.format_exc())
         return []
-

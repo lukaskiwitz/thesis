@@ -20,17 +20,13 @@ class MyEntityLocator(ABC):
 class MyCellListLocator(MyEntityLocator):
 
     def __init__(self, cell_pos, cell_types):
-
-
         assert np.array(cell_pos).shape[1] == 3
         assert len(cell_pos) == len(cell_types)
 
         self.cell_pos = cell_pos
         self.cell_types = cell_types
 
-
     def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
-
         assert issubclass(type(cell_type), CellType)
 
         cell_list = []
@@ -43,6 +39,7 @@ class MyCellListLocator(MyEntityLocator):
             cell_list.append(cell)
 
         return cell_list
+
 
 class MyCellGridLocator(MyEntityLocator):
 

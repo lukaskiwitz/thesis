@@ -23,7 +23,6 @@ class MyFieldTemplate(ABC):
 class MyMeanCytokineTemplate(MyFieldTemplate):
 
     def get_problem(self) -> MeanFieldProblem:
-
         mean_field_problem = MeanFieldProblem()
         mean_field_problem.field_name = self.name
         mean_field_problem.field_quantity = self.field_quantity
@@ -32,7 +31,6 @@ class MyMeanCytokineTemplate(MyFieldTemplate):
         return mean_field_problem
 
     def build_parameter_collection(self, parameter_pool: MyParameterPool) -> ParameterCollection:
-
         collection = ParameterCollection(self.name, [])
         collection.field_quantity = self.field_quantity
 
@@ -43,19 +41,16 @@ class MyMeanCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
-
         return collection
 
 
 class MyCytokineTemplate(MyFieldTemplate):
-
 
     def __init__(self):
         super().__init__()
         self.ext_cache: str = ""
 
     def get_problem(self) -> FieldProblem:
-
         fieldProblem = FieldProblem()
         fieldProblem.field_name = self.name
         fieldProblem.field_quantity = self.field_quantity
