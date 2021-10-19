@@ -69,7 +69,7 @@ skip_first_time_index = True
 ########################################################################################################################
 
 pos_path = "/{extra}/{u}/paper_models/kinetics/{mn}/{n}/".format(u=user, n="positive", mn=model_name, extra = hdd)
-neg_path = "/{extra}/{u}/paper_models/kinetics/{mn}/{n}/".format(u=user, n="positive", mn=model_name, extra = hdd)
+neg_path = "/{extra}/{u}/paper_models/kinetics/{mn}/{n}/".format(u=user, n="negative", mn=model_name, extra = hdd)
 
 pos_cell_df = load_runs(pos_path, 1)
 neg_cell_df = load_runs(neg_path, 1)
