@@ -1,14 +1,9 @@
 import os
-from copy import deepcopy
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sns
-
-from thesis.main.MyPlotter import Plotter
 
 from parameters import IMGPATH, path
+from thesis.main.MyPlotter import Plotter
 
 if os.path.isdir("/extra2"):
     extra = "extra2"

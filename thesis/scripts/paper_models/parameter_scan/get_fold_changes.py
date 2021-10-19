@@ -1,14 +1,10 @@
-import pandas as pd
-
-from thesis.main.MyPlotter import Plotter
-import numpy as np
-from thesis.main.my_debug import message
-from parameters import path
-import seaborn as sns
 import matplotlib.pyplot as plt
-from copy import deepcopy
-from parameters import path, IMGPATH
+import numpy as np
+import seaborn as sns
 
+from parameters import path, IMGPATH
+from thesis.main.MyPlotter import Plotter
+from thesis.main.my_debug import message
 
 path = path
 plotter = Plotter(path)
@@ -16,7 +12,6 @@ message("dataset loaded")
 
 
 def get_fold_change(df, aggregator, group_by_columns):
-
     def f(df):
 
         scan_name = df[plotter.scan_name_key].iloc[0]

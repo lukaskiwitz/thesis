@@ -1,13 +1,15 @@
-from  thesis.main.MyPlotter import Plotter
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
-import os
+
+from thesis.main.MyPlotter import Plotter
 from thesis.main.my_debug import message
 
 if len(sys.argv) > 1:
     path = sys.argv[1]
-    IMGPATH = os.path.join(path,"cli_images")
+    IMGPATH = os.path.join(path, "cli_images")
 
 else:
     from parameters import path, IMGPATH

@@ -1,9 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from scipy.optimize import  curve_fit
-
-
+from scipy.optimize import curve_fit
 
 
 # R_M = 1e3

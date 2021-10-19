@@ -1,8 +1,10 @@
+from typing import List
+
 import numpy as np
 
 from thesis.main.Entity import DomainCube, DomainSphere, Entity
 from thesis.main.ParameterSet import ParameterSet
-from typing import List
+
 
 class BoundingBoxError(Exception): pass
 

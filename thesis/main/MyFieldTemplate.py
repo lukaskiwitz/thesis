@@ -1,8 +1,9 @@
+from abc import ABC, abstractmethod
+
 from thesis.main.FieldProblem import FieldProblem, MeanFieldProblem, GlobalProblem
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MySolver import MyDiffusionSolver, MyMeanFieldSolver
 from thesis.main.ParameterSet import ParameterCollection, ParameterSet
-from abc import ABC, abstractmethod
 
 
 class MyFieldTemplate(ABC):
