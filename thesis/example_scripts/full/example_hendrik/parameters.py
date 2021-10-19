@@ -27,25 +27,25 @@ R_h = 1e2
 R_l = 1e2
 q = 10
 
-myList = [1,2,3]
+myList = [1, 2, 3]
 
 cell_types_dict = [
     {"name": "default",
      "fraction": 0,
-     "il2": {"R": 0, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "linear"},
-     "misc":{"custom_para":myList},
+     "il2": {"R": 0, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": "linear"},
+     "misc": {"custom_para": myList},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "sec",
      "fraction": 0.04,
-     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths":0.01, "bc_type": "linear"},
-     "misc":{"custom_para":myList},
+     "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "linear"},
+     "misc": {"custom_para": myList},
      "internal_solver": "RuleBasedSolver"
      },
     {"name": "abs",
      "fraction": 0.96,
-     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1,"ths":0.01, "bc_type": "linear"},
-     "misc":{"custom_para":myList},
+     "il2": {"R": R_h, "q": 0, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "linear"},
+     "misc": {"custom_para": myList},
      "internal_solver": "RuleBasedSolver"
      }
 ]
@@ -60,14 +60,14 @@ standard box is applied.
 """
 boundary = [
     {"name": "box",
-     "expr":"!near(x[0],{d})",
-     "il6":{"q":0, "R":0, "bc_type": "R_saturation"},
-     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
+     "expr": "!near(x[0],{d})",
+     "il6": {"q": 0, "R": 0, "bc_type": "R_saturation"},
+     "ifng": {"q": 0, "R": 0, "bc_type": "R_saturation"},
      },
     {"name": "left_boundary",
-     "expr":"near(x[0],{d})",
-     "il6":{"q":0, "R":0, "amax":0, "bc_type": "R_saturation"},
-     "ifng":{"q":0, "R":0, "bc_type": "R_saturation"},
+     "expr": "near(x[0],{d})",
+     "il6": {"q": 0, "R": 0, "amax": 0, "bc_type": "R_saturation"},
+     "ifng": {"q": 0, "R": 0, "bc_type": "R_saturation"},
      }
 ]
 
@@ -78,8 +78,8 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 150,  # dimensions of the cell grid (edge length in um)
     "y_grid": 150,
-    "z_grid": 150, # comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2 # area passed to bc function of outside boundary
+    "z_grid": 150,  # comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
 """
@@ -89,15 +89,15 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": True,# use linear fenics solver. If your chosen bc_type is not linear, flip it
+    "linear": True,  # use linear fenics solver. If your chosen bc_type is not linear, flip it
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,# linear solver relative tolerance
+    "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#calc_boundary_values degrees of freedom per mpi node for pde solving
-    "max_mpi_nodes": os.cpu_count()/2,# max nodes for fenics solver
+    "newton_rtol": 1e-5,  # newton method relative tolerance
+    "dofs_per_node": 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
+    "max_mpi_nodes": os.cpu_count() / 2,  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count()/2,#max number of worker to extract boundary conditions at runtime
+    "max_pool_size": os.cpu_count() / 2,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution, smaller = finer
     "max_char_length": 5,  # mesh resolution, smaller = finer
     "unit_length_exponent": -6  # for concentration conversion
@@ -109,13 +109,12 @@ absolute paths
 if os.path.isdir("/extra2"):
     extra = "extra2"
 else:
-    extra ="extra"
-
+    extra = "extra"
 
 user = getpass.getuser()
 model_name = "example_hendrik"
 name = "example_1"
-path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra = extra)
+path = "/{extra}/{u}/{mn}/{n}/".format(u=user, n=name, mn=model_name, extra=extra)
 IMGPATH = path + "images/"
 
 """

@@ -88,8 +88,7 @@ absolute paths
 if os.path.isdir("/extra2"):
     extra = "extra2"
 else:
-    extra ="extra"
-
+    extra = "extra"
 
 user = getpass.getuser()
 model_name = "full_parameter_scan"

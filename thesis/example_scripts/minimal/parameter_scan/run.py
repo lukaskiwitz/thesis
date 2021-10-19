@@ -46,10 +46,12 @@ stMan = StateManager.StateManager(path)
 stMan.scenario = scenario
 stMan.scan_container = scan_container
 
-stMan.T = [0,1]
+stMan.T = [0, 1]
+
 
 def pre_scan(state_manager, scan_index):
     update_state(state_manager.sim_container, 0)
+
 
 stMan.pre_scan = pre_scan
 stMan.run()

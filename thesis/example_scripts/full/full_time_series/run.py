@@ -30,7 +30,6 @@ class RuleBasedSolver(InternalSolver):
     def on_type_change(self, p, replicat_index, entity=None):
         pass
 
-
     def step(self, t1, t2, dt, p, entity=None, **kwargs):
 
         def activation(c, R, R_M=860, max=0.125, min=0, n_R=0.55, n_il2=4):
@@ -100,7 +99,6 @@ parameter_pool = scenario.parameter_pool
 default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
-
 
 """
 signs up the internal solver with the sim container. 

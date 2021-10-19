@@ -112,4 +112,3 @@ IMGPATH = path + "images/"
 relative to path; best to leave this alone
 """
 ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
-

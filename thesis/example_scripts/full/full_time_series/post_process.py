@@ -12,6 +12,7 @@ logging.basicConfig(
     format='%(levelname)s::%(asctime)s %(message)s',
     datefmt='%I:%M:%S')
 
+
 def to_rgb(h):
     return [int(h[2 * i:2 * i + 2], 16) / 255 for i in range(3)]
 

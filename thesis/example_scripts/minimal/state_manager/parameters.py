@@ -25,21 +25,21 @@ q = 1
 
 cell_types_dict = [
     {"name": "default",
-     "mc":0,
+     "mc": 0,
      "fraction": 0,
-     "il2": {"R": 1e2, "q": 0, "Kc": 0.01, "amax": 0,"ths":0.01, "bc_type": "R_saturation"},
+     "il2": {"R": 1e2, "q": 0, "Kc": 0.01, "amax": 0, "ths": 0.01, "bc_type": "R_saturation"},
      "internal_solver": ""
      },
     {"name": "sec",
-     "mc":0,
+     "mc": 0,
      "fraction": 0.1,
-     "il2": {"R": 1e2, "q": 10, "Kc": 0.01, "amax": 1, "ths":0.01, "bc_type": "R_saturation"},
+     "il2": {"R": 1e2, "q": 10, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "R_saturation"},
      "internal_solver": ""
      },
     {"name": "abs",
-     "mc":0,
-     "fraction":0.5,
-     "il2": {"R": 1e4, "q": 0, "Kc": 0.01, "amax": 1,"ths":0.01, "bc_type": "R_saturation"},
+     "mc": 0,
+     "fraction": 0.5,
+     "il2": {"R": 1e4, "q": 0, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": "R_saturation"},
      "internal_solver": ""
      }
 ]
@@ -53,8 +53,8 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 150,  # dimensions of the cell grid (edge length in um)
     "y_grid": 150,
-    "z_grid": 150,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
+    "z_grid": 150,  # comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
 """
@@ -64,15 +64,15 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": False,# use linear fenics solver
+    "linear": False,  # use linear fenics solver
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,# linear solver relative tolerance
+    "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#target degrees of freedom per mpi node for pde solving
-    "max_mpi_nodes": os.cpu_count()/2,# max nodes for fenics solver
+    "newton_rtol": 1e-5,  # newton method relative tolerance
+    "dofs_per_node": 15000,  # target degrees of freedom per mpi node for pde solving
+    "max_mpi_nodes": os.cpu_count() / 2,  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count()/2,#max number of worker to extract boundary conditions at runtime
+    "max_pool_size": os.cpu_count() / 2,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
     "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion
