@@ -24,7 +24,8 @@ download any update with
 
 `make html`
 
-Open `index.html` in your web browser to access the title page.
+
+When done open `index.html` in your web browser to access the title page.
 <h1>
     Requirements
 </h1>
