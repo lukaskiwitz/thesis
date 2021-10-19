@@ -4,9 +4,27 @@
 <h1>
 Documentation
 </h1>
-A documentation is hosted at https://lukaskiwitz.github.io/thesis/
+Because github pages are publicly accessible, 
+I moved the documentation to the "doc" branch. 
+To download the documentation either 
 
+1. Download the zip file from the "doc" branch
 
+2. clone the repo with
+
+`git clone -b doc http:// https://personal_access_token@github.com/lukaskiwitz/thesis`
+
+To clone the repo from the cli you will need to set up a personal acces token in your github settings. Then you can
+download any update with
+
+`git pull`
+
+3. Alternatively, you can build the documentation yourself, provided that you have a properly configured conda
+   environment. Move to the docsrc folder and run
+
+`make html`
+
+Open `index.html` in your web browser to access the title page.
 <h1>
     Requirements
 </h1>
