@@ -1,15 +1,16 @@
+import logging
 import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
 from parameters import path
-
-os.environ["LOG_PATH"] = path
-
 from thesis.main.PostProcess import PostProcessor
 
+logging.basicConfig(
+    filename=os.path.join(path, "post_process.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 def to_rgb(h):
     return [int(h[2 * i:2 * i + 2], 16) / 255 for i in range(3)]

@@ -2,24 +2,22 @@ import logging
 import os
 
 import numpy as np
-
-from parameters import cytokines, cell_types_dict, geometry, numeric, path, boundary
-
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH, exist_ok=True)
-logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
-                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
-
-os.environ["LOG_PATH"] = path
+from scipy.stats import poisson
 
 import thesis.main.StateManager as StateManager
+from parameters import cytokines, cell_types_dict, geometry, numeric, path, boundary
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
-from scipy.stats import poisson
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 """
 A solver is an object which is usually applied on a cell/entity. This solver must have a step function which acts upon 

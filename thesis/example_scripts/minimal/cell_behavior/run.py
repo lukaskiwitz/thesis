@@ -1,3 +1,4 @@
+import logging
 import os
 
 import matplotlib.pyplot as plt
@@ -14,6 +15,13 @@ from thesis.scenarios.box_grid import setup, assign_fractions
 
 """Define paths for result folder structure"""
 solution_path = "/extra/kiwitz/cell_behavior_example/test_1/"
+os.makedirs(solution_path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(solution_path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 
 class SimpleThresholdSolver(InternalSolver):

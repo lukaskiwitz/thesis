@@ -58,10 +58,10 @@ geometry = {
     "margin": 20,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 300,  # dimensions of the cell grid (edge length in um)
-    "y_grid": 300,
-    "z_grid":300,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 ** 2# area passed to bc function of outside boundary
+    "x_grid": 100,  # dimensions of the cell grid (edge length in um)
+    "y_grid": 100,
+    "z_grid": 100,  # comment out for single cell layer
+    "norm_area": 4 * np.pi * 5 ** 2  # area passed to bc function of outside boundary
 }
 
 """
@@ -105,4 +105,3 @@ IMGPATH = path + "images/"
 relative to path; best to leave this alone
 """
 ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
-

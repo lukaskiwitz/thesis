@@ -1,3 +1,6 @@
+import logging
+import os
+
 import numpy as np
 
 import thesis.main.StateManager as StateManager
@@ -13,6 +16,13 @@ def update_state(sc, t):
 
 path = "/extra/kiwitz/parameter_scan_example/test_1/"
 ext_cache = r"../{mn}_ext_cache/".format(mn="parameter_scan_example")
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 scan_container = ScanContainer()
 scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric)

@@ -1,18 +1,21 @@
+import logging
 import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
-import numpy as np
 from parameters import path
+from thesis.main.PostProcess import PostProcessor, ParaviewRender
+
+logging.basicConfig(
+    filename=os.path.join(path, "post_process.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
+
 
 def to_rgb(h):
-    return [int(h[2*i:2*i+2],16)/255 for i in range(3)]
+    return [int(h[2 * i:2 * i + 2], 16) / 255 for i in range(3)]
 
-os.environ["LOG_PATH"] = path
-
-from thesis.main.PostProcess import PostProcessor
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:
@@ -62,14 +65,15 @@ pp.image_settings = {
             "volume_raytracing_light_scale":1,
             "marker_view_uniform_opacity": False,  # draw cell type marker with uniform opacity in marker image
             "lookup": {
-                "1": ["default", to_rgb("cbcbcbff"), 0.5], # mesh_function_value:[name,(r,g,b),opacity] opacity only works with raytracing
+                "1": ["default", to_rgb("cbcbcbff"), 0.5],
+                # mesh_function_value:[name,(r,g,b),opacity] opacity only works with raytracing
                 "2": ["sec", to_rgb("f2643bff"), 1],
                 "3": ["abs", to_rgb("417cffff"), 0.5],
             },
         }
 }
 
-
-
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
-pp.run_post_process(threads, make_images=False, kde=False, render_paraview=True)
+
+pp.computations.append(ParaviewRender)
+pp.run_post_process(threads)

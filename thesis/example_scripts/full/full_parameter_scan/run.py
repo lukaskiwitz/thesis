@@ -1,3 +1,6 @@
+import logging
+import os
+
 import numpy as np
 
 import thesis.main.StateManager as StateManager
@@ -6,6 +9,14 @@ from parameters import f_sec as fs, f_abs as fr, f_n as fn, R_h, q
 from thesis.main.ParameterSet import MiscParameter, ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
+
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 
 def updateState(sc, t):

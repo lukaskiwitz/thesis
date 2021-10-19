@@ -1,38 +1,36 @@
+import logging
 import os
-import sys
-
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
 
 import numpy as np
-from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
-
-import logging
-
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH, exist_ok=True)
-logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
-                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
 import thesis.main.StateManager as StateManager
+from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
 from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
-from thesis.scenarios.box_grid import setup
-from thesis.main.assign_fractions import assign_fractions
+from thesis.scenarios.box_grid import setup, assign_fractions
+
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 
-def updateState(sc, t):
-    assign_fractions(sc, t)
+def updateState(sc, replicat_index):
+    assign_fractions(sc, replicat_index)
 
-    sc.apply_type_changes()
+    sc.apply_type_changes(replicat_index)
 
     R = np.unique(
         [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in sc.entity_list if e.type_name == "abs"])
     assert len(R) == 1
     E = R[0]
+    if E == 0:
+        return None
     var = 1
-    np.random.seed(t)
+    np.random.seed(replicat_index)
     tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
     mean = np.log(E) - 1 / 2 * tmp_sigma ** 2
     for e in sc.entity_list:
@@ -81,17 +79,17 @@ default = scenario.get_entity_type_by_name("default")
 abs = scenario.get_entity_type_by_name("abs")
 sec = scenario.get_entity_type_by_name("sec")
 
-s = 4
-fc = 10
-e = np.log10(fc) / np.log10(10)
-scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
+# s = 4
+# fc = 10
+# e = np.log10(fc) / np.log10(10)
+# scan_space = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
+#
+# fc = 10
+# e = np.log10(fc) / np.log10(10)
+# scan_space_2 = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
 
-fc = 10
-e = np.log10(fc) / np.log10(10)
-scan_space_2 = np.concatenate([np.logspace(-e, 0, int(s / 2)), np.logspace(0, e, int(s / 2))[1:]])
-
-scan_space = [0.1,1,10]
-scan_space_2 = [0.1,1,10]
+scan_space = [0.1, 1, 10]
+scan_space_2 = [0.1, 1, 10]
 
 f_sec_def = ScanDefintion(f_sec, "fractions", scan_space, ScanType.GLOBAL)
 q_constant_def = ScanDefintion(q_constant, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
@@ -156,26 +154,19 @@ for bc, linear in [("linear", True), ("patrick_saturation", False)]:
         [f_abs_def, f_sec_def, bc_def(sec), q_constant_def, R_constant_df, bc_def(abs), linear_def], scan_name="ratio")
 
 
-def pre_scan(state_manager, scan_index):
-    updateState(state_manager.sim_container, 0)
+def pre_replicat(sc, time_index, replicat_index, t, T):
+    updateState(sc, replicat_index)
 
 
-def pre_step(sc, time_index, t, T):
-    updateState(sc, time_index)
+state_manager = StateManager.StateManager(path)
+state_manager.scenario = scenario
 
+state_manager.marker_lookup = {"default": 1, "sec": 2, "abs": 3}
 
-stMan = StateManager.StateManager(path)
-stMan.scenario = scenario
+state_manager.compress_log_file = True
+state_manager.pre_replicat = pre_replicat
 
-stMan.marker_lookup = {"default": 1, "sec": 2, "abs": 3}
+state_manager.scan_container = scan_container
+state_manager.T = [0, 1]
 
-stMan.compress_log_file = True
-stMan.pre_scan = pre_scan
-stMan.pre_step = pre_step
-
-stMan.scan_container = scan_container
-# stMan.T = [0, 1, 2]
-stMan.T = range(11)
-
-stMan.run(ext_cache=ext_cache)
-# stMan.run()
+state_manager.run(ext_cache=ext_cache)

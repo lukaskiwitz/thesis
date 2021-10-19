@@ -1,52 +1,35 @@
+import logging
 import os
-import sys
-
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
 
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
-from thesis.main.assign_fractions import assign_fractions
+from thesis.main.StateManager import StateManager
+from thesis.scenarios.box_grid import assign_fractions, setup
 
-import logging
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH,exist_ok=True)
-logging.basicConfig(filename=LOG_PATH+"debug.log",level=logging.INFO,filemode="w", format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
-os.environ["LOG_PATH"] = path
 
-import thesis.main.StateManager as StateManager
-from thesis.main.ScanContainer import ScanContainer
-from thesis.main.SimContainer import SimContainer
-from thesis.scenarios.box_grid import setup
-
-def updateState(sc, t):
-
+def update_state(sc, t):
     assign_fractions(sc, t)
 
-scan_container = ScanContainer()
 
+scenario = setup(cytokines, cell_types_dict, boundary, geometry, numeric)
+stMan = StateManager(path)
+stMan.scenario = scenario
 
-sc: SimContainer = setup(cytokines, cell_types_dict,boundary, geometry, numeric, path, ext_cache)
-stMan = StateManager.StateManager(path)
-stMan.sim_container = sc
-sc.marker_lookup = {"default":1, "sec":2, "abs":3}#labels to apper in marker function; 0 denotes background
-stMan.scan_container = scan_container
+stMan.marker_lookup = {"default": 1, "sec": 2, "abs": 3}  # labels to apper in marker function; 0 denotes background
 stMan.compress_log_file = True
-
-# stMan.T = [0,1]
-stMan.T = list(range(11))
-
-def pre_scan(state_manager, scan_index):
-    updateState(state_manager.sim_container, 0)
-
-def pre_step(sc, time_index, t, T):
-    updateState(sc, time_index)
-
-stMan.pre_scan = pre_scan
-sc.pre_step = pre_step
-stMan.run()
+stMan.T = [0, 1]
 
 
+def pre_replicat(sc, time_index, replicat_index, t, T):
+    update_state(sc, replicat_index)
 
 
+stMan.pre_replicat = pre_replicat
+stMan.run(ext_cache=ext_cache, number_of_replicats=1)

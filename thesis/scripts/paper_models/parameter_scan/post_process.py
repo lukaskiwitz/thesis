@@ -1,17 +1,16 @@
+import logging
 import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
-import numpy as np
 from parameters import path
+from thesis.main.PostProcess import PostProcessor
 
-os.environ["LOG_PATH"] = path
-
-from thesis.main.PostProcess import PostProcessor, PostProcessComputation
-
-
+logging.basicConfig(
+    filename=os.path.join(path, "post_process.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:

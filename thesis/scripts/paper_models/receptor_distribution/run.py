@@ -1,24 +1,22 @@
+import logging
 import os
-import sys
-
-
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
 
 import numpy as np
-from parameters import cytokines, cell_types_dict, geometry, path, ext_cache, numeric
-import logging
-
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH, exist_ok=True)
-logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
-                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
 import thesis.main.StateManager as StateManager
+from parameters import cytokines, cell_types_dict, geometry, path, ext_cache, numeric
 from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.scenarios.box_grid import setup, assign_fractions
+
+os.makedirs(path, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(path, "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
+
 
 # noinspection PyPep8Naming
 def update_state(sim_container, replicat_index):

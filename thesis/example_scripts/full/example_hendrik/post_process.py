@@ -1,12 +1,15 @@
+import logging
 import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
 from parameters import path
 
-os.environ["LOG_PATH"] = path
+logging.basicConfig(
+    filename=os.path.join(path, "post_process.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 from thesis.main.PostProcess import PostProcessor
 

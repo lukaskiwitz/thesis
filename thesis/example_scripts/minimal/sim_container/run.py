@@ -1,9 +1,20 @@
+import logging
+import os
+
 from parameters import cytokines, cell_types_dict, geometry, numeric, boundary
 from thesis.scenarios.box_grid import setup, assign_fractions
 
 """Define paths for result folder structure"""
 pde_solution_path = "/extra/kiwitz/simcontainer_example/test_1/pde_model"
 ode_solution_path = "/extra/kiwitz/simcontainer_example/test_1/ode_model"
+
+os.makedirs("/extra/kiwitz/simcontainer_example/test_1/", exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join("/extra/kiwitz/simcontainer_example/test_1/" "sim.log"),
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s::%(asctime)s %(message)s',
+    datefmt='%I:%M:%S')
 
 scenario = setup(
     cytokines,
