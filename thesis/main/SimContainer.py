@@ -91,19 +91,6 @@ class SimContainer:
         self.markers: List[str] = ["type_name", "IL-2_surf_c"]
         self.default_sample: ScanSample = None
 
-    def init_logs(self) -> None:
-
-        """
-        Cleans old logs and writes directory structure for log files.
-
-        """
-
-        if os.path.exists(self.get_current_path()):
-            for i in os.listdir(self.get_current_path()):
-                if i.endswith(".log"):
-                    message("removing old logs {log}".format(log=i))
-                    os.remove(self.get_current_path() + i)
-
     def initialize(self) -> None:
 
         """
