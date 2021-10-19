@@ -1,0 +1,594 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>SimContainer &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="StateManager" href="state_manager.html" />
+    <link rel="prev" title="GlobalProblem" href="global_problem.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/guide.html">General description of the package structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html">main package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="global_problem.html">GlobalProblem</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">SimContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="state_manager.html">StateManager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parameter_pool.html">MyParameterPool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="post_processor.html">PostProcessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="my_plotter.html">MyPlotter</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../main.html">main package</a> &raquo;</li>
+        
+      <li>SimContainer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sim_container.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="simcontainer">
+<h1>SimContainer<a class="headerlink" href="#simcontainer" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thesis.main.SimContainer.SimContainer">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.SimContainer.</code><code class="sig-name descname">SimContainer</code><span class="sig-paren">(</span><em class="sig-param">parameter_set</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container to hold all simulation object. Can be used as standalone or aggregate with
+StateManager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>Parameterset</em>) – parmeters set, that get handed down to global problems.</p></li>
+<li><p><strong>entity_list</strong> (<em>List</em><em>[</em><em>Entity</em><em>]</em>) – List of all entities in the simulation</p></li>
+<li><p><strong>global_problems</strong> (<em>List</em><em>[</em><a class="reference internal" href="global_problem.html#thesis.main.FieldProblem.GlobalProblem" title="thesis.main.FieldProblem.GlobalProblem"><em>GlobalProblem</em></a><em>]</em>) – list of global problems in this simulation</p></li>
+<li><p><strong>top_path</strong> – path to the top level directory to serve as reference for ext_cache</p></li>
+<li><p><strong>path</strong> – (sub) path to simulation results</p></li>
+<li><p><strong>relative_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>worker_sub_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>entity_templates</strong> (<em>List</em><em>[</em><em>EntityType</em><em>]</em>) – list of available entity templates</p></li>
+<li><p><strong>internal_solvers</strong> (<em>List</em><em>[</em><em>InternalSolver</em><em>]</em>) – list of available internal solvers</p></li>
+<li><p><strong>marker_lookup</strong> (<em>Mapping</em><em>[</em><em>str</em><em>,</em><em>int</em><em>]</em>) – lookup dict to manually set the mesh function value for exported properties</p></li>
+<li><p><strong>markers</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – list of entity properties, which should be exported as mesh functions</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – current time</p></li>
+<li><p><strong>record</strong> (<em>ClassRecord</em>) – Class record object to store execution timing data</p></li>
+<li><p><strong>default_sample</strong> – scan sample to reset sim object before each parameter scan</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_entity">
+<code class="sig-name descname">add_entity</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds entity to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_entity_type">
+<code class="sig-name descname">add_entity_type</code><span class="sig-paren">(</span><em class="sig-param">template</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_entity_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds entity template to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_internal_solver">
+<code class="sig-name descname">add_internal_solver</code><span class="sig-paren">(</span><em class="sig-param">internal_solver</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_internal_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers and internal solver object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalSolver</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.add_problem">
+<code class="sig-name descname">add_problem</code><span class="sig-paren">(</span><em class="sig-param">field</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.add_problem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds global problem to simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="global_problem.html#thesis.main.FieldProblem.GlobalProblem" title="thesis.main.FieldProblem.GlobalProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalProblem</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.apply_type_changes">
+<code class="sig-name descname">apply_type_changes</code><span class="sig-paren">(</span><em class="sig-param">replicat_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.apply_type_changes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies pending entity type changes. Should be executed between time steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.from_xml">
+<code class="sig-name descname">from_xml</code><span class="sig-paren">(</span><em class="sig-param">e</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.from_xml" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_current_path">
+<code class="sig-name descname">get_current_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_current_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns current path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_entities_by_type">
+<code class="sig-name descname">get_entities_by_type</code><span class="sig-paren">(</span><em class="sig-param">entity_type</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entities_by_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns all entities of type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>entity_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_entity_by_name">
+<code class="sig-name descname">get_entity_by_name</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns first entity with that matches given name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_entity_type_by_name">
+<code class="sig-name descname">get_entity_type_by_name</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_entity_type_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_internal_solver_by_name">
+<code class="sig-name descname">get_internal_solver_by_name</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_internal_solver_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns first internal solver that matches name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">InternalSolver</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_number_of_entities">
+<code class="sig-name descname">get_number_of_entities</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_number_of_entities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of entities per entity type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dictionary with entity type names as keys</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.get_tmp_path">
+<code class="sig-name descname">get_tmp_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.get_tmp_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets current temporary directory
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
+:return:tmp dir path</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.init_logs">
+<code class="sig-name descname">init_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.init_logs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleans old logs and writes directory structure for log files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup task before simulation.
+Registers entities with global problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.move_cells">
+<code class="sig-name descname">move_cells</code><span class="sig-paren">(</span><em class="sig-param">time_index</em>, <em class="sig-param">dt</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.move_cells" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.post_replicat">
+<code class="sig-name descname">post_replicat</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">t</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.post_replicat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.post_step">
+<code class="sig-name descname">post_step</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">t</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.post_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method can be overwritten to call custom code after each time step. Must have this signature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sc</strong> (<a class="reference internal" href="#thesis.main.SimContainer.SimContainer" title="thesis.main.SimContainer.SimContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code></a>) – this SimContainer</p></li>
+<li><p><strong>time_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – current time index</p></li>
+<li><p><strong>t</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – current time</p></li>
+<li><p><strong>T</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – complete time range</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.pre_replicat">
+<code class="sig-name descname">pre_replicat</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">t</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.pre_replicat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.pre_step">
+<code class="sig-name descname">pre_step</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">t</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.pre_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method can be overwritten to call custom code before each time step. Must have this signature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sc</strong> (<a class="reference internal" href="#thesis.main.SimContainer.SimContainer" title="thesis.main.SimContainer.SimContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code></a>) – this SimContainer</p></li>
+<li><p><strong>time_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – current time index</p></li>
+<li><p><strong>t</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – current time</p></li>
+<li><p><strong>T</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – complete time range</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.reapply_entity_types">
+<code class="sig-name descname">reapply_entity_types</code><span class="sig-paren">(</span><em class="sig-param">replicat_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.reapply_entity_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.register_entites">
+<code class="sig-name descname">register_entites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.register_entites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers entities with global problems based on matching field_quantity values
+between GlobalProblem and Entity interactions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">T</em>, <em class="sig-param">number_of_replicats=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the simulation of given time range.
+:type T: <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]
+:param T: time range; dt is calculated from the differences of successive elements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.save_domain">
+<code class="sig-name descname">save_domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_domain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves Mesh Function with outer domains colored according to field.get_outer_domain_vis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.save_subdomains">
+<code class="sig-name descname">save_subdomains</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.save_subdomains" title="Permalink to this definition">¶</a></dt>
+<dd><p>saves Mesh Function with subdomains domains colored according to field.get_sub_domain_vis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.set_ext_cache">
+<code class="sig-name descname">set_ext_cache</code><span class="sig-paren">(</span><em class="sig-param">ext_cache</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.set_ext_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the external cache directory for all global_problems.
+TODO some abstraction to differentiate between spatial and mean field classes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ext_cache</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – external cache directory path</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.set_parameters">
+<code class="sig-name descname">set_parameters</code><span class="sig-paren">(</span><em class="sig-param">p</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.set_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets parameter set for sim container
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">dt</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>advanches simulation by dt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – delta t for this timestep</p></li>
+<li><p><strong>time_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – time index for this timestep</p></li>
+<li><p><strong>replicat_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – index for this replicat</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.SimContainer.SimContainer.to_xml">
+<code class="sig-name descname">to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.SimContainer.SimContainer.to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="state_manager.html" class="btn btn-neutral float-right" title="StateManager" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="global_problem.html" class="btn btn-neutral float-left" title="GlobalProblem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,1022 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>MyParameterPool &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PostProcessor" href="post_processor.html" />
+    <link rel="prev" title="StateManager" href="state_manager.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/guide.html">General description of the package structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html">main package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="global_problem.html">GlobalProblem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sim_container.html">SimContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="state_manager.html">StateManager</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MyParameterPool</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parameterset">ParameterSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parametercollection">ParameterCollection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter">Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#physicalparameter">PhysicalParameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miscparameter">MiscParameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scannableparameter">ScannableParameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parametertemplate">ParameterTemplate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#physicalparametertemplate">PhysicalParameterTemplate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#globalparameters">GlobalParameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#globalcollections">GlobalCollections</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="post_processor.html">PostProcessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="my_plotter.html">MyPlotter</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../main.html">main package</a> &raquo;</li>
+        
+      <li>MyParameterPool</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/parameter_pool.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="myparameterpool">
+<h1>MyParameterPool<a class="headerlink" href="#myparameterpool" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thesis.main.MyParameterPool.MyParameterPool">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.MyParameterPool.</code><code class="sig-name descname">MyParameterPool</code><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Stores parameter templates to derive Parameters and Collections from</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>parameter_templates</strong> (<em>List</em><em>[</em><a class="reference internal" href="#thesis.main.ParameterSet.ParameterTemplate" title="thesis.main.ParameterSet.ParameterTemplate"><em>ParameterTemplate</em></a><em>]</em>) – List of parameter templates</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.MyParameterPool.MyParameterPool.add_template">
+<code class="sig-name descname">add_template</code><span class="sig-paren">(</span><em class="sig-param">template</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool.add_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a template to this pool. Name must be unique.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyParameterPool.MyParameterPool.get_as_collection">
+<code class="sig-name descname">get_as_collection</code><span class="sig-paren">(</span><em class="sig-param">parameter_name_dict</em>, <em class="sig-param">name='dummy'</em>, <em class="sig-param">field_quantity=''</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool.get_as_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter collection from key value pairs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Keys must be template names in this pool and values must be appropriate parameter values</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – collection name</p></li>
+<li><p><strong>field_quantity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – collection field quantity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyParameterPool.MyParameterPool.get_template">
+<code class="sig-name descname">get_template</code><span class="sig-paren">(</span><em class="sig-param">template_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool.get_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves first template that matches name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>template_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of the parameter template</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.ParameterTemplate" title="thesis.main.ParameterSet.ParameterTemplate"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterTemplate</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyParameterPool.MyParameterPool.join">
+<code class="sig-name descname">join</code><span class="sig-paren">(</span><em class="sig-param">pool</em>, <em class="sig-param">overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Joins with a second parameter pool inplace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pool</strong> (<a class="reference internal" href="#thesis.main.MyParameterPool.MyParameterPool" title="thesis.main.MyParameterPool.MyParameterPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">MyParameterPool</span></code></a>) – Pool to join</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Overwrite templates in this pool</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="parameterset">
+<h2>ParameterSet<a class="headerlink" href="#parameterset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.ParameterSet">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterSet</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">collections</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container object that holds parameter collections</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collections</strong> (<em>List</em><em>[</em><a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><em>ParameterCollection</em></a><em>]</em>) – List of collection in this parameter set</p></li>
+<li><p><a class="reference internal" href="post_processor.html#thesis.main.PostProcess.CV.name" title="thesis.main.PostProcess.CV.name"><strong>name</strong></a> (<em>str</em>) – name of this parameter set</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.add_collection">
+<code class="sig-name descname">add_collection</code><span class="sig-paren">(</span><em class="sig-param">collection</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.add_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a collection to this parameter set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>) – collection to add</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.add_parameter_with_collection">
+<code class="sig-name descname">add_parameter_with_collection</code><span class="sig-paren">(</span><em class="sig-param">parameter</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.add_parameter_with_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a parameter with its own ParameterCollection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parameter</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>) – parameter to add</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.deserialize_from_xml">
+<em class="property">static </em><code class="sig-name descname">deserialize_from_xml</code><span class="sig-paren">(</span><em class="sig-param">element</em>, <em class="sig-param">parent_tree=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.deserialize_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter set from xml representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>) – the xml elment</p></li>
+<li><p><strong>parent_tree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ElementTree</span></code>]) – an xml tree to integrate global collections/parameters into (passed to ParameterCollection)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#thesis.main.ParameterSet.ParameterSet" title="thesis.main.ParameterSet.ParameterSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterSet</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_as_dictionary">
+<code class="sig-name descname">get_as_dictionary</code><span class="sig-paren">(</span><em class="sig-param">in_sim=False</em>, <em class="sig-param">with_collection_name=True</em>, <em class="sig-param">field_quantity=''</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_as_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns dicitonary version of this parameter set.
+Collections are flattened into dict keys: {collectionname_parametername: value…}</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_sim</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – return values in sim units</p></li>
+<li><p><strong>with_collection_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – include collection name in dict keys</p></li>
+<li><p><strong>field_quantity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – only include collection with this field quantity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_collection">
+<code class="sig-name descname">get_collection</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves as parameter collection by name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – collection name to look for</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_collections_by_field_quantity">
+<code class="sig-name descname">get_collections_by_field_quantity</code><span class="sig-paren">(</span><em class="sig-param">field_quantity</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_collections_by_field_quantity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a list of parameter collections by associated field quantity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>field_quantity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – field quantity</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_misc_parameter">
+<code class="sig-name descname">get_misc_parameter</code><span class="sig-paren">(</span><em class="sig-param">parameter_name</em>, <em class="sig-param">collection_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_misc_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a misc parameter by parameter and collection name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>collection_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.MiscParameter" title="thesis.main.ParameterSet.MiscParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">MiscParameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_physical_parameter">
+<code class="sig-name descname">get_physical_parameter</code><span class="sig-paren">(</span><em class="sig-param">parameter_name</em>, <em class="sig-param">collection_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_physical_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a physical parameter by parameter and collection name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>collection_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.PhysicalParameter" title="thesis.main.ParameterSet.PhysicalParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalParameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.get_physical_parameter_by_field_quantity">
+<code class="sig-name descname">get_physical_parameter_by_field_quantity</code><span class="sig-paren">(</span><em class="sig-param">parameter_name</em>, <em class="sig-param">field_quantity_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.get_physical_parameter_by_field_quantity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a parameter by associated field quantity and name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – parameter name</p></li>
+<li><p><strong>field_quantity_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – field quantity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.PhysicalParameter" title="thesis.main.ParameterSet.PhysicalParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalParameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><em class="sig-param">global_collections=None</em>, <em class="sig-param">global_parameters=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an xml representation of this parameter set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>global_collections</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.GlobalCollections" title="thesis.main.ParameterSet.GlobalCollections"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalCollections</span></code></a>]) – global collection object (optional)</p></li>
+<li><p><strong>global_parameters</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.GlobalParameters" title="thesis.main.ParameterSet.GlobalParameters"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalParameters</span></code></a>]) – global parameters object (optional)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterSet.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">input_parameter_object</em>, <em class="sig-param">overwrite=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates this parameter set inplace. Values are not overwritten by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_parameter_object</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.ParameterSet" title="thesis.main.ParameterSet.ParameterSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterSet</span></code></a>, <a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>, <a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]) – can be a Parameter, ParameterCollection or ParameterSet. When a Parameter object is passed a dummy collection is created.</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – overwrite values in this parameter set</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parametercollection">
+<h2>ParameterCollection<a class="headerlink" href="#parametercollection" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.ParameterCollection">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterCollection</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">field_quantity=''</em>, <em class="sig-param">is_global=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container object that holds parameter objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> – List of parameters in this collection</p></li>
+<li><p><a class="reference internal" href="post_processor.html#thesis.main.PostProcess.CV.name" title="thesis.main.PostProcess.CV.name"><strong>name</strong></a> – collection name</p></li>
+<li><p><strong>field_quantity</strong> – field quantity associated with this collection</p></li>
+<li><p><strong>is_global</strong> – If True: parameter objects are handed down by reference. If False: parameter objects are handed down by copy</p></li>
+</ul>
+</dd>
+<dt class="field-even">Vartype</dt>
+<dd class="field-even"><p>parameters: List[<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter">Parameter</a>]</p>
+</dd>
+<dt class="field-odd">Vartype</dt>
+<dd class="field-odd"><p>name: str</p>
+</dd>
+<dt class="field-even">Vartype</dt>
+<dd class="field-even"><p>field_quantity: str</p>
+</dd>
+<dt class="field-odd">Vartype</dt>
+<dd class="field-odd"><p>is_global: bool</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.deserialize_from_xml">
+<code class="sig-name descname">deserialize_from_xml</code><span class="sig-paren">(</span><em class="sig-param">element</em>, <em class="sig-param">parent_tree=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.deserialize_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter collection from xml representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>) – the xml elment</p></li>
+<li><p><strong>parent_tree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ElementTree</span></code>]) – an xml tree to integrate global collections/parameters into</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.get_misc_parameter">
+<code class="sig-name descname">get_misc_parameter</code><span class="sig-paren">(</span><em class="sig-param">misc_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.get_misc_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets mics parameter by name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>misc_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – misc parameter name</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#thesis.main.ParameterSet.MiscParameter" title="thesis.main.ParameterSet.MiscParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">MiscParameter</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.get_parameter">
+<code class="sig-name descname">get_parameter</code><span class="sig-paren">(</span><em class="sig-param">parameter_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.get_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter by name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – parameter name</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.get_physical_parameter">
+<code class="sig-name descname">get_physical_parameter</code><span class="sig-paren">(</span><em class="sig-param">parameter_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.get_physical_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets physical parameter by name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – physical parameter name</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#thesis.main.ParameterSet.PhysicalParameter" title="thesis.main.ParameterSet.PhysicalParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalParameter</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><em class="sig-param">global_parameters=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an xml representation of this parameter collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>global_parameters</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#thesis.main.ParameterSet.GlobalParameters" title="thesis.main.ParameterSet.GlobalParameters"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalParameters</span></code></a>]) – global parameters object (optional)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.set_misc_parameter">
+<code class="sig-name descname">set_misc_parameter</code><span class="sig-paren">(</span><em class="sig-param">misc_parameter</em>, <em class="sig-param">overwrite=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.set_misc_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a mics parameter in this collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>misc_parameter</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.MiscParameter" title="thesis.main.ParameterSet.MiscParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">MiscParameter</span></code></a>) – misc parameter to set.</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – overwrite parameter with same name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.set_parameter">
+<code class="sig-name descname">set_parameter</code><span class="sig-paren">(</span><em class="sig-param">parameter</em>, <em class="sig-param">overwrite=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.set_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a parameter in this collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>) – parameter to set.</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – overwrite parameter with same name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.set_physical_parameter">
+<code class="sig-name descname">set_physical_parameter</code><span class="sig-paren">(</span><em class="sig-param">physical_parameter</em>, <em class="sig-param">overwrite=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.set_physical_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a physical parameter in this collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>physical_parameter</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.PhysicalParameter" title="thesis.main.ParameterSet.PhysicalParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicalParameter</span></code></a>) – physical parameter to set.</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – overwrite parameter with same name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">update_collection</em>, <em class="sig-param">overwrite=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates this parameter collection inplace. Values are not overwritten by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>update_collection</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>) – collection with new parameters</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – overwrite values in this collection</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameter">
+<h2>Parameter<a class="headerlink" href="#parameter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.Parameter">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for container object that bundles parameter value, name and conversion function/factor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="post_processor.html#thesis.main.PostProcess.CV.name" title="thesis.main.PostProcess.CV.name"><strong>name</strong></a> (<em>str</em>) – parameter name</p></li>
+<li><p><strong>value</strong> (<em>T</em>) – parameter value (must be at least json serializable)</p></li>
+<li><p><strong>is_global</strong> (<em>bool</em>) – make this a global parameter. If True: parameter is handed down by reference. If False: parameter is handed down by copy</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.deserialize_from_xml">
+<em class="property">abstract </em><code class="sig-name descname">deserialize_from_xml</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.deserialize_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter from xml representation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.get_in_post_unit">
+<code class="sig-name descname">get_in_post_unit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.get_in_post_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter value in post units</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.get_in_sim_unit">
+<code class="sig-name descname">get_in_sim_unit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.get_in_sim_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter value in sim units</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.serialize_to_xml">
+<em class="property">abstract </em><code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an xml representation of this parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.set_in_post_unit">
+<code class="sig-name descname">set_in_post_unit</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.set_in_post_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets parameter value in post units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>~T</em>) – parameter value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.Parameter.set_in_sim_unit">
+<code class="sig-name descname">set_in_sim_unit</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter.set_in_sim_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets parameter value in sim units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>~T</em>) – parameter value</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="physicalparameter">
+<h2>PhysicalParameter<a class="headerlink" href="#physicalparameter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.PhysicalParameter">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">PhysicalParameter</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">value</em>, <em class="sig-param">to_sim=1</em>, <em class="sig-param">to_post=1</em>, <em class="sig-param">is_global=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.ParameterSet.Parameter</span></code></a></p>
+<p>Container class for numerical parameters that have physical units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>to_sim</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Callable</em><em>]</em>) – function of factor to convert from post to sim units</p></li>
+<li><p><strong>to_post</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Callable</em><em>]</em>) – function of factor to convert from sim to post units</p></li>
+<li><p><strong>factor_conversion</strong> (<em>bool</em>) – wether conversion is by factor or callable</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.deserialize_from_xml">
+<code class="sig-name descname">deserialize_from_xml</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.deserialize_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter from xml representation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.get_in_post_unit">
+<code class="sig-name descname">get_in_post_unit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.get_in_post_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter value in post units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>~PhysicalValue</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.get_in_sim_unit">
+<code class="sig-name descname">get_in_sim_unit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.get_in_sim_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter value in sim units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>~PhysicalValue</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.my_cast">
+<code class="sig-name descname">my_cast</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.my_cast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to cast value for serialization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – parameter value to cast</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>~PhysicalValue</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an xml representation of this parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.set_in_post_unit">
+<code class="sig-name descname">set_in_post_unit</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.set_in_post_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets parameter value in post units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>~PhysicalValue</em>) – parameter value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.PhysicalParameter.set_in_sim_unit">
+<code class="sig-name descname">set_in_sim_unit</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameter.set_in_sim_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets parameter value in sim units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>~PhysicalValue</em>) – parameter value</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="miscparameter">
+<h2>MiscParameter<a class="headerlink" href="#miscparameter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.MiscParameter">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">MiscParameter</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">value</em>, <em class="sig-param">is_global=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.MiscParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.ParameterSet.Parameter</span></code></a></p>
+<p>Container class for miscellaneous parameters that do not have physical units.</p>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.MiscParameter.deserialize_from_xml">
+<code class="sig-name descname">deserialize_from_xml</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.MiscParameter.deserialize_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a parameter from xml representation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.MiscParameter.get_in_sim_unit">
+<code class="sig-name descname">get_in_sim_unit</code><span class="sig-paren">(</span><em class="sig-param">type=&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.MiscParameter.get_in_sim_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets parameter value in sim units</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.MiscParameter.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.MiscParameter.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an xml representation of this parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="scannableparameter">
+<h2>ScannableParameter<a class="headerlink" href="#scannableparameter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.ScannableParameter">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ScannableParameter</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">f</em>, <em class="sig-param">in_sim=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ScannableParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container class that combine parameter with a function for scanning over parameter ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><em>Parameter</em></a>) – base physical parameter</p></li>
+<li><p><strong>f</strong> (<em>Callable</em>) – scaling function; Must have signature f(x,v), were x is the base parameter value and v is the scaling parameter</p></li>
+<li><p><strong>in_sim</strong> (<em>bool</em>) – wether to use sim or post units for scaling function</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="parametertemplate">
+<h2>ParameterTemplate<a class="headerlink" href="#parametertemplate" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.ParameterTemplate">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterTemplate</code><a class="headerlink" href="#thesis.main.ParameterSet.ParameterTemplate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for parameter object factories</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><a class="reference internal" href="post_processor.html#thesis.main.PostProcess.CV.name" title="thesis.main.PostProcess.CV.name"><strong>name</strong></a> (<em>str</em>) – template name</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="physicalparametertemplate">
+<h2>PhysicalParameterTemplate<a class="headerlink" href="#physicalparametertemplate" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.PhysicalParameterTemplate">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">PhysicalParameterTemplate</code><span class="sig-paren">(</span><em class="sig-param">parameter</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.PhysicalParameterTemplate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.ParameterSet.ParameterTemplate" title="thesis.main.ParameterSet.ParameterTemplate"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.ParameterSet.ParameterTemplate</span></code></a></p>
+<p>Object factory for physical parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.PhysicalParameter" title="thesis.main.ParameterSet.PhysicalParameter"><em>PhysicalParameter</em></a>) – physical parameter prototype</p></li>
+<li><p><a class="reference internal" href="post_processor.html#thesis.main.PostProcess.CV.name" title="thesis.main.PostProcess.CV.name"><strong>name</strong></a> (<em>str</em>) – template name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="globalparameters">
+<h2>GlobalParameters<a class="headerlink" href="#globalparameters" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.GlobalParameters">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">GlobalParameters</code><a class="headerlink" href="#thesis.main.ParameterSet.GlobalParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container class ot store global parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><em>Parameter</em></a><em>]</em>) – Dict containing stored parameters</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalParameters.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param">p</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalParameters.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>p</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>) – parameter Object</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalParameters.get_key">
+<code class="sig-name descname">get_key</code><span class="sig-paren">(</span><em class="sig-param">p</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalParameters.get_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes md5 hash on the string xml representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>p</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.Parameter" title="thesis.main.ParameterSet.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>) – parameter to hash</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>parameter md5 hash</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalParameters.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalParameters.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>xml representation of this object</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="globalcollections">
+<h2>GlobalCollections<a class="headerlink" href="#globalcollections" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.ParameterSet.GlobalCollections">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">GlobalCollections</code><a class="headerlink" href="#thesis.main.ParameterSet.GlobalCollections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container class ot store global parameter collections</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>collections</strong> – Dict containing stored parameter collections</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalCollections.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalCollections.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds parameter collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalCollections.get_key">
+<code class="sig-name descname">get_key</code><span class="sig-paren">(</span><em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalCollections.get_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes md5 hash on the string xml representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>c</strong> (<a class="reference internal" href="#thesis.main.ParameterSet.ParameterCollection" title="thesis.main.ParameterSet.ParameterCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code></a>) – parameter collection to hash</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>collection md5 hash</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.ParameterSet.GlobalCollections.serialize_to_xml">
+<code class="sig-name descname">serialize_to_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.GlobalCollections.serialize_to_xml" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>xml representation of this object</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="post_processor.html" class="btn btn-neutral float-right" title="PostProcessor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="state_manager.html" class="btn btn-neutral float-left" title="StateManager" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

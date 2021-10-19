@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>StateManager &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Scenario usage and construction" href="../03_scenario/scenario_main.html" />
+    <link rel="prev" title="Time series simulation with SimContainer" href="../01_timeseries_simulation/timeseries_simulation_main.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../guide.html">General description of the package structure</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../01_timeseries_simulation/timeseries_simulation_main.html">Time series simulation with SimContainer</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">StateManager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-scan-setup">Parameter scan setup</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../03_scenario/scenario_main.html">Scenario usage and construction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04_parameter_pool/parameter_pool_main.html">Parameter templates and management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../05_post_processing/post_processing_main.html">Post Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../main.html">main package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../guide.html">General description of the package structure</a> &raquo;</li>
+        
+      <li>StateManager</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/guide/chapters/02_parameter_scan/parameter_scan_main.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="statemanager">
+<h1>StateManager<a class="headerlink" href="#statemanager" title="Permalink to this headline">¶</a></h1>
+<p>The main use of <code class="xref py py-class docutils literal notranslate"><span class="pre">StateManager</span></code> is to run parameter scans in an organised manner and produces the xml
+files necessary for the use of <code class="xref py py-class docutils literal notranslate"><span class="pre">PostProcessor</span></code>.
+When SimContainer is used in conjunction with StateManger to run parameter scans and produce xml output for post processing,
+the simulation loop is invoke from with StateManger.run()
+(<a class="reference internal" href="#basic-scan-loop"><span class="std std-numref">Listing 2</span></a> and <a class="reference internal" href="#state-manager-activity"><span class="std std-numref">Fig. 5</span></a>).</p>
+<div class="figure align-default" id="state-manager-activity">
+<p class="plantuml">
+<img src="../../../_images/plantuml-c4d2ec282d1c0ccfbc109e9cd308f884e4f312fe.png" alt="&#64;startuml
+    partition run.py {
+        :scenario = setup();
+        :state_manager = StateManager()
+        state_manager.scenario = scenario
+        state_manager.T = [0,1];
+
+        partition StateManager.run() {
+
+        while (model_index in model_indicies)
+            while (scan_index scan_samples)
+
+                :self.sim_container =self.scenario.get_sim_container();
+                :self.sim_container.initialize();
+                    :self.update_sim_container();
+                    :self.sim_container.run();
+                    :self.scan_tree.write_element_tree();
+            endwhile
+        endwhile
+        }
+    }
+    end
+&#64;enduml"/>
+</p>
+<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">Activity diagramm depicting the scan loop.</span><a class="headerlink" href="#state-manager-activity" title="Permalink to this image">¶</a></p>
+</div>
+<div class="literal-block-wrapper docutils container" id="basic-scan-loop">
+<div class="code-block-caption"><span class="caption-number">Listing 2 </span><span class="caption-text">Basic parameter scan loop in pseudo code. Actual implementation in <code class="xref py py-func docutils literal notranslate"><span class="pre">StateManager.run()</span></code></span><a class="headerlink" href="#basic-scan-loop" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ext_cache</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">model_names</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">number_of_replicats</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+    <span class="k">for</span> <span class="n">model_index</span> <span class="ow">in</span> <span class="n">model_indicies</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">scan_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_container</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scenario</span><span class="o">.</span><span class="n">get_sim_container</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_scan_sample</span><span class="p">(</span><span class="n">scan_index</span><span class="p">)</span><span class="o">.</span><span class="n">p</span><span class="p">,</span>
+                <span class="n">model_index</span><span class="o">=</span><span class="n">model_index</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_container</span><span class="o">.</span><span class="n">top_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_container</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_sim_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_container</span><span class="p">,</span> <span class="n">scan_index</span><span class="p">,</span> <span class="n">model_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pre_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_container</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">number_of_replicats</span><span class="o">=</span><span class="n">number_of_replicats</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">post_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scan_tree</span><span class="o">.</span><span class="n">write_element_tree</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_records</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<p>For each combination of model and scan_sample the <code class="xref py py-func docutils literal notranslate"><span class="pre">SimContainer.run()</span></code> method is invoked once with the following steps</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>(Lines 5-8) construct <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> instance from scenario</p></li>
+<li><p>(Line 9) Set file paths</p></li>
+<li><p>(Line 10) Initialize <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> instance</p></li>
+<li><p>(Line 11) update <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> instance with <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSample</span></code> instance</p></li>
+<li><p>(Line 12) run pre_scan hook</p></li>
+<li><p>(Line 13) call <code class="xref py py-func docutils literal notranslate"><span class="pre">SimContainer.run()</span></code></p></li>
+<li><p>(Line 14) run post_scan hook</p></li>
+<li><p>(Line 15) write xml output</p></li>
+<li><p>(Line 16) Save timing records</p></li>
+</ol>
+</div></blockquote>
+<p>The call to step-methods propagates until it reaches the <code class="xref py py-func docutils literal notranslate"><span class="pre">MySolver.step()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">InternalSolver.step()</span></code> methods respectively.
+The actual solver for <code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalProblems</span></code> is implemented in the subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">MySolver</span></code> and the solver for <code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code> behavior in
+subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">InternalSolver</span></code>.</p>
+<div class="section" id="parameter-scan-setup">
+<h2>Parameter scan setup<a class="headerlink" href="#parameter-scan-setup" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-default" id="id1">
+<p class="plantuml">
+<img src="../../../_images/plantuml-1967cba7dd30d37949520dbf2cdd8eb6195469fb.png" alt="&#64;startuml
+
+    !include ../puml_src/classes.puml
+    remove &#64;unlinked
+    ScanDefinition *- ScannableParameter
+    ScanContainer &lt;.. ScanDefinition
+    ScanContainer *- ScanSample
+    StateManager *- ScanContainer
+    ScanSample *- ScanType
+
+
+&#64;enduml"/>
+</p>
+<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">The <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code> class holds a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSample</span></code>, each representing a
+single point in the parameter scan. <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSamples</span></code> objects are self contained
+and can be applied to <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code>, to change all (or just some)
+simulation parameters.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ScanDefinition</span></code> instances can be passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code> as a more convenient
+way of adding scan points.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>A parameter scan is produced by adding <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSample</span></code> instances to <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code>
+and then handing the <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code> instance to <code class="xref py py-class docutils literal notranslate"><span class="pre">StateManager</span></code>.
+This can be accomplished by either manually instantiating and population <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSample</span></code>,
+or through the use of <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanDefinition</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">ScanContainer.add_single_parameter_scan()</span></code>.</p>
+<div class="literal-block-wrapper docutils container" id="d-scan-snippet">
+<div class="code-block-caption"><span class="caption-number">Listing 3 </span><span class="caption-text">Code snippet that uses  <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code> to setup a parameters scan over the
+Diffusion constant with logarithmically spaced samples ranging
+from parameter fold change 0.1 to 10.</span><a class="headerlink" href="#d-scan-snippet" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template_D</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">)</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">ScannableParameter</span><span class="p">(</span><span class="n">template_D</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span>
+<span class="n">scan_space</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">D_def</span> <span class="o">=</span> <span class="n">ScanDefintion</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="s2">&quot;IL-2&quot;</span><span class="p">,</span> <span class="n">scan_space</span><span class="p">,</span> <span class="n">ScanType</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">,</span> <span class="n">field_quantity</span><span class="o">=</span><span class="s2">&quot;il2&quot;</span><span class="p">)</span>
+<span class="n">scan_container</span><span class="o">.</span><span class="n">add_single_parameter_scan</span><span class="p">([</span><span class="n">D_def</span><span class="p">],</span> <span class="n">scan_name</span><span class="o">=</span><span class="s2">&quot;D&quot;</span><span class="p">)</span>
+<span class="n">stMan</span><span class="o">.</span><span class="n">scan_container</span> <span class="o">=</span> <span class="n">scan_container</span>
+</pre></div>
+</div>
+</div>
+<p>Instantiating <code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSamples</span></code> needs more code, but is more flexible.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../03_scenario/scenario_main.html" class="btn btn-neutral float-right" title="Scenario usage and construction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../01_timeseries_simulation/timeseries_simulation_main.html" class="btn btn-neutral float-left" title="Time series simulation with SimContainer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

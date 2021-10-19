@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>StateManager &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MyParameterPool" href="parameter_pool.html" />
+    <link rel="prev" title="SimContainer" href="sim_container.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/guide.html">General description of the package structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html">main package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="global_problem.html">GlobalProblem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sim_container.html">SimContainer</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">StateManager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#myscantree">MyScanTree</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="parameter_pool.html">MyParameterPool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="post_processor.html">PostProcessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="my_plotter.html">MyPlotter</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../main.html">main package</a> &raquo;</li>
+        
+      <li>StateManager</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/state_manager.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="statemanager">
+<h1>StateManager<a class="headerlink" href="#statemanager" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thesis.main.StateManager.StateManager">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">StateManager</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
+produces the xml files necessary for the use of PostProcessor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>ruse</strong> (<em>pd.DataFrame</em>) – </p></li>
+<li><p><strong>scan_folder_pattern</strong> (<em>str</em>) – </p></li>
+<li><p><strong>element_tree</strong> (<em>ET.ElementTree</em>) – </p></li>
+<li><p><strong>scan_container</strong> (<em>ScanContainer</em>) – </p></li>
+<li><p><strong>sim_container</strong> (<em>SimConatiner</em>) – </p></li>
+<li><p><strong>T</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>N</strong> (<em>int</em>) – </p></li>
+<li><p><strong>compress_log_file</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>globarl_collections</strong> – </p></li>
+<li><p><strong>global_parameters</strong> (<a class="reference internal" href="parameter_pool.html#thesis.main.ParameterSet.GlobalParameters" title="thesis.main.ParameterSet.GlobalParameters"><em>GlobalParameters</em></a>) – </p></li>
+<li><p><strong>record</strong> (<em>ClassRecord</em>) – </p></li>
+<li><p><strong>progress_bar</strong> – </p></li>
+<li><p><strong>eta_estimates</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.apply_sample_flags">
+<code class="sig-name descname">apply_sample_flags</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">scan_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.apply_sample_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.clear_log_files">
+<code class="sig-name descname">clear_log_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.clear_log_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.estimate_time_remaining">
+<code class="sig-name descname">estimate_time_remaining</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">model_index</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">R</em>, <em class="sig-param">S</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.estimate_time_remaining" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.get_cell_ts_data_frame">
+<code class="sig-name descname">get_cell_ts_data_frame</code><span class="sig-paren">(</span><em class="sig-param">time_indices=None</em>, <em class="sig-param">scan_indicies=None</em>, <em class="sig-param">n_processes=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.get_cell_ts_data_frame" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.get_records_path">
+<code class="sig-name descname">get_records_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.get_records_path" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.get_scan_folder">
+<code class="sig-name descname">get_scan_folder</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.get_scan_folder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.get_scan_sample">
+<code class="sig-name descname">get_scan_sample</code><span class="sig-paren">(</span><em class="sig-param">i</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.get_scan_sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ScanSample</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.post_scan">
+<code class="sig-name descname">post_scan</code><span class="sig-paren">(</span><em class="sig-param">state_manager</em>, <em class="sig-param">scan_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.post_scan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.pre_scan">
+<code class="sig-name descname">pre_scan</code><span class="sig-paren">(</span><em class="sig-param">state_manager</em>, <em class="sig-param">scan_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.pre_scan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">ext_cache=''</em>, <em class="sig-param">model_names=None</em>, <em class="sig-param">number_of_replicats=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.run" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.save_records">
+<code class="sig-name descname">save_records</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.save_records" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.StateManager.update_sim_container">
+<code class="sig-name descname">update_sim_container</code><span class="sig-paren">(</span><em class="sig-param">sc</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">model_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager.update_sim_container" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="parameter_pool.html#thesis.main.ParameterSet.ParameterSet" title="thesis.main.ParameterSet.ParameterSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterSet</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="myscantree">
+<h2>MyScanTree<a class="headerlink" href="#myscantree" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="thesis.main.StateManager.MyScanTree">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">MyScanTree</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.add_time_step_to_element_tree">
+<code class="sig-name descname">add_time_step_to_element_tree</code><span class="sig-paren">(</span><em class="sig-param">sim_container</em>, <em class="sig-param">model_index</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">time</em>, <em class="sig-param">model_name=''</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.add_time_step_to_element_tree" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>marker_paths</strong> – Dictionary of shape {marker_key :marker_name}</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.create_model_element">
+<code class="sig-name descname">create_model_element</code><span class="sig-paren">(</span><em class="sig-param">scan_index</em>, <em class="sig-param">model_index</em>, <em class="sig-param">model_name=''</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.create_model_element" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.deserialize_from_element_tree">
+<code class="sig-name descname">deserialize_from_element_tree</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.deserialize_from_element_tree" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ScanContainer</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_field_names">
+<code class="sig-name descname">get_field_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_field_names" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_model_element">
+<code class="sig-name descname">get_model_element</code><span class="sig-paren">(</span><em class="sig-param">scan_index</em>, <em class="sig-param">model_index</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_model_element" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_model_elements">
+<code class="sig-name descname">get_model_elements</code><span class="sig-paren">(</span><em class="sig-param">scan_indicies=None</em>, <em class="sig-param">model_indicies=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_model_elements" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_scan_element">
+<code class="sig-name descname">get_scan_element</code><span class="sig-paren">(</span><em class="sig-param">scan_index=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_scan_element" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_scan_elements">
+<code class="sig-name descname">get_scan_elements</code><span class="sig-paren">(</span><em class="sig-param">scan_indicies=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_scan_elements" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.get_timeteps">
+<code class="sig-name descname">get_timeteps</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.get_timeteps" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>element</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>) – lxml element with TimeSeries/Step sub elements</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.getroot">
+<code class="sig-name descname">getroot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.getroot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.load_xml">
+<code class="sig-name descname">load_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.load_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads xml representation from file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.rebuild_timesteps">
+<code class="sig-name descname">rebuild_timesteps</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.rebuild_timesteps" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>element</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>) – lxml element with TimeSeries/Step sub elements</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.serialize_to_element_tree">
+<code class="sig-name descname">serialize_to_element_tree</code><span class="sig-paren">(</span><em class="sig-param">scan_container</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.serialize_to_element_tree" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.StateManager.MyScanTree.write_element_tree">
+<code class="sig-name descname">write_element_tree</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.write_element_tree" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="parameter_pool.html" class="btn btn-neutral float-right" title="MyParameterPool" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sim_container.html" class="btn btn-neutral float-left" title="SimContainer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Scenario usage and construction &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Parameter templates and management" href="../04_parameter_pool/parameter_pool_main.html" />
+    <link rel="prev" title="StateManager" href="../02_parameter_scan/parameter_scan_main.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../guide.html">General description of the package structure</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../01_timeseries_simulation/timeseries_simulation_main.html">Time series simulation with SimContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../02_parameter_scan/parameter_scan_main.html">StateManager</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Scenario usage and construction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simcontainer-construction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> construction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scenario-construction"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> construction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#template-factory-objects-contained-in-scenario">Template/factory objects contained in <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#entity-interactions-boundary-conditions">Entity-interactions (Boundary conditions)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../04_parameter_pool/parameter_pool_main.html">Parameter templates and management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../05_post_processing/post_processing_main.html">Post Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../main.html">main package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../guide.html">General description of the package structure</a> &raquo;</li>
+        
+      <li>Scenario usage and construction</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/guide/chapters/03_scenario/scenario_main.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="scenario-usage-and-construction">
+<h1>Scenario usage and construction<a class="headerlink" href="#scenario-usage-and-construction" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> class is an object factory for <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code>.
+It is and aggregate of two abstract factory classes (<code class="xref py py-class docutils literal notranslate"><span class="pre">MyGlobalModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MyEntityLocator</span></code>),
+one template object (<code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterTemplate</span></code>),
+the parameter pool, entity types (instances of <code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>)
+and internal solver types (as types subclassed from <code class="xref py py-class docutils literal notranslate"><span class="pre">InternalSovler</span></code>).</p>
+<div class="figure align-default" id="id1">
+<p class="plantuml">
+<img src="../../../_images/plantuml-18a1287964add24ddc188805c22992dad02ee68f.png" alt="&#64;startuml
+    !include ../puml_src/classes.puml
+    remove &#64;unlinked
+
+
+    Scenario *-- MyGlobalModel
+    MyGlobalModel *-- MyFieldTemplate
+
+
+    Scenario &lt;- InternalSolver
+    EntityType -* Scenario
+    Scenario *-- MyEntityLocator
+    Scenario *-- MyParameterPool
+    MyParameterPool *-- ParameterTemplate
+
+&#64;enduml
+
+
+
+
+"/>
+</p>
+<p class="caption"><span class="caption-number">Fig. 7 </span><span class="caption-text">Factory classes are bundled in the <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> class</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="section" id="simcontainer-construction">
+<h2><code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> construction<a class="headerlink" href="#simcontainer-construction" title="Permalink to this headline">¶</a></h2>
+<p>The scenario object contains information about the simulation scenario (in the form of template and factory objects),
+but doesn’t instantiate the costly simulation objects at creation.</p>
+<p>Instead, when the actual <code class="xref py py-class docutils literal notranslate"><span class="pre">SimConatiner</span></code> instance ins needed, in custom code or from within <code class="xref py py-class docutils literal notranslate"><span class="pre">StateManager</span></code>,
+the <code class="xref py py-func docutils literal notranslate"><span class="pre">get_sim_container()</span></code> method gets invoked on the <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> instance (<a class="reference internal" href="#get-sim-container"><span class="std std-numref">Listing 4</span></a>).
+It returns the constructed <code class="xref py py-class docutils literal notranslate"><span class="pre">SimContainer</span></code> instance,
+which can run the simulation by invoking <code class="xref py py-func docutils literal notranslate"><span class="pre">SimContainer.initialize()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">SimContainer.run()</span></code> methods.</p>
+<p>This allows all simulation object to be hidden from the user,
+though access/inspection is still possible entirely possible through a debugger.</p>
+<div class="literal-block-wrapper docutils container" id="get-sim-container">
+<div class="code-block-caption"><span class="caption-number">Listing 4 </span><span class="caption-text">get_sim_container method from Scenario</span><a class="headerlink" href="#get-sim-container" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_sim_container</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">model_index</span><span class="p">):</span>
+
+    <span class="n">global_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_models</span><span class="p">[</span><span class="n">model_index</span><span class="p">]</span>
+
+    <span class="n">parameter_set</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_parameters</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parameter_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">locator</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_locators</span><span class="p">:</span>
+        <span class="n">cell_list</span> <span class="o">=</span> <span class="n">locator</span><span class="o">.</span><span class="n">get_entity_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_types</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parameter_set</span><span class="p">)</span>
+
+    <span class="n">parameter_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">global_model</span><span class="o">.</span><span class="n">build_parameter_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_pool</span><span class="p">))</span>
+
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">SimContainer</span><span class="p">(</span><span class="n">parameter_set</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">global_model</span><span class="o">.</span><span class="n">get_problem_list</span><span class="p">(</span><span class="n">parameter_set</span><span class="p">):</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">internal_solvers</span><span class="p">:</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">add_internal_solver</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cell_list</span><span class="p">:</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">add_entity</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entity_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_types</span><span class="p">:</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">add_entity_type</span><span class="p">(</span><span class="n">entity_type</span><span class="p">)</span>
+
+    <span class="n">default</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">ScanSample</span><span class="p">(</span><span class="n">parameter_set</span><span class="o">.</span><span class="n">collections</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_types</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="n">sc</span><span class="o">.</span><span class="n">default_sample</span> <span class="o">=</span> <span class="n">default</span>
+
+    <span class="k">return</span> <span class="n">sc</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="scenario-construction">
+<h2><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> construction<a class="headerlink" href="#scenario-construction" title="Permalink to this headline">¶</a></h2>
+<p>To define a new model setup, a instance of the <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> class must
+be populated with the appropriate template and factory objects.</p>
+<p>The creation algorithm for the scenario, which is used in the examples,
+is implemented in the setup function from box_grid.py.</p>
+<p>In this case <code class="xref py py-func docutils literal notranslate"><span class="pre">setup()</span></code> expects parameters as defined in the parameters.py
+files of many models that use the box grid scenario,
+but this is up to the programmer, the contents of box_grid.py can be anything that results in a valid scenario instance
+and could be included in the main script.</p>
+<p>In general the setup-routine:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Defines several parameter templates for physical parameters used in the simulation</p></li>
+<li><p>parses a parameter file or recieves the customizable parameter values as arguments.</p></li>
+<li><p>Creates <code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterSet</span></code> instances for model-and entity-templates</p></li>
+<li><p>Creates and adds <code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code> instances</p></li>
+<li><p>Creates and adds <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldTemplate</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalModel</span></code> instances</p></li>
+<li><p>Creates and adds one or more (non conflicting, please) <code class="xref py py-class docutils literal notranslate"><span class="pre">EntityLocators</span></code></p></li>
+<li><p>Returns the populated <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code> instance</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="template-factory-objects-contained-in-scenario">
+<h2>Template/factory objects contained in <code class="xref py py-class docutils literal notranslate"><span class="pre">Scenario</span></code><a class="headerlink" href="#template-factory-objects-contained-in-scenario" title="Permalink to this headline">¶</a></h2>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterTemplate</span></code>:</p>
+<blockquote>
+<div><p>A template object to derive independent <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> instances
+without redefining name an conversion factor/function</p>
+</div></blockquote>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterSet</span></code>:</p>
+<blockquote>
+<div><p>Holds the physical (with unit conversion) and misc (without conversion)
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> instances inside of <code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code> objects.
+Typically each <code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterCollection</span></code> corresponds to a single
+field_quantity (il2, il6…) or a logical grouping of parameters (numeric ,geometry…).</p>
+</div></blockquote>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityType</span></code>:</p>
+<blockquote>
+<div><p>Defines a “Type” that can be applied to a simulation entity,
+typically a cell type like Treg or Th1 to be applied to <code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code> objects.
+It aggregates a parameter set and internal solver name to overwrite the
+values on <code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code> object when applied.</p>
+</div></blockquote>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldTemplate</span></code>:</p>
+<blockquote>
+<div><p>Object factory for <code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalProblem</span></code> objects. It stores name,
+field_quantity and a parameter set, specific for a given field.
+The choice of <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldTemplate</span></code> subclass decides what mathematical model is used
+(i.e. which subclass of <code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalProblem</span></code> will be instantiated)
+and what <code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalModel</span></code> objects it can be assigned to.</p>
+</div></blockquote>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalModel</span></code>:</p>
+<blockquote>
+<div><p>Aggregate class for <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldTemplate</span></code> objects, which together correspond to a given global model.</p>
+</div></blockquote>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityLocator</span></code>:</p>
+<blockquote>
+<div><p>Object factory for <code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code> objects. Takes some parameters and decides how and where to create simulation entities.
+Multiple locators can be used at once, but there is no checking
+wether the placement makes sense, i.e. geometries are non intersecting.</p>
+</div></blockquote>
+</div>
+<div class="section" id="entity-interactions-boundary-conditions">
+<h2>Entity-interactions (Boundary conditions)<a class="headerlink" href="#entity-interactions-boundary-conditions" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../04_parameter_pool/parameter_pool_main.html" class="btn btn-neutral float-right" title="Parameter templates and management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../02_parameter_scan/parameter_scan_main.html" class="btn btn-neutral float-left" title="StateManager" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,487 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>PostProcessor &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MyPlotter" href="my_plotter.html" />
+    <link rel="prev" title="MyParameterPool" href="parameter_pool.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/guide.html">General description of the package structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html">main package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="global_problem.html">GlobalProblem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sim_container.html">SimContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="state_manager.html">StateManager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parameter_pool.html">MyParameterPool</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PostProcessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="my_plotter.html">MyPlotter</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../main.html">main package</a> &raquo;</li>
+        
+      <li>PostProcessor</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/post_processor.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-thesis.main.PostProcess">
+<span id="postprocessor"></span><h1>PostProcessor<a class="headerlink" href="#module-thesis.main.PostProcess" title="Permalink to this headline">¶</a></h1>
+<p>Created on Wed Oct 16 12:56:59 2019</p>
+<p>&#64;author: Lukas Kiwitz</p>
+<dl class="class">
+<dt id="thesis.main.PostProcess.CV">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">CV</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.CV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<p>Defines a custom computation</p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.CV.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CV'</em><a class="headerlink" href="#thesis.main.PostProcess.CV.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.ComputeSettings">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">ComputeSettings</code><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to store computation input and output</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – file path to volume file</p></li>
+<li><p><strong>field</strong> (<em>str</em>) – field name in h5 file</p></li>
+<li><p><strong>cell_data</strong> (<em>List</em><em>[</em><em>Dict</em><em>]</em>) – cell data</p></li>
+<li><p><strong>dynamic</strong> (<em>Dict</em>) – dynamic parameters</p></li>
+<li><p><strong>scan_index</strong> (<em>int</em>) – scan index</p></li>
+<li><p><strong>model_index</strong> (<em>int</em>) – model index</p></li>
+<li><p><strong>model_name</strong> (<em>str</em>) – name of this global model</p></li>
+<li><p><strong>replicat_index</strong> (<em>int</em>) – replicat index</p></li>
+<li><p><strong>time_index</strong> (<em>int</em>) – time index</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="thesis.main.PostProcess.ComputeSettings.create_from_element">
+<em class="property">static </em><code class="sig-name descname">create_from_element</code><span class="sig-paren">(</span><em class="sig-param">field_element</em>, <em class="sig-param">marker_element</em>, <em class="sig-param">model_index</em>, <em class="sig-param">model_name</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">time_indices</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.create_from_element" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.ComputeSettings.file_path">
+<code class="sig-name descname">file_path</code><em class="property"> = None</em><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.file_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>file path to volume file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.ComputeSettings.set_image_settings">
+<code class="sig-name descname">set_image_settings</code><span class="sig-paren">(</span><em class="sig-param">image_settings</em>, <em class="sig-param">image_settings_fields</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ComputeSettings.set_image_settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.FenicsScalarFieldComputation">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">FenicsScalarFieldComputation</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.FenicsScalarFieldComputation.compatible_result_type">
+<code class="sig-name descname">compatible_result_type</code><em class="property"> = [&lt;class 'thesis.main.GlobalResult.ScalarFieldResult'&gt;]</em><a class="headerlink" href="#thesis.main.PostProcess.FenicsScalarFieldComputation.compatible_result_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.MeshVolume">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">MeshVolume</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.MeshVolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.MeshVolume.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MeshVolume'</em><a class="headerlink" href="#thesis.main.PostProcess.MeshVolume.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.ParaviewRender">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">ParaviewRender</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ParaviewRender" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.ParaviewRender.add_xml_result">
+<code class="sig-name descname">add_xml_result</code><em class="property"> = False</em><a class="headerlink" href="#thesis.main.PostProcess.ParaviewRender.add_xml_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.ParaviewRender.make_paraview_images">
+<code class="sig-name descname">make_paraview_images</code><span class="sig-paren">(</span><em class="sig-param">visual_conv=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ParaviewRender.make_paraview_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.ParaviewRender.name">
+<code class="sig-name descname">name</code><em class="property"> = 'ParaviewRender'</em><a class="headerlink" href="#thesis.main.PostProcess.ParaviewRender.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.PostProcessComputation">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessComputation</code><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.PostProcessComputation.add_xml_result">
+<code class="sig-name descname">add_xml_result</code><em class="property"> = True</em><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation.add_xml_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.PostProcessComputation.compatible_result_type">
+<code class="sig-name descname">compatible_result_type</code><em class="property"> = []</em><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation.compatible_result_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.PostProcessor">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessor</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.get_cell_dataframe">
+<code class="sig-name descname">get_cell_dataframe</code><span class="sig-paren">(</span><em class="sig-param">kde=False</em>, <em class="sig-param">time_indices=None</em>, <em class="sig-param">n_processes=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_cell_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.get_global_dataframe">
+<code class="sig-name descname">get_global_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_global_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.get_kde_estimators">
+<code class="sig-name descname">get_kde_estimators</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">ts</em>, <em class="sig-param">time_index</em>, <em class="sig-param">type_names</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_kde_estimators" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.get_stats">
+<code class="sig-name descname">get_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_stats" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.get_timing_dataframe">
+<code class="sig-name descname">get_timing_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_timing_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.run_post_process">
+<code class="sig-name descname">run_post_process</code><span class="sig-paren">(</span><em class="sig-param">n_processes</em>, <em class="sig-param">extra_cell_constants=False</em>, <em class="sig-param">kde=False</em>, <em class="sig-param">time_indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.run_post_process" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.save_dataframes">
+<code class="sig-name descname">save_dataframes</code><span class="sig-paren">(</span><em class="sig-param">extra_cell_constants=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.save_dataframes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.PostProcessor.write_post_process_xml">
+<code class="sig-name descname">write_post_process_xml</code><span class="sig-paren">(</span><em class="sig-param">n_processes</em>, <em class="sig-param">debug=False</em>, <em class="sig-param">time_indices=None</em>, <em class="sig-param">scan_indicies=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.write_post_process_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs compute-function for all scans an writes result to xml file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.SD">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">SD</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.SD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.SD.name">
+<code class="sig-name descname">name</code><em class="property"> = 'SD'</em><a class="headerlink" href="#thesis.main.PostProcess.SD.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.ScalarComputation">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">ScalarComputation</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.ScalarComputation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.PostProcessComputation" title="thesis.main.PostProcess.PostProcessComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.PostProcessComputation</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.SheetPyPlotRender">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">SheetPyPlotRender</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.SheetPyPlotRender" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.SheetPyPlotRender.add_xml_result">
+<code class="sig-name descname">add_xml_result</code><em class="property"> = False</em><a class="headerlink" href="#thesis.main.PostProcess.SheetPyPlotRender.add_xml_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.PostProcess.SheetPyPlotRender.make_images">
+<code class="sig-name descname">make_images</code><span class="sig-paren">(</span><em class="sig-param">visual_conv=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.SheetPyPlotRender.make_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.SheetPyPlotRender.name">
+<code class="sig-name descname">name</code><em class="property"> = 'SheetPyPlot'</em><a class="headerlink" href="#thesis.main.PostProcess.SheetPyPlotRender.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.c">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">c</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.c.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Concentration'</em><a class="headerlink" href="#thesis.main.PostProcess.c.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="thesis.main.PostProcess.compute">
+<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.compute" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="thesis.main.PostProcess.get_color_dictionary">
+<code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">get_color_dictionary</code><span class="sig-paren">(</span><em class="sig-param">cell_df</em>, <em class="sig-param">cell_color_key</em>, <em class="sig-param">cell_colors</em>, <em class="sig-param">round_legend_labels=3</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.get_color_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.grad">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">grad</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.FenicsScalarFieldComputation" title="thesis.main.PostProcess.FenicsScalarFieldComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.FenicsScalarFieldComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.grad.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Gradient'</em><a class="headerlink" href="#thesis.main.PostProcess.grad.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="thesis.main.PostProcess.mean_c">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">mean_c</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.mean_c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thesis.main.PostProcess.ScalarComputation" title="thesis.main.PostProcess.ScalarComputation"><code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.PostProcess.ScalarComputation</span></code></a></p>
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.mean_c.compatible_result_type">
+<code class="sig-name descname">compatible_result_type</code><em class="property"> = [&lt;class 'thesis.main.GlobalResult.ScalarResult'&gt;]</em><a class="headerlink" href="#thesis.main.PostProcess.mean_c.compatible_result_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="thesis.main.PostProcess.mean_c.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Concentration'</em><a class="headerlink" href="#thesis.main.PostProcess.mean_c.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="my_plotter.html" class="btn btn-neutral float-right" title="MyPlotter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="parameter_pool.html" class="btn btn-neutral float-left" title="MyParameterPool" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

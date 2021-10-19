@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>MyPlotter &mdash; Spatial Simulation v0.1a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="PostProcessor" href="post_processor.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Spatial Simulation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/guide.html">General description of the package structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/contribute/doc.html">How to extend the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro/glossary.html">Glossary</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html">main package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="global_problem.html">GlobalProblem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sim_container.html">SimContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="state_manager.html">StateManager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parameter_pool.html">MyParameterPool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="post_processor.html">PostProcessor</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MyPlotter</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Spatial Simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../main.html">main package</a> &raquo;</li>
+        
+      <li>MyPlotter</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/my_plotter.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-thesis.main.MyPlotter">
+<span id="myplotter"></span><h1>MyPlotter<a class="headerlink" href="#module-thesis.main.MyPlotter" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="thesis.main.MyPlotter.Plotter">
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">Plotter</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.activation">
+<code class="sig-name descname">activation</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">R</em>, <em class="sig-param">R_M=860</em>, <em class="sig-param">max=0.125</em>, <em class="sig-param">min=0</em>, <em class="sig-param">n_R=0.55</em>, <em class="sig-param">n_il2=4</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.activation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.calc_cell_activation">
+<code class="sig-name descname">calc_cell_activation</code><span class="sig-paren">(</span><em class="sig-param">R_M=860</em>, <em class="sig-param">max=0.125</em>, <em class="sig-param">min=0</em>, <em class="sig-param">n_R=0.55</em>, <em class="sig-param">n_il2=4</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.calc_cell_activation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_activation_histogramm">
+<code class="sig-name descname">cell_activation_histogramm</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">color='red'</em>, <em class="sig-param">showmax=None</em>, <em class="sig-param">t=None</em>, <em class="sig-param">bins=100</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylog=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_activation_histogramm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_density_plot">
+<code class="sig-name descname">cell_density_plot</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_density_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_displacement_plot">
+<code class="sig-name descname">cell_displacement_plot</code><span class="sig-paren">(</span><em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">n=False</em>, <em class="sig-param">palette_name='Dark2'</em>, <em class="sig-param">color=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_displacement_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_heatmap">
+<code class="sig-name descname">cell_heatmap</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">z_name</em>, <em class="sig-param">filter={}</em>, <em class="sig-param">cmap='viridis'</em>, <em class="sig-param">v_range=None</em>, <em class="sig-param">c_lines=None</em>, <em class="sig-param">levels=100</em>, <em class="sig-param">xlog=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">accumulator=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_histogramm">
+<code class="sig-name descname">cell_histogramm</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">quantiles=None</em>, <em class="sig-param">distplot_kwargs=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylog=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_histogramm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_plot">
+<code class="sig-name descname">cell_plot</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">time=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">condition=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">count=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_plot_twinx">
+<code class="sig-name descname">cell_plot_twinx</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">color_axis=True</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">time=None</em>, <em class="sig-param">marker=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_plot_twinx" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_radial_niche_plot">
+<code class="sig-name descname">cell_radial_niche_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">center_type</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">cell_radius=None</em>, <em class="sig-param">legend=None</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">plot_filter=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_radial_niche_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_scatter_plot">
+<code class="sig-name descname">cell_scatter_plot</code><span class="sig-paren">(</span><em class="sig-param">names</em>, <em class="sig-param">t=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">m=0.05</em>, <em class="sig-param">legend=None</em>, <em class="sig-param">marker='o'</em>, <em class="sig-param">s=0.1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_scatter_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_slice_plot">
+<code class="sig-name descname">cell_slice_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">axis_name='x'</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_slice_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_steady_state_barplot">
+<code class="sig-name descname">cell_steady_state_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">y_ticks=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cell_steady_state_plot">
+<code class="sig-name descname">cell_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">dashes=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cells_time_series_plot">
+<code class="sig-name descname">cells_time_series_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.cells_time_series_twinx">
+<code class="sig-name descname">cells_time_series_twinx</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">colors_axis=True</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.cells_time_series_twinx" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.compute_cell_distance_metric">
+<code class="sig-name descname">compute_cell_distance_metric</code><span class="sig-paren">(</span><em class="sig-param">source_type_name</em>, <em class="sig-param">metric_dict={'mean_distance': &lt;function mean&gt;}</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_cell_distance_metric" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.compute_ci">
+<code class="sig-name descname">compute_ci</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">group_by_columns</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">y_names=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_ci" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.compute_distance_metric">
+<code class="sig-name descname">compute_distance_metric</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">type_name</em>, <em class="sig-param">metrics</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_distance_metric" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.compute_radial_profiles">
+<code class="sig-name descname">compute_radial_profiles</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">center_func=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">n_workers=8</em>, <em class="sig-param">chunksize=32</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.compute_radial_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.count_plot">
+<code class="sig-name descname">count_plot</code><span class="sig-paren">(</span><em class="sig-param">legend=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.count_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.counts_global_twinx">
+<code class="sig-name descname">counts_global_twinx</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">colors_axis=False</em>, <em class="sig-param">ci='sd'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.counts_global_twinx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.empty_plot">
+<code class="sig-name descname">empty_plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.empty_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.finalize_steady_state_plot">
+<code class="sig-name descname">finalize_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">ax</em>, <em class="sig-param">y_name</em>, <em class="sig-param">ylim</em>, <em class="sig-param">ylog</em>, <em class="sig-param">xlog</em>, <em class="sig-param">x_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.finalize_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.format_scan_index">
+<code class="sig-name descname">format_scan_index</code><span class="sig-paren">(</span><em class="sig-param">index_column</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels">
+<em class="property">static </em><code class="sig-name descname">format_scan_index_ticklabels</code><span class="sig-paren">(</span><em class="sig-param">scan_scale</em>, <em class="sig-param">distance</em>, <em class="sig-param">round_n</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.format_scan_index_ticklabels" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.function_plot">
+<code class="sig-name descname">function_plot</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">plot_kwargs={}</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.function_twinx_overlay">
+<code class="sig-name descname">function_twinx_overlay</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">ylabel=None</em>, <em class="sig-param">sub_divisions=10</em>, <em class="sig-param">plot_args=()</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.function_twinx_overlay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.gca">
+<code class="sig-name descname">gca</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gca" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.gcf">
+<code class="sig-name descname">gcf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.gcf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_categorical_color">
+<code class="sig-name descname">get_categorical_color</code><span class="sig-paren">(</span><em class="sig-param">kvp</em>, <em class="sig-param">palette_name='Dark2'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_categorical_color" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_color_dict">
+<em class="property">static </em><code class="sig-name descname">get_color_dict</code><span class="sig-paren">(</span><em class="sig-param">keys</em>, <em class="sig-param">palette_name='Dark2'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_color_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_continuous_color">
+<code class="sig-name descname">get_continuous_color</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">palette_name='viridids'</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_continuous_color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_label">
+<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_label" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_max_time_index">
+<code class="sig-name descname">get_max_time_index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_max_time_index" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_palette">
+<code class="sig-name descname">get_palette</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">key</em>, <em class="sig-param">palette_name='Dark2'</em>, <em class="sig-param">categorical=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_palette" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_scan_ticks">
+<code class="sig-name descname">get_scan_ticks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_scan_ticks" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(typing.List, typing.List)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.get_subplot_axes">
+<code class="sig-name descname">get_subplot_axes</code><span class="sig-paren">(</span><em class="sig-param">overlay=False</em>, <em class="sig-param">gs_slice=None</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.get_subplot_axes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.global_heatmap">
+<code class="sig-name descname">global_heatmap</code><span class="sig-paren">(</span><em class="sig-param">x_name</em>, <em class="sig-param">y_name</em>, <em class="sig-param">z_name</em>, <em class="sig-param">acc_filter={}</em>, <em class="sig-param">cmap='viridis'</em>, <em class="sig-param">v_range=None</em>, <em class="sig-param">c_lines=None</em>, <em class="sig-param">levels=100</em>, <em class="sig-param">xlog=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">accumulator=&lt;function Plotter.&lt;lambda&gt;&gt;</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.global_steady_state_barplot">
+<code class="sig-name descname">global_steady_state_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_names</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">bar_spacing=1.1</em>, <em class="sig-param">cat_spacing=1.2</em>, <em class="sig-param">barwidth=0.1</em>, <em class="sig-param">norm=False</em>, <em class="sig-param">y_ticks=True</em>, <em class="sig-param">t_mean=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_barplot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.global_steady_state_plot">
+<code class="sig-name descname">global_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">average=False</em>, <em class="sig-param">estimator=None</em>, <em class="sig-param">dashes=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.global_time_series_plot">
+<code class="sig-name descname">global_time_series_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.global_time_series_plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.load_single_sim">
+<code class="sig-name descname">load_single_sim</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">groups</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.load_single_sim" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.make_legend">
+<code class="sig-name descname">make_legend</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.make_legend_entry">
+<code class="sig-name descname">make_legend_entry</code><span class="sig-paren">(</span><em class="sig-param">ax</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.make_legend_entry" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.plot_twinx_overlay">
+<code class="sig-name descname">plot_twinx_overlay</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">legend_name=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">plot_args=()</em>, <em class="sig-param">y_label=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.plot_twinx_overlay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.prepare_plot">
+<code class="sig-name descname">prepare_plot</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">hue</em>, <em class="sig-param">reduce=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.prepare_twinx_plot">
+<code class="sig-name descname">prepare_twinx_plot</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">y_names</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.prepare_twinx_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.reduce_df">
+<code class="sig-name descname">reduce_df</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">index_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reduce_df" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.replace_labels">
+<code class="sig-name descname">replace_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.replace_labels" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.reset_scan_index">
+<code class="sig-name descname">reset_scan_index</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.reset_scan_index" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.ruse_plot">
+<code class="sig-name descname">ruse_plot</code><span class="sig-paren">(</span><em class="sig-param">IMGPATH</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.ruse_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.savefig">
+<code class="sig-name descname">savefig</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.savefig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.show">
+<code class="sig-name descname">show</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.show" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot">
+<code class="sig-name descname">single_cell_steady_state_plot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">cummulative=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">linewidth=0.1</em>, <em class="sig-param">units='id'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.single_cell_steady_state_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.steady_state_count">
+<code class="sig-name descname">steady_state_count</code><span class="sig-paren">(</span><em class="sig-param">legend=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">relative=False</em>, <em class="sig-param">ylog=False</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">xlog=True</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.steady_state_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.subplots">
+<code class="sig-name descname">subplots</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">m</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">5)</em>, <em class="sig-param">external_legend='axes'</em>, <em class="sig-param">gridspec_args=None</em>, <em class="sig-param">reset_filter=True</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.subplots" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.timing_barplot">
+<code class="sig-name descname">timing_barplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_barplot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.timing_lineplot">
+<code class="sig-name descname">timing_lineplot</code><span class="sig-paren">(</span><em class="sig-param">y_name</em>, <em class="sig-param">x_name=None</em>, <em class="sig-param">hue=None</em>, <em class="sig-param">style=None</em>, <em class="sig-param">ci='sd'</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">legend=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_lineplot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.timing_timelineplot">
+<code class="sig-name descname">timing_timelineplot</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.timing_timelineplot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="thesis.main.MyPlotter.Plotter.update_rc">
+<code class="sig-name descname">update_rc</code><span class="sig-paren">(</span><em class="sig-param">rc</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.Plotter.update_rc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="thesis.main.MyPlotter.get_distance_matrix">
+<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">get_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.get_distance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thesis.main.MyPlotter.run_single_step">
+<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">run_single_step</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">dfg</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.run_single_step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thesis.main.MyPlotter.split_kwargs">
+<code class="sig-prename descclassname">thesis.main.MyPlotter.</code><code class="sig-name descname">split_kwargs</code><span class="sig-paren">(</span><em class="sig-param">kwargs</em>, <em class="sig-param">keys</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.MyPlotter.split_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="post_processor.html" class="btn btn-neutral float-left" title="PostProcessor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Lukas Kiwitz.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
