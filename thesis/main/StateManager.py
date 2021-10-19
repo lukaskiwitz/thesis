@@ -112,8 +112,8 @@ class StateManager:
 
     def clear_log_files(self):
 
-        for log_file in [ "log.xml", "debug.log"]:
-            file_path = os.path.join(self.path,log_file)
+        for log_file in ["log.xml"]:
+            file_path = os.path.join(self.path, log_file)
             if os.path.exists(file_path):
                 os.remove(file_path)
                 
