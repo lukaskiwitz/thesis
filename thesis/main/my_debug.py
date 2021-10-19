@@ -1,7 +1,3 @@
-import time as t
-import logging
-import mpi4py.MPI as MPI
-from tqdm import tqdm
 import logging
 import time as t
 
@@ -11,47 +7,6 @@ from tqdm import tqdm
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-
-
-# so = se = open(os.environ["LOG_PATH"]+"full.log", 'w', 0)
-# # re-open stdout without buffering
-# sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-# # redirect stdout and stderr to the log file opened above
-# os.dup2(so.fileno(), sys.stdout.fileno())
-# os.dup2(se.fileno(), sys.stderr.fileno())
-
-
-# @contextlib.contextmanager
-# def std_out_err_redirect_tqdm():
-#     orig_out_err = sys.stdout, sys.stderr
-#     try:
-#         sys.stdout, sys.stderr = map(DummyTqdmFile, orig_out_err)
-#         return orig_out_err[0]
-#     # Relay exceptions
-#     except Exception as exc:
-#         raise exc
-#     # Always restore sys.stdout/err if necessary
-#     finally:
-#         sys.stdout, sys.stderr = orig_out_err
-
-
-# class OutputFilter:
-#
-#     def __init__(self, stream):
-#         self.stream = stream
-#     def __getattr__(self, attr_name):
-#         return getattr(self.stream, attr_name)
-#
-#     def clear(self):
-#         os.system("clear")
-#
-#     def write(self, data):
-#
-#         self.stream.write(data)
-#         self.stream.flush()
-#
-#     def flush(self):
-#         self.stream.flush()
 
 def message(text: str):
     if rank == 0:
