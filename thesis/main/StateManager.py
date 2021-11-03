@@ -107,7 +107,6 @@ class StateManager:
         self.record: ClassRecord = ClassRecord("StateManager")
         self.progress_bar = None
         self.eta_estimates: List[float] = []
-        self.marker_lookup: Mapping[str, int] = {}
         self.debug: bool = False
 
     def clear_log_files(self):
@@ -307,7 +306,6 @@ class StateManager:
                                                                          model_index=model_index)
                     self.sim_container.top_path = self.path
 
-                    self.sim_container.marker_lookup = self.marker_lookup
                     get_sim_container_task.stop()
                     sample_task.add_child(self.sim_container.record)
 

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Union, List
+from typing import Union, List, Mapping
 
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.ParameterSet import ParameterSet
@@ -26,11 +26,12 @@ class MyScenario:
         self.parameter_pool = parameter_pool
         self.global_parameters: ParameterSet = ParameterSet("scenario_dummy", [])
         self.markers = []
+        self.marker_lookup: Mapping[str, int] = {}
 
     def get_model_indicies(self) -> List[int]:
         """Gets a list of all available model indices"""
 
-        return range(len(self.global_models))
+        return list(range(len(self.global_models)))
 
     def get_model_name(self, model_index: int) -> str:
         """
@@ -86,6 +87,7 @@ class MyScenario:
         default = deepcopy(ScanSample(parameter_set.collections, self.entity_types, {}))
         sc.default_sample = default
 
+        sc.marker_lookup = self.marker_lookup
         sc.markers = list(set(sc.markers + self.markers))
 
         return sc
