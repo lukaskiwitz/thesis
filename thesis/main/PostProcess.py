@@ -543,26 +543,39 @@ class PostProcessComputation(ABC):
     compatible_result_type: List[GlobalResult] = []
 
     @abstractmethod
-    def __init__(self): pass
+    def __init__(self, compute_settings: ComputeSettings):
+
+        if hasattr(self, "name"):
+            name = str(self.__class__).split(".")[-1].replace(">", "") + ": " + str(self.name)
+        else:
+            name = str(self.__class__)
+
+        message(
+            "running a {cn}(\"{n}\") for replicat {rep} of step {t} in scan {s}".format(t=compute_settings.time_index,
+                                                                                        cn=
+                                                                                        str(self.__class__.__base__).split(
+                                                                                            ".")[-1].replace(">", ""),
+                                                                                        s=compute_settings.scan_index,
+                                                                                        n=name,
+                                                                                        rep=compute_settings.replicat_index))
 
     @abstractmethod
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs): pass
+    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
+        pass
 
 
 class FenicsScalarFieldComputation(PostProcessComputation):
     compatible_result_type = [thesis.main.GlobalResult.ScalarFieldResult]
 
     def __init__(self, compute_settings: ComputeSettings):
+        super().__init__(compute_settings)
+
         loader = compute_settings.loader_class(
             os.path.join(compute_settings.path, os.path.dirname(os.path.dirname(compute_settings.solution_path))),
             compute_settings.field_quantity
         )
         loader.load(compute_settings.time_index, os.path.join(compute_settings.path, compute_settings.mesh_path))
         self.u = loader.get()
-
-        message("running global computations for step {t} in scan {s}".format(t=compute_settings.time_index,
-                                                                              s=compute_settings.scan_index))
-
         self.path = compute_settings.path
         self.solution_path = compute_settings.solution_path
         self.scan_index = compute_settings.scan_index
