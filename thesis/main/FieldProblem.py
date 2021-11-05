@@ -351,14 +351,15 @@ class FieldProblem(GlobalProblem):
             with mp.Pool(processes=pn, initializer=init,
                          initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
                 result_async = pool.map(calc_boundary_values, entity_list, chunksize=chunksize)
-                try:
-                    result = result_async.get(self.boundary_extraction_timeout)
-                except multiprocessing.TimeoutError as e:
-                    if i == self.boundary_extraction_trials:
-                        raise BoundaryConcentrationError(
-                            "failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
-                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
-                    continue
+                result = result_async
+                # try:
+                #     result = result_async.get(self.boundary_extraction_timeout)
+                # except multiprocessing.TimeoutError as e:
+                #     if i == self.boundary_extraction_trials:
+                #         raise BoundaryConcentrationError(
+                #             "failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
+                #     message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
+                #     continue
             break
 
         f = get_concentration_conversion(
