@@ -350,7 +350,7 @@ class FieldProblem(GlobalProblem):
         for i in range(self.boundary_extraction_trials + 1):
             with mp.Pool(processes=pn, initializer=init,
                          initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-                result_async = pool.map_async(calc_boundary_values, entity_list, chunksize=chunksize)
+                result_async = pool.map(calc_boundary_values, entity_list, chunksize=chunksize)
                 try:
                     result = result_async.get(self.boundary_extraction_timeout)
                 except multiprocessing.TimeoutError as e:
