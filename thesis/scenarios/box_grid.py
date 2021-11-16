@@ -7,16 +7,18 @@ from scipy.constants import N_A
 
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
-from thesis.main.MyEntityLocator import MyCellGridLocator
+from thesis.main.MyEntityLocator import MyCellGridLocator, MyCellListLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
-from thesis.main.MyInteractionTemplate import FieldInteractionType
-from thesis.main.MyInteractionTemplate import MyFieldInteractionTemplate
+from thesis.main.MyInteractionTemplate import FieldInteractionType, MyFieldInteractionTemplate
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, PhysicalParameter, ParameterCollection, \
     MiscParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
+from thesis.main.BC import OuterIntegral
+from thesis.main.bcFunctions import cellBC
+import fenics as fcs
 
 ule = -6
 
@@ -48,10 +50,8 @@ templates = {
 
 
 def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=None) -> MyScenario:
-    parameter_pool = MyParameterPool()
 
-    for i, t in templates.items():
-        parameter_pool.add_template(t)
+    parameter_pool = get_standard_pool()
 
     if isinstance(custom_pool, MyParameterPool):
         parameter_pool.join(custom_pool, overwrite=False)
@@ -103,6 +103,13 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     scenario.global_parameters.update(fractions)
 
     return scenario
+
+
+def get_standard_pool():
+    parameter_pool = MyParameterPool()
+    for i, t in templates.items():
+        parameter_pool.add_template(t)
+    return parameter_pool
 
 
 def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], ParameterCollection):
@@ -162,9 +169,6 @@ def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], 
 
 def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool):
     domainBC = []
-    from thesis.main.BC import OuterIntegral
-    from thesis.main.bcFunctions import cellBC
-    import fenics as fcs
 
     for piece in boundary:
         for key, piece_line in piece.items():

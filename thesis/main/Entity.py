@@ -11,7 +11,6 @@ from typing import List, Dict
 
 import fenics as fcs
 import numpy as np
-
 import thesis.main.BC as bc
 import thesis.main.MySubDomain as SD
 from thesis.main.BC import BC, OuterBC
@@ -304,6 +303,31 @@ class DomainEntity(Entity):
     def get_subdomains(self, **kwargs) -> List:
         raise NotImplementedError
 
+    def update_bcs(self, p=None) -> None:
+
+        if p or hasattr(self, "p"):
+            for k, v in self.subdomain_dict.items():
+                for i in v:
+                    if p:
+                        for ii in i.interactions:
+                            if hasattr(ii, "p"):
+                                ii.p.update(p, overwrite=False)
+                            else:
+                                ii.p = p
+
+    def apply_sample(self, outer_domain_dict) -> None:
+
+        for k, v in self.subdomain_dict.items():
+            for i in v:
+                for ii in i.interactions:
+                    name = ii.name
+                    if name in outer_domain_dict.keys():
+                        p = outer_domain_dict[name]
+                        if hasattr(ii, "p"):
+                            ii.p.update(p, overwrite=True)
+                        else:
+                            ii.p = p
+
 
 class DomainSphere(DomainEntity):
     """
@@ -358,39 +382,13 @@ class DomainSphere(DomainEntity):
                 subdomains.append({"entity": o[0], "patch": i + 1})
         return subdomains
 
-    def update_bcs(self, p=None) -> None:
 
-        if p or hasattr(self, "p"):
-            for k, v in self.subdomain_dict.items():
-                for i in v:
-                    if p:
-                        if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, overwrite=False)
-                        else:
-                            i.bc.p = p
-
-    def apply_sample(self, outer_domain_dict) -> None:
-
-        for k, v in self.subdomain_dict.items():
-            for i in v:
-                name = i.bc.name
-                if name in outer_domain_dict.keys():
-
-                    p = outer_domain_dict[name]
-
-                    if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, overwrite=True)
-                    else:
-                        i.bc.p = p
-
-    # def get_subdomain(self):
-    #     return SD.OuterSphere(self.center, self.radius)
 
 
 class CompiledSphere(DomainSphere, Entity):
 
     def __init__(self, expr, bc, parent):
-        self.bc = bc
+        self.interactions = [bc]
         self.parent = parent
         self.expr = expr
 
@@ -404,15 +402,17 @@ class CompiledSphere(DomainSphere, Entity):
 
     def get_BC(self, field_quantity):
 
-        return self.bc
+        for i in self.interactions:
+            if i.field_quantity == field_quantity:
+                return i
 
     def get_surface_area(self):
-
-        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        p = self.interactions[0].p.get_physical_parameter("norm_area", "geometry")
         if p:
             return p.get_in_sim_unit()
         else:
             return None
+
 
 
 class DomainCube(DomainEntity):
@@ -423,7 +423,7 @@ class DomainCube(DomainEntity):
 
         self.interactions = interactions
 
-        self.subdomainDict = self.__compile_subdomains()
+        self.subdomain_dict = self.__compile_subdomains()
         super().__init__(**kwargs)
 
     def __compile_subdomains(self):
@@ -443,7 +443,7 @@ class DomainCube(DomainEntity):
 
     def get_subdomains(self, **kwargs):
         subdomains = []
-        for i, o in enumerate(self.subdomainDict.values()):
+        for i, o in enumerate(self.subdomain_dict.values()):
             if "field_quantity" in kwargs:
                 for e in o:
                     if e.field_quantity == kwargs["field_quantity"]:
@@ -454,31 +454,6 @@ class DomainCube(DomainEntity):
 
     def get_subdomain_geometry(self):
         return SD.OuterCube(self.p1, self.p2)
-
-    def update_bcs(self, p=None) -> None:
-
-        if p or hasattr(self, "p"):
-            for k, v in self.subdomainDict.items():
-                for i in v:
-                    if p:
-                        for ii in i.interactions:
-                            if hasattr(ii, "p"):
-                                ii.p.update(p, overwrite=False)
-                            else:
-                                ii.p = p
-
-    def apply_sample(self, outer_domain_dict) -> None:
-
-        for k, v in self.subdomainDict.items():
-            for i in v:
-                for ii in i.interactions:
-                    name = ii.name
-                    if name in outer_domain_dict.keys():
-                        p = outer_domain_dict[name]
-                        if hasattr(ii, "p"):
-                            ii.p.update(p, overwrite=True)
-                        else:
-                            ii.p = p
 
 
 class CompiledCube(DomainCube, Entity):
