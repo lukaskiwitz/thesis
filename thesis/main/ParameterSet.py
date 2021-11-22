@@ -44,7 +44,7 @@ class ParameterSet:
                overwrite: bool = False) -> None:
 
         """
-        Updates this parameter set inplace. Values are not overwritten by default.
+        Updates this parameter set inplace. Values are not overwritten by naive.
 
         :param input_parameter_object: can be a Parameter, ParameterCollection or ParameterSet. When a Parameter object is passed a dummy collection is created.
         :param overwrite: overwrite values in this parameter set
@@ -240,7 +240,10 @@ class ParameterSet:
                 else:
                     name = parameter.name
                 if in_sim:
-                    result[name] = parameter.get_in_sim_unit()
+                    try:
+                        result[name] = parameter.get_in_sim_unit()
+                    except:
+                        pass
                 else:
                     result[name] = parameter.get_in_post_unit()
 
@@ -275,10 +278,40 @@ class ParameterCollection:
     def __iter__(self):
         return self.parameters.__iter__()
 
+    def get_as_dictionary(self, in_sim: bool = False, with_collection_name: bool = False) -> \
+            Dict[str, Any]:
+
+        """
+        Returns dicitonary version of this collection.
+        Collections are flattened into dict keys: {collectionname_parametername: value...}
+
+        :param in_sim: return values in sim units
+        :param with_collection_name: include collection name in dict keys
+        :param field_quantity: only include collection with this field quantity
+        """
+        result = {}
+
+        for parameter in self:
+            if with_collection_name:
+                name = self.name + "_" + parameter.name
+            else:
+                name = parameter.name
+            if in_sim:
+                try:
+                    result[name] = parameter.get_in_sim_unit()
+                except:
+                    pass
+            else:
+                result[name] = parameter.get_in_post_unit()
+
+        return result
+
+
+
     def update(self, update_collection: 'ParameterCollection', overwrite: bool = False):
 
         """
-        Updates this parameter collection inplace. Values are not overwritten by default.
+        Updates this parameter collection inplace. Values are not overwritten by naive.
 
         :param update_collection: collection with new parameters
         :param overwrite: overwrite values in this collection
