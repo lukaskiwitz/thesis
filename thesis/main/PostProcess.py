@@ -530,6 +530,7 @@ class PostProcessor:
         self.timing_dataframe.to_hdf(os.path.join(self.path, "timing_df.h5"), key="df", mode="w")
 
     def run_post_process(self, n_processes, extra_cell_constants=False, kde=False, time_indices=None):
+
         self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices=time_indices, n_processes=n_processes)
         self.write_post_process_xml(n_processes, time_indices=time_indices)
         self.global_dataframe = self.get_global_dataframe()
@@ -894,8 +895,7 @@ class c(FenicsScalarFieldComputation):
     def __call__(self):
         nodal_values = np.array(self.u.vector())
 
-        mean_c = np.sum(nodal_values) * (1 / nodal_values.shape[0])
-        return mean_c * self.c_conv
+        return np.mean(nodal_values) * self.c_conv
 
 
 class mean_c(ScalarComputation):
