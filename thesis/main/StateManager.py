@@ -128,7 +128,8 @@ class StateManager:
             os.nice(19)
 
         result = []
-
+        if time_indices is not None:
+            time_indices = [len(time_indices) + ti if ti < 0 else ti for ti in time_indices]
         scans = self.scan_tree.get_scan_elements(scan_indicies)
 
         import multiprocessing as mp
@@ -752,6 +753,7 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
                         step = step.getroot()
 
                     time_index = step.get("time_index")
+
                     if (not time_indices is None) and not (int(time_index) in time_indices):
                         continue
                     time = step.get("time")
