@@ -317,6 +317,7 @@ class ParameterCollection:
         :param overwrite: overwrite values in this collection
 
         """
+        assert isinstance(update_collection, ParameterCollection)
         for physical in update_collection:
             self.set_parameter(physical, overwrite=overwrite)
             debug("setting  parameter {n} on collection {n2}".format(n=physical.name, n2=self.name))

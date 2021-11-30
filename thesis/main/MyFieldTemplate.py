@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from thesis.main.FieldProblem import FieldProblem, MeanFieldProblem, GlobalProblem
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MySolver import MyDiffusionSolver, MyMeanFieldSolver
-from thesis.main.ParameterSet import ParameterCollection, ParameterSet
+from thesis.main.ParameterSet import ParameterCollection
 
 
 class MyFieldTemplate(ABC):
@@ -11,7 +11,7 @@ class MyFieldTemplate(ABC):
     def __init__(self):
         self.name: str = None
         self.field_quantity: str = None
-        self.p: ParameterSet = None
+        self.collection: ParameterCollection = ParameterCollection("FieldTemplateDummy", [])
 
     @abstractmethod
     def get_problem(self) -> GlobalProblem: pass
@@ -41,6 +41,7 @@ class MyMeanCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
+        collection.update(self.collection, overwrite=True)
         return collection
 
 
@@ -70,4 +71,5 @@ class MyCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
+        collection.update(self.collection, overwrite=True)
         return collection

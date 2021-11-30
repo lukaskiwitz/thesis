@@ -2,12 +2,14 @@ import random
 from copy import deepcopy
 from typing import List, Dict
 
+import fenics as fcs
 import numpy as np
 from scipy.constants import N_A
 
+from thesis.main.BC import OuterIntegral
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
-from thesis.main.MyEntityLocator import MyCellGridLocator, MyCellListLocator
+from thesis.main.MyEntityLocator import MyCellGridLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
 from thesis.main.MyInteractionTemplate import FieldInteractionType, MyFieldInteractionTemplate
@@ -16,9 +18,7 @@ from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, PhysicalParameter, ParameterCollection, \
     MiscParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
-from thesis.main.BC import OuterIntegral
 from thesis.main.bcFunctions import cellBC
-import fenics as fcs
 
 ule = -6
 
@@ -73,12 +73,17 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
         cytokine_template = MyCytokineTemplate()
         cytokine_template.name = c["name"]
         cytokine_template.field_quantity = c["field_quantity"]
+        cytokine_template.collection = parameter_pool.get_as_collection(c, name=c["name"],
+                                                                        field_quantity=c["field_quantity"])
+
         pde_model.add_field_template(cytokine_template)
 
         mean_cytokine_template = MyMeanCytokineTemplate()
 
         mean_cytokine_template.name = c["name"]
         mean_cytokine_template.field_quantity = c["field_quantity"]
+        mean_cytokine_template.collection = parameter_pool.get_as_collection(c, name=c["name"],
+                                                                             field_quantity=c["field_quantity"])
         ode_model.add_field_template(mean_cytokine_template)
 
     na = geometry_dict["norm_area"]
@@ -231,6 +236,9 @@ def assign_fractions(sc, t):
 def distribute_receptors(entity_list, replicat_index, type_name, var=1):
     R = np.unique(
         [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in entity_list if e.type_name == type_name])
+    R_start = np.unique([e.p.get_physical_parameter("R_start", "R_start").get_in_post_unit() for e in entity_list if
+                         e.type_name == type_name])
+
     assert len(R) == 1
     E = R[0]
     if E == 0:
