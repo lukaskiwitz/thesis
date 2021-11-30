@@ -44,7 +44,7 @@ class ParameterSet:
                overwrite: bool = False) -> None:
 
         """
-        Updates this parameter set inplace. Values are not overwritten by naive.
+        Updates this parameter set inplace. Values are not overwritten by default.
 
         :param input_parameter_object: can be a Parameter, ParameterCollection or ParameterSet. When a Parameter object is passed a dummy collection is created.
         :param overwrite: overwrite values in this parameter set
@@ -311,7 +311,7 @@ class ParameterCollection:
     def update(self, update_collection: 'ParameterCollection', overwrite: bool = False):
 
         """
-        Updates this parameter collection inplace. Values are not overwritten by naive.
+        Updates this parameter collection inplace. Values are not overwritten by default.
 
         :param update_collection: collection with new parameters
         :param overwrite: overwrite values in this collection
