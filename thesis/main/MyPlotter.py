@@ -281,6 +281,7 @@ class Plotter:
             result = self.load_single_sim(p, groups)
 
             for k, v in result.items():
+                if v is None: continue
                 name_series = pd.Series([p.split("/")[-1]] * len(v))
                 v[self.path_name] = name_series
 
@@ -298,30 +299,37 @@ class Plotter:
         assert os.path.exists(path)
         ruse_df = pd.DataFrame()
         try:
-            global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
-            global_df = self.reset_scan_index(global_df)
+            try:
+                global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
+                global_df = self.reset_scan_index(global_df)
+            except:
+                global_df = pd.DataFrame()
 
-            cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
-            if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
-                cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
-            else:
+            try:
+                cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
+            except:
+                cell_df = pd.DataFrame()
+            try:
+                if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
+                    cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
+                else:
+                    cell_constants = pd.DataFrame()
+            except:
                 cell_constants = pd.DataFrame()
 
-            self.cell_constants = cell_constants
+            self.cell_constants = None
 
             try:
                 timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
                 timing_df = self.reset_scan_index(timing_df)
-            except FileNotFoundError:
-                pass
-            except KeyError:
-                pass
+            except:
+                timing_df = None
 
             try:
                 ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
                 ruse_df = self.reset_scan_index(ruse_df)
-            except FileNotFoundError:
-                pass
+            except:
+                ruse_df = None
 
             # self.timing_df = timing_df
         except FileNotFoundError as e:
@@ -481,6 +489,8 @@ class Plotter:
 
     def reset_scan_index(self, df) -> pd.DataFrame:
 
+        if df is None: return None
+
         df["raw_scan_index"] = df["scan_index"]
 
         if "scan_name" in list(df.columns):
@@ -615,14 +625,15 @@ class Plotter:
         ax.set_ylabel(self.get_label(y_name))
 
     def global_steady_state_plot(self, y_name, x_name=None, legend=False, ci="sd", hue=None, style=None, ylog=False,
-                                 xlog=True, ylim=None, average=False, estimator=None, dashes=True,
+                                 xlog=True, ylim=None, xlim=None, average=False, estimator=None, dashes=True,
+                                 marker=None,
                                  **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
 
         df, ci = self.compute_ci(
             df,
-            [self.scan_index_key, self.time_index_key, hue, style],
+            [self.scan_index_key, self.time_index_key, self.time_key, hue, style],
             ci=ci, estimator=estimator, y_names=[y_name])
 
         if x_name is None:
@@ -640,12 +651,12 @@ class Plotter:
 
         if style in df.columns:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         style=style, ci=ci, dashes=dashes)
+                         style=style, ci=ci, dashes=dashes, marker=marker)
         else:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         ci=ci, dashes=dashes)
+                         ci=ci, dashes=dashes, marker=marker)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, xlim, ylog, xlog, x_name=x_name)
 
     def global_steady_state_barplot(self, y_names, x_name=None, legend=False, hue=None, ylim=None, bar_spacing=1.1,
                                     cat_spacing=1.2,
@@ -715,7 +726,7 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def finalize_steady_state_plot(self, ax, y_name, ylim, ylog, xlog, x_name=None):
+    def finalize_steady_state_plot(self, ax, y_name, ylim, xlim, ylog, xlog, x_name=None):
 
         self.make_legend_entry(ax)
         ax.set_xlabel(self.get_label(self.scan_index_key))
@@ -743,9 +754,11 @@ class Plotter:
 
         if ylim:
             ax.set_ylim(ylim)
+        if xlim:
+            ax.set_xlim(xlim)
 
     def cell_steady_state_plot(self, y_name, x_name=None, legend=False, hue=None, style=None, ylog=False, xlog=True,
-                               cummulative=False, estimator=None,
+                               cummulative=False, estimator=None, xlim=None, marker=None,
                                ylim=None, ci="sd", dashes=True, **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -767,9 +780,9 @@ class Plotter:
         if x_name is None:
             x_name = self.scan_index_key
         sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
-                     palette=palette, ci=ci, dashes=dashes)
+                     palette=palette, ci=ci, dashes=dashes, marker=marker)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, xlim, ylog, xlog, x_name=x_name)
 
     def cell_steady_state_barplot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
                                   ylim=None, ci="sd", y_ticks=True, **kwargs) -> None:
@@ -814,8 +827,7 @@ class Plotter:
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
     def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False, ylim=None, xlog=True,
-                           ci="sd",
-                           **kwargs):
+                           xlim=None, ci="sd", marker=None, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.counts, hue, **kwargs)
         if relative:
@@ -828,7 +840,7 @@ class Plotter:
                 ylim = False
 
         sns.lineplot(x=self.scan_index_key, y=y, hue=hue, data=df, ax=ax, style=style, ci=ci,
-                     legend=legend,
+                     legend=legend, marker=marker,
                      palette=palette)
 
         self.make_legend_entry(ax)
@@ -844,7 +856,7 @@ class Plotter:
         else:
             ax.set_ylabel("Number of cells")
 
-        self.finalize_steady_state_plot(ax, y, ylim, ylog, xlog)
+        self.finalize_steady_state_plot(ax, y, ylim, xlim, ylog, xlog)
 
         # ax.set_ylabel(self.get_label(y))
         #
