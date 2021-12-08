@@ -37,3 +37,10 @@ def get_gradient_conversion(unit_length_exponent: int, target_exponent=-6):
     # exp -= (6 + unit_length_exponent)  # to nM/um
 
     return float(10 ** (-3 - 4 * unit_length_exponent + target_exponent))
+
+
+def cast_mixed_columns_to_string(df):
+    columns = [k for k, v in df.dtypes.items() if v == np.dtype('O')]
+    df.loc[:, columns] = df[columns].applymap(str)
+
+    return df

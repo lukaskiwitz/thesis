@@ -27,7 +27,7 @@ import thesis.main.MyError as MyError
 import thesis.main.StateManager as st
 from thesis.main.GlobalResult import GlobalResult
 from thesis.main.ParameterSet import ParameterSet
-from thesis.main.PostProcessUtil import get_mesh_volume
+from thesis.main.PostProcessUtil import get_mesh_volume, cast_mixed_columns_to_string
 from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
     get_gradient_conversion
 from thesis.main.myDictSorting import groupByKey
@@ -364,7 +364,7 @@ class PostProcessor:
                 d.update({v.tag: float(v.text)})
             result.append(d)
 
-        return pd.DataFrame(result)
+        return cast_mixed_columns_to_string(pd.DataFrame(result))
 
     def get_timing_dataframe(self) -> pd.DataFrame:
 
@@ -396,7 +396,7 @@ class PostProcessor:
         df["duration"] = df["end"] - df["start"]
         df["name"] = df["task"].map(lambda x: x.split(":")[-1])
 
-        return df
+        return cast_mixed_columns_to_string(df)
 
     def get_kde_estimators(self, n, ts, time_index, type_names):
 
@@ -473,7 +473,7 @@ class PostProcessor:
                     kde_result = kde_result.append(step)
             result = self._normalize_cell_score(kde_result)
 
-        return result
+        return cast_mixed_columns_to_string(result)
 
     def _normalize_cell_score(self, x):
 
@@ -518,6 +518,7 @@ class PostProcessor:
             cell_df = df.loc[:, (df != df.iloc[0]).any()]
             cell_df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
             cell_df_constant.to_hdf(os.path.join(self.path, "cell_constants_df.h5"), key="df", mode="w")
+
         else:
             try:
                 df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
@@ -534,7 +535,11 @@ class PostProcessor:
         self.cell_dataframe = self.get_cell_dataframe(kde=kde, time_indices=time_indices, n_processes=n_processes)
         self.write_post_process_xml(n_processes, time_indices=time_indices)
         self.global_dataframe = self.get_global_dataframe()
-        self.timing_dataframe = self.get_timing_dataframe()
+
+        try:
+            self.timing_dataframe = self.get_timing_dataframe()
+        except FileNotFoundError:
+            warning("cound not write timing dataframe because files are missing")
 
         self.save_dataframes(extra_cell_constants=extra_cell_constants)
 
