@@ -1,20 +1,14 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sns
-import getpass
-import KDEpy
-import os
-import multiprocessing as mp
-from loader import load_csv
-from sklearn.neighbors import NearestNeighbors
-import networkx as nx
-from models.nearest_neighbour.model import my_nn, my_nn_plot
 
+from loader import load_csv
+from model import my_nn, my_nn_plot
 
 path = "../../data/hauser/"
 IMGPATH = "/home/lukas/hauser_img_kde/nearest_neighbour/"
-os.makedirs(IMGPATH,exist_ok = True)
+os.makedirs(IMGPATH, exist_ok=True)
 
 r_max = 50
 n_neighbours=50

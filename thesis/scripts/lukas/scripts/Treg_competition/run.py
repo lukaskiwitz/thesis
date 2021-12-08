@@ -1,313 +1,106 @@
+import os
 import sys
-
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
-# if "LD_LIBRARY_PATH" in os.environ:
-#     os.environ['LD_LIBRARY_PATH'] = "/home/lukas/anaconda3/envs/fenics/lib:"+os.environ['LD_LIBRARY_PATH']
-# else:
-#     os.environ['LD_LIBRARY_PATH'] = "/home/lukas/anaconda3/envs/fenics/lib"
-
-import random
+from copy import deepcopy
 
 import numpy as np
-import os
-from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
-os.environ["LOG_PATH"] = path
 
-from thesis.main.StateManager import StateManager
-from thesis.main.InternalSolver import InternalSolver
-from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter, PhysicalParameter
-from thesis.main.ScanContainer import ScanContainer, ScanSample
-from thesis.main.SimContainer import SimContainer
+from build_scans import compute_samples_points, post_process, get_new_samples_points
+from parameters import cytokines, cell_types_dict, geometry, numeric
+from parameters import ext_cache
+from parameters import path as old_path
+from thesis.main.MyScenario import MyScenario
+from thesis.scenarios.box_grid import setup
+import os
+import sys
+from copy import deepcopy
+
+import numpy as np
+
+from build_scans import compute_samples_points, post_process, get_new_samples_points
+from parameters import cytokines, cell_types_dict, geometry, numeric
+from parameters import ext_cache
+from parameters import path as old_path
+from thesis.main.MyScenario import MyScenario
 from thesis.scenarios.box_grid import setup
 
-import matplotlib.pyplot as plt
-from thesis.main.Entity import Cell
+ext_cache = "../" + ext_cache
 
+T = 200
+dt = 3
+time_range = np.linspace(0, T, int(np.ceil(T / dt))) * 3600
 
-class ResponseTimeSolver(InternalSolver):
+scenario: MyScenario = setup(deepcopy(cytokines), deepcopy(cell_types_dict), [], deepcopy(geometry),
+                             deepcopy(numeric), deepcopy(old_path))
 
-    name = "ResponseTimeSolver"
 
-    def __init__(self):
-        self.il2_threshold = 0.012
-        self.T = 0
+class ParameterError(Exception): pass
 
-    def step(self, t, dt, p, entity=None):
-        import pandas as pd
-        import scipy.stats as stats
 
-        types = ["default", "Treg", "effector"]
-        Kc = p.get_physical_parameter("Kc","IL-2").get_in_post_unit()
+if __name__ == "__main__":
 
-        def get_A():
+    cs = float(sys.argv[1])
+    if not (cs >= 0 and cs <= 1):
+        raise ParameterError
 
-            def f(T,il2):
-                x = stats.gamma.cdf(T, 2, scale=1) * il2/(Kc+ il2)
-                return x
+    ec50 = float(sys.argv[2])
+    if ec50 < 0:
+        raise ParameterError
 
-            f0 = lambda x,c: 0
+    k = float(sys.argv[3])
+    if k < 0:
+        raise ParameterError
 
-            A = [
-                [f0, f0, f0],
-                [f0, f0, f0],
-                [f, f0, f0],
-            ]
+    treg_half_time = float(sys.argv[4])
+    if treg_half_time <= 0:
+        raise ParameterError
 
-            A = pd.DataFrame(A, columns=types, index=types)
-            return A
+    scan_kwargs = {"cs_strength": cs, "pSTAT_ec50": ec50, "treg_k": k, "treg_half_time": treg_half_time}
 
-        A = get_A()
-
-
-        il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
-        type_name  = entity.type_name
-
-        trans = False
-
-        for k, g in A[type_name].items():
-
-            if g(self.T,il2) > np.random.uniform(0, 1):
-                trans = True
-                entity.change_type = k
-                self.T = 0
-                break
-
-        if not trans:
-            self.T = self.T + dt
-
-
-        return p
-
-
-def updateState(sc, t):
-
-    from thesis.main.MyKDE import get_kde_from_df, evalutate_kernel_on_grid, get_cell_df
-
-    for i, e in enumerate(sc.entity_list):
-        e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
-
-    ran = random.Random()
-    ran.seed(t)
-    np.random.seed(t)
-
-    Treg_frac = sc.p.get_physical_parameter("Treg","fractions").get_in_sim_unit()
-    e_frac = sc.p.get_physical_parameter("effector", "fractions").get_in_sim_unit()
-    clustering_strength = sc.get_entity_type_by_name("effector").p.get_physical_parameter("strength","clustering").get_in_sim_unit()
-    bw = sc.get_entity_type_by_name("effector").p.get_physical_parameter("bw", "clustering").get_in_sim_unit()
-
-    effectors = []
-    cells = []
-
-    def is_effector(cell):
-        center = cell.center
-        if ran.uniform(0,1) < e_frac:
-            return True
-        else:
-            return False
-
-
-    for i, e in enumerate(sc.entity_list):
-
-        if isinstance(e,Cell):
-
-            fractions = sc.p.get_collection("fractions")
-            e.change_type = fractions.parameters[0].name
-
-            if is_effector(e):
-                e.change_type = "effector"
-                effectors.append(e)
-            else:
-                cells.append(e)
-
-    draw = np.random.uniform(0,1,len(sc.entity_list))
-
-
-
-    effector_df = get_cell_df(effectors)
-    cell_df = get_cell_df(cells)
-
-    kernel, kernel_vis = get_kde_from_df(effector_df,"gaussian",bw)
-
-    grid_points = 100
-    x,y,v = evalutate_kernel_on_grid(kernel_vis, grid_points)
-
-    plt.contourf(x,y,v[:,:],100)
-    plt.xlim([0,300])
-    plt.ylim([0,300])
-    plt.colorbar()
-
-    for e_c  in np.array([effector_df["x"],effector_df["y"]]).T:
-        plt.gca().add_artist(plt.Circle(e_c, 5, color="blue"))
-
-    treg_density = kernel.evaluate(np.transpose([cell_df["x"],cell_df["y"],cell_df["z"]]))
-
-    n_cells = len(sc.entity_list)
-    n_Treg = Treg_frac*n_cells
-
-
-    sort_indices = np.flip(np.argsort(treg_density))
-    cells = np.take_along_axis(np.array(cells),sort_indices,axis=0)
-    treg_density = np.take_along_axis(np.array(treg_density),sort_indices,axis=0)
-
-    from numpy.random import normal
-
-    while n_Treg > 0 and len(cells) > 0:
-        n_Treg -= 1
-
-        high = int((1-clustering_strength)*len(treg_density))
-
-        i = np.random.randint(0,high) if high > 0 else 0
-
-        cell = cells[i]
-        cells = np.delete(cells,i)
-        treg_density = np.delete(treg_density, i)
-
-        cell.change_type = "Treg"
-        plt.gca().add_artist(plt.Circle([cell.center[0],cell.center[1]],5, color="red"))
-
-    plt.show()
-    print("")
-
-
-"""Setup/Simulation"""
-
-
-
-
-scan_container = ScanContainer()
-
-sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
-
-
-from thesis.scenarios.box_grid import get_parameter_templates
-
-templates = get_parameter_templates(numeric["unit_length_exponent"])
-
-t_D = templates["D"]
-t_R = templates["R"]
-t_q = templates["q"]
-t_kd = templates["kd"]
-t_amax = templates["amax"]
-
-# R = ScannableParameter(t_R(40000), lambda x, v: x * v)
-q = ScannableParameter(t_q(100), lambda x, v: x * v)
-D = ScannableParameter(t_D(10), lambda x, v: x * v)
-kd = ScannableParameter(t_kd(0.1), lambda x, v: x * v)
-amax = ScannableParameter(t_amax(100), lambda x, v: x * v)
-
-c_s = ScannableParameter(PhysicalParameter("strength", 0.1, to_sim=1), lambda x, v: v)
-f = ScannableParameter(PhysicalParameter("Treg", 0.1, is_global=True, to_sim=1), lambda x, v: v)
-# bw = ScannableParameter(PhysicalParameter("bw", 10 ,to_sim = 1), lambda x,v: x*v)
-
-
-default = sc.get_entity_type_by_name("default")
-effector = sc.get_entity_type_by_name("effector")
-treg = sc.get_entity_type_by_name("Treg")
-
-
-# for v in np.logspace(-1,1,10):
-#
-#     sim_parameters = [
-#         ParameterCollection("IL-2", [D(v)], field_quantity="il2"),
-#         # ParameterCollection("IL-2", [kd(v)], field_quantity="il2"),
-#         # ParameterCollection("fractions", [f(v)]),
-#     ]
-#
-#
-#     entity_types = [
-#         # (effector.get_updated([ParameterCollection("clustering",[c_s(v)])])),
-#         # (effector.get_updated([ParameterCollection("clustering", [bw(v)])])),
-#         # (effector.get_updated([ParameterCollection("IL-2", [q(v)])])),
-#         # (treg.get_updated([ParameterCollection("IL-2",[R(v)])])),
-#         # (default.get_updated([ParameterCollection("IL-2", [q(v)])]))
-#     ]
-#
-#     outer_domain_dict = {
-#         # "left_boundary": [ParameterCollection("IL-2",[R(v)])],
-#         # "box": [ParameterCollection("IL-2",[R(v)])]
-#     }
-#
-#     sample = ScanSample(sim_parameters, entity_types, outer_domain_dict)
-#     scan_container.add_sample(sample)
-
-def sim_parameter_scan(scanable,collection_name, field_quantity, scan_space, scan_name = None):
-
-    result = []
-    assert isinstance(scanable, ScannableParameter)
-    for v in scan_space:
-
-        sim_parameters = [
-            ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity),
-        ]
-
-        sample = ScanSample(sim_parameters, [], {},scan_name = scan_name)
-        result.append(sample)
-    return result
-
-def entity_scan(entities,scanable,collection_name,field_quantity,scan_space, scan_name = None):
-
-    result = []
-    assert isinstance(scanable, ScannableParameter)
-    for v in scan_space:
-        entity_types = []
-        for e in entities:
-            if not field_quantity is None:
-                e = e.get_updated([ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity)])
-
-            e = e.get_updated([ParameterCollection(collection_name, [scanable(v)])])
-            entity_types.append(e)
-
-        sample = ScanSample([], entity_types, {}, scan_name=scan_name)
-        result.append(sample)
-    return result
-
-s = 10
-# scan_space = np.logspace(-1,1,s)
-scan_space = np.linspace(0,1,s)
-
-
-# for sample in entity_scan([treg],amax,"IL-2","il2",scan_space,scan_name = "treg_amax"):
-#     scan_container.add_sample(sample)
-#
-# for sample in entity_scan([effector],q,"IL-2","il2",scan_space,scan_name = "effector_q"):
-#     scan_container.add_sample(sample)
-#
-# for sample in sim_parameter_scan(D,"IL-2","il2",scan_space,scan_name = "D"):
-#     scan_container.add_sample(sample)
-#
-# for sample in sim_parameter_scan(kd, "IL-2", "il2", scan_space, scan_name="kd"):
-#     scan_container.add_sample(sample)
-
-# for sample in sim_parameter_scan(f,"fractions","Treg",scan_space,scan_name = "f"):
-#     scan_container.add_sample(sample)
-#
-# for sample in entity_scan([effector],c_s,"clustering","",scan_space,scan_name = "cluster_strength"):
-#     scan_container.add_sample(sample)
-
-sc.add_internal_solver(ResponseTimeSolver)
-
-
-
-stMan = StateManager(path)
-stMan.sim_container = sc
-stMan.scan_container = scan_container
-stMan.dt = 1
-
-stMan.T = np.arange(0, 30, 1)
-
-
-def pre_scan(state_manager, scan_index):
-    updateState(state_manager.sim_container, 0)
-
-
-stMan.pre_scan = pre_scan
-
-"""Runs the ParameterScan"""
-if len(sys.argv) > 1:
-    if not sys.argv[1] == "mesh":
-        stMan.run()
 else:
+    scan_kwargs = {"cs_strength": 1, "pSTAT_ec50": 1, "treg_k": 860}
 
-    stMan.run()
+from build_scans import scan_2
+from multiprocessing import Process
+
+scan_samples, scan_name = scan_2(scenario, np.linspace(0.01, 0.5, 16), **scan_kwargs)
+old_path = old_path[:-1] + "_" + scan_name
+
+path_list = []
+for i in [0, 1]:
+
+    if len(scan_samples) == 0: break
+    if len(scan_samples) > 64: break
+
+    path_list.append([os.path.join(old_path, "refine_{i}_{o}".format(i=i, o=o)) for o, s in enumerate(scan_samples)])
+
+    processes = []
+    for o, sample in enumerate(scan_samples):
+        p = Process(target=compute_samples_points,
+                    args=([sample], scenario, path_list[-1][o], time_range,),
+                    kwargs={"ext_cache": ext_cache}
+                    )
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
+        p.close()
+
+    processes = []
+    n = int(8 / len(path_list[-1]))
+    n = n if n > 0 else 1
+
+    for o, path in enumerate(path_list[-1]):
+        p = Process(target=post_process,
+                    args=(path, [len(time_range) - 2]),
+                    kwargs={"n_procs": n}
+                    )
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
+        p.close()
+
+    scan_scale = get_new_samples_points([item for sublist in path_list for item in sublist], grad_max=0.01)
+    scan_samples, scan_name = scan_2(scenario, scan_scale, **scan_kwargs)
