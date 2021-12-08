@@ -493,6 +493,25 @@ Collections are flattened into dict keys: {collectionname_parametername: value�
 </dd></dl>
 
 <dl class="method">
+<dt id="thesis.main.ParameterSet.ParameterCollection.get_as_dictionary">
+<code class="sig-name descname">get_as_dictionary</code><span class="sig-paren">(</span><em class="sig-param">in_sim=False</em>, <em class="sig-param">with_collection_name=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.get_as_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns dicitonary version of this collection.
+Collections are flattened into dict keys: {collectionname_parametername: value…}</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_sim</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – return values in sim units</p></li>
+<li><p><strong>with_collection_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – include collection name in dict keys</p></li>
+<li><p><strong>field_quantity</strong> – only include collection with this field quantity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="thesis.main.ParameterSet.ParameterCollection.get_misc_parameter">
 <code class="sig-name descname">get_misc_parameter</code><span class="sig-paren">(</span><em class="sig-param">misc_name</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection.get_misc_parameter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets mics parameter by name</p>

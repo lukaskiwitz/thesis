@@ -218,12 +218,37 @@ hook on <code class="xref py py-class docutils literal notranslate"><span class=
 20
 21
 22
-23</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">parameters</span> <span class="kn">import</span> <span class="n">cytokines</span><span class="p">,</span> <span class="n">cell_types_dict</span><span class="p">,</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">numeric</span><span class="p">,</span> <span class="n">boundary</span>
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">parameters</span> <span class="kn">import</span> <span class="n">cytokines</span><span class="p">,</span> <span class="n">cell_types_dict</span><span class="p">,</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">numeric</span><span class="p">,</span> <span class="n">boundary</span>
 <span class="kn">from</span> <span class="nn">thesis.main.StateManager</span> <span class="kn">import</span> <span class="n">StateManager</span>
 <span class="kn">from</span> <span class="nn">thesis.scenarios.box_grid</span> <span class="kn">import</span> <span class="n">setup</span><span class="p">,</span> <span class="n">assign_fractions</span>
 
 <span class="sd">&quot;&quot;&quot;Define paths for result folder structure&quot;&quot;&quot;</span>
 <span class="n">solution_path</span> <span class="o">=</span> <span class="s2">&quot;/extra/kiwitz/statemanager_example/test_1/&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">solution_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solution_path</span><span class="p">,</span> <span class="s2">&quot;sim.log&quot;</span><span class="p">),</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="n">filemode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">::</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="n">datefmt</span><span class="o">=</span><span class="s1">&#39;%I:%M:%S&#39;</span><span class="p">)</span>
 
 <span class="n">scenario</span> <span class="o">=</span> <span class="n">setup</span><span class="p">(</span>
     <span class="n">cytokines</span><span class="p">,</span>
@@ -234,10 +259,15 @@ hook on <code class="xref py py-class docutils literal notranslate"><span class=
 
 <span class="n">stMan</span> <span class="o">=</span> <span class="n">StateManager</span><span class="p">(</span><span class="n">solution_path</span><span class="p">)</span>
 <span class="n">stMan</span><span class="o">.</span><span class="n">scenario</span> <span class="o">=</span> <span class="n">scenario</span>
+
+<span class="n">scenario</span><span class="o">.</span><span class="n">markers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;type_name&quot;</span><span class="p">,</span> <span class="s2">&quot;IL-2_surf_c&quot;</span><span class="p">,</span> <span class="s2">&quot;IL-2_R&quot;</span><span class="p">]</span>
+
 <span class="n">stMan</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
 
 <span class="k">def</span> <span class="nf">pre_scan</span><span class="p">(</span><span class="n">state_manager</span><span class="p">,</span> <span class="n">scan_index</span><span class="p">):</span>
     <span class="n">assign_fractions</span><span class="p">(</span><span class="n">state_manager</span><span class="o">.</span><span class="n">sim_container</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
 
 <span class="n">stMan</span><span class="o">.</span><span class="n">pre_scan</span> <span class="o">=</span> <span class="n">pre_scan</span>
 <span class="n">stMan</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
