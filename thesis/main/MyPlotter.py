@@ -277,8 +277,12 @@ class Plotter:
 
         acc = {}
         for p in path:
-
-            result = self.load_single_sim(p, groups)
+            try:
+                result = self.load_single_sim(p, groups)
+            except KeyError:
+                warning(
+                    "could not load single sim at:\n{p}\nbecause dataframe did not contain necessary keys".format(p=p))
+                continue
 
             for k, v in result.items():
                 if v is None: continue
@@ -299,41 +303,38 @@ class Plotter:
         assert os.path.exists(path)
         ruse_df = pd.DataFrame()
         try:
-            try:
-                global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
-                global_df = self.reset_scan_index(global_df)
-            except:
-                global_df = pd.DataFrame()
-
-            try:
-                cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
-            except:
-                cell_df = pd.DataFrame()
-            try:
-                if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
-                    cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
-                else:
-                    cell_constants = pd.DataFrame()
-            except:
-                cell_constants = pd.DataFrame()
-
-            self.cell_constants = None
-
-            try:
-                timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
-                timing_df = self.reset_scan_index(timing_df)
-            except:
-                timing_df = None
-
-            try:
-                ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
-                ruse_df = self.reset_scan_index(ruse_df)
-            except:
-                ruse_df = None
-
-            # self.timing_df = timing_df
+            global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
+            global_df = self.reset_scan_index(global_df)
         except FileNotFoundError as e:
-            warning("{df} dataframe was not found".format(df=str(e)))
+            global_df = pd.DataFrame()
+
+        try:
+            cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
+        except FileNotFoundError as e:
+            cell_df = pd.DataFrame()
+        try:
+            if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
+                cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
+            else:
+                cell_constants = pd.DataFrame()
+        except FileNotFoundError as e:
+            cell_constants = pd.DataFrame()
+
+        self.cell_constants = None
+
+        try:
+            timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
+            timing_df = self.reset_scan_index(timing_df)
+        except FileNotFoundError as e:
+            timing_df = None
+
+        try:
+            ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
+            ruse_df = self.reset_scan_index(ruse_df)
+        except FileNotFoundError as e:
+            ruse_df = None
+
+        # self.timing_df = timing_df
 
         if self.scan_index_key not in global_df.columns:
             self.scan_index_key = "scan_index"
@@ -370,6 +371,7 @@ class Plotter:
         if self.scan_name_key in list(cell_df.columns) and self.scan_name_key not in groups:
             groups.append(self.scan_name_key)
 
+        groups = [g for g in groups if g in cell_df.columns]
         grouped_cells = cell_df.groupby(groups, as_index=True)
 
         means = grouped_cells.mean()
@@ -390,7 +392,8 @@ class Plotter:
         #     "id"
         # ]
 
-        groups.remove("type_name")
+        if "type_name" in groups:
+            groups.remove("type_name")
 
         total = pd.Series(np.zeros(len(counts)))
 
