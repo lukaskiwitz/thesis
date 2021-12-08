@@ -1,8 +1,10 @@
+import KDEpy
 import numpy as np
 import pandas as pd
 
 
 def evalutate_kernel_on_grid(kernel, grid_points):
+
     grid, points = kernel.evaluate(grid_points)
     x, y = np.unique(grid[:, 0]), np.unique(grid[:, 1])
     v = points.reshape(grid_points, grid_points).T
@@ -20,18 +22,13 @@ def get_kde_from_df(df, kernel_type, bw, visual=True):
     if df.shape[0] == 0:
         pass
     elif df.shape[0] == 1:
-        data = np.array([df["x"].iloc[0], df["y"].iloc[0], df["z"].iloc[0]])
+        data = np.expand_dims(np.array([df["x"].iloc[0], df["y"].iloc[0], df["z"].iloc[0]]), axis=1).T
     else:
         data = np.array([df["x"], df["y"], df["z"]]).T
 
     kernel = KDEpy.TreeKDE(kernel_type, bw=bw).fit(data)
 
-    data = data.T[0:2].T
-
-    if visual:
-        vis_kernel = KDEpy.FFTKDE(kernel_type, bw=bw).fit(data)
-
-    return kernel, vis_kernel
+    return kernel
 
 
 def get_cell_df(cell_list):

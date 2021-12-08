@@ -12,7 +12,10 @@ size = comm.Get_size()
 def message(text: str):
     if rank == 0:
         logging.info(text)
-        tqdm.write(get_cli_format(text))
+        try:
+            tqdm.write(get_cli_format(text))
+        except BlockingIOError:
+            pass
 
 
 def debug(text):
@@ -20,16 +23,23 @@ def debug(text):
         logging.debug(text)
 
 
+
 def warning(text: str):
     if rank == 0:
         logging.warning(text)
-        tqdm.write(get_cli_format(text))
+        try:
+            tqdm.write(get_cli_format(text))
+        except BlockingIOError:
+            pass
 
 
 def critical(text):
     if rank == 0:
         logging.critical(text)
-        tqdm.write(get_cli_format(text))
+        try:
+            tqdm.write(get_cli_format(text))
+        except BlockingIOError:
+            pass
 
 
 def get_cli_format(text):
