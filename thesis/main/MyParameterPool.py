@@ -1,10 +1,10 @@
-import logging
 from typing import List, Mapping, Union
 
 from thesis.main.ParameterSet import ParameterTemplate, ParameterCollection
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyParameterPool(SimComponent):

@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -8,7 +7,8 @@ from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyEntityLocator(ABC, SimComponent):

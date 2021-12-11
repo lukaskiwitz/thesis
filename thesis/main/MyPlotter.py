@@ -1,4 +1,6 @@
-import logging
+import os
+from typing import List, Dict
+
 import os
 from typing import List, Dict
 
@@ -12,7 +14,8 @@ from scipy.spatial import distance_matrix
 from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import warning
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class Plotter(SimComponent):

@@ -1,10 +1,8 @@
-import logging
-
 import KDEpy
 import numpy as np
 import pandas as pd
 
-module_logger = logging.getLogger(__name__)
+# module_logger = logging.getLogger(__name__)
 
 
 def evalutate_kernel_on_grid(kernel, grid_points):

@@ -5,7 +5,6 @@ Created on Fri Jun  7 12:21:51 2019
 
 @author: kiwitz
 """
-import logging
 import os
 from typing import *
 
@@ -33,7 +32,7 @@ class InternalSolverNotRegisteredError(Exception): pass
 class EntityTypeNotRegisteredError(Exception): pass
 
 
-module_logger = logging.getLogger('main.SimContainer')
+# module_logger = logging.getLogger('main.SimContainer')
 
 
 class SimContainer(SimComponent):

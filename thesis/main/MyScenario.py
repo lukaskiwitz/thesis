@@ -1,4 +1,3 @@
-import logging
 from copy import deepcopy
 from typing import Union, List, Mapping
 
@@ -8,7 +7,8 @@ from thesis.main.ScanContainer import ScanSample
 from thesis.main.SimComponent import SimComponent
 from thesis.main.SimContainer import SimContainer
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 class ModelIndexOutOfRangeError(Exception): pass
 

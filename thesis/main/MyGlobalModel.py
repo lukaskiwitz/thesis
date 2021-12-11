@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -8,7 +7,8 @@ from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTempla
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyGlobalModel(ABC, SimComponent):

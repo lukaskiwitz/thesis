@@ -1,5 +1,4 @@
 import json
-import logging
 from abc import ABC
 from copy import deepcopy
 from typing import List
@@ -10,7 +9,8 @@ from thesis.main.BC import BC
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class EntityType(ABC, SimComponent):

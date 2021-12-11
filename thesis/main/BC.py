@@ -5,7 +5,6 @@ Created on Sat Jun  8 14:17:07 2019
 
 @author: Lukas Kiwitz
 """
-import logging
 from typing import Dict, Callable
 
 import fenics as fcs
@@ -13,7 +12,8 @@ import fenics as fcs
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class BC(SimComponent):

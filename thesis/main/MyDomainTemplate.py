@@ -10,9 +10,9 @@ class BoundingBoxError(Exception): pass
 
 
 from thesis.main.SimComponent import SimComponent
-import logging
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyDomainTemplate(SimComponent):

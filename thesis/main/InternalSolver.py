@@ -2,13 +2,13 @@
 @author: Lukas Kiwitz
 """
 
-import logging
 from abc import ABC, abstractmethod
 
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class InternalSolver(ABC, SimComponent):

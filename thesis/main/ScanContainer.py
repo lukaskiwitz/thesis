@@ -1,5 +1,4 @@
 import json
-import logging
 from enum import Enum
 from typing import List, Dict
 
@@ -10,7 +9,8 @@ from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscPara
     ScannableParameter
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class ScanContainer(SimComponent):

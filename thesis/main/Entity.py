@@ -6,7 +6,6 @@ Created on Fri Jun  7 12:22:13 2019
 @author: Lukas Kiwitz
 """
 
-import logging
 from abc import *
 from copy import deepcopy
 from typing import List, Dict
@@ -25,7 +24,8 @@ from thesis.main.SimComponent import SimComponent
 from thesis.main.TaskRecord import TaskRecord
 from thesis.main.my_debug import message
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class Entity(ABC, SimComponent):

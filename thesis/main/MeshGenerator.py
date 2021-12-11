@@ -20,7 +20,8 @@ import pygmsh
 import thesis.main.Entity as Entity
 from thesis.main.my_debug import message
 
-module_logger = logging.getLogger('main.MeshGenerator')
+
+# module_logger = logging.getLogger('main.MeshGenerator')
 
 class DomainTypeError(Exception):
     def __init__(self, text):

@@ -11,9 +11,9 @@ class FieldInteractionType(Enum):
 
 
 from thesis.main.SimComponent import SimComponent
-import logging
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyInteractionTemplate(ABC, SimComponent):

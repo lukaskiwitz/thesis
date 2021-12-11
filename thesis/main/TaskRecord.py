@@ -1,10 +1,10 @@
-import logging
 from time import time
 
 from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import message
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 class TaskError(Exception):
     pass

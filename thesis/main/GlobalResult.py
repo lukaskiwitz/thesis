@@ -1,4 +1,3 @@
-import logging
 import os
 from abc import ABC, abstractmethod
 from numbers import Number
@@ -10,7 +9,8 @@ import numpy as np
 
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class ResultEmptyError(Exception): pass

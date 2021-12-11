@@ -6,8 +6,6 @@ Created on Thu May 23 12:06:52 2019
 @author: Lukas Kiwitz
 """
 
-import logging
-
 import fenics as fcs
 import numpy as np
 from dolfin import near, Point
@@ -15,7 +13,8 @@ from mshr import Circle, Sphere, Rectangle, Box
 
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 def insideRectangle(p1, p2, x):

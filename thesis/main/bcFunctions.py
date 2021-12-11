@@ -5,11 +5,10 @@ Created on Mon Jun 10 19:42:20 2019
 
 @author: lukas
 """
-import logging
 
 from thesis.main.my_debug import message
 
-module_logger = logging.getLogger(__name__)
+# module_logger = logging.getLogger(__name__)
 
 
 def cellBC(u, p, field_quantity, area=1):

@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 
 from thesis.main.FieldProblem import FieldProblem, MeanFieldProblem, GlobalProblem
@@ -7,7 +6,8 @@ from thesis.main.MySolver import MyDiffusionSolver, MyMeanFieldSolver
 from thesis.main.ParameterSet import ParameterCollection
 from thesis.main.SimComponent import SimComponent
 
-module_logger = logging.getLogger(__name__)
+
+# module_logger = logging.getLogger(__name__)
 
 
 class MyFieldTemplate(ABC, SimComponent):
