@@ -249,7 +249,9 @@ def distribute_receptors(entity_list, replicat_index, type_name, var=1):
     R_start = np.unique([e.p.get_physical_parameter("R_start", "R_start").get_in_post_unit() for e in entity_list if
                          e.type_name == type_name])
 
+    if len(R) == 0: return None
     assert len(R) == 1
+
     E = R[0]
     if E == 0:
         return None
@@ -261,3 +263,6 @@ def distribute_receptors(entity_list, replicat_index, type_name, var=1):
         if e.type_name == type_name:
             R_draw = np.random.lognormal(mean, tmp_sigma)
             e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(R_draw)
+            e.p.get_physical_parameter("R_start", "R_start").set_in_post_unit(R_draw)
+            e.p.get_misc_parameter("R_start_pos", "misc").set_in_post_unit(R_draw)
+            e.p.get_misc_parameter("R_start_neg", "misc").set_in_post_unit(R_draw)

@@ -552,13 +552,13 @@ class PostProcessor(SimComponent):
         self.save_dataframes(extra_cell_constants=extra_cell_constants)
 
 
-class PostProcessComputation(ABC):
+class PostProcessComputation(ABC, SimComponent):
     add_xml_result = True
     compatible_result_type: List[GlobalResult] = []
 
     @abstractmethod
     def __init__(self, compute_settings: ComputeSettings):
-
+        super().__init__()
         if hasattr(self, "name"):
             name = str(self.__class__).split(".")[-1].replace(">", "") + ": " + str(self.name)
         else:
