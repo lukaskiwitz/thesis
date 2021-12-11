@@ -5,7 +5,7 @@ Created on Fri Jun  7 12:21:51 2019
 
 @author: kiwitz
 """
-
+import logging
 import os
 from typing import *
 
@@ -20,8 +20,9 @@ from thesis.main.FieldProblem import GlobalProblem
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import ParameterSet, MiscParameter
 from thesis.main.ScanContainer import ScanSample
+from thesis.main.SimComponent import SimComponent
 from thesis.main.TaskRecord import ClassRecord
-from thesis.main.my_debug import message, debug
+from thesis.main.my_debug import debug
 
 Element = et.Element
 
@@ -32,7 +33,10 @@ class InternalSolverNotRegisteredError(Exception): pass
 class EntityTypeNotRegisteredError(Exception): pass
 
 
-class SimContainer:
+module_logger = logging.getLogger('main.SimContainer')
+
+
+class SimContainer(SimComponent):
     """
 
     Container to hold all simulation object. Can be used as standalone or aggregate with
@@ -72,6 +76,8 @@ class SimContainer:
 
     def __init__(self, parameter_set: ParameterSet) -> None:
 
+        super().__init__()
+
         self.p: ParameterSet = parameter_set
         self.entity_list: List[Entity] = []
         self.global_problems: List[GlobalProblem] = []
@@ -90,6 +96,7 @@ class SimContainer:
 
         self.markers: List[str] = ["type_name", "IL-2_surf_c"]
         self.default_sample: ScanSample = None
+
 
     def initialize(self) -> None:
 
@@ -234,7 +241,7 @@ class SimContainer:
 
             elif field.moving_mesh == True:
 
-                message("Moving Cells")
+                self.logger.info("Moving Cells")
                 if field.ale:
                     field.load_mesh(field.mesh_path + field.file_name + ".xdmf")
                     field.ale(dt, tmp_path)
@@ -310,7 +317,7 @@ class SimContainer:
         for i, entity in enumerate(self.entity_list):
             entity.get_surface_area()
             if not entity.change_type == "":
-                debug("changing type for entity {id}".format(id=entity.id))
+                debug("changing type for entity {id}".format(id=entity.id), self.logger)
                 entity_type = self.get_entity_type_by_name(entity.change_type)
                 assert entity_type is not None
 
@@ -472,7 +479,7 @@ class SimContainer:
         """
 
         for o, i in enumerate(self.global_problems):
-            message("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
+            self.logger.info("writing to {f}".format(f="{path}cache".format(path=self.get_current_path())))
             self.subdomain_files[o].write(i.get_sub_domains_vis())
 
     def save_domain(self) -> None:

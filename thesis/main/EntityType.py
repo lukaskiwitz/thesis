@@ -1,4 +1,5 @@
 import json
+import logging
 from abc import ABC
 from copy import deepcopy
 from typing import List
@@ -7,11 +8,16 @@ import lxml.etree as ET
 
 from thesis.main.BC import BC
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
-class EntityType(ABC):
+class EntityType(ABC, SimComponent):
 
     def __init__(self, p: ParameterSet, name: str):
+
+        super.__init__()
 
         self.p = deepcopy(p)
         self.name = name
@@ -40,6 +46,8 @@ class EntityType(ABC):
 class CellType(EntityType):
 
     def __init__(self, p: ParameterSet, name: str, solver_name: str):
+        super(EntityType, self).__init__()
+
         self.p = deepcopy(p)
         self.name = name
         self.internal_solver = solver_name

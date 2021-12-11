@@ -10,9 +10,16 @@ class FieldInteractionType(Enum):
     OUTERINTERGRAL = 3
 
 
-class MyInteractionTemplate(ABC):
+from thesis.main.SimComponent import SimComponent
+import logging
+
+module_logger = logging.getLogger(__name__)
+
+
+class MyInteractionTemplate(ABC, SimComponent):
 
     def __init__(self):
+        super(MyInteractionTemplate, self).__init__()
         self.field_quantity = None
 
     @abstractmethod
@@ -25,6 +32,8 @@ class MyFieldInteractionTemplate(MyInteractionTemplate):
     def __init__(self, field_quantity: str, field_interaction_type: FieldInteractionType):
         assert isinstance(field_quantity, str)
         assert isinstance(field_interaction_type, FieldInteractionType)
+
+        super(MyFieldInteractionTemplate, self).__init__()
 
         self.field_quantity: str = field_quantity
         self.field_interaction_type: FieldInteractionType = field_interaction_type

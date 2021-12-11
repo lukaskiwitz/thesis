@@ -1,4 +1,5 @@
 import json
+import logging
 from enum import Enum
 from typing import List, Dict
 
@@ -7,11 +8,15 @@ import lxml.etree as ET
 from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, MiscParameter, PhysicalParameterTemplate, \
     ScannableParameter
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
-class ScanContainer:
+class ScanContainer(SimComponent):
 
     def __init__(self):
+        super(ScanContainer, self).__init__()
         self.scan_samples = []
 
     def __iter__(self):
@@ -166,11 +171,12 @@ class ScanContainer:
             self.scan_samples.append(sample)
 
 
-class ScanSample:
+class ScanSample(SimComponent):
 
     def __init__(self, collection_list: List[ParameterCollection], entity_types: List[EntityType],
                  outer_domain_dict: Dict, scan_name="UnnamedScanSample"):
 
+        super(ScanSample, self).__init__()
         self.p: ParameterSet = ParameterSet("dynamic", collection_list)
         self.remesh_scan_sample = False
         self.remesh_timestep = False
@@ -244,12 +250,13 @@ class ScanType(Enum):
     BOUNDARY = 3
 
 
-class ScanDefintion:
+class ScanDefintion(SimComponent):
 
     def __init__(self, scannable, collection_name, scan_space, scan_type: ScanType,
                  entity_type=None, boundary_pieces_name=None, field_quantity=""):
 
         assert isinstance(scannable, ScannableParameter)
+        super(ScanDefintion, self).__init__()
 
         self.scannable = scannable
         self.collection_name = collection_name

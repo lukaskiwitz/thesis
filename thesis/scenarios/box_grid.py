@@ -1,3 +1,4 @@
+import logging
 import random
 from copy import deepcopy
 from typing import List, Dict
@@ -19,6 +20,8 @@ from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, Ph
     MiscParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
 from thesis.main.bcFunctions import cellBC
+
+module_logger = logging.getLogger(__name__)
 
 ule = -6
 
@@ -50,6 +53,13 @@ templates = {
 
 
 def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=None) -> MyScenario:
+    """args need to be copied for thread saftey"""
+    cytokines = deepcopy(cytokines)
+    cell_types = deepcopy(cell_types)
+    boundary = deepcopy(boundary)
+    geometry_dict = deepcopy(geometry_dict)
+    numeric = deepcopy(numeric)
+    custom_pool = deepcopy(custom_pool)
 
     parameter_pool = get_standard_pool()
 

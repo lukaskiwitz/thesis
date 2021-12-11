@@ -9,9 +9,16 @@ from thesis.main.ParameterSet import ParameterSet
 class BoundingBoxError(Exception): pass
 
 
-class MyDomainTemplate:
+from thesis.main.SimComponent import SimComponent
+import logging
+
+module_logger = logging.getLogger(__name__)
+
+
+class MyDomainTemplate(SimComponent):
 
     def __init__(self):
+        super(MyDomainTemplate, self).__init__()
         pass
 
     def get_domain(self, p: ParameterSet, entity_list: List[Entity]):
@@ -21,6 +28,8 @@ class MyDomainTemplate:
 class MyBoxDomainTemplate(MyDomainTemplate):
 
     def __init__(self, p1, p2):
+        super(MyBoxDomainTemplate, self).__init__()
+
         self.p1 = p1
         self.p2 = p2
 
@@ -34,6 +43,8 @@ class MyBoxDomainTemplate(MyDomainTemplate):
 class MyBoundingBoxTemplate(MyDomainTemplate):
 
     def __init__(self):
+        super(MyBoundingBoxTemplate, self).__init__()
+
         self.bc_list = []
 
     def get_domain(self, p: ParameterSet, entity_list: List[Entity]):
@@ -55,6 +66,8 @@ class MySphereDomainTemplate(MyDomainTemplate):
 
     def __init__(self, c, r):
         assert len(c) == 3
+
+        super(MySphereDomainTemplate, self).__init__()
 
         self.c = c
         self.r = r

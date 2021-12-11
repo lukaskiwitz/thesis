@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -5,12 +6,15 @@ import numpy as np
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
-class MyEntityLocator(ABC):
+class MyEntityLocator(ABC, SimComponent):
 
     def __init__(self):
-        pass
+        super(MyEntityLocator, self).__init__()
 
     @abstractmethod
     def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet) -> [Entity]:
@@ -33,9 +37,10 @@ class MyCellListLocator(MyEntityLocator):
         :param cell_types: corresponding list of entity templates.
         """
 
-
         assert np.array(cell_pos).shape[1] == 3
         assert len(cell_pos) > 0
+
+        super(MyCellListLocator, self).__init__()
 
         self.cell_pos = cell_pos
         self.cell_types = cell_types
@@ -70,8 +75,8 @@ class MyCellGridLocator(MyEntityLocator):
     """
 
     def __init__(self):
+        super(MyCellGridLocator, self).__init__()
 
-        pass
 
     def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
 

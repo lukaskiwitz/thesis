@@ -6,11 +6,14 @@ Created on Fri Jun  7 12:22:13 2019
 @author: Lukas Kiwitz
 """
 
+import logging
 from abc import *
+from copy import deepcopy
 from typing import List, Dict
 
 import fenics as fcs
 import numpy as np
+
 import thesis.main.BC as bc
 import thesis.main.MySubDomain as SD
 from thesis.main.BC import BC, OuterBC
@@ -18,10 +21,14 @@ from thesis.main.EntityType import CellType
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.MySubDomain import CellSubDomain
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
 from thesis.main.TaskRecord import TaskRecord
+from thesis.main.my_debug import message
+
+module_logger = logging.getLogger(__name__)
 
 
-class Entity:
+class Entity(ABC, SimComponent):
     """
 
     :var: name: entity name
@@ -45,6 +52,7 @@ class Entity:
     """
 
     def __init__(self):
+        super(Entity, self).__init__()
         self.name: str = "default"
         self.fieldQuantities: List[str] = []
         self.internal_solver: InternalSolver = None
@@ -168,6 +176,7 @@ class Cell(Entity):
         :param bc_list:
         """
         super().__init__()
+
         self.p = ParameterSet("Cell_dummy", [])
         self.interactions = []
         self.center: List[float] = center
@@ -186,7 +195,7 @@ class Cell(Entity):
 
     def move_real(self, dt, bouding_box):
 
-        from thesis.main.my_debug import message
+
 
         def inside(p1, p2, i, x, m):
 
@@ -196,10 +205,10 @@ class Cell(Entity):
             if (r[0] + m < x) and (r[1] - m > x):
                 return True
             else:
-                message("cell outside of bounding box")
+                message("cell outside of bounding box", self.logger)
                 return False
 
-        from copy import deepcopy
+
 
         old = deepcopy(self.center)
 
@@ -209,17 +218,17 @@ class Cell(Entity):
 
         self.center[0] += self.velocity[0] * dt
         if not inside(p1, p2, 0, self.center, m):
-            message("setting x to " + str(old[0]))
+            message("setting x to " + str(old[0]), self.logger)
             self.center[0] = old[0]
 
         self.center[1] += self.velocity[1] * dt
         if not inside(p1, p2, 1, self.center, m):
-            message("setting y to " + str(old[1]))
+            message("setting y to " + str(old[1]), self.logger)
             self.center[1] = old[1]
 
         self.center[2] += self.velocity[2] * dt
         if not inside(p1, p2, 2, self.center, m):
-            message("setting z to " + str(old[2]))
+            message("setting z to " + str(old[2]), self.logger)
             self.center[2] = old[2]
 
     def get_surface_area(self):
@@ -383,11 +392,11 @@ class DomainSphere(DomainEntity):
         return subdomains
 
 
-
-
 class CompiledSphere(DomainSphere, Entity):
 
     def __init__(self, expr, bc, parent):
+        super(CompiledSphere, self).__init__()
+
         self.interactions = [bc]
         self.parent = parent
         self.expr = expr
@@ -412,7 +421,6 @@ class CompiledSphere(DomainSphere, Entity):
             return p.get_in_sim_unit()
         else:
             return None
-
 
 
 class DomainCube(DomainEntity):
@@ -459,6 +467,9 @@ class DomainCube(DomainEntity):
 class CompiledCube(DomainCube, Entity):
 
     def __init__(self, expr, bc, parent):
+
+        super(Entity, self).__init__()
+
         self.interactions = [bc]
         self.parent = parent
         self.expr = expr

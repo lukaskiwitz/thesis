@@ -5,16 +5,21 @@ Created on Sat Jun  8 14:17:07 2019
 
 @author: Lukas Kiwitz
 """
+import logging
 from typing import Dict, Callable
 
 import fenics as fcs
 
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
-class BC:
+class BC(SimComponent):
 
     def __init__(self, **kwargs: Dict) -> None:
+        super(BC, self).__init__()
         self.field_quantity = ""
         if "field_quantity" in kwargs:
             self.field_quantity = kwargs["field_quantity"]
@@ -23,6 +28,7 @@ class BC:
 class Integral(BC):
 
     def __init__(self, q: Callable, **kwargs: Dict) -> None:
+
         self.value = None
         if "p" in kwargs:
             assert isinstance(kwargs["p"], ParameterSet)

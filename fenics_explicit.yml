@@ -246,5 +246,5 @@ dependencies:
       - sphinx-rtd-theme==0.5.2
       - sphinxcontrib-plantuml==0.22
       - termplotlib==0.3.2
-      - tqdm==4.51.0
+      - tqdm==4.62.3
       - coverage==6.1.1

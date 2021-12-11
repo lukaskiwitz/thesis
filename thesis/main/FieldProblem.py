@@ -5,9 +5,11 @@ Created on Fri Jun  7 12:48:49 2019
 
 @author: Lukas Kiwitz
 """
+import logging
 import multiprocessing
 import multiprocessing as mp
 import os
+import sys
 import time
 from abc import ABC, abstractmethod
 from numbers import Number
@@ -25,15 +27,16 @@ from thesis.main.MySolver import MySolver, MyDiffusionSolver
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.ScanContainer import ScanSample
+from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import message, total_time, warning
 
 Element = et.Element
-
+module_logger = logging.getLogger(__name__)
 
 class BoundaryConcentrationError(Exception): pass
 
 
-class GlobalProblem(ABC):
+class GlobalProblem(ABC, SimComponent):
     """
     Abstract base class for all global problems.
     New global models should be implemented by subclassing from this class and implementing all its abstract methods.
@@ -57,6 +60,8 @@ class GlobalProblem(ABC):
     """
 
     def __init__(self) -> None:
+        super().__init__()
+
         # self.path: Union[str, None] = None
         self.name: str = ""
         self.field_name: str = ""
@@ -215,6 +220,8 @@ class FieldProblem(GlobalProblem):
 
     def __init__(self) -> None:
 
+        super().__init__()
+
         self.field_name: str = ""
         self.registered_entities: List[Mapping[str, Union[Entity, int]]] = []
         self.outer_domain: Union[DomainEntity, None] = None
@@ -357,7 +364,8 @@ class FieldProblem(GlobalProblem):
                     if i == self.boundary_extraction_trials:
                         raise BoundaryConcentrationError(
                             "failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
-                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
+                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i),
+                            self.logger)
                     continue
             break
 
@@ -365,7 +373,7 @@ class FieldProblem(GlobalProblem):
             self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
         end = time.time()
 
-        total_time(end - start, pre="Cell concentration extracted in ")
+        total_time(end - start, pre="Cell concentration extracted in ", logger=self.logger)
 
         for i, (patch, sa, value) in enumerate(result):
 
@@ -383,7 +391,7 @@ class FieldProblem(GlobalProblem):
                 ], field_quantity=self.field_quantity)])
                 , overwrite=True)
 
-        message("done pool map with chunksize {}".format(cs))
+        message("done pool map with chunksize {}".format(cs), self.logger)
 
     def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup: Mapping[str, int],
                      time_index: int) -> Dict[str, str]:
@@ -641,6 +649,9 @@ class FieldProblem(GlobalProblem):
 
 class MeanFieldProblem(GlobalProblem):
 
+    def __init__(self):
+        super().__init__()
+
     def initialize_run(self, p: ParameterSet, top_path: str, absolute_path: str, tmp_path: str) -> None:
 
         self.p.update(p)
@@ -649,6 +660,7 @@ class MeanFieldProblem(GlobalProblem):
 
     def update_step(self, p: ParameterSet, path: str, time_index: int, tmp_path: str) -> None:
 
+        message("running mean field problem", self.logger)
         entity_parameters = {}
 
         for e in self.registered_entities:
@@ -743,7 +755,8 @@ def calc_boundary_values(entity: Entity):
     try:
         values = vertex_values.take(verts)
     except TypeError as e:
-        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi=patch_index))
+        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi=patch_index),
+                logger)
 
     vertex_sum = values.sum() / len(verts)
     result = [patch_index, sa, vertex_sum]

@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -5,11 +6,15 @@ from thesis.main.FieldProblem import GlobalProblem, MeanFieldProblem, FieldProbl
 from thesis.main.MyDomainTemplate import MyDomainTemplate
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate, MyFieldTemplate
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
-class MyGlobalModel(ABC):
+class MyGlobalModel(ABC, SimComponent):
 
     def __init__(self, name: str):
+        super(MyGlobalModel, self).__init__()
         self.name: str = name
         self.field_templates: List[MyFieldTemplate] = []
 
@@ -31,6 +36,8 @@ class MyGlobalModel(ABC):
 class MyODEModel(MyGlobalModel):
 
     def __init__(self, name: str):
+        super(MyODEModel, self).__init__(name)
+
         self.name: str = name
         self.field_templates: List[MyMeanCytokineTemplate] = []
 
@@ -52,6 +59,7 @@ class MyPDEModel(MyGlobalModel):
 
     def __init__(self, name: str):
         super().__init__(name)
+
         self.field_templates: List[MyCytokineTemplate] = []
         self.domain_template: MyDomainTemplate = None
 

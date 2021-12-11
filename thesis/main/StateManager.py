@@ -7,6 +7,7 @@ Created on Mon Oct 14 14:34:19 2019
 """
 
 import json
+import logging
 import os
 import time
 import traceback
@@ -27,6 +28,7 @@ from thesis.main.Entity import Cell
 from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, GlobalCollections, GlobalParameters
 from thesis.main.ScanContainer import ScanContainer, ScanSample
+from thesis.main.SimComponent import SimComponent
 from thesis.main.SimContainer import SimContainer
 from thesis.main.TaskRecord import ClassRecord
 from thesis.main.my_debug import message, warning, critical
@@ -45,9 +47,10 @@ def outputParse(v):
 
 ElementTree = lxml.etree.ElementTree
 Element = lxml.etree.Element
+module_logger = logging.getLogger(__name__)
 
 
-class StateManager:
+class StateManager(SimComponent):
     """
     This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
     produces the xml files necessary for the use of PostProcessor.
@@ -91,6 +94,7 @@ class StateManager:
         :param path: Path to simulation directoy
         :return None
         """
+        super().__init__()
         self.path: str = path
         self.ruse = []
 
@@ -143,16 +147,17 @@ class StateManager:
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
 
         message("State Manager: Distributing {total} scans to {n_processes} processes".format(n_processes=n_processes,
-                                                                                              total=len(scans)))
+                                                                                              total=len(scans)),
+                self.logger)
 
         with mp.Pool(processes=n_processes, initializer=init) as p:
-            result = p.map(target, scatter_list)
+            result = p.map(parallel_get_cell_dataframe, scatter_list)
             while [] in result:
                 result.remove([])
 
         # result = []
         # for sc in scatter_list:
-        #     result.append(target(sc))
+        #     result.append(parallel_get_cell_dataframe(sc))
         result = reduce(lambda x, v: x + v, result, [])
 
         return pd.DataFrame(result)
@@ -232,7 +237,7 @@ class StateManager:
         self.time_series_bar.update(1)
         self.scan_bar.postfix = "ETA: {eta}".format(eta=scan_eta)
         self.time_series_bar.postfix = "ETA: {eta}".format(eta=time_series_eta)
-        # message("ETA: {eta}".format(eta = eta))
+        # message("ETA: {eta}".format(eta = eta),self.logger)
 
     def run(self, ext_cache: str = "", model_names: List[str] = None, number_of_replicats=1) -> None:
         self.clear_log_files()
@@ -443,56 +448,11 @@ class StateManager:
         pass
 
 
-# class ScanManager:
-#
-#     def __init__(self, path: str):
-#
-#         self.path: str = path
-#         self.scan_folder_pattern: str = "scan_{n}/"
-#         self.element_tree: ElementTree = None
-#         self.scan_container: ScanContainer = None
-#         self.sim_container = None
-#         self.T = None
-#         self.dt = 1
-#         self.N = 10
-#         self.compress_log_file = True
-#         self.global_collections = GlobalCollections()
-#         self.global_parameters = GlobalParameters()
-#         self.record = ClassRecord("ScanManager")
-#         self.progress_bar = None
-#
-#     def update_sim_container(self, sc, i) -> Dict:
-#
-#         scan_container = self.deserialize_from_element_tree()
-#         sc.path = self.get_scan_folder(i)
-#         assert i <= len(scan_container.scan_samples) - 1
-#         sample = scan_container.scan_samples[i]
-#
-#         assert hasattr(sc, "default_sample")
-#
-#         sc.p.update(sc.default_sample.p)
-#         sc.p.update(sample.p)
-#
-#         for f in sc.fields:
-#             f.apply_sample(sc.default_sample)
-#             f.apply_sample(sample)
-#
-#         for e in sc.entity_list:
-#             e.p.update(sc.default_sample.p, override=True)
-#             e.p.update(sample.p, override=True)
-#
-#         for entity_type in sc.default_sample.entity_types:
-#             sc.add_entity_type(entity_type)
-#
-#         for entity_type in sample.entity_types:
-#             sc.add_entity_type(entity_type)
-#
-#         return deepcopy(sample.p)
-
-
-class MyScanTree:
+class MyScanTree(SimComponent):
 
     def __init__(self, path: str):
+
+        super().__init__()
 
         self.path: str = path
         self.element_tree: ET.ElementTree = None
@@ -564,21 +524,21 @@ class MyScanTree:
 
         try:
             f = os.path.join(self.path, "log.xml")
-            message("writing element tree to {file}".format(file=f))
+            message("writing element tree to {file}".format(file=f), self.logger)
             self.element_tree.write(f, pretty_print=True)
         except Exception as e:
-            message("Could not write element tree to file: {e}".format(e=e))
+            message("Could not write element tree to file: {e}".format(e=e), self.logger)
 
     def serialize_to_element_tree(self, scan_container) -> None:
 
         scan_folder_pattern = "scan_{n}"
 
         if scan_container is None:
-            message("Scan Container not set. Running one sample with default parmeters")
+            message("Scan Container not set. Running one sample with default parmeters", self.logger)
             scan_container = ScanContainer()
 
         if len(scan_container.scan_samples) == 0:
-            message("No Scan Sample found. Running one sample with default parmeters")
+            message("No Scan Sample found. Running one sample with default parmeters", self.logger)
             scan_container.add_sample(ScanSample([], [], {}, scan_name="default"))
 
         root = ET.Element("Run")
@@ -737,7 +697,9 @@ class MyScanTree:
         return element_copies
 
 
-def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
+def parallel_get_cell_dataframe(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
+    logger = module_logger.getChild("parallel_get_cell_dataframe")
+
     try:
         n_scans, scan, time_indices, path = mp_input
         scan = ET.fromstring(scan)
@@ -759,7 +721,8 @@ def target(mp_input: Tuple[int, str, List[int], str]) -> List[pd.DataFrame]:
                     time = step.get("time")
 
                     message(
-                        "State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans))
+                        "State Manager: Computing timestep {n} for scan {scan_n}".format(n=time_index, scan_n=n_scans),
+                        logger)
 
                     for cell in step.findall("Cells/Cell"):
 

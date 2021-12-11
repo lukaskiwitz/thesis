@@ -1,3 +1,4 @@
+import logging
 import os
 from abc import ABC, abstractmethod
 from numbers import Number
@@ -7,13 +8,19 @@ import fenics as fcs
 import mpi4py.MPI as MPI
 import numpy as np
 
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
+
 
 class ResultEmptyError(Exception): pass
 
 
-class GlobalResult(ABC):
+class GlobalResult(ABC, SimComponent):
 
     def __init__(self, directory_path: str, field_quantity: str):
+        super(GlobalResult, self).__init__()
+
         self.path: str = directory_path
         self.field_quantity: str = field_quantity
 
@@ -34,6 +41,7 @@ class ScalarResult(GlobalResult):
 
     def __init__(self, *args):
         super().__init__(*args)
+
         self.u: float = None
 
     def set(self, u: float):
@@ -83,6 +91,7 @@ class ScalarFieldResult(GlobalResult):
 
     def __init__(self, *args):
         super().__init__(*args)
+
         self.u: fcs.Function = None
 
     def set(self, u):

@@ -1,11 +1,14 @@
+import logging
 from copy import deepcopy
 from typing import Union, List, Mapping
 
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.ScanContainer import ScanSample
+from thesis.main.SimComponent import SimComponent
 from thesis.main.SimContainer import SimContainer
 
+module_logger = logging.getLogger(__name__)
 
 class ModelIndexOutOfRangeError(Exception): pass
 
@@ -13,11 +16,12 @@ class ModelIndexOutOfRangeError(Exception): pass
 class ModelNameNotFoundError(Exception): pass
 
 
-class MyScenario:
+class MyScenario(SimComponent):
 
     def __init__(self, parameter_pool):
 
         assert isinstance(parameter_pool, MyParameterPool)
+        super(MyScenario, self).__init__()
 
         self.global_models = []
         self.internal_solvers = []

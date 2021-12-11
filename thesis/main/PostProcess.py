@@ -6,6 +6,7 @@ Created on Wed Oct 16 12:56:59 2019
 @author: Lukas Kiwitz
 """
 import json
+import logging
 import multiprocessing as mp
 import os
 import random
@@ -30,8 +31,12 @@ from thesis.main.ParameterSet import ParameterSet
 from thesis.main.PostProcessUtil import get_mesh_volume, cast_mixed_columns_to_string
 from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentration_conversion, \
     get_gradient_conversion
+from thesis.main.SimComponent import SimComponent
 from thesis.main.myDictSorting import groupByKey
-from thesis.main.my_debug import message, warning
+from thesis.main.my_debug import message
+from thesis.main.my_debug import warning
+
+module_logger = logging.getLogger(__name__)
 
 
 class ComputeSettings:
@@ -175,9 +180,11 @@ class ComputeSettings:
         return compute_settings
 
 
-class PostProcessor:
+class PostProcessor(SimComponent):
 
     def __init__(self, path: str) -> None:
+        super(PostProcessor, self).__init__()
+
         self.debug_compute_in_serial = False
         self.out_tree_path = path + "postProcess.xml"
         self.path = path
@@ -270,7 +277,9 @@ class PostProcessor:
 
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
         message(
-            "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)))
+            "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)),
+            self.logger
+        )
 
         if self.debug_compute_in_serial:
             result_list = []
@@ -301,7 +310,6 @@ class PostProcessor:
         tree = et.ElementTree(element=post_process_result)
         for s in indexed_list:
             scan = et.SubElement(post_process_result, "Scan")
-            #            message(s[0])
             scan.set("i", str(s[0][0]["scan_index"]))
             for t in s:
                 for i in t:
@@ -309,11 +317,11 @@ class PostProcessor:
                     time.set("i", i["time_index"])
                     time.set("time", i["time"])
                     time.append(i["entry"])
-        message("writing post process output to {p}".format(p=self.out_tree_path))
+        message("writing post process output to {p}".format(p=self.out_tree_path), self.logger)
         tree.write(self.out_tree_path, pretty_print=True)
 
     def get_global_dataframe(self) -> pd.DataFrame:
-        message("collecting global dataframe from post_process.xml")
+        message("collecting global dataframe from post_process.xml", self.logger)
         in_tree = et.parse(self.out_tree_path)
 
         result = []
@@ -402,7 +410,7 @@ class PostProcessor:
 
         kernels = {}
         bw = 20
-        message("computing kde for time series: {n} and timestep {t}".format(n=n, t=time_index))
+        message("computing kde for time series: {n} and timestep {t}".format(n=n, t=time_index), self.logger)
         for type_name in type_names:
             inital_cells = ts.loc[(ts["time_index"] == time_index) & (ts["type_name"] == type_name)]
             if inital_cells.shape[0] == 0:
@@ -439,7 +447,7 @@ class PostProcessor:
                                                                         n_processes=n_processes)
 
         if kde:
-            message("running kernel density estimation")
+            message("running kernel density estimation", self.logger)
             r_grouped = result.groupby(["scan_index", "model_index", "replicat_index"], as_index=False)
             kde_result = pd.DataFrame()
             for scan_index, ts in r_grouped:
@@ -523,7 +531,7 @@ class PostProcessor:
             try:
                 df.to_hdf(os.path.join(self.path, "cell_df.h5"), key="df", mode="w")
             except:
-                message("Saving the cell_df to hdf failed, falling back to pickling...")
+                message("Saving the cell_df to hdf failed, falling back to pickling...", self.logger)
                 df.to_pickle(os.path.join(self.path, "cell_df.pkl"))
 
         self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w",
@@ -563,7 +571,8 @@ class PostProcessComputation(ABC):
                                                                                             ".")[-1].replace(">", ""),
                                                                                         s=compute_settings.scan_index,
                                                                                         n=name,
-                                                                                        rep=compute_settings.replicat_index))
+                                                                                        rep=compute_settings.replicat_index),
+            self.logger)
 
     @abstractmethod
     def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
@@ -780,7 +789,7 @@ class SheetPyPlotRender(FenicsScalarFieldComputation):
         #     key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
         #     if not key in color_dict:
         #         color = "black"
-        #         message("no color provided for key {k}".format(k=key))
+        #         message("no color provided for key {k}".format(k=key),self.logger)
         #     else:
         #         color = color_dict[key]
         #
@@ -824,7 +833,7 @@ class SheetPyPlotRender(FenicsScalarFieldComputation):
             key = cell[cell_color_key] if categorical else round(cell[cell_color_key], round_legend_labels)
             if not key in color_dict:
                 color = "black"
-                message("no color provided for key {k}".format(k=key))
+                message("no color provided for key {k}".format(k=key), self.logger)
             else:
                 color = color_dict[key]
 
@@ -1011,7 +1020,7 @@ def compute(compute_settings: ComputeSettings) -> str:
                 else:
                     comp()
             except Exception as e:
-                message("could not perform post process computation: {name}".format(name=comp.name))
+                message("could not perform post process computation: {name}".format(name=comp.name), self.logger)
                 raise e
                 break
 
@@ -1040,7 +1049,7 @@ def get_color_dictionary(cell_df, cell_color_key, cell_colors, round_legend_labe
         try:
             cmap = plt.get_cmap(cell_colors)
         except:
-            message("could not inteperet cell_colors as colormap")
+            message("could not inteperet cell_colors as colormap", self.logger)
             cmap = plt.get_cmap("Dark2")
 
         from numbers import Number

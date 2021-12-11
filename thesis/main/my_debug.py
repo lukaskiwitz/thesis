@@ -9,33 +9,52 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 
-def message(text: str):
+def message(text: str, logger=None):
     if rank == 0:
-        logging.info(text)
+        if logger is not None:
+            logger.info(text)
+        else:
+            logging.info(text)
         try:
             tqdm.write(get_cli_format(text))
         except BlockingIOError:
             pass
 
 
-def debug(text):
+def info(text, logger=None):
     if rank == 0:
-        logging.debug(text)
+        if logger is not None:
+            logger.info(text)
+        else:
+            logging.info(text)
 
 
-
-def warning(text: str):
+def debug(text, logger=None):
     if rank == 0:
-        logging.warning(text)
+        if logger is not None:
+            logger.debug(text)
+        else:
+            logging.debug(text)
+
+
+def warning(text: str, logger=None):
+    if rank == 0:
+        if logger is not None:
+            logger.warning(text)
+        else:
+            logging.info(text)
         try:
             tqdm.write(get_cli_format(text))
         except BlockingIOError:
             pass
 
 
-def critical(text):
+def critical(text, logger=None):
     if rank == 0:
-        logging.critical(text)
+        if logger is not None:
+            logger.critical(text)
+        else:
+            logging.info(text)
         try:
             tqdm.write(get_cli_format(text))
         except BlockingIOError:
@@ -48,7 +67,7 @@ def get_cli_format(text):
     return text
 
 
-def total_time(time: float, pre="", post=""):
+def total_time(time: float, pre="", post="", logger=None):
     l = t.gmtime(time)
 
     text = "{h}h:{m}m:{s}s".format(
@@ -56,4 +75,4 @@ def total_time(time: float, pre="", post=""):
         m=l.tm_min,
         s=l.tm_sec
     )
-    message(pre + text + post)
+    message(pre + text + post, logger)

@@ -6,6 +6,7 @@ Created on Thu May 23 12:06:41 2019
 @author: Lukas Kiwitz
 """
 
+import logging
 import os
 
 import dolfin as dlf
@@ -19,6 +20,7 @@ import pygmsh
 import thesis.main.Entity as Entity
 from thesis.main.my_debug import message
 
+module_logger = logging.getLogger('main.MeshGenerator')
 
 class DomainTypeError(Exception):
     def __init__(self, text):
@@ -37,6 +39,8 @@ class MeshGenerator:
     def __init__(self, **kwargs):
         if "outer_domain" in kwargs:
             self.outerDomain = kwargs["outer_domain"]
+
+        self.logger = logging.getLogger('main.MeshGenerator.MeshGenerator')
 
     def meshGen(self, p, mesh_path, subdomain_path, load_mesh=False, load_subdomain=False, ):
 
@@ -73,15 +77,15 @@ class MeshGenerator:
             meshio.write(mesh_path, meshio.Mesh(points=mesh.points, cells={"tetra": mesh.cells["tetra"]}))
 
         else:
-            message("loading Mesh from: " + mesh_path)
+            message("loading Mesh from: " + mesh_path, self.logger)
         mesh = dlf.Mesh()
 
         with dlf.XDMFFile(dlf.MPI.comm_world, mesh_path) as f:
             f.read(mesh)
-        message("mesh loaded")
+        message("mesh loaded", self.logger)
 
         if load_subdomain and os.path.isfile(subdomain_path):
-            message("loading subdomain from " + subdomain_path)
+            message("loading subdomain from " + subdomain_path, self.logger)
 
             boundary_markers = fcs.MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
             with fcs.HDF5File(fcs.MPI.comm_world, subdomain_path, "r") as f:
@@ -95,17 +99,17 @@ class MeshGenerator:
         else:
             boundary_markers = fcs.MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
             boundary_markers.set_all(0)
-            message("boundaries marked")
+            message("boundaries marked", self.logger)
 
             for i in self.outerDomain.get_subdomains():
                 i["entity"].get_subdomain().mark(boundary_markers, i["patch"])
-            message("outer domain set")
+            message("outer domain set", self.logger)
             for i, o in enumerate(self.entityList):
                 domain_patches = self.outerDomain.get_subdomains()
                 a = domain_patches[-1]["patch"] + 1 if len(domain_patches) > 0 else 1
                 o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
                 o["patch"] = i + a
-            message("loop complete")
+            message("loop complete", self.logger)
             if load_subdomain:
                 with fcs.HDF5File(fcs.MPI.comm_world, subdomain_path, "w") as f:
                     f.write(boundary_markers, "/boundaries")

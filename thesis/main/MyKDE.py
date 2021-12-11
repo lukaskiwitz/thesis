@@ -1,10 +1,13 @@
+import logging
+
 import KDEpy
 import numpy as np
 import pandas as pd
 
+module_logger = logging.getLogger(__name__)
+
 
 def evalutate_kernel_on_grid(kernel, grid_points):
-
     grid, points = kernel.evaluate(grid_points)
     x, y = np.unique(grid[:, 0]), np.unique(grid[:, 1])
     v = points.reshape(grid_points, grid_points).T

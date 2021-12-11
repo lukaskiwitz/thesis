@@ -7,7 +7,9 @@ Created on Tue Oct 22 09:52:45 2019
 """
 
 import itertools
+import logging
 
+module_logger = logging.getLogger(__name__)
 
 def sortDict(x, keys):
     res = x
