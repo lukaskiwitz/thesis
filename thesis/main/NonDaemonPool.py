@@ -6,6 +6,7 @@ https://stackoverflow.com/questions/6974695/python-process-pool-non-daemonic
 
 
 class NoDaemonProcess(multiprocessing.Process):
+    """mainly for compatibility with github CI"""
 
     def _get_daemon(self):
         return False

@@ -31,7 +31,7 @@ from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimComponent import SimComponent
 from thesis.main.SimContainer import SimContainer
 from thesis.main.TaskRecord import ClassRecord
-from thesis.main.my_debug import message, warning, critical
+from thesis.main.my_debug import message, warning, critical, setup_loggers
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -49,7 +49,6 @@ ElementTree = lxml.etree.ElementTree
 Element = lxml.etree.Element
 module_logger = logging.getLogger(__name__)
 
-
 class StateManager(SimComponent):
     """
     This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
@@ -64,7 +63,7 @@ class StateManager(SimComponent):
     :ivar sim_container:
     :ivar T:
     :ivar N:
-    :ivar compress_log_file:
+    :ivar compress_xml_log_file:
     :ivar globarl_collections:
     :ivar global_parameters:
     :ivar record:
@@ -80,7 +79,7 @@ class StateManager(SimComponent):
     :vartype T: List[float]
     :vartype dt: float
     :vartype N: int
-    :vartype compress_log_file: bool
+    :vartype compress_xml_log_file: bool
     :vartype global_collections: GlobalCollections
     :vartype global_parameters: GlobalParameters
     :vartype record: ClassRecord
@@ -88,18 +87,20 @@ class StateManager(SimComponent):
     :vartype eta_estimates: List[float]
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, debug: bool = False):
 
         """
         :param path: Path to simulation directoy
+        :param debug: turn on debug options
         :return None
         """
         super().__init__()
+        setup_loggers(path, debug=debug)
         self.path: str = path
         self.ruse = []
 
         self.scan_tree: MyScanTree = MyScanTree(path)
-        self.scan_tree.compress_log_file: bool = True
+        self.scan_tree.compress_xml_log_file: bool = True
         self.scan_folder_pattern: str = "scan_{n}/"
 
         self.scan_container: ScanContainer = None
@@ -456,7 +457,7 @@ class MyScanTree(SimComponent):
 
         self.path: str = path
         self.element_tree: ET.ElementTree = None
-        self.compress_log_file: bool = True
+        self.compress_xml_log_file: bool = True
 
         self.global_collections: GlobalCollections = GlobalCollections()
         self.global_parameters: GlobalParameters = GlobalParameters()
@@ -592,7 +593,7 @@ class MyScanTree(SimComponent):
         else:
             time_series = ET.SubElement(replicat, "TimeSeries")
 
-        if self.compress_log_file:
+        if self.compress_xml_log_file:
             path = "./scan_{i}/timestep_logs/".format(i=scan_index)
             file_name = "step_{mi}_{si}_{ti}_{ri}.xml".format(si=scan_index, ti=time_index, mi=model_index,
                                                               ri=replicat_index)
@@ -636,7 +637,7 @@ class MyScanTree(SimComponent):
                 cell.set("name", str(c.name))
                 cell.set("entity_id", str(c.id))
                 cell.set("type_name", str(c.type_name))
-                if self.compress_log_file:
+                if self.compress_xml_log_file:
                     cell.append(c.p.serialize_to_xml(
                         global_collections=self.global_collections,
                         global_parameters=self.global_parameters
@@ -655,7 +656,7 @@ class MyScanTree(SimComponent):
         time_series.insert(0, self.global_collections.serialize_to_xml())
         time_series.insert(0, self.global_parameters.serialize_to_xml())
 
-        if self.compress_log_file:
+        if self.compress_xml_log_file:
             tree = ET.ElementTree(step)
             tree.write(os.path.join(self.path, path), pretty_print=True)
 

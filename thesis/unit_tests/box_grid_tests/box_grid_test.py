@@ -125,7 +125,7 @@ class PostProcessingTest(MyTest):
 
     def test_static(self):
         stMan = self.set_up_statemanager()
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
 
         stMan.T = [0, 1]
         stMan.clear_log_files()
@@ -144,7 +144,7 @@ class PostProcessingTest(MyTest):
 
     def test_timeseries(self):
         stMan = self.set_up_statemanager()
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
         t_unit = 3600
         stMan.T = np.arange(0, t_unit * 4, t_unit)
         stMan.clear_log_files()
@@ -163,7 +163,7 @@ class PostProcessingTest(MyTest):
     def test_scan(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
 
         stMan.T = [0, 1]
         stMan.clear_log_files()
