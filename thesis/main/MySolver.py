@@ -219,11 +219,11 @@ class MyDiffusionSolver(MySolver):
 
     def solve(self, t: float, dt: float) -> fcs.Function:
 
-        from sys import exit
+
         def sig_handler(signum, frame):
             if self.process is not None:
                 self.process.kill()
-                exit(0)
+                sys.exit(1)
 
         signal.signal(signal.SIGINT, sig_handler)
         signal.signal(signal.SIGTERM, sig_handler)
