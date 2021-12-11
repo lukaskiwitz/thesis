@@ -5,11 +5,10 @@ Created on Fri Jun  7 12:48:49 2019
 
 @author: Lukas Kiwitz
 """
+import hashlib
 import logging
 import multiprocessing
-import multiprocessing as mp
 import os
-import sys
 import time
 from abc import ABC, abstractmethod
 from numbers import Number
@@ -24,11 +23,12 @@ import thesis.main.MeshGenerator as mshGen
 from thesis.main.Entity import Entity, DomainEntity
 from thesis.main.GlobalResult import ScalarFieldResult, ScalarResult
 from thesis.main.MySolver import MySolver, MyDiffusionSolver
+from thesis.main.NonDaemonPool import Pool
 from thesis.main.ParameterSet import ParameterSet, ParameterCollection, PhysicalParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion
 from thesis.main.ScanContainer import ScanSample
 from thesis.main.SimComponent import SimComponent
-from thesis.main.my_debug import message, total_time, warning
+from thesis.main.my_debug import message, total_time, warning, debug
 
 Element = et.Element
 module_logger = logging.getLogger(__name__)
@@ -348,33 +348,67 @@ class FieldProblem(GlobalProblem):
 
         chunksize = int(len(entity_list) / pool_size)
 
-        message("Extracting boundary concentrations. Poolsize: {pool_size}, cell_per_worker: {cells_per_worker}".format(
-            pool_size=pool_size,
-            cells_per_worker=chunksize
-        ))
+        serial = False
         start = time.time()
+        if serial:
 
-        for i in range(self.boundary_extraction_trials + 1):
-            with mp.Pool(processes=pn, initializer=init,
-                         initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
-                result_async = pool.map_async(calc_boundary_values, entity_list, chunksize=chunksize)
-                try:
-                    result = result_async.get(self.boundary_extraction_timeout)
-                except multiprocessing.TimeoutError as e:
-                    if i == self.boundary_extraction_trials:
-                        raise BoundaryConcentrationError(
-                            "failed to extract surface conentration for {i}-th time. Trying again!".format(i=i))
-                    message("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i),
-                            self.logger)
-                    continue
-            break
+            init(self.solver.mesh, self.solver.boundary_markers, self.solver.u)
+            result = list(map(calc_boundary_values, entity_list))
+
+        else:
+            self.boundary_extraction_timeout = 100
+            for i in range(self.boundary_extraction_trials + 1):
+                with Pool(processes=pn, initializer=init,
+                          initargs=(self.solver.mesh, self.solver.boundary_markers, self.solver.u)) as pool:
+
+                    class MyTimeoutError(multiprocessing.TimeoutError):
+                        pass
+
+                    message(
+                        "Extracting boundary concentrations. Poolsize: {pool_size}, cell_per_worker: {cells_per_worker}".format(
+                            pool_size=pool_size,
+                            cells_per_worker=chunksize
+                        ), self.logger)
+
+                    result_async = pool.map_async(calc_boundary_values, entity_list, chunksize=chunksize)
+                    try:
+                        debug("Waiting to get result from async pool map", self.logger)
+                        result_async.wait(self.boundary_extraction_timeout)
+                        if result_async.ready() and result_async.successful():
+                            debug("Results are ready", self.logger)
+
+                            def watchdog(timeout):
+                                end = time.time() + timeout
+                                while time.time() < end:
+                                    time.sleep(1)
+                                raise MyTimeoutError
+
+                            watchdog = multiprocessing.Process(target=watchdog, args=(30,))
+                            watchdog.start()
+                            result = result_async.get(5)
+                            watchdog.kill()
+
+                        else:
+                            debug("Results did not arrive", self.logger)
+                            raise multiprocessing.TimeoutError
+                    except (multiprocessing.TimeoutError, MyTimeoutError) as e:
+
+                        if i == self.boundary_extraction_trials:
+                            raise BoundaryConcentrationError(
+                                "failed to extract surface conentration for {i}-th time!".format(i=i))
+
+                        warning("failed to extract surface conentration for {i}-th time. Trying again!".format(i=i),
+                                self.logger)
+                        continue
+                message("done pool map with chunksize {}".format(cs), self.logger)
+                break
+
+        end = time.time()
+        total_time(end - start, pre="Cell concentration extracted in ", logger=self.logger)
 
         f = get_concentration_conversion(
             self.p.get_misc_parameter("unit_length_exponent", "numeric").get_in_sim_unit(type=int))
-        end = time.time()
-
-        total_time(end - start, pre="Cell concentration extracted in ", logger=self.logger)
-
+        debug("Boundary extraction md5: " + hashlib.md5(str(result).encode()).hexdigest(), self.logger)
         for i, (patch, sa, value) in enumerate(result):
 
             re = self.registered_entities[i]
@@ -391,7 +425,7 @@ class FieldProblem(GlobalProblem):
                 ], field_quantity=self.field_quantity)])
                 , overwrite=True)
 
-        message("done pool map with chunksize {}".format(cs), self.logger)
+
 
     def save_markers(self, path: str, properties_to_mark: List["str"], marker_lookup: Mapping[str, int],
                      time_index: int) -> Dict[str, str]:
@@ -738,27 +772,39 @@ class MeanFieldProblem(GlobalProblem):
 
 
 def calc_boundary_values(entity: Entity):
-    patch_index = entity[0]
-    sa = entity[1]
-    if sa == None:
-        sa = fcs.assemble(1 * ds(patch_index))
-
-    log = fcs.get_log_level()
-    fcs.set_log_level(50)
-
-    facets = np.array([i for i in fcs.SubsetIterator(boundary_markers, patch_index)])
-
-    fcs.set_log_level(log)
-
-    verts = np.unique(np.array(list(map(lambda x: x.entities(0), facets))))
-
     try:
-        values = vertex_values.take(verts)
-    except TypeError as e:
-        warning("Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi=patch_index),
+        import signal
+
+        logger = module_logger.getChild("calc_boundary_values")
+
+        patch_index = entity[0]
+        sa = entity[1]
+        if sa == None:
+            sa = fcs.assemble(1 * ds(patch_index))
+
+        log = fcs.get_log_level()
+        fcs.set_log_level(50)
+
+        facets = np.array([i for i in fcs.SubsetIterator(boundary_markers, patch_index)])
+
+        fcs.set_log_level(log)
+
+        verts = np.unique(np.array(list(map(lambda x: x.entities(0), facets))))
+
+        try:
+            values = vertex_values.take(verts)
+        except TypeError as e:
+
+            warning(
+                "Failed to extract vertex values for patch index {pi}. Check your mesh settings".format(pi=patch_index),
                 logger)
+            return None
 
-    vertex_sum = values.sum() / len(verts)
-    result = [patch_index, sa, vertex_sum]
+        vertex_sum = values.sum() / len(verts)
+        result = [patch_index, sa, vertex_sum]
 
-    return result
+        return result
+
+    except Exception as e:
+        message(e, logger)
+        return [patch_index, sa, None]

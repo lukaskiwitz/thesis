@@ -364,9 +364,9 @@ class StateManager(SimComponent):
 
                 except Exception as e:
 
-                    warning("Scan {i} failed.".format(i=scan_index))
-                    critical(traceback.format_exc())
-                    warning("Continuing to next scan sample")
+                    warning("Scan {i} failed.".format(i=scan_index), self.logger)
+                    critical(traceback.format_exc(), self.logger)
+                    warning("Continuing to next scan sample", self.logger)
                     self.scan_bar.update(1)
                     sample_task.reset()
                     if self.debug:

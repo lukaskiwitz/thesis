@@ -330,7 +330,7 @@ class SimContainer(SimComponent):
         for i, entity in enumerate(self.entity_list):
             entity.get_surface_area()
 
-            debug("changing type for entity {id}".format(id=entity.id))
+            debug("changing type for entity {id}".format(id=entity.id), self.logger)
             entity_type = self.get_entity_type_by_name(entity.type_name)
             assert entity_type is not None
 
