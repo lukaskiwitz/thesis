@@ -348,9 +348,8 @@ class FieldProblem(GlobalProblem):
 
         chunksize = int(len(entity_list) / pool_size)
 
-        serial = False
         start = time.time()
-        if serial:
+        if max_pool_size == 1:
 
             init(self.solver.mesh, self.solver.boundary_markers, self.solver.u)
             result = list(map(calc_boundary_values, entity_list))
@@ -376,18 +375,7 @@ class FieldProblem(GlobalProblem):
                         result_async.wait(self.boundary_extraction_timeout)
                         if result_async.ready() and result_async.successful():
                             debug("Results are ready", self.logger)
-
-                            def watchdog(timeout):
-                                end = time.time() + timeout
-                                while time.time() < end:
-                                    time.sleep(1)
-                                raise MyTimeoutError
-
-                            watchdog = multiprocessing.Process(target=watchdog, args=(30,))
-                            watchdog.start()
                             result = result_async.get(5)
-                            watchdog.kill()
-
                         else:
                             debug("Results did not arrive", self.logger)
                             raise multiprocessing.TimeoutError
