@@ -278,6 +278,9 @@ class PostProcessor(SimComponent):
                         compute_settings.set_image_settings(self.image_settings, self.image_settings_fields)
                         scatter_list.append(compute_settings)
 
+        if len(scatter_list) == 0:
+            return None
+
         n_processes = n_processes if n_processes <= os.cpu_count() else os.cpu_count()
         message(
             "distributing {i} items to {n_processes} processes".format(n_processes=n_processes, i=len(scatter_list)),
@@ -324,11 +327,19 @@ class PostProcessor(SimComponent):
         tree.write(self.out_tree_path, pretty_print=True)
 
     def get_global_dataframe(self) -> pd.DataFrame:
+
+        if not os.path.exists(self.out_tree_path):
+            message("post_process.xml was not found, can't create global dataframe", self.logger)
+            return None
         message("collecting global dataframe from post_process.xml", self.logger)
         in_tree = et.parse(self.out_tree_path)
 
+        # if len(self.computations) == 0:
+        #     return None
+
         result = []
         if self.cell_dataframe.empty:
+            print(self.path)
             raise MyError.DataframeEmptyError("Post Processor Cell Dataframe")
 
         for file in in_tree.findall("Scan/Step/File"):
@@ -537,9 +548,11 @@ class PostProcessor(SimComponent):
                 message("Saving the cell_df to hdf failed, falling back to pickling...", self.logger)
                 df.to_pickle(os.path.join(self.path, "cell_df.pkl"))
 
-        self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w",
-                                     data_columns=self.global_dataframe.columns)
-        self.timing_dataframe.to_hdf(os.path.join(self.path, "timing_df.h5"), key="df", mode="w")
+        if self.global_dataframe is not None:
+            self.global_dataframe.to_hdf(os.path.join(self.path, 'global_df.h5'), key="data", mode="w",
+                                         data_columns=self.global_dataframe.columns)
+        if self.timing_dataframe is not None:
+            self.timing_dataframe.to_hdf(os.path.join(self.path, "timing_df.h5"), key="df", mode="w")
 
     def run_post_process(self, n_processes, extra_cell_constants=False, kde=False, time_indices=None):
 
