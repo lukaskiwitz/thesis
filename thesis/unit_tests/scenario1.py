@@ -43,7 +43,7 @@ numeric = {
     "dofs_per_node": 15000,
     "max_mpi_nodes": 2,
     "cells_per_worker": 50,
-    "max_pool_size": 4,
+    "max_pool_size": 1,
     "min_char_length": 0.1,
     "max_char_length": 5,
     "unit_length_exponent": -6
