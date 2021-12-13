@@ -33,8 +33,7 @@ from thesis.main.PostProcessUtil import get_rectangle_plane_mesh, get_concentrat
     get_gradient_conversion
 from thesis.main.SimComponent import SimComponent
 from thesis.main.myDictSorting import groupByKey
-from thesis.main.my_debug import message
-from thesis.main.my_debug import warning
+from thesis.main.my_debug import message, warning, setup_loggers
 
 module_logger = logging.getLogger(__name__)
 
@@ -183,6 +182,10 @@ class ComputeSettings:
 class PostProcessor(SimComponent):
 
     def __init__(self, path: str) -> None:
+
+
+        setup_loggers(path, log_name="post_process")
+
         super(PostProcessor, self).__init__()
 
         self.debug_compute_in_serial = False
