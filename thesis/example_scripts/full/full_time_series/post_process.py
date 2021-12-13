@@ -5,12 +5,7 @@ import sys
 from parameters import path
 from thesis.main.PostProcess import PostProcessor
 
-logging.basicConfig(
-    filename=os.path.join(path, "post_process.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 
 def to_rgb(h):

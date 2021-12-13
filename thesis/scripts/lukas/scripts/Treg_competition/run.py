@@ -13,7 +13,6 @@ import random
 import numpy as np
 import os
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
-
 os.environ["LOG_PATH"] = path
 
 from thesis.main.StateManager import StateManager
@@ -28,6 +27,7 @@ from thesis.main.Entity import Cell
 
 
 class ResponseTimeSolver(InternalSolver):
+
     name = "ResponseTimeSolver"
 
     def __init__(self):
@@ -39,15 +39,15 @@ class ResponseTimeSolver(InternalSolver):
         import scipy.stats as stats
 
         types = ["naive", "Treg", "sec"]
-        Kc = p.get_physical_parameter("Kc", "IL-2").get_in_post_unit()
+        Kc = p.get_physical_parameter("Kc","IL-2").get_in_post_unit()
 
         def get_A():
 
-            def f(T, il2):
-                x = stats.gamma.cdf(T, 2, scale=1) * il2 / (Kc + il2)
+            def f(T,il2):
+                x = stats.gamma.cdf(T, 2, scale=1) * il2/(Kc+ il2)
                 return x
 
-            f0 = lambda x, c: 0
+            f0 = lambda x,c: 0
 
             A = [
                 [f0, f0, f0],
@@ -60,14 +60,15 @@ class ResponseTimeSolver(InternalSolver):
 
         A = get_A()
 
+
         il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit()
-        type_name = entity.type_name
+        type_name  = entity.type_name
 
         trans = False
 
         for k, g in A[type_name].items():
 
-            if g(self.T, il2) > np.random.uniform(0, 1):
+            if g(self.T,il2) > np.random.uniform(0, 1):
                 trans = True
                 entity.change_type = k
                 self.T = 0
@@ -76,10 +77,12 @@ class ResponseTimeSolver(InternalSolver):
         if not trans:
             self.T = self.T + dt
 
+
         return p
 
 
 def updateState(sc, t):
+
     from thesis.main.MyKDE import get_kde_from_df, evalutate_kernel_on_grid, get_cell_df
 
     for i, e in enumerate(sc.entity_list):
@@ -89,10 +92,9 @@ def updateState(sc, t):
     ran.seed(t)
     np.random.seed(t)
 
-    Treg_frac = sc.p.get_physical_parameter("Treg", "fractions").get_in_sim_unit()
+    Treg_frac = sc.p.get_physical_parameter("Treg","fractions").get_in_sim_unit()
     e_frac = sc.p.get_physical_parameter("sec", "fractions").get_in_sim_unit()
-    clustering_strength = sc.get_entity_type_by_name("sec").p.get_physical_parameter("strength",
-                                                                                     "clustering").get_in_sim_unit()
+    clustering_strength = sc.get_entity_type_by_name("sec").p.get_physical_parameter("strength","clustering").get_in_sim_unit()
     bw = sc.get_entity_type_by_name("sec").p.get_physical_parameter("bw", "clustering").get_in_sim_unit()
 
     effectors = []
@@ -100,14 +102,15 @@ def updateState(sc, t):
 
     def is_effector(cell):
         center = cell.center
-        if ran.uniform(0, 1) < e_frac:
+        if ran.uniform(0,1) < e_frac:
             return True
         else:
             return False
 
+
     for i, e in enumerate(sc.entity_list):
 
-        if isinstance(e, Cell):
+        if isinstance(e,Cell):
 
             fractions = sc.p.get_collection("fractions")
             e.change_type = fractions.parameters[0].name
@@ -118,48 +121,51 @@ def updateState(sc, t):
             else:
                 cells.append(e)
 
-    draw = np.random.uniform(0, 1, len(sc.entity_list))
+    draw = np.random.uniform(0,1,len(sc.entity_list))
+
+
 
     effector_df = get_cell_df(effectors)
     cell_df = get_cell_df(cells)
 
-    kernel, kernel_vis = get_kde_from_df(effector_df, "gaussian", bw)
+    kernel, kernel_vis = get_kde_from_df(effector_df,"gaussian",bw)
 
     grid_points = 100
-    x, y, v = evalutate_kernel_on_grid(kernel_vis, grid_points)
+    x,y,v = evalutate_kernel_on_grid(kernel_vis, grid_points)
 
-    plt.contourf(x, y, v[:, :], 100)
-    plt.xlim([0, 300])
-    plt.ylim([0, 300])
+    plt.contourf(x,y,v[:,:],100)
+    plt.xlim([0,300])
+    plt.ylim([0,300])
     plt.colorbar()
 
-    for e_c in np.array([effector_df["x"], effector_df["y"]]).T:
+    for e_c  in np.array([effector_df["x"],effector_df["y"]]).T:
         plt.gca().add_artist(plt.Circle(e_c, 5, color="blue"))
 
-    treg_density = kernel.evaluate(np.transpose([cell_df["x"], cell_df["y"], cell_df["z"]]))
+    treg_density = kernel.evaluate(np.transpose([cell_df["x"],cell_df["y"],cell_df["z"]]))
 
     n_cells = len(sc.entity_list)
-    n_Treg = Treg_frac * n_cells
+    n_Treg = Treg_frac*n_cells
+
 
     sort_indices = np.flip(np.argsort(treg_density))
-    cells = np.take_along_axis(np.array(cells), sort_indices, axis=0)
-    treg_density = np.take_along_axis(np.array(treg_density), sort_indices, axis=0)
+    cells = np.take_along_axis(np.array(cells),sort_indices,axis=0)
+    treg_density = np.take_along_axis(np.array(treg_density),sort_indices,axis=0)
 
     from numpy.random import normal
 
     while n_Treg > 0 and len(cells) > 0:
         n_Treg -= 1
 
-        high = int((1 - clustering_strength) * len(treg_density))
+        high = int((1-clustering_strength)*len(treg_density))
 
-        i = np.random.randint(0, high) if high > 0 else 0
+        i = np.random.randint(0,high) if high > 0 else 0
 
         cell = cells[i]
-        cells = np.delete(cells, i)
+        cells = np.delete(cells,i)
         treg_density = np.delete(treg_density, i)
 
         cell.change_type = "Treg"
-        plt.gca().add_artist(plt.Circle([cell.center[0], cell.center[1]], 5, color="red"))
+        plt.gca().add_artist(plt.Circle([cell.center[0],cell.center[1]],5, color="red"))
 
     plt.show()
     print("")
@@ -167,9 +173,13 @@ def updateState(sc, t):
 
 """Setup/Simulation"""
 
+
+
+
 scan_container = ScanContainer()
 
 sc: SimContainer = setup(cytokines, cell_types_dict, geometry, numeric, path, ext_cache)
+
 
 from thesis.scenarios.box_grid import get_parameter_templates
 
@@ -222,20 +232,22 @@ treg = sc.get_entity_type_by_name("Treg")
 #     sample = ScanSample(sim_parameters, entity_types, outer_domain_dict)
 #     scan_container.add_sample(sample)
 
-def sim_parameter_scan(scanable, collection_name, field_quantity, scan_space, scan_name=None):
+def sim_parameter_scan(scanable,collection_name, field_quantity, scan_space, scan_name = None):
+
     result = []
     assert isinstance(scanable, ScannableParameter)
     for v in scan_space:
+
         sim_parameters = [
             ParameterCollection(collection_name, [scanable(v)], field_quantity=field_quantity),
         ]
 
-        sample = ScanSample(sim_parameters, [], {}, scan_name=scan_name)
+        sample = ScanSample(sim_parameters, [], {},scan_name = scan_name)
         result.append(sample)
     return result
 
+def entity_scan(entities,scanable,collection_name,field_quantity,scan_space, scan_name = None):
 
-def entity_scan(entities, scanable, collection_name, field_quantity, scan_space, scan_name=None):
     result = []
     assert isinstance(scanable, ScannableParameter)
     for v in scan_space:
@@ -251,10 +263,10 @@ def entity_scan(entities, scanable, collection_name, field_quantity, scan_space,
         result.append(sample)
     return result
 
-
 s = 10
 # scan_space = np.logspace(-1,1,s)
-scan_space = np.linspace(0, 1, s)
+scan_space = np.linspace(0,1,s)
+
 
 # for sample in entity_scan([treg],amax,"IL-2","il2",scan_space,scan_name = "treg_amax"):
 #     scan_container.add_sample(sample)
@@ -275,6 +287,8 @@ scan_space = np.linspace(0, 1, s)
 #     scan_container.add_sample(sample)
 
 sc.add_internal_solver(ResponseTimeSolver)
+
+
 
 stMan = StateManager(path)
 stMan.sim_container = sc
