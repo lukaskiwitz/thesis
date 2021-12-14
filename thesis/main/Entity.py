@@ -7,6 +7,7 @@ Created on Fri Jun  7 12:22:13 2019
 """
 
 from abc import *
+from copy import deepcopy
 from typing import List, Dict
 
 import fenics as fcs
@@ -19,10 +20,15 @@ from thesis.main.EntityType import CellType
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.MySubDomain import CellSubDomain
 from thesis.main.ParameterSet import ParameterSet
+from thesis.main.SimComponent import SimComponent
 from thesis.main.TaskRecord import TaskRecord
+from thesis.main.my_debug import message
 
 
-class Entity:
+# module_logger = logging.getLogger(__name__)
+
+
+class Entity(ABC, SimComponent):
     """
 
     :var: name: entity name
@@ -46,6 +52,7 @@ class Entity:
     """
 
     def __init__(self):
+        super(Entity, self).__init__()
         self.name: str = "default"
         self.fieldQuantities: List[str] = []
         self.internal_solver: InternalSolver = None
@@ -169,6 +176,7 @@ class Cell(Entity):
         :param bc_list:
         """
         super().__init__()
+
         self.p = ParameterSet("Cell_dummy", [])
         self.interactions = []
         self.center: List[float] = center
@@ -187,7 +195,7 @@ class Cell(Entity):
 
     def move_real(self, dt, bouding_box):
 
-        from thesis.main.my_debug import message
+
 
         def inside(p1, p2, i, x, m):
 
@@ -197,10 +205,10 @@ class Cell(Entity):
             if (r[0] + m < x) and (r[1] - m > x):
                 return True
             else:
-                message("cell outside of bounding box")
+                message("cell outside of bounding box", self.logger)
                 return False
 
-        from copy import deepcopy
+
 
         old = deepcopy(self.center)
 
@@ -210,17 +218,17 @@ class Cell(Entity):
 
         self.center[0] += self.velocity[0] * dt
         if not inside(p1, p2, 0, self.center, m):
-            message("setting x to " + str(old[0]))
+            message("setting x to " + str(old[0]), self.logger)
             self.center[0] = old[0]
 
         self.center[1] += self.velocity[1] * dt
         if not inside(p1, p2, 1, self.center, m):
-            message("setting y to " + str(old[1]))
+            message("setting y to " + str(old[1]), self.logger)
             self.center[1] = old[1]
 
         self.center[2] += self.velocity[2] * dt
         if not inside(p1, p2, 2, self.center, m):
-            message("setting z to " + str(old[2]))
+            message("setting z to " + str(old[2]), self.logger)
             self.center[2] = old[2]
 
     def get_surface_area(self):
@@ -304,6 +312,31 @@ class DomainEntity(Entity):
     def get_subdomains(self, **kwargs) -> List:
         raise NotImplementedError
 
+    def update_bcs(self, p=None) -> None:
+
+        if p or hasattr(self, "p"):
+            for k, v in self.subdomain_dict.items():
+                for i in v:
+                    if p:
+                        for ii in i.interactions:
+                            if hasattr(ii, "p"):
+                                ii.p.update(p, overwrite=False)
+                            else:
+                                ii.p = p
+
+    def apply_sample(self, outer_domain_dict) -> None:
+
+        for k, v in self.subdomain_dict.items():
+            for i in v:
+                for ii in i.interactions:
+                    name = ii.name
+                    if name in outer_domain_dict.keys():
+                        p = outer_domain_dict[name]
+                        if hasattr(ii, "p"):
+                            ii.p.update(p, overwrite=True)
+                        else:
+                            ii.p = p
+
 
 class DomainSphere(DomainEntity):
     """
@@ -358,39 +391,13 @@ class DomainSphere(DomainEntity):
                 subdomains.append({"entity": o[0], "patch": i + 1})
         return subdomains
 
-    def update_bcs(self, p=None) -> None:
-
-        if p or hasattr(self, "p"):
-            for k, v in self.subdomain_dict.items():
-                for i in v:
-                    if p:
-                        if hasattr(i.bc, "p"):
-                            i.bc.p.update(p, overwrite=False)
-                        else:
-                            i.bc.p = p
-
-    def apply_sample(self, outer_domain_dict) -> None:
-
-        for k, v in self.subdomain_dict.items():
-            for i in v:
-                name = i.bc.name
-                if name in outer_domain_dict.keys():
-
-                    p = outer_domain_dict[name]
-
-                    if hasattr(i.bc, "p"):
-                        i.bc.p.update(p, overwrite=True)
-                    else:
-                        i.bc.p = p
-
-    # def get_subdomain(self):
-    #     return SD.OuterSphere(self.center, self.radius)
-
 
 class CompiledSphere(DomainSphere, Entity):
 
     def __init__(self, expr, bc, parent):
-        self.bc = bc
+        super(CompiledSphere, self).__init__()
+
+        self.interactions = [bc]
         self.parent = parent
         self.expr = expr
 
@@ -404,11 +411,12 @@ class CompiledSphere(DomainSphere, Entity):
 
     def get_BC(self, field_quantity):
 
-        return self.bc
+        for i in self.interactions:
+            if i.field_quantity == field_quantity:
+                return i
 
     def get_surface_area(self):
-
-        p = self.bc.p.get_physical_parameter("norm_area", "geometry")
+        p = self.interactions[0].p.get_physical_parameter("norm_area", "geometry")
         if p:
             return p.get_in_sim_unit()
         else:
@@ -423,7 +431,7 @@ class DomainCube(DomainEntity):
 
         self.interactions = interactions
 
-        self.subdomainDict = self.__compile_subdomains()
+        self.subdomain_dict = self.__compile_subdomains()
         super().__init__(**kwargs)
 
     def __compile_subdomains(self):
@@ -443,7 +451,7 @@ class DomainCube(DomainEntity):
 
     def get_subdomains(self, **kwargs):
         subdomains = []
-        for i, o in enumerate(self.subdomainDict.values()):
+        for i, o in enumerate(self.subdomain_dict.values()):
             if "field_quantity" in kwargs:
                 for e in o:
                     if e.field_quantity == kwargs["field_quantity"]:
@@ -455,35 +463,13 @@ class DomainCube(DomainEntity):
     def get_subdomain_geometry(self):
         return SD.OuterCube(self.p1, self.p2)
 
-    def update_bcs(self, p=None) -> None:
-
-        if p or hasattr(self, "p"):
-            for k, v in self.subdomainDict.items():
-                for i in v:
-                    if p:
-                        for ii in i.interactions:
-                            if hasattr(ii, "p"):
-                                ii.p.update(p, overwrite=False)
-                            else:
-                                ii.p = p
-
-    def apply_sample(self, outer_domain_dict) -> None:
-
-        for k, v in self.subdomainDict.items():
-            for i in v:
-                for ii in i.interactions:
-                    name = ii.name
-                    if name in outer_domain_dict.keys():
-                        p = outer_domain_dict[name]
-                        if hasattr(ii, "p"):
-                            ii.p.update(p, overwrite=True)
-                        else:
-                            ii.p = p
-
 
 class CompiledCube(DomainCube, Entity):
 
     def __init__(self, expr, bc, parent):
+
+        super(Entity, self).__init__()
+
         self.interactions = [bc]
         self.parent = parent
         self.expr = expr

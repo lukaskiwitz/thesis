@@ -9,11 +9,14 @@ import lxml.etree as ET
 import numpy as np
 
 from thesis.main.MyError import DuplicateParameterError, DuplicateCollectionError
-from thesis.main.my_debug import debug
+from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import message
 
 
-class ParameterSet:
+# module_logger = logging.getLogger(__name__)
+
+
+class ParameterSet(SimComponent):
     """Container object that holds parameter collections
 
     :ivar collections: List of collection in this parameter set
@@ -24,6 +27,8 @@ class ParameterSet:
     """
 
     def __init__(self, name: str, collections: List['ParameterCollection']) -> None:
+
+        super().__init__()
 
         for s in collections:
             assert isinstance(s, ParameterCollection)
@@ -39,6 +44,7 @@ class ParameterSet:
         """
         dummy = ParameterSet("dummy", [ParameterCollection(parameter.name, [parameter])])
         self.update(dummy, overwrite=True)
+        pass
 
     def update(self, input_parameter_object: Union['ParameterSet', 'ParameterCollection', 'Parameter'],
                overwrite: bool = False) -> None:
@@ -52,7 +58,7 @@ class ParameterSet:
 
         if isinstance(input_parameter_object, Parameter):
             dummy = ParameterCollection(input_parameter_object.name, [input_parameter_object])
-            debug("Collection {name} created with parameter".format(name=input_parameter_object.name))
+            # debug("Collection {name} created with parameter".format(name=input_parameter_object.name), self.logger)
             input_parameter_object = dummy
 
         if isinstance(input_parameter_object, ParameterCollection):
@@ -67,7 +73,7 @@ class ParameterSet:
 
             else:
                 self.add_collection(deepcopy(update_c))
-                debug("appending collection {n} to {n2}".format(n=update_c.name, n2=self.name))
+                #debug("appending collection {n} to {n2}".format(n=update_c.name, n2=self.name), self.logger)
 
     def add_collection(self, collection: 'ParameterCollection') -> None:
         """
@@ -240,14 +246,17 @@ class ParameterSet:
                 else:
                     name = parameter.name
                 if in_sim:
-                    result[name] = parameter.get_in_sim_unit()
+                    try:
+                        result[name] = parameter.get_in_sim_unit()
+                    except:
+                        pass
                 else:
                     result[name] = parameter.get_in_post_unit()
 
         return result
 
 
-class ParameterCollection:
+class ParameterCollection(SimComponent):
     """
     Container object that holds parameter objects
 
@@ -266,6 +275,8 @@ class ParameterCollection:
     def __init__(self, name: str, parameters: List['Parameter'] = None, field_quantity: str = "",
                  is_global: bool = False) -> None:
 
+        super().__init__()
+
         assert isinstance(field_quantity, str)
         self.parameters: List[Parameter] = parameters
         self.name: str = name
@@ -274,6 +285,36 @@ class ParameterCollection:
 
     def __iter__(self):
         return self.parameters.__iter__()
+
+    def get_as_dictionary(self, in_sim: bool = False, with_collection_name: bool = False) -> \
+            Dict[str, Any]:
+
+        """
+        Returns dicitonary version of this collection.
+        Collections are flattened into dict keys: {collectionname_parametername: value...}
+
+        :param in_sim: return values in sim units
+        :param with_collection_name: include collection name in dict keys
+        :param field_quantity: only include collection with this field quantity
+        """
+        result = {}
+
+        for parameter in self:
+            if with_collection_name:
+                name = self.name + "_" + parameter.name
+            else:
+                name = parameter.name
+            if in_sim:
+                try:
+                    result[name] = parameter.get_in_sim_unit()
+                except:
+                    pass
+            else:
+                result[name] = parameter.get_in_post_unit()
+
+        return result
+
+
 
     def update(self, update_collection: 'ParameterCollection', overwrite: bool = False):
 
@@ -284,9 +325,10 @@ class ParameterCollection:
         :param overwrite: overwrite values in this collection
 
         """
+        assert isinstance(update_collection, ParameterCollection)
         for physical in update_collection:
             self.set_parameter(physical, overwrite=overwrite)
-            debug("setting  parameter {n} on collection {n2}".format(n=physical.name, n2=self.name))
+            #debug("setting  parameter {n} on collection {n2}".format(n=physical.name, n2=self.name), self.logger)
 
     def set_parameter(self, parameter: 'Parameter', overwrite: bool = False):
 
@@ -470,7 +512,7 @@ T = TypeVar('T')
 PhysicalValue = TypeVar('PhysicalValue', float, int, np.float, np.int, None)
 
 
-class Parameter(ABC):
+class Parameter(ABC, SimComponent):
     """
     Abstract base class for container object that bundles parameter value, name and conversion function/factor.
 
@@ -484,6 +526,9 @@ class Parameter(ABC):
     """
 
     def __init__(self, name: str, value: T):
+
+        super().__init__()
+
         self.name: str = name
         self.value: T = value
         self.is_global: bool = False
@@ -548,11 +593,13 @@ class Parameter(ABC):
             value = json.dumps(self.value)
         except TypeError as e:
             message(
-                "Trying to serialize Parameter {n} as float because it was not json serializable".format(n=self.name))
+                "Trying to serialize Parameter {n} as float because it was not json serializable".format(n=self.name),
+                self.logger
+            )
             try:
                 value = json.dumps(float(self.value))
             except Exception as e_2:
-                message("Casting to float failed; cannot serialize Parameter {n}".format(n=self.name))
+                message("Casting to float failed; cannot serialize Parameter {n}".format(n=self.name), self.logger)
 
         return value
 
@@ -584,12 +631,15 @@ class PhysicalParameter(Parameter):
     def __init__(self, name: str, value: PhysicalValue, to_sim: Union[float, Callable] = 1,
                  to_post: Union[float, Callable] = 1, is_global: bool = False) -> None:
 
+        super().__init__(name, value)
+
         self.name: str = name
+        self.value: PhysicalValue = None
+
         self.to_sim: Union[float, Callable] = to_sim
         self.to_post: Union[float, Callable] = to_post
         self.is_global: bool = is_global
         self.factor_conversion: bool = False if callable(to_sim) else True
-        self.value: PhysicalValue = None
         self.set_in_post_unit(deepcopy(value))
 
     def my_cast(self, value: Any) -> PhysicalValue:
@@ -600,7 +650,8 @@ class PhysicalParameter(Parameter):
         if not (isinstance(value, float) or isinstance(value, int)):
             message(""
                     "The value of physical parameter "
-                    "{n} was type {t}. Casting to float".format(n=self.name, t=type(self.value))
+                    "{n} was type {t}. Casting to float".format(n=self.name, t=type(self.value)),
+                    self.logger
                     )
             value = float(value)
         return value
@@ -663,6 +714,7 @@ class MiscParameter(Parameter):
     """
 
     def __init__(self, name: str, value: Any, is_global: bool = False) -> None:
+        super().__init__(name, value)
         self.name: str = name
         self.is_global: bool = is_global
         self.value: Any = value
@@ -687,7 +739,7 @@ class MiscParameter(Parameter):
         return type(value)
 
 
-class ScannableParameter:
+class ScannableParameter(SimComponent):
     """
     Container class that combine parameter with a function for scanning over parameter ranges.
 
@@ -701,6 +753,8 @@ class ScannableParameter:
     """
 
     def __init__(self, p: Parameter, f: Callable, in_sim: bool = False):
+
+        super().__init__()
 
         self.p = deepcopy(p)
         self.f = f
@@ -722,7 +776,7 @@ class ScannableParameter:
         return p
 
 
-class ParameterTemplate(ABC):
+class ParameterTemplate(ABC, SimComponent):
     """
     Abstract base class for parameter object factories
 
@@ -733,6 +787,7 @@ class ParameterTemplate(ABC):
 
     @abstractmethod
     def __init__(self):
+        super().__init__()
         self.name: Union[str, None] = None
 
     @abstractmethod
@@ -751,6 +806,8 @@ class PhysicalParameterTemplate(ParameterTemplate):
     """
 
     def __init__(self, parameter: PhysicalParameter):
+
+        super().__init__()
 
         self.p: PhysicalParameter = parameter
         self.name: str = parameter.name
@@ -784,6 +841,8 @@ class MiscParameterTemplate(ParameterTemplate):
     """
 
     def __init__(self, parameter: MiscParameter):
+        super().__init__()
+
         self.p: MiscParameter = parameter
         self.name: str = parameter.name
 
@@ -800,7 +859,7 @@ class MiscParameterTemplate(ParameterTemplate):
         return p
 
 
-class GlobalParameters:
+class GlobalParameters(SimComponent):
     """
     Container class ot store global parameters
 
@@ -810,6 +869,9 @@ class GlobalParameters:
     """
 
     def __init__(self):
+
+        super().__init__()
+
         self.parameters: Dict[str, Parameter] = {}
 
     def add(self, p: Parameter) -> None:
@@ -859,7 +921,7 @@ class GlobalParameters:
         return root
 
 
-class GlobalCollections:
+class GlobalCollections(SimComponent):
     """
    Container class ot store global parameter collections
 
@@ -869,6 +931,7 @@ class GlobalCollections:
    """
 
     def __init__(self):
+        super().__init__()
         self.collections: Dict[str, ParameterCollection] = {}
 
     def add(self, c: ParameterCollection):

@@ -38,7 +38,6 @@ cell_types_dict = [
      },
     {"name": "sec",
      "fraction": 0.005,
-     # "fraction": 0.05,
      "il2": {"R": R_l, "q": q, "Kc": 0.01, "amax": 1, "ths": 0.01, "bc_type": bc_type},
      "internal_solver": ""
      },
@@ -88,7 +87,7 @@ numeric = {
     "dofs_per_node": 7500,  # calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": os.cpu_count() / 2,  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count() / 2,  # max number of worker to extract boundary conditions at runtime
+    "max_pool_size": 1,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution, smaller = finer
     "max_char_length": 5,  # mesh resolution, smaller = finer
     "unit_length_exponent": -6  # for concentration conversion

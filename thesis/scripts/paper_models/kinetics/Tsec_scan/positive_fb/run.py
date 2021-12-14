@@ -5,34 +5,24 @@ except RuntimeError:
     os.environ['PATH'] = '/home/brunner/anaconda3/envs/Lukas2/bin:/home/brunner/.local/bin:/home/brunner/anaconda3/condabin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/opt/puppetlabs/bin'
     import fenics as fcs
 
-import getpass
-import random
 import sys
-import os
-import logging
 from copy import deepcopy
 
 sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
-from scipy.constants import N_A
 # from sympy import symbols, solve
-from scipy.integrate import solve_ivp
 
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH, exist_ok=True)
-logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
-                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
-os.environ["LOG_PATH"] = path
+
+
+
 
 import thesis.main.StateManager as StateManager
-from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate, \
-    MiscParameter
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scripts.paper_models.utilities.states import updateState
 from thesis.scenarios.box_grid import setup

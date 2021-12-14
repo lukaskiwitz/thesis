@@ -12,12 +12,6 @@ from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
 os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
 
 """
 A solver is an object which is usually applied on a cell/entity. This solver must have a step function which acts upon 
@@ -117,7 +111,7 @@ D_def = ScanDefintion(D, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il
 t_q = parameter_pool.get_template("q")
 q = ScannableParameter(t_q(1), lambda x, v: x * v)
 sec_q_def = ScanDefintion(q, "IL-2", scan_space, ScanType.ENTITY, field_quantity="il2", entity_type=sec)
-# scan_container.add_single_parameter_scan([sec_q_def], scan_name="q")
+# scan_container.add_single_parameter_scan([naive_q], scan_name="q")
 
 """
 signs up the internal solver with the sim container. 

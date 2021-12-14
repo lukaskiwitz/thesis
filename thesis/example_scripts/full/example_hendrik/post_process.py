@@ -4,12 +4,7 @@ import sys
 
 from parameters import path
 
-logging.basicConfig(
-    filename=os.path.join(path, "post_process.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 from thesis.main.PostProcess import PostProcessor
 

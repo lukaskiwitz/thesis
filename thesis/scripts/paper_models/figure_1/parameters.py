@@ -71,15 +71,15 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": True,# use linear fenics solver
+    "linear": True,  # use linear fenics solver
     "krylov_atol": 1e-35,
-    "krylov_rtol": 1e-5,# linear solver relative tolerance
+    "krylov_rtol": 1e-5,  # linear solver relative tolerance
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-5,# newton method relative tolerance
-    "dofs_per_node": 15000,#calc_boundary_values degrees of freedom per mpi node for pde solving
-    "max_mpi_nodes": int(os.cpu_count()/2),# max nodes for fenics solver
+    "newton_rtol": 1e-5,  # newton method relative tolerance
+    "dofs_per_node": 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
+    "max_mpi_nodes": int(os.cpu_count() / 2),  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": 16,#max number of worker to extract boundary conditions at runtime
+    "max_pool_size": 1,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
     "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion

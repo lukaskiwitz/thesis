@@ -3,15 +3,20 @@ from abc import ABC, abstractmethod
 from thesis.main.FieldProblem import FieldProblem, MeanFieldProblem, GlobalProblem
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MySolver import MyDiffusionSolver, MyMeanFieldSolver
-from thesis.main.ParameterSet import ParameterCollection, ParameterSet
+from thesis.main.ParameterSet import ParameterCollection
+from thesis.main.SimComponent import SimComponent
 
 
-class MyFieldTemplate(ABC):
+# module_logger = logging.getLogger(__name__)
+
+
+class MyFieldTemplate(ABC, SimComponent):
 
     def __init__(self):
+        super(MyFieldTemplate, self).__init__()
         self.name: str = None
         self.field_quantity: str = None
-        self.p: ParameterSet = None
+        self.collection: ParameterCollection = ParameterCollection("FieldTemplateDummy", [])
 
     @abstractmethod
     def get_problem(self) -> GlobalProblem: pass
@@ -21,6 +26,9 @@ class MyFieldTemplate(ABC):
 
 
 class MyMeanCytokineTemplate(MyFieldTemplate):
+
+    def __init__(self):
+        super(MyMeanCytokineTemplate, self).__init__()
 
     def get_problem(self) -> MeanFieldProblem:
         mean_field_problem = MeanFieldProblem()
@@ -41,6 +49,7 @@ class MyMeanCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
+        collection.update(self.collection, overwrite=True)
         return collection
 
 
@@ -48,6 +57,7 @@ class MyCytokineTemplate(MyFieldTemplate):
 
     def __init__(self):
         super().__init__()
+
         self.ext_cache: str = ""
 
     def get_problem(self) -> FieldProblem:
@@ -70,4 +80,5 @@ class MyCytokineTemplate(MyFieldTemplate):
         collection.set_parameter(parameter_pool.get_template("D")())
         collection.set_parameter(parameter_pool.get_template("kd")())
 
+        collection.update(self.collection, overwrite=True)
         return collection

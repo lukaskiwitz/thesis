@@ -12,7 +12,7 @@ from thesis.main.ParameterSet import ParameterSet
 
 comm = MPI.COMM_WORLD
 rank = comm.rank
-
+LINEAR_FENICS_SOLVERS = ["default", "mumps", "petsc", "umfpack"]
 
 def prepare_solver():
     global fq
@@ -102,9 +102,9 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None
 
     solver.parameters["linear_solver"] = p.get_misc_parameter(
         "linear_solver", "numeric").get_in_sim_unit()
-
-    solver.parameters["preconditioner"] = p.get_misc_parameter(
-        "preconditioner", "numeric").get_in_sim_unit()
+    if (solver.parameters["linear_solver"] in LINEAR_FENICS_SOLVERS):
+        solver.parameters["preconditioner"] = p.get_misc_parameter(
+            "preconditioner", "numeric").get_in_sim_unit()
 
     solver.parameters["krylov_solver"]["absolute_tolerance"] = p.get_misc_parameter(
         "krylov_atol", "numeric").get_in_sim_unit(type=float)
@@ -156,9 +156,9 @@ def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=
     # solver.parameters['newton_solver']['relaxation_parameter'] = 1.5
     solver.parameters["newton_solver"]["linear_solver"] = p.get_misc_parameter(
         "linear_solver", "numeric").get_in_sim_unit()
-
-    solver.parameters["newton_solver"]["preconditioner"] = p.get_misc_parameter(
-        "preconditioner", "numeric").get_in_sim_unit()
+    if not (solver.parameters["newton_solver"]["linear_solver"] in LINEAR_FENICS_SOLVERS):
+        solver.parameters["newton_solver"]["preconditioner"] = p.get_misc_parameter(
+            "preconditioner", "numeric").get_in_sim_unit()
 
     solver.parameters["newton_solver"]["absolute_tolerance"] = p.get_misc_parameter(
         "newton_atol", "numeric").get_in_sim_unit(type=float)

@@ -1,16 +1,7 @@
-import os
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
-import numpy as np
 from parameters import path
-
-os.environ["LOG_PATH"] = path
-
-from thesis.main.PostProcess import PostProcessor, PostProcessComputation
-
+from thesis.main.PostProcess import PostProcessor
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:

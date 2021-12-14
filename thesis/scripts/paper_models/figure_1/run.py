@@ -1,17 +1,7 @@
-import logging
-import os
-
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 from thesis.main.StateManager import StateManager
 from thesis.scenarios.box_grid import assign_fractions, setup
 
-os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
 
 
 def update_state(sc, t):

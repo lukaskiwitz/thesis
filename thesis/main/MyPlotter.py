@@ -8,12 +8,18 @@ import seaborn as sns
 from matplotlib.patches import Rectangle
 from scipy.spatial import distance_matrix
 
+from thesis.main.SimComponent import SimComponent
 from thesis.main.my_debug import warning
 
 
-class Plotter:
+# module_logger = logging.getLogger(__name__)
+
+
+class Plotter(SimComponent):
 
     def __init__(self, path, groups=[]) -> None:
+
+        super(Plotter, self).__init__()
 
         self.main_title = ""
         self.time_key: str = "time"
@@ -277,10 +283,15 @@ class Plotter:
 
         acc = {}
         for p in path:
-
-            result = self.load_single_sim(p, groups)
+            try:
+                result = self.load_single_sim(p, groups)
+            except KeyError:
+                warning(
+                    "could not load single sim at:\n{p}\nbecause dataframe did not contain necessary keys".format(p=p))
+                continue
 
             for k, v in result.items():
+                if v is None: continue
                 name_series = pd.Series([p.split("/")[-1]] * len(v))
                 v[self.path_name] = name_series
 
@@ -300,32 +311,36 @@ class Plotter:
         try:
             global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
             global_df = self.reset_scan_index(global_df)
+        except FileNotFoundError as e:
+            global_df = pd.DataFrame()
 
+        try:
             cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
+        except FileNotFoundError as e:
+            cell_df = pd.DataFrame()
+        try:
             if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
                 cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
             else:
                 cell_constants = pd.DataFrame()
-
-            self.cell_constants = cell_constants
-
-            try:
-                timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
-                timing_df = self.reset_scan_index(timing_df)
-            except FileNotFoundError:
-                pass
-            except KeyError:
-                pass
-
-            try:
-                ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
-                ruse_df = self.reset_scan_index(ruse_df)
-            except FileNotFoundError:
-                pass
-
-            # self.timing_df = timing_df
         except FileNotFoundError as e:
-            warning("{df} dataframe was not found".format(df=str(e)))
+            cell_constants = pd.DataFrame()
+
+        self.cell_constants = None
+
+        try:
+            timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
+            timing_df = self.reset_scan_index(timing_df)
+        except FileNotFoundError as e:
+            timing_df = None
+
+        try:
+            ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
+            ruse_df = self.reset_scan_index(ruse_df)
+        except FileNotFoundError as e:
+            ruse_df = None
+
+        # self.timing_df = timing_df
 
         if self.scan_index_key not in global_df.columns:
             self.scan_index_key = "scan_index"
@@ -362,6 +377,7 @@ class Plotter:
         if self.scan_name_key in list(cell_df.columns) and self.scan_name_key not in groups:
             groups.append(self.scan_name_key)
 
+        groups = [g for g in groups if g in cell_df.columns]
         grouped_cells = cell_df.groupby(groups, as_index=True)
 
         means = grouped_cells.mean()
@@ -382,7 +398,8 @@ class Plotter:
         #     "id"
         # ]
 
-        groups.remove("type_name")
+        if "type_name" in groups:
+            groups.remove("type_name")
 
         total = pd.Series(np.zeros(len(counts)))
 
@@ -480,6 +497,8 @@ class Plotter:
         return result
 
     def reset_scan_index(self, df) -> pd.DataFrame:
+
+        if df is None: return None
 
         df["raw_scan_index"] = df["scan_index"]
 
@@ -615,14 +634,15 @@ class Plotter:
         ax.set_ylabel(self.get_label(y_name))
 
     def global_steady_state_plot(self, y_name, x_name=None, legend=False, ci="sd", hue=None, style=None, ylog=False,
-                                 xlog=True, ylim=None, average=False, estimator=None, dashes=True,
+                                 xlog=True, ylim=None, xlim=None, average=False, estimator=None, dashes=True,
+                                 marker=None,
                                  **kwargs) -> None:
 
         ax, df, palette, hue = self.prepare_plot(self.global_df, hue, **kwargs)
 
         df, ci = self.compute_ci(
             df,
-            [self.scan_index_key, self.time_index_key, hue, style],
+            [self.scan_index_key, self.time_index_key, self.time_key, hue, style],
             ci=ci, estimator=estimator, y_names=[y_name])
 
         if x_name is None:
@@ -640,12 +660,12 @@ class Plotter:
 
         if style in df.columns:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         style=style, ci=ci, dashes=dashes)
+                         style=style, ci=ci, dashes=dashes, marker=marker)
         else:
             sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, legend=legend, palette=palette,
-                         ci=ci, dashes=dashes)
+                         ci=ci, dashes=dashes, marker=marker)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, xlim, ylog, xlog, x_name=x_name)
 
     def global_steady_state_barplot(self, y_names, x_name=None, legend=False, hue=None, ylim=None, bar_spacing=1.1,
                                     cat_spacing=1.2,
@@ -715,7 +735,7 @@ class Plotter:
         if ylim:
             ax.set_ylim(ylim)
 
-    def finalize_steady_state_plot(self, ax, y_name, ylim, ylog, xlog, x_name=None):
+    def finalize_steady_state_plot(self, ax, y_name, ylim, xlim, ylog, xlog, x_name=None):
 
         self.make_legend_entry(ax)
         ax.set_xlabel(self.get_label(self.scan_index_key))
@@ -743,9 +763,11 @@ class Plotter:
 
         if ylim:
             ax.set_ylim(ylim)
+        if xlim:
+            ax.set_xlim(xlim)
 
     def cell_steady_state_plot(self, y_name, x_name=None, legend=False, hue=None, style=None, ylog=False, xlog=True,
-                               cummulative=False, estimator=None,
+                               cummulative=False, estimator=None, xlim=None, marker=None,
                                ylim=None, ci="sd", dashes=True, **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
 
@@ -767,9 +789,9 @@ class Plotter:
         if x_name is None:
             x_name = self.scan_index_key
         sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
-                     palette=palette, ci=ci, dashes=dashes)
+                     palette=palette, ci=ci, dashes=dashes, marker=marker)
 
-        self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
+        self.finalize_steady_state_plot(ax, y_name, ylim, xlim, ylog, xlog, x_name=x_name)
 
     def cell_steady_state_barplot(self, y_name, legend=False, hue=None, style=None, ylog=False, cummulative=False,
                                   ylim=None, ci="sd", y_ticks=True, **kwargs) -> None:
@@ -814,8 +836,7 @@ class Plotter:
         self.finalize_steady_state_plot(ax, y_name, ylim, ylog, xlog, x_name=x_name)
 
     def steady_state_count(self, legend=None, hue=None, style=None, relative=False, ylog=False, ylim=None, xlog=True,
-                           ci="sd",
-                           **kwargs):
+                           xlim=None, ci="sd", marker=None, **kwargs):
 
         ax, df, palette, hue = self.prepare_plot(self.counts, hue, **kwargs)
         if relative:
@@ -828,7 +849,7 @@ class Plotter:
                 ylim = False
 
         sns.lineplot(x=self.scan_index_key, y=y, hue=hue, data=df, ax=ax, style=style, ci=ci,
-                     legend=legend,
+                     legend=legend, marker=marker,
                      palette=palette)
 
         self.make_legend_entry(ax)
@@ -844,7 +865,7 @@ class Plotter:
         else:
             ax.set_ylabel("Number of cells")
 
-        self.finalize_steady_state_plot(ax, y, ylim, ylog, xlog)
+        self.finalize_steady_state_plot(ax, y, ylim, xlim, ylog, xlog)
 
         # ax.set_ylabel(self.get_label(y))
         #
@@ -1140,7 +1161,7 @@ class Plotter:
         ax.set_xlabel(self.get_label(x_name))
 
     def _compute_radial_profile(self, df, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
-                                chunksize=32):
+                                chunksize=32, additional_categories=[]):
 
         if not isinstance(y_names, List):
             y_names = [y_names]
@@ -1157,7 +1178,8 @@ class Plotter:
 
         from multiprocessing import Pool
         with Pool(n_workers, initializer=init, initargs=(y_names, self.groups, center_func)) as p:
-            l = list(df.groupby(["raw_scan_index", self.time_index_key]))
+            l = list(df.groupby(["raw_scan_index", self.time_index_key, self.scan_name_key,
+                                 self.replicat_index_key] + additional_categories))
 
             c = int(len(l) / n_workers)
             c = c if c > 0 else 1
@@ -1167,6 +1189,7 @@ class Plotter:
                                                                                         n=n_workers))
             full_result = pd.concat(p.starmap(run_single_step, l, chunksize=chunksize))
 
+        print("computed radials")
         return full_result
 
     def compute_radial_profiles(self, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
@@ -1207,6 +1230,7 @@ class Plotter:
 
     def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,
                                ci="sd", cell_radius=None, legend=None, estimator=None, plot_filter=lambda df: df,
+                               additional_categories=[],
                                **kwargs):
 
         df = self.cell_df
@@ -1220,8 +1244,9 @@ class Plotter:
         else:
             print("recomputing radial profiles because hue or y_name wasn't found in cache")
             ax, df, palette, hue = self.prepare_plot(df, hue, **kwargs)
-            df = self._compute_radial_profile(df, [y_name, "type_name"],
-                                              center_func=lambda df: df.loc[df["type_name"] == center_type])
+            df = self._compute_radial_profile(df, [y_name, "type_name"] + additional_categories,
+                                              center_func=lambda df: df.loc[df["type_name"] == center_type],
+                                              additional_categories=additional_categories)
         df = plot_filter(df)
 
         df, ci = self.compute_ci(
@@ -1752,7 +1777,7 @@ def split_kwargs(kwargs, keys):
 
 
 def run_single_step(i, dfg):
-    rsi, ti = i
+    # rsi, ti, scan_name, replicat_index = i
 
     time_index_key = "time_index"
     scan_name_key = "scan_name_scan_name"

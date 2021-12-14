@@ -41,9 +41,9 @@ numeric = {
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
     "dofs_per_node": 15000,
-    "max_mpi_nodes":2,
+    "max_mpi_nodes": 2,
     "cells_per_worker": 50,
-    "max_pool_size": 16,
+    "max_pool_size": 1,
     "min_char_length": 0.1,
     "max_char_length": 5,
     "unit_length_exponent": -6

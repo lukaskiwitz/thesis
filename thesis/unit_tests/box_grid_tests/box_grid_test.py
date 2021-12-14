@@ -69,7 +69,7 @@ numeric = {
     "dofs_per_node": 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": int(os.cpu_count() / 2),  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": 16,  # max number of worker to extract boundary conditions at runtime
+    "max_pool_size": 1,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
     "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion
@@ -125,7 +125,7 @@ class PostProcessingTest(MyTest):
 
     def test_static(self):
         stMan = self.set_up_statemanager()
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
 
         stMan.T = [0, 1]
         stMan.clear_log_files()
@@ -144,7 +144,7 @@ class PostProcessingTest(MyTest):
 
     def test_timeseries(self):
         stMan = self.set_up_statemanager()
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
         t_unit = 3600
         stMan.T = np.arange(0, t_unit * 4, t_unit)
         stMan.clear_log_files()
@@ -163,7 +163,7 @@ class PostProcessingTest(MyTest):
     def test_scan(self):
         stMan = self.set_up_statemanager()
         stMan.scan_container = self.get_scan_container(stMan.scenario)
-        stMan.scan_tree.compress_log_file = True
+        stMan.scan_tree.compress_xml_log_file = True
 
         stMan.T = [0, 1]
         stMan.clear_log_files()

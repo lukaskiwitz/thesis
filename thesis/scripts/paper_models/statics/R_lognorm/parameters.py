@@ -1,5 +1,6 @@
 import getpass
 import os
+
 import numpy as np
 
 """defines cytokines. Currently their parameters can be changed using the scan sample interface.
@@ -108,9 +109,9 @@ numeric = {
     "newton_atol": 1e-35,
     "newton_rtol": 1e-5,
     "dofs_per_node": 15000,
-    "max_mpi_nodes": int(os.cpu_count()/4),
+    "max_mpi_nodes": int(os.cpu_count() / 4),
     "cells_per_worker": 50,
-    "max_pool_size": int(os.cpu_count()/4),
+    "max_pool_size": 1,
     "min_char_length": 0.06,  # mesh, smaller = finer
     "max_char_length": 6,  # mesh, smaller = finer
     "unit_length_exponent": -6  # for concentration conversion

@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -5,6 +7,8 @@ import seaborn as sns
 from parameters import path, IMGPATH
 from thesis.main.MyPlotter import Plotter
 from thesis.main.my_debug import message
+
+os.makedirs(IMGPATH, exist_ok=True)
 
 path = path
 plotter = Plotter(path)

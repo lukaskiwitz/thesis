@@ -11,6 +11,11 @@ import numpy as np
 from dolfin import near, Point
 from mshr import Circle, Sphere, Rectangle, Box
 
+from thesis.main.SimComponent import SimComponent
+
+
+# module_logger = logging.getLogger(__name__)
+
 
 def insideRectangle(p1, p2, x):
     x1 = p1[0]
@@ -21,7 +26,7 @@ def insideRectangle(p1, p2, x):
     return near(x[0], x1, tol) or near(x[0], x2, tol) or near(x[1], y1, tol) or near(x[1], y2, tol)
 
 
-class MySubDomain(fcs.SubDomain):
+class MySubDomain(SimComponent, fcs.SubDomain):
     def __init__(self):
         self.patch = 0
         super().__init__()
@@ -99,5 +104,4 @@ class CellSubDomain(MySubDomain):
 
     def inside(self, x, on_boundary):
         tol = 10e-2
-        #        message(str(x))
         return on_boundary and near(np.linalg.norm(x - self.center), self.radius, tol)

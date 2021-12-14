@@ -11,12 +11,7 @@ from thesis.main.ScanContainer import ScanContainer
 from thesis.scenarios.box_grid import setup, assign_fractions
 
 os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 """
 A solver is an object which is usually applied on a cell/entity. This solver must have a step function which acts upon 

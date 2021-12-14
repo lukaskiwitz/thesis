@@ -22,13 +22,10 @@ from scipy.integrate import solve_ivp
 
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 
-os.environ["LOG_PATH"] = path
-LOG_PATH = os.environ.get("LOG_PATH") if os.environ.get("LOG_PATH") else "./"
-os.makedirs(LOG_PATH, exist_ok=True)
-logging.basicConfig(filename=LOG_PATH + "debug.log", level=logging.INFO, filemode="w",
-                    format='%(levelname)s::%(asctime)s %(message)s', datefmt='%I:%M:%S')
 
-os.environ["LOG_PATH"] = path
+
+
+
 
 import thesis.main.StateManager as StateManager
 from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate, \

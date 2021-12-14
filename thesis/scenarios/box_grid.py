@@ -1,22 +1,27 @@
+import logging
 import random
 from copy import deepcopy
 from typing import List, Dict
 
+import fenics as fcs
 import numpy as np
 from scipy.constants import N_A
 
+from thesis.main.BC import OuterIntegral
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
 from thesis.main.MyEntityLocator import MyCellGridLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
-from thesis.main.MyInteractionTemplate import FieldInteractionType
-from thesis.main.MyInteractionTemplate import MyFieldInteractionTemplate
+from thesis.main.MyInteractionTemplate import FieldInteractionType, MyFieldInteractionTemplate
 from thesis.main.MyParameterPool import MyParameterPool
 from thesis.main.MyScenario import MyScenario
 from thesis.main.ParameterSet import ParameterSet, PhysicalParameterTemplate, PhysicalParameter, ParameterCollection, \
     MiscParameter
 from thesis.main.PostProcessUtil import get_concentration_conversion as get_cc
+from thesis.main.bcFunctions import cellBC
+
+module_logger = logging.getLogger(__name__)
 
 ule = -6
 
@@ -48,10 +53,15 @@ templates = {
 
 
 def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=None) -> MyScenario:
-    parameter_pool = MyParameterPool()
+    """args need to be copied for thread saftey"""
+    cytokines = deepcopy(cytokines)
+    cell_types = deepcopy(cell_types)
+    boundary = deepcopy(boundary)
+    geometry_dict = deepcopy(geometry_dict)
+    numeric = deepcopy(numeric)
+    custom_pool = deepcopy(custom_pool)
 
-    for i, t in templates.items():
-        parameter_pool.add_template(t)
+    parameter_pool = get_standard_pool()
 
     if isinstance(custom_pool, MyParameterPool):
         parameter_pool.join(custom_pool, overwrite=False)
@@ -73,12 +83,17 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
         cytokine_template = MyCytokineTemplate()
         cytokine_template.name = c["name"]
         cytokine_template.field_quantity = c["field_quantity"]
+        cytokine_template.collection = parameter_pool.get_as_collection(c, name=c["name"],
+                                                                        field_quantity=c["field_quantity"])
+
         pde_model.add_field_template(cytokine_template)
 
         mean_cytokine_template = MyMeanCytokineTemplate()
 
         mean_cytokine_template.name = c["name"]
         mean_cytokine_template.field_quantity = c["field_quantity"]
+        mean_cytokine_template.collection = parameter_pool.get_as_collection(c, name=c["name"],
+                                                                             field_quantity=c["field_quantity"])
         ode_model.add_field_template(mean_cytokine_template)
 
     na = geometry_dict["norm_area"]
@@ -103,6 +118,13 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     scenario.global_parameters.update(fractions)
 
     return scenario
+
+
+def get_standard_pool():
+    parameter_pool = MyParameterPool()
+    for i, t in templates.items():
+        parameter_pool.add_template(t)
+    return parameter_pool
 
 
 def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], ParameterCollection):
@@ -162,9 +184,6 @@ def _make_cell_types(cell_types, cytokines, parameter_pool) -> (List[CellType], 
 
 def _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool):
     domainBC = []
-    from thesis.main.BC import OuterIntegral
-    from thesis.main.bcFunctions import cellBC
-    import fenics as fcs
 
     for piece in boundary:
         for key, piece_line in piece.items():
@@ -227,7 +246,12 @@ def assign_fractions(sc, t):
 def distribute_receptors(entity_list, replicat_index, type_name, var=1):
     R = np.unique(
         [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in entity_list if e.type_name == type_name])
+    R_start = np.unique([e.p.get_physical_parameter("R_start", "R_start").get_in_post_unit() for e in entity_list if
+                         e.type_name == type_name])
+
+    if len(R) == 0: return None
     assert len(R) == 1
+
     E = R[0]
     if E == 0:
         return None
@@ -239,3 +263,6 @@ def distribute_receptors(entity_list, replicat_index, type_name, var=1):
         if e.type_name == type_name:
             R_draw = np.random.lognormal(mean, tmp_sigma)
             e.p.get_physical_parameter("R", "IL-2").set_in_post_unit(R_draw)
+            e.p.get_physical_parameter("R_start", "R_start").set_in_post_unit(R_draw)
+            e.p.get_misc_parameter("R_start_pos", "misc").set_in_post_unit(R_draw)
+            e.p.get_misc_parameter("R_start_neg", "misc").set_in_post_unit(R_draw)

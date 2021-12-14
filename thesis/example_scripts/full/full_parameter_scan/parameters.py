@@ -75,7 +75,7 @@ numeric = {
     "dofs_per_node": 2 * 15000,  # calc_boundary_values degrees of freedom per mpi node for pde solving
     "max_mpi_nodes": int(os.cpu_count()),  # max nodes for fenics solver
     "cells_per_worker": 50,
-    "max_pool_size": 16,  # max number of worker to extract boundary conditions at runtime
+    "max_pool_size": 1,  # max number of worker to extract boundary conditions at runtime
     "min_char_length": 1,  # mesh resolution
     "max_char_length": 5,  # mesh resolution
     "unit_length_exponent": -6  # for concentration conversion

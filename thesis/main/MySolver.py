@@ -12,6 +12,7 @@ import os
 import pickle as pl
 import signal
 import subprocess as sp
+import sys
 from abc import *
 from typing import List, Any
 
@@ -29,14 +30,20 @@ from thesis.main.my_debug import message, warning
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
+import logging
+from thesis.main.SimComponent import SimComponent
+
+module_logger = logging.getLogger(__name__)
 
 
 class MeanFieldSolverError(Exception): pass
 
 
-class MySolver(ABC):
+class MySolver(ABC, SimComponent):
 
     def __init__(self):
+        super().__init__()
+
         self.p: ParameterSet = ParameterSet("solver_dummy", [])
         self.field_quantity: str = ""
 
@@ -83,6 +90,8 @@ class MyDiffusionSolver(MySolver):
 
     def __init__(self):
 
+        super().__init__()
+
         self.dirichlet: List[BC.DirichletBC] = []
         self.integralBC: List[BC.Integral] = []
         self.subdomains: List[MySubDomain] = []
@@ -92,14 +101,12 @@ class MyDiffusionSolver(MySolver):
         self.boundary_markers = None
         self.timeout = None
 
-        super().__init__()
-
     def compile(self, tmp_path: str):
 
         def sig_handler(signum, frame):
             if self.process is not None:
                 self.process.kill()
-                exit(0)
+                # sys.exit(0)
 
         signal.signal(signal.SIGINT, sig_handler)
         signal.signal(signal.SIGTERM, sig_handler)
@@ -189,7 +196,7 @@ class MyDiffusionSolver(MySolver):
         dofs_per_node = int(dof_n / mpi_nodes)
 
         message("Launching {n} mpi process(es) to solve system of {dn} dofs with {dofs_p_n} per node".format(
-            n=mpi_nodes, dn=dof_n, dofs_p_n=dofs_per_node))
+            n=mpi_nodes, dn=dof_n, dofs_p_n=dofs_per_node), self.logger)
 
         from thesis.main import __path__ as main_path
 
@@ -212,14 +219,12 @@ class MyDiffusionSolver(MySolver):
 
     def solve(self, t: float, dt: float) -> fcs.Function:
 
-        from sys import exit
         def sig_handler(signum, frame):
             if self.process is not None:
                 self.process.kill()
-                exit(0)
+                sys.exit(1)
 
         signal.signal(signal.SIGINT, sig_handler)
-        signal.signal(signal.SIGTERM, sig_handler)
 
         class SolutionFailedError(Exception):
             pass
@@ -234,27 +239,27 @@ class MyDiffusionSolver(MySolver):
             try:
                 signal_out, signal_err = self.process.communicate(b"START", timeout=self.timeout)
                 for i in signal_out.decode("utf-8").split("\n"):
-                    message(i)
+                    message(i, self.logger)
 
                 file = str(signal_out).split("\\n")[-1].replace("'", "")
                 if file == "solution_failed":
                     raise SolutionFailedError
                     return -1
                 if os.path.exists(file + ".h5"):
-                    message("loading solution from {f}".format(f=file))
+                    message("loading solution from {f}".format(f=file), self.logger)
                     with fcs.HDF5File(comm, file + ".h5", "r") as f:
                         f.read(self.u, "field")
                     self.u.rename(self.field_quantity, self.field_quantity)
                     return self.u
                 else:
-                    message("Something went wrong. Solution file {f}.h5 doesn't exist".format(f=file))
-                    message(o)
+                    message("Something went wrong. Solution file {f}.h5 doesn't exist".format(f=file), self.logger)
+                    message(o, self.logger)
                     continue
 
 
             except (FileNotFoundError, sp.TimeoutExpired, ValueError) as e:
                 self.process.kill()
-                warning("External solver timed out or crashed, restarting worker threads")
+                warning("External solver timed out or crashed, restarting worker threads", self.logger)
                 self.compile(self.tmp_path)
 
     def get_solution(self) -> Any:
@@ -264,7 +269,11 @@ class MyDiffusionSolver(MySolver):
 
 class MyMeanFieldSolver(MySolver):
 
+    def __init__(self):
+        super().__init__()
+
     def solve(self, t: float, dt: float):
+
         from scipy.integrate import solve_ivp
 
         q = np.mean(self.entity_parameters["q"])

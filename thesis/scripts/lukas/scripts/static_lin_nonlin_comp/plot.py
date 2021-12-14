@@ -1,15 +1,12 @@
 import os
-import sys
-
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from parameters import path
-import matplotlib.image as mpimg
+
 
 def global_plot(fig, ax, global_df, y_name, y_label, legend="brief"):
     global_df = reduce_df(global_df, "scan_index")
@@ -279,7 +276,7 @@ ax_l.set_ylabel("cell surface std")
 
 
 # scan_0_img = mpimg.imread(path+"images/scan_0/IL-2/0.png")
-# scan_1_img = mpimg.imread(path+"images/scan_1/IL-2/0.png")
+# scan_1_img = mpimg.imread(path+"images/q_scan/IL-2/0.png")
 #
 # fig,ax = plt.subplots(1,2,figsize = (10,5))
 # ax = np.ravel(ax)

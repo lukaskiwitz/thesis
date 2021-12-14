@@ -11,12 +11,7 @@ from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
 
 os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 
 def updateState(sc, t):

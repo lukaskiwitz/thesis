@@ -1,9 +1,13 @@
 from typing import List, Mapping, Union
 
 from thesis.main.ParameterSet import ParameterTemplate, ParameterCollection
+from thesis.main.SimComponent import SimComponent
 
 
-class MyParameterPool:
+# module_logger = logging.getLogger(__name__)
+
+
+class MyParameterPool(SimComponent):
     """Stores parameter templates to derive Parameters and Collections from
 
     :ivar parameter_templates: List of parameter templates
@@ -11,6 +15,8 @@ class MyParameterPool:
     """
 
     def __init__(self):
+        super(MyParameterPool, self).__init__()
+
         self.parameter_templates: List[ParameterTemplate] = []
 
     def join(self, pool: 'MyParameterPool', overwrite: bool = True):
