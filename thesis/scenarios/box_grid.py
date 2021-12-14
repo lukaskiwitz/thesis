@@ -46,7 +46,7 @@ templates = {
     "pSTAT5": PhysicalParameterTemplate(PhysicalParameter("pSTAT5", 0, to_sim=1)),
     "EC50": PhysicalParameterTemplate(PhysicalParameter("EC50", 0, to_sim=1 / get_cc(ule))),
     "global_q": PhysicalParameterTemplate(PhysicalParameter("global_q", True, to_sim=1, is_global=True)),
-    "KD": PhysicalParameterTemplate(PhysicalParameter("KD", 7.437e-12, to_sim=1 / get_cc(ule))),  # post = nM
+    "KD": PhysicalParameterTemplate(PhysicalParameter("KD", 7.437e-3, to_sim=1 / get_cc(ule))),  # post = nM
     "nu": PhysicalParameterTemplate(PhysicalParameter("nu", 1, to_sim=1 / 60 ** 2, is_global=True)),  # receptors/s
     "eta": PhysicalParameterTemplate(PhysicalParameter("eta", 1, to_sim=1 / 60 ** 2, is_global=True)),
 }
