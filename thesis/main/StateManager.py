@@ -95,6 +95,7 @@ class StateManager(SimComponent):
         :return None
         """
         super().__init__()
+        os.makedirs(path, exist_ok=True)
         setup_loggers(path, log_name="simulation", debug=debug)
         self.path: str = path
         self.ruse = []
