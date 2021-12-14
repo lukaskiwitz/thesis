@@ -1,9 +1,6 @@
 import os
 from typing import List, Dict
 
-import os
-from typing import List, Dict
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -1164,7 +1161,7 @@ class Plotter(SimComponent):
         ax.set_xlabel(self.get_label(x_name))
 
     def _compute_radial_profile(self, df, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
-                                chunksize=32):
+                                chunksize=32, additional_categories=[]):
 
         if not isinstance(y_names, List):
             y_names = [y_names]
@@ -1181,7 +1178,8 @@ class Plotter(SimComponent):
 
         from multiprocessing import Pool
         with Pool(n_workers, initializer=init, initargs=(y_names, self.groups, center_func)) as p:
-            l = list(df.groupby(["raw_scan_index", self.time_index_key]))
+            l = list(df.groupby(["raw_scan_index", self.time_index_key, self.scan_name_key,
+                                 self.replicat_index_key] + additional_categories))
 
             c = int(len(l) / n_workers)
             c = c if c > 0 else 1
@@ -1191,6 +1189,7 @@ class Plotter(SimComponent):
                                                                                         n=n_workers))
             full_result = pd.concat(p.starmap(run_single_step, l, chunksize=chunksize))
 
+        print("computed radials")
         return full_result
 
     def compute_radial_profiles(self, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
@@ -1231,6 +1230,7 @@ class Plotter(SimComponent):
 
     def cell_radial_niche_plot(self, y_name, center_type, hue=None, style=None, xlim=None, ylim=None, ylog=False,
                                ci="sd", cell_radius=None, legend=None, estimator=None, plot_filter=lambda df: df,
+                               additional_categories=[],
                                **kwargs):
 
         df = self.cell_df
@@ -1244,8 +1244,9 @@ class Plotter(SimComponent):
         else:
             print("recomputing radial profiles because hue or y_name wasn't found in cache")
             ax, df, palette, hue = self.prepare_plot(df, hue, **kwargs)
-            df = self._compute_radial_profile(df, [y_name, "type_name"],
-                                              center_func=lambda df: df.loc[df["type_name"] == center_type])
+            df = self._compute_radial_profile(df, [y_name, "type_name"] + additional_categories,
+                                              center_func=lambda df: df.loc[df["type_name"] == center_type],
+                                              additional_categories=additional_categories)
         df = plot_filter(df)
 
         df, ci = self.compute_ci(
@@ -1776,7 +1777,7 @@ def split_kwargs(kwargs, keys):
 
 
 def run_single_step(i, dfg):
-    rsi, ti = i
+    # rsi, ti, scan_name, replicat_index = i
 
     time_index_key = "time_index"
     scan_name_key = "scan_name_scan_name"
