@@ -13,8 +13,8 @@ cytokines = [
         "k_on": 111.6,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
         "kd": 0.1,  # cytokine decay in medium 1/s
+        "KD": 7.437e-3,
         "hill_factor": 3,
-        "k_endo": 1.1e-3,
     }
 ]
 
@@ -27,7 +27,7 @@ cell_types_dict = [
 
      "name": "Tnaive",
      "fraction": 0,
-     "il2": {"R": 1e2, "q": 0, "bc_type": "linear", "global_q": True},  # [Receptor number per cell, secretion in molecules/s]
+     "il2": {"R": 1e2, "q": 0, "bc_type": "patrick_saturation", "global_q": True},  # [Receptor number per cell, secretion in molecules/s]
      "misc": {"sigma":0,
               "gamma": 1,
               "states":[],
@@ -42,8 +42,8 @@ cell_types_dict = [
      },
     {
      "name": "Tsec",
-     "fraction": 0.2,
-     "il2": {"R": 1e2, "q": 30, "bc_type": "linear", "global_q": True}, #"R_saturation"
+     "fraction": 0.25,
+     "il2": {"R": 1e2, "q": 30, "bc_type": "patrick_saturation", "global_q": True}, #"patrick_saturation"
      "misc": {"sigma":0,
               "gamma": 1,
               "states":[],
@@ -52,15 +52,16 @@ cell_types_dict = [
               "Km_neg": 0.75,
               "pSTAT5_signal": True,
               "KD": 7.437e-3,
+              "k_endo": 1.1e-3,
               "nu": 1e-3,
               "name": "Tsec"},
      "internal_solver": ""
      },
     {
      "name": "Th",
-     "fraction": 0.8,
-     "il2": {"R": 1e3, "q": 0, "bc_type": "linear", "global_q": False}, # "R_saturation"
-     "misc": {"sigma": 2.5, # receptor distribution
+     "fraction": 0.75,
+     "il2": {"R": 1e3, "q": 0, "bc_type": "patrick_saturation", "global_q": False}, # "patrick_saturation"
+     "misc": {"sigma": 0.001, # receptor distribution
               "gamma": 1,
               "states":[0,0,0,0,0,0],
               "pos_half_time": 1,
@@ -72,7 +73,6 @@ cell_types_dict = [
               "R_start_pos": 5e3,
               "pSTAT5_signal": True,
               "KD": 7.437e-3,
-              "k_endo": 1.1e-3,
               "nu": 1e-3,
               "pSTAT5": 0,
               "name": "Th"},
@@ -87,7 +87,7 @@ geometry = {
     "rho": 5,  # cell radius
     "x_grid": 240,  # dimensions of the cell grid
     "y_grid": 240,
-    # "z_grid": 240,# comment out for single cell layer
+    "z_grid": 240,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2
 }
 
@@ -106,7 +106,7 @@ parameters regarding meshing and fenics. unit_length_exponent is necessary for c
 numeric = {
     "linear_solver": "gmres",
     "preconditioner": "hypre_amg",
-    "linear": True,
+    "linear": False,
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,
     "newton_atol": 1e-35,
@@ -124,8 +124,8 @@ hdd = "extra2" if os.path.exists("/extra2") else "extra"
 
 user = getpass.getuser()
 
-model_name = "Tsec_scan"
-path = "/{extra}/{u}/paper_models/statics/{mn}/".format(u=user, mn=model_name, extra = hdd)
+model_name = "Tsec_scan_no_sigma_3"
+path = "/{extra}/{u}/paper_models/statics/saturated/{mn}/".format(u=user, mn=model_name, extra = hdd)
 IMGPATH = path + "images/"
 
-ext_cache = r"../{mn}_ext_cache/".format(mn=model_name)
+ext_cache = r"../../Tsec_scan_no_sigma_3D_ext_cache/"#.format(mn=model_name)
