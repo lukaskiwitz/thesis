@@ -1,5 +1,4 @@
-import logging
-import os
+import numpy as np
 
 import numpy as np
 
@@ -8,14 +7,6 @@ from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_
 from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scenarios.box_grid import setup, assign_fractions
-
-os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
 
 
 def updateState(sc, replicat_index):

@@ -1,23 +1,16 @@
-import os
+import random
 import sys
 
-sys.path.append("/home/lukas/thesis/main/")
-sys.path.append("/home/lukas/thesis/scenarios/")
-
-import random
-
+import mpi4py.MPI as MPI
 import numpy as np
-from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
-
-os.environ["LOG_PATH"] = path
 
 import thesis.main.StateManager as StateManager
+from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache
 from thesis.main.InternalSolver import InternalSolver
 from thesis.main.ParameterSet import MiscParameter, ParameterCollection, ScannableParameter
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.main.SimContainer import SimContainer
 from thesis.scenarios.box_grid import setup
-import mpi4py.MPI as MPI
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()

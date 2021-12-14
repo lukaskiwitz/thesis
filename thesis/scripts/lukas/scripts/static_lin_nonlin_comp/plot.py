@@ -279,7 +279,7 @@ ax_l.set_ylabel("cell surface std")
 
 
 # scan_0_img = mpimg.imread(path+"images/scan_0/IL-2/0.png")
-# scan_1_img = mpimg.imread(path+"images/scan_1/IL-2/0.png")
+# scan_1_img = mpimg.imread(path+"images/q_scan/IL-2/0.png")
 #
 # fig,ax = plt.subplots(1,2,figsize = (10,5))
 # ax = np.ravel(ax)

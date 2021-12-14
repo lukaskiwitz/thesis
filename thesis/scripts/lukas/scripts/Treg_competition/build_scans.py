@@ -160,13 +160,6 @@ def compute_samples_points(scan_samples, scenario, path, time_range, ext_cache="
 
     os.makedirs(path, exist_ok=True)
 
-    logging.basicConfig(
-        filename=os.path.join(path, "sim.log"),
-        level=logging.INFO,
-        filemode="w",
-        format='%(levelname)s::%(asctime)s %(message)s',
-        datefmt='%I:%M:%S')
-
     scan_container = ScanContainer()
     for s in scan_samples:
         scan_container.add_sample(s)

@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 
@@ -21,12 +20,7 @@ if len(sys.argv) == 3:
 else:
     pass
 
-logging.basicConfig(
-    filename=os.path.join(path, "post_process.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 
 class my_post_process(PostProcessComputation):

@@ -1,13 +1,15 @@
 import os
-import sys
-import fenics as fcs
 import shutil
+import sys
+
+import fenics as fcs
 
 sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
-from parameters import path, ext_cache
+from parameters import path
+
 # path = path_kinetic
 
 for run in np.arange(1):
@@ -16,7 +18,7 @@ for run in np.arange(1):
     print(path)
     # path = "/extra/brunner/thesis/kinetic/q_fraction_test/"
 
-    os.environ["LOG_PATH"] = path
+    
 
     from thesis.main.PostProcess import PostProcessor, PostProcessComputation
 

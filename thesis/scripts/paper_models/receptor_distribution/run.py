@@ -9,13 +9,7 @@ from thesis.main.ParameterSet import MiscParameter, ParameterCollection, Scannab
 from thesis.main.ScanContainer import ScanContainer, ScanSample
 from thesis.scenarios.box_grid import setup, assign_fractions
 
-os.makedirs(path, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(path, "sim.log"),
-    level=logging.INFO,
-    filemode="w",
-    format='%(levelname)s::%(asctime)s %(message)s',
-    datefmt='%I:%M:%S')
+
 
 
 # noinspection PyPep8Naming

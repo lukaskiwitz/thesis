@@ -1,7 +1,8 @@
 import getpass
+import os
 
 import numpy as np
-import os
+
 """defines cytokines. Currently their parameters can be changed using the scan sample interface.
 "field_quantity" determines which boundary contitions interact with which fields, 
 the name is only used in IO/post processing."""
@@ -24,19 +25,19 @@ The first entry is the default cell type. The "fraction" entry is meaningless.
 cell_types_dict = [
     {"name": "naive",
      "fraction": 1,
-     "il2": {"amax": 0, "q": 0, "bc_type":"amax_saturation"},  # [Receptor number per cell, secretion in molecules/s]
+     "il2": {"amax": 0, "q": 0, "bc_type": "amax_saturation"},  # [Receptor number per cell, secretion in molecules/s]
      "internal_solver": "ResponseTimeSolver"
      },
     {"name": "sec",
      "fraction": 0.02,
-     "il2": {"amax": 1, "q": 100,"bc_type":"amax_saturation"},
+     "il2": {"amax": 1, "q": 100, "bc_type": "amax_saturation"},
      "internal_solver": "ResponseTimeSolver",
-     "bw":25,
-     "cluster_strength":0.8
+     "bw": 25,
+     "cluster_strength": 0.8
      },
     {"name": "Treg",
      "fraction": 0.2,
-     "il2": {"amax": 100, "q": 0,"bc_type":"amax_saturation"},
+     "il2": {"amax": 100, "q": 0, "bc_type": "amax_saturation"},
      "internal_solver": "ResponseTimeSolver"
      }
 ]
@@ -49,7 +50,7 @@ geometry = {
     "x_grid": 500,  # dimensions of the cell grid
     "y_grid": 500,
     # "z_grid":0,# comment out for single cell layer
-    "norm_area": 4 * np.pi * 5 **2
+    "norm_area": 4 * np.pi * 5 ** 2
 }
 
 """
@@ -63,11 +64,11 @@ numeric = {
     "krylov_atol": 1e-35,
     "krylov_rtol": 1e-5,
     "newton_atol": 1e-35,
-    "newton_rtol": 1e-3,# newton method relative tolerance
+    "newton_rtol": 1e-3,  # newton method relative tolerance
     "dofs_per_node": 30000,
     "max_mpi_nodes": os.cpu_count(),
     "cells_per_worker": 50,
-    "max_pool_size": os.cpu_count(),
+    "max_pool_size": 1,
     "min_char_length": 0.1,  # mesh
     "max_char_length": 3,  # mesh
     "unit_length_exponent": -6  # for concentration conversion
@@ -80,6 +81,6 @@ scan_name = "response_test"
 
 hdd = "extra2" if os.path.exists("/extra2") else "extra"
 
-path = "/{hdd}/{u}/{mn}/{n}/{sn}/".format(u=user, n=name, mn=model_name, sn = scan_name,hdd = hdd)
-ext_cache = r"../../{mn}_{n}_ext_cache_/".format(mn=model_name,n = name)
+path = "/{hdd}/{u}/{mn}/{n}/{sn}/".format(u=user, n=name, mn=model_name, sn=scan_name, hdd=hdd)
+ext_cache = r"../../{mn}_{n}_ext_cache_/".format(mn=model_name, n=name)
 IMGPATH = path + "images/"

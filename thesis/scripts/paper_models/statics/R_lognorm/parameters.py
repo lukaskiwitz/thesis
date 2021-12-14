@@ -112,7 +112,7 @@ numeric = {
     "dofs_per_node": 15000,
     "max_mpi_nodes": int(os.cpu_count() / 4),
     "cells_per_worker": 50,
-    "max_pool_size": 4,
+    "max_pool_size": 1,
     "min_char_length": 0.06,  # mesh, smaller = finer
     "max_char_length": 6,  # mesh, smaller = finer
     "unit_length_exponent": -6  # for concentration conversion
