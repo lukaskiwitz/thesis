@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy.spatial import KDTree, distance_matrix
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
@@ -111,3 +112,98 @@ class MyCellGridLocator(MyEntityLocator):
             return np.round(np.arange(margin, grid, distance), 2)
         else:
             return [0]
+
+
+class MyRandomCellLocator(MyCellGridLocator):
+    """
+    Locator class to arbitrarily place a set of cells in the simulation.
+
+    """
+    def __init__(self):
+        """
+        Accepts a (n,3) list of cells positions and a list of matching cell types.
+        If len(cell_pos) > len(cell_types), the last element in cell_types is used for the remaining cells.
+        Note: Cell types can be changed later (in pre_scan, pre_step, etc), but a dummy is needed to get the
+        the cell radius parameter (rho) before meshing.
+
+        :param cell_pos: list of entity positions
+        :param cell_types: corresponding list of entity templates.
+        """
+        pass
+
+    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
+        assert issubclass(type(cell_type), CellType)
+        r = cell_type.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+
+        self.cell_pos = self.get_random_pos(r, 3, global_p)
+
+        cell_list = []
+        for i, p in enumerate(self.cell_pos):
+
+            assert r is not None and r > 0
+            cell = Cell(p, r, [])
+            cell.set_cell_type(cell_type, None, 0)
+
+            cell_list.append(cell)
+
+        return cell_list
+
+    def get_random_pos(self, rho, penalty, global_p):
+
+        xx = self.make_grid(global_p, "x_grid")
+        yy = self.make_grid(global_p, "y_grid")
+        zz = self.make_grid(global_p, "z_grid")
+
+        length = len(xx) * len(yy) * len(zz)
+        x = np.random.uniform(np.min(xx), np.max(xx), (1, length))
+        y = np.random.uniform(np.min(yy), np.max(yy), (1, length))
+        z = np.random.uniform(np.min(zz), np.max(zz), (1, length))
+
+        positions = np.vstack(list(zip(x.ravel(), y.ravel(), z.ravel())))
+
+        dist_m = distance_matrix(positions, positions)
+        dist_m[np.tril_indices(len(dist_m[0]), k=0)] = None
+
+        iterations = 1000
+
+        for i in range(iterations):
+            too_close = np.argwhere(dist_m < (rho + penalty) * 2)
+            for tc in too_close:
+                cell_1 = np.round(positions[tc[0]], 2)
+                cell_2 = np.round(positions[tc[1]], 2)
+                c_c_v = ((cell_2 - cell_1) / 2) * 0.1
+                positions[tc[0]] += - c_c_v
+                positions[tc[1]] += + c_c_v
+
+            dist_m = distance_matrix(positions, positions)
+            dist_m[np.tril_indices(len(dist_m[0]), k=0)] = None
+
+            too_close = np.argwhere(dist_m < (rho + penalty) * 2)
+            if len(too_close) == 0:
+                print(i)
+                break
+
+
+
+
+        dist_list = []
+        for coord in range(len(dist_m)):
+            # dist_list.append(np.nanmin(dist_m[coord]))
+            dist_list.append(np.sort(dist_m[coord])[6])
+
+        # from mpl_toolkits.mplot3d import Axes3D
+        # import matplotlib.pyplot as plt
+        # plt.hist(dist_list, bins=46)
+        # plt.axvline(np.nanmean(dist_list), 0, 130, color="orange")
+        # plt.axvline(20, 0, 130, color="orange")
+        # plt.xlim((0, None))
+        # plt.show()
+        # #
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection='3d')
+        # ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], marker=".", s=20)
+        # # ax.scatter(x, y, z, marker="o")
+        # plt.show()
+
+        return positions
+
