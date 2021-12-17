@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.spatial import KDTree, distance_matrix
+from scipy.spatial import distance_matrix
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
@@ -27,6 +27,7 @@ class MyCellListLocator(MyEntityLocator):
     Locator class to arbitrarily place a set of cells in the simulation.
 
     """
+
     def __init__(self, cell_pos, cell_types):
         """
         Accepts a (n,3) list of cells positions and a list of matching cell types.
@@ -52,11 +53,10 @@ class MyCellListLocator(MyEntityLocator):
         cell_list = []
         for i, p in enumerate(self.cell_pos):
             if len(self.cell_types) > i:
-                assert isinstance(self.cell_types[i],CellType)
+                assert isinstance(self.cell_types[i], CellType)
                 cell_type = self.cell_types[i]
             else:
                 cell_type = self.cell_types[-1]
-
 
             r = cell_type.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
             assert r is not None and r > 0
@@ -69,7 +69,6 @@ class MyCellListLocator(MyEntityLocator):
 
 
 class MyCellGridLocator(MyEntityLocator):
-
     """
     Locator class to place cells in a primitive cubic lattice.
     Dimensions are taken from "geometry" parameter collection.
@@ -77,7 +76,6 @@ class MyCellGridLocator(MyEntityLocator):
 
     def __init__(self):
         super(MyCellGridLocator, self).__init__()
-
 
     def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
 
@@ -116,19 +114,11 @@ class MyCellGridLocator(MyEntityLocator):
 
 class MyRandomCellLocator(MyCellGridLocator):
     """
-    Locator class to arbitrarily place a set of cells in the simulation.
-
+    Randomizes grid positions into collision free uniform distribution of cells
     """
-    def __init__(self):
-        """
-        Accepts a (n,3) list of cells positions and a list of matching cell types.
-        If len(cell_pos) > len(cell_types), the last element in cell_types is used for the remaining cells.
-        Note: Cell types can be changed later (in pre_scan, pre_step, etc), but a dummy is needed to get the
-        the cell radius parameter (rho) before meshing.
 
-        :param cell_pos: list of entity positions
-        :param cell_types: corresponding list of entity templates.
-        """
+    def __init__(self):
+
         pass
 
     def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
@@ -139,7 +129,6 @@ class MyRandomCellLocator(MyCellGridLocator):
 
         cell_list = []
         for i, p in enumerate(self.cell_pos):
-
             assert r is not None and r > 0
             cell = Cell(p, r, [])
             cell.set_cell_type(cell_type, None, 0)
@@ -178,32 +167,15 @@ class MyRandomCellLocator(MyCellGridLocator):
             dist_m = distance_matrix(positions, positions)
             dist_m[np.tril_indices(len(dist_m[0]), k=0)] = None
 
+            print(len(too_close))
             too_close = np.argwhere(dist_m < (rho + penalty) * 2)
             if len(too_close) == 0:
                 print(i)
                 break
-
-
-
 
         dist_list = []
         for coord in range(len(dist_m)):
             # dist_list.append(np.nanmin(dist_m[coord]))
             dist_list.append(np.sort(dist_m[coord])[6])
 
-        # from mpl_toolkits.mplot3d import Axes3D
-        # import matplotlib.pyplot as plt
-        # plt.hist(dist_list, bins=46)
-        # plt.axvline(np.nanmean(dist_list), 0, 130, color="orange")
-        # plt.axvline(20, 0, 130, color="orange")
-        # plt.xlim((0, None))
-        # plt.show()
-        # #
-        # fig = plt.figure()
-        # ax = fig.add_subplot(projection='3d')
-        # ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], marker=".", s=20)
-        # # ax.scatter(x, y, z, marker="o")
-        # plt.show()
-
         return positions
-
