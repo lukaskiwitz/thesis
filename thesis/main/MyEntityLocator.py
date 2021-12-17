@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.spatial import distance_matrix
+from scipy.spatial import cKDTree, distance_matrix
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
@@ -150,32 +150,26 @@ class MyRandomCellLocator(MyCellGridLocator):
 
         positions = np.vstack(list(zip(x.ravel(), y.ravel(), z.ravel())))
 
-        dist_m = distance_matrix(positions, positions)
-        dist_m[np.tril_indices(len(dist_m[0]), k=0)] = None
-
         iterations = 1000
 
         for i in range(iterations):
-            too_close = np.argwhere(dist_m < (rho + penalty) * 2)
-            for tc in too_close:
-                cell_1 = np.round(positions[tc[0]], 2)
-                cell_2 = np.round(positions[tc[1]], 2)
-                c_c_v = ((cell_2 - cell_1) / 2) * 0.1
-                positions[tc[0]] += - c_c_v
-                positions[tc[1]] += + c_c_v
+            len_neighbors = 0
+            tree = cKDTree(positions)
+            for j in range(len(positions)):
+                neighbors = tree.query(positions[j], 2, distance_upper_bound = (rho + penalty) * 2, n_jobs = 1)[1][1:]
+                neighbors = neighbors[neighbors != len(positions)]
+                length = len(neighbors)
+                len_neighbors += length
+                if length != 0:
+                    cell_1 = np.mean(positions[neighbors], axis=0)
+                    cell_2 = positions[j]
+                    factor = 1.01 if length > 4 else 0.1
+                    c_c_v = ((cell_2 - cell_1) / 2) * factor
+                    positions[j] += + c_c_v
 
-            dist_m = distance_matrix(positions, positions)
-            dist_m[np.tril_indices(len(dist_m[0]), k=0)] = None
-
-            print(len(too_close))
-            too_close = np.argwhere(dist_m < (rho + penalty) * 2)
-            if len(too_close) == 0:
-                print(i)
+            if len_neighbors == 0:
                 break
 
-        dist_list = []
-        for coord in range(len(dist_m)):
-            # dist_list.append(np.nanmin(dist_m[coord]))
-            dist_list.append(np.sort(dist_m[coord])[6])
 
         return positions
+
