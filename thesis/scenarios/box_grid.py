@@ -10,7 +10,7 @@ from scipy.constants import N_A
 from thesis.main.BC import OuterIntegral
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
-from thesis.main.MyEntityLocator import MyCellGridLocator
+from thesis.main.MyEntityLocator import MyCellGridLocator, MyRandomCellLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
 from thesis.main.MyInteractionTemplate import FieldInteractionType, MyFieldInteractionTemplate
@@ -104,7 +104,12 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
     domain_parameter_set.add_collection(geometry)
 
     domain_template.bc_list = _make_domain_bc(cytokines, boundary, numeric, domain_parameter_set, parameter_pool)
-    locator = MyCellGridLocator()
+
+    randomize = geometry.get_misc_parameter("randomize")
+    if randomize is not None and randomize.get_in_post_unit():
+        locator = MyRandomCellLocator()
+    else:
+        locator = MyCellGridLocator()
 
     scenario = MyScenario(parameter_pool)
 
