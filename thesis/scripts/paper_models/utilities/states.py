@@ -76,7 +76,7 @@ class updateState():
             draws = np.random.choice(free_draws, amount_of_draws - 1, replace=False)
         return draws
 
-
+    @staticmethod
     def set_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws = [], q_il2_sum = None): # fallback function, mostly not used
         t_R_start = self.parameter_pool.get_template("R_start")
         t_pSTAT5 = self.parameter_pool.get_template("pSTAT5")
@@ -104,10 +104,13 @@ class updateState():
             elif e.type_name == "blank":
                 e.p.add_parameter_with_collection(t_R_start(0, in_sim=False))
 
-
-    def set_R_lognorm_parameters(self, sc, Tsec_draws, q_il2_sum):
+    @staticmethod
+    def set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum):
         t_R_start = self.parameter_pool.get_template("R_start")
         t_EC50 = self.parameter_pool.get_template("EC50")
+        no_of_cells = len(Tsec_draws) + len(Th_draws) + len(Treg_draws)
+        systemic_R = int(round(no_of_cells * 0.1)) * 100 + (no_of_cells - int(round(no_of_cells * 0.1))) * 5e3
+        Th_R = systemic_R - len(Tsec_draws) * 100
 
         for i, e in enumerate(sc.entity_list):
             e.p.add_parameter_with_collection(t_EC50(0, in_sim=False))
@@ -118,10 +121,8 @@ class updateState():
             if len(Tsec_draws) != 0 and e.type_name == "Tsec":
                 if q_il2_sum != None:
                     e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / len(Tsec_draws))
-                if e.p.get_as_dictionary()["scan_name_scan_name"] == "R_scan":
-                    new_q = 2e-3 * e.p.get_physical_parameter("R_scan", "IL-2").get_in_post_unit()
-                    e.p.get_physical_parameter("q", "IL-2").set_in_post_unit(new_q)
-                e.p.add_parameter_with_collection(t_R_start(1e2, in_sim=False))
+                Tsec_R = e.p.get_physical_parameter("R", "IL-2").get_in_post_unit()
+                e.p.add_parameter_with_collection(t_R_start(Tsec_R, in_sim=False))
                 E = 0
 
             elif e.type_name == "Th":
@@ -131,9 +132,10 @@ class updateState():
                     Th_start_R = e.p.get_misc_parameter("R_start_pos", "misc").get_in_post_unit()
                 elif gamma == 1:
                     if e.p.get_as_dictionary()["scan_name_scan_name"] == "R_scan":
-                        Th_start_R = e.p.get_physical_parameter("R_scan", "IL-2").get_in_post_unit()
+                        Th_start_R = e.p.get_as_dictionary()["scan_value"]
                     else:
-                        Th_start_R = 4800
+                        Th_start_R = Th_R/len(Th_draws)
+                # print(Th_start_R)
                 e.p.add_parameter_with_collection(t_R_start(Th_start_R, in_sim=False))
                 E = Th_start_R * N_A ** -1 * 1e9
 
@@ -144,7 +146,7 @@ class updateState():
                     Treg_start_R = e.p.get_misc_parameter("R_start_pos", "misc").get_in_post_unit()
                 elif gamma == 1:
                     if e.p.get_as_dictionary()["scan_name_scan_name"] == "R_scan":
-                        Treg_start_R = e.p.get_physical_parameter("R_scan", "IL-2").get_in_post_unit()
+                        Treg_start_R = e.p.get_physical_parameter("R", "IL-2").get_in_post_unit()
                     else:
                         Treg_start_R = 5001
                 e.p.add_parameter_with_collection(t_R_start(Treg_start_R, in_sim=False))
@@ -235,9 +237,9 @@ class updateState():
         message("Number of Tregs: " +  str(no_of_Treg))
 
         try:
-            global_q = sc.entity_list[0].p.get_physical_parameter("global_q", "IL-2").get_in_sim_unit()
+            global_q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("global_q", "IL-2").get_in_sim_unit()
         except:
-            global_q = sc.entity_list[0].p.get_as_dictionary()["IL-2_global_q"]
+            global_q = sc.entity_list[Tsec_draws[0]].p.get_as_dictionary()["IL-2_global_q"]
         if global_q == True:
             q_il2_sum = len(sc.entity_list) * 0.1 * 30 * N_A ** -1 * 1e9
             if len(Tsec_draws) != 0:
@@ -261,10 +263,14 @@ class updateState():
         else:
             var = sc.entity_list[0].p.get_misc_parameter("sigma", "misc").get_in_post_unit()
         if var == 0:
-            self.set_parameters(sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
+            self.set_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
         else:
-            self.set_R_lognorm_parameters(sc, Tsec_draws, q_il2_sum)
+            self.set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
 
     def step_R_lognorm(self,sc):
         Tsec_draws, Th_draws, Treg_draws, q_il2_sum = self.set_cell_types(sc)
-        self.set_R_lognorm_parameters(sc, Tsec_draws, q_il2_sum)
+        self.set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
+
+    def reset_draw_arrays(self):
+        self.Tsec_distribution_array = np.array([])
+        self.Th_distribution_array = np.array([])
