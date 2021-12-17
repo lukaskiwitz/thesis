@@ -261,7 +261,7 @@ class MyDiffusionSolver(MySolver):
                 self.process.kill()
                 warning("External solver timed out or crashed, restarting worker threads", self.logger)
                 self.compile(self.tmp_path)
-
+            self.process.kill()
     def get_solution(self) -> Any:
 
         return self.u
