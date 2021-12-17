@@ -193,7 +193,11 @@ class Plotter(SimComponent):
             ax.axis('off')
 
     def _prepare_color_dict(self) -> None:
-        fields = self.global_df["field_name"].unique()
+
+        try:
+            fields = self.global_df["field_name"].unique()
+        except KeyError:
+            fields = []
         cell_types = self.cell_df["type_name"].unique()
         t = self.cell_df[self.time_key].unique()
 
@@ -417,8 +421,10 @@ class Plotter(SimComponent):
 
     def get_max_time_index(self) -> float:
 
-        g = self.global_df[self.time_index_key].max()
-        g = [g, np.unique(self.global_df.loc[self.global_df[self.time_index_key] == g]["time"])[0]]
+        df = self.global_df if self.time_index_key in self.global_df.columns else self.cell_df
+
+        g = df[self.time_index_key].max()
+        g = [g, np.unique(df.loc[df[self.time_index_key] == g]["time"])[0]]
 
         c = self.cell_df[self.time_index_key].max()
         c = [c, np.unique(self.cell_df.loc[self.cell_df[self.time_index_key] == c]["time"])[0]]
