@@ -180,8 +180,8 @@
 <h1>StateManager<a class="headerlink" href="#statemanager" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="thesis.main.StateManager.StateManager">
-<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">StateManager</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">StateManager</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.StateManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>This class manages the state of the simulation. Its main use is to run parameter scans in an organised manner and
 produces the xml files necessary for the use of PostProcessor.</p>
 <dl class="field-list simple">
@@ -195,7 +195,7 @@ produces the xml files necessary for the use of PostProcessor.</p>
 <li><p><strong>sim_container</strong> (<em>SimConatiner</em>) – </p></li>
 <li><p><strong>T</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – </p></li>
 <li><p><strong>N</strong> (<em>int</em>) – </p></li>
-<li><p><strong>compress_log_file</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>compress_xml_log_file</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>globarl_collections</strong> – </p></li>
 <li><p><strong>global_parameters</strong> (<a class="reference internal" href="parameter_pool.html#thesis.main.ParameterSet.GlobalParameters" title="thesis.main.ParameterSet.GlobalParameters"><em>GlobalParameters</em></a>) – </p></li>
 <li><p><strong>record</strong> (<em>ClassRecord</em>) – </p></li>
@@ -311,7 +311,7 @@ produces the xml files necessary for the use of PostProcessor.</p>
 <dl class="class">
 <dt id="thesis.main.StateManager.MyScanTree">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.StateManager.</code><code class="sig-name descname">MyScanTree</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <dl class="method">
 <dt id="thesis.main.StateManager.MyScanTree.add_time_step_to_element_tree">
 <code class="sig-name descname">add_time_step_to_element_tree</code><span class="sig-paren">(</span><em class="sig-param">sim_container</em>, <em class="sig-param">model_index</em>, <em class="sig-param">scan_index</em>, <em class="sig-param">time_index</em>, <em class="sig-param">replicat_index</em>, <em class="sig-param">time</em>, <em class="sig-param">model_name=''</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.StateManager.MyScanTree.add_time_step_to_element_tree" title="Permalink to this definition">¶</a></dt>

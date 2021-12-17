@@ -273,7 +273,7 @@
 <dl class="class">
 <dt id="thesis.main.PostProcess.PostProcessComputation">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessComputation</code><span class="sig-paren">(</span><em class="sig-param">compute_settings</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <dl class="attribute">
 <dt id="thesis.main.PostProcess.PostProcessComputation.add_xml_result">
 <code class="sig-name descname">add_xml_result</code><em class="property"> = True</em><a class="headerlink" href="#thesis.main.PostProcess.PostProcessComputation.add_xml_result" title="Permalink to this definition">¶</a></dt>
@@ -289,7 +289,7 @@
 <dl class="class">
 <dt id="thesis.main.PostProcess.PostProcessor">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.PostProcess.</code><code class="sig-name descname">PostProcessor</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <dl class="method">
 <dt id="thesis.main.PostProcess.PostProcessor.get_cell_dataframe">
 <code class="sig-name descname">get_cell_dataframe</code><span class="sig-paren">(</span><em class="sig-param">kde=False</em>, <em class="sig-param">time_indices=None</em>, <em class="sig-param">n_processes=1</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.PostProcess.PostProcessor.get_cell_dataframe" title="Permalink to this definition">¶</a></dt>

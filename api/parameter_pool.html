@@ -190,7 +190,7 @@
 <dl class="class">
 <dt id="thesis.main.MyParameterPool.MyParameterPool">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.MyParameterPool.</code><code class="sig-name descname">MyParameterPool</code><a class="headerlink" href="#thesis.main.MyParameterPool.MyParameterPool" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Stores parameter templates to derive Parameters and Collections from</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -256,7 +256,7 @@
 <dl class="class">
 <dt id="thesis.main.ParameterSet.ParameterSet">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterSet</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">collections</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterSet" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Container object that holds parameter collections</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -451,7 +451,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.ParameterCollection">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterCollection</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">field_quantity=''</em>, <em class="sig-param">is_global=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ParameterCollection" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Container object that holds parameter objects</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -631,7 +631,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.Parameter">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.Parameter" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Abstract base class for container object that bundles parameter value, name and conversion function/factor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -831,7 +831,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.ScannableParameter">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ScannableParameter</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">f</em>, <em class="sig-param">in_sim=False</em><span class="sig-paren">)</span><a class="headerlink" href="#thesis.main.ParameterSet.ScannableParameter" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Container class that combine parameter with a function for scanning over parameter ranges.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -850,7 +850,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.ParameterTemplate">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">ParameterTemplate</code><a class="headerlink" href="#thesis.main.ParameterSet.ParameterTemplate" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Abstract base class for parameter object factories</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -883,7 +883,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.GlobalParameters">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">GlobalParameters</code><a class="headerlink" href="#thesis.main.ParameterSet.GlobalParameters" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Container class ot store global parameters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
@@ -942,7 +942,7 @@ Collections are flattened into dict keys: {collectionname_parametername: valueâ€
 <dl class="class">
 <dt id="thesis.main.ParameterSet.GlobalCollections">
 <em class="property">class </em><code class="sig-prename descclassname">thesis.main.ParameterSet.</code><code class="sig-name descname">GlobalCollections</code><a class="headerlink" href="#thesis.main.ParameterSet.GlobalCollections" title="Permalink to this definition">Â¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">thesis.main.SimComponent.SimComponent</span></code></p>
 <p>Container class ot store global parameter collections</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
