@@ -69,9 +69,7 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths):
     bws = np.ones(shape=(len(fractions, ))) * np.max(cell_grid_positions)
 
     number_of_cell_types = len(fractions)
-    cell_types = np.zeros(shape=(cell_grid_positions.shape[0], number_of_cell_types), dtype=bool)
-    cell_type = np.zeros(shape=(cell_grid_positions.shape[0],), dtype=int)
-
+    cell_types = np.zeros(shape=(cell_grid_positions.shape[0], number_of_cell_types + 1), dtype=bool)
     sorted_positions = np.zeros((len(cell_grid_positions), len(fractions)), dtype=int)
 
     for t, N in enumerate(fractions):
@@ -90,32 +88,64 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths):
         sorted_positions[:, t] = ai
 
         q = cluster_strengths[t]
-        l = int(len(cell_grid_positions) * N)  # Number of cells for this type
+        l = round(len(cell_grid_positions) * N)  # Number of cells for this type
 
         draw_length = int(q * len(ai))
         draw_length = draw_length if draw_length > l else l
 
         draws = np.random.choice(draw_length, (l,), replace=False) if q > 0 else np.arange(0, l, dtype=int)
-        cell_types[ai[draws], t] = t + 1
+        cell_types[ai[draws], t + 1] = t + 1
+
+    def resolve_conflict(conflict_row, cs):
+
+        draw_list = []
+        for o in conflict_row:
+            g = lambda x: int(1e3) * int((-x + 1)) + 1
+            draw_list = draw_list + g(cs[o]) * [o]  # this is a very crude solution
+        draw_list = np.ravel(draw_list)
+
+        ti = np.random.choice(draw_list, 1, replace=False)[0]
+        ti = np.argwhere(draw_list == ti)[0, 0]
+        winner_index = np.argwhere(conflict_row == draw_list[ti])[0, 0]
+        remaining_indices = np.delete(conflict_row, winner_index)
+
+        return winner_index, remaining_indices
 
     # This loop looks for conflicts and resovles them
-    for i in np.random.choice(len(cell_types), len(cell_types), replace=False):
 
-        nz = np.where(cell_types[i])[0]
-        if len(nz) == 0:
-            continue
-        else:
+    positions_to_check = np.where(np.count_nonzero(cell_types[:, 1:], axis=1) > 1)[0]
+    offset = np.zeros(shape=(len(fractions, )), dtype=int)
 
-            ti = np.random.choice(nz - 1, 1, replace=False)[0]
-            cell_type[i] = nz[ti] + 1
-            empty_position_indices = np.where(np.all(np.invert(cell_types), axis=1))[0]
-            for o in np.delete(nz, ti):
-                for p in sorted_positions[:, o]:
-                    if p in empty_position_indices:
-                        cell_type[p] = o + 1
-                        empty_position_indices = np.delete(empty_position_indices,
-                                                           np.where(empty_position_indices == p))
-                        cell_types[p, o] = True
-                        break
+    counter = 0
+    while len(positions_to_check) > 0:
+        if counter > 1e4:
+            raise StopIteration
 
-    return cell_type
+        counter += 1
+        i = np.random.choice(len(positions_to_check), 1, replace=False)[0]
+        ii = positions_to_check[i]
+        nz = np.where(cell_types[ii, 1:])[0]
+        assert len(nz) > 1
+
+        winner_index, remaining_indices = resolve_conflict(nz, cluster_strengths)
+        # cell_types[ii, winner_index + 1] = True
+
+        for o in remaining_indices:
+            cell_types[ii, o + 1] = False
+            candidates = np.where(sorted_positions[offset[o]:, o] >= 0)[0]
+            for k, m in enumerate(candidates):
+
+                pi = candidates[k]
+                p = sorted_positions[offset[o]:, o][pi]
+                if cell_types[p, o + 1]:
+                    continue
+                else:
+                    cell_types[p, o + 1] = True
+                    break
+
+            sorted_positions[offset[o] + pi, o] = -1
+
+        positions_to_check = np.where(np.count_nonzero(cell_types[:, 1:], axis=1) > 1)[0]
+
+    cell_types[:, 0] = np.invert(np.any(cell_types[:, 1:], axis=1))
+    return np.where(cell_types)[1]
