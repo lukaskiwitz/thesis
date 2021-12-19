@@ -447,7 +447,9 @@ class Plotter(SimComponent):
 
         scan_axis_name = self.scan_index_key
 
-        axis_df = self.global_df.loc[self.global_df[scan_axis_name].notna()]
+        df = self.global_df if self.scan_index_key in self.global_df.columns else self.cell_df
+
+        axis_df = df.loc[df[scan_axis_name].notna()]
         ticks = axis_df[self.scan_index_key].unique()
 
         labels = axis_df[scan_axis_name]
@@ -776,6 +778,7 @@ class Plotter(SimComponent):
                                cummulative=False, estimator=None, xlim=None, marker=None,
                                ylim=None, ci="sd", dashes=True, **kwargs) -> None:
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
+        df = df.loc[df[self.time_key] == self.t_max]
 
         df, ci = self.compute_ci(
             df,
@@ -1167,7 +1170,7 @@ class Plotter(SimComponent):
         ax.set_xlabel(self.get_label(x_name))
 
     def _compute_radial_profile(self, df, y_names, center_func=lambda df: df.loc[df["type_name"] == "sec"], n_workers=8,
-                                chunksize=32, additional_categories=[]):
+                                chunksize=8, additional_categories=[]):
 
         if not isinstance(y_names, List):
             y_names = [y_names]
@@ -1799,14 +1802,14 @@ def run_single_step(i, dfg):
         distances = r[:, i][:, 0]
         sort_index = np.argsort(distances)
 
-        distances = np.take_along_axis(distances, sort_index, axis=0)
-        single_center_result["distance"] = distances
-        properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
-                                  scan_index_key] + y_names + groups
-        for p in properties:
-            single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
+            distances = np.take_along_axis(distances, sort_index, axis=0)
+            single_center_result["distance"] = distances
+            properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
+                                      scan_index_key] + y_names + groups
+            for p in properties:
+                single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
 
-        chunk_result.append(single_center_result)
+            chunk_result.append(single_center_result)
 
     return pd.concat(chunk_result)
 
@@ -1820,5 +1823,8 @@ def get_distance_matrix(df):  # for single replicate
         np.array(df["z"], dtype=float),
     ]).T
 
-    r = distance_matrix(XX, XX, p=2)
+    if sources is not None:
+        r = distance_matrix(XX, sources, p=2)
+    else:
+        r = distance_matrix(XX, XX, p=2)
     return ids, r
