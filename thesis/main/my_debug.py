@@ -20,7 +20,7 @@ def setup_loggers(path: str, log_name = None, debug=False):
             log_name = ""
 
         logging.getLogger().handlers = []
-        logger = logging.getLogger('thesis.main')
+        logger = logging.getLogger('thesis')
         logger.handlers = []
 
         if debug:

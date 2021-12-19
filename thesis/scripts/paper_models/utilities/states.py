@@ -1,7 +1,13 @@
+import logging
+
 import numpy as np
 from scipy.constants import N_A
+
 from thesis.main.ParameterSet import MiscParameter
 from thesis.main.my_debug import message
+
+module_logger = logging.getLogger(__name__)
+
 
 class updateState():
 
@@ -25,7 +31,7 @@ class updateState():
             del a
         except KeyError:
             dims = 2
-        message("dims = " + str(dims))
+        message("dims = " + str(dims), module_logger)
         if dims == 3:
             cube_size = round(np.cbrt(no_of_cells), 0)
         else:
@@ -232,9 +238,9 @@ class updateState():
             e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
         sc.apply_type_changes(self.replicat_index)
 
-        message("Number of secreting cells: " +  str(len(Tsec_draws)))
-        message("Number of Ths: " +  str(no_of_Th))
-        message("Number of Tregs: " +  str(no_of_Treg))
+        message("Number of secreting cells: " + str(len(Tsec_draws)), module_logger)
+        message("Number of Ths: " + str(no_of_Th), module_logger)
+        message("Number of Tregs: " + str(no_of_Treg), module_logger)
 
         try:
             global_q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("global_q", "IL-2").get_in_sim_unit()
@@ -243,15 +249,15 @@ class updateState():
         if global_q == True:
             q_il2_sum = len(sc.entity_list) * 0.1 * 30 * N_A ** -1 * 1e9
             if len(Tsec_draws) != 0:
-                message("Cells q: " + str(q_il2_sum / len(Tsec_draws) / (N_A ** -1 * 1e9)))
+                message("Cells q: " + str(q_il2_sum / len(Tsec_draws) / (N_A ** -1 * 1e9)), module_logger)
             else:
-                message("Cells q = 0")
+                message("Cells q = 0", module_logger)
         else:
             if len(Tsec_draws) != 0:
                 q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("q", "IL-2").get_in_post_unit()
-                message("Cells q: " + str(q))
+                message("Cells q: " + str(q), module_logger)
             else:
-                message("Cells q: 0")
+                message("Cells q: 0", module_logger)
             q_il2_sum = None
         return Tsec_draws, Th_draws, Treg_draws, q_il2_sum
 

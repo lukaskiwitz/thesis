@@ -1,8 +1,14 @@
+import logging
+
 import numpy as np
+
 from thesis.main.ParameterSet import MiscParameter
 from thesis.main.my_debug import message
 
-def update_state(sc, replicat_index, parameter_pool, apcs = np.array([[140, 140, 140]])):
+module_logger = logging.getLogger(__name__)
+
+
+def update_state(sc, replicat_index, parameter_pool, apcs=np.array([[140, 140, 140]])):
     """
     Grid clustering is implemented using cellBehaviourUtilities.grid_clustering.
     Note that cell fractions are controlled by the clustering function.
@@ -59,13 +65,13 @@ def update_state(sc, replicat_index, parameter_pool, apcs = np.array([[140, 140,
 
     from thesis.scripts.paper_models.utilities.states import updateState as updateStatePatrick
     updateStatePatrick.parameter_pool = parameter_pool
-    updateStatePatrick.set_R_lognorm_parameters(updateStatePatrick, sc, 
-                                                Tsec_draws = Tsec_draws,
-                                                Th_draws = Th_draws,
-                                                Treg_draws = Treg_draws,
-                                                q_il2_sum = None
+    updateStatePatrick.set_R_lognorm_parameters(updateStatePatrick, sc,
+                                                Tsec_draws=Tsec_draws,
+                                                Th_draws=Th_draws,
+                                                Treg_draws=Treg_draws,
+                                                q_il2_sum=None
                                                 )
 
-    message("Number of secreting cells: " + str(len(Tsec_draws)))
-    message("Number of Ths: " + str(len(Th_draws)))
-    message("Number of Tregs: " + str(len(Treg_draws)))
+    message("Number of secreting cells: " + str(len(Tsec_draws)), module_logger)
+    message("Number of Ths: " + str(len(Th_draws)), module_logger)
+    message("Number of Tregs: " + str(len(Treg_draws)), module_logger)
