@@ -310,9 +310,8 @@ class StateManager(SimComponent):
                     self.scan_container.t = 0
 
                     get_sim_container_task = sample_task.start_child("build_sim_container")
-                    self.sim_container = self.scenario.get_sim_container(self.get_scan_sample(scan_index).p,
+                    self.sim_container = self.scenario.get_sim_container(self.path, self.get_scan_sample(scan_index),
                                                                          model_index=model_index)
-                    self.sim_container.top_path = self.path
 
                     get_sim_container_task.stop()
                     sample_task.add_child(self.sim_container.record)

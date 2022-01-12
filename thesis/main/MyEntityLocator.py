@@ -1,12 +1,15 @@
+import json
+import os
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.spatial import cKDTree, distance_matrix
+from scipy.spatial import cKDTree
 
 from thesis.main.Entity import Entity, Cell
 from thesis.main.EntityType import EntityType, CellType
 from thesis.main.ParameterSet import ParameterSet
 from thesis.main.SimComponent import SimComponent
+from thesis.main.my_debug import message
 
 
 # module_logger = logging.getLogger(__name__)
@@ -15,10 +18,38 @@ from thesis.main.SimComponent import SimComponent
 class MyEntityLocator(ABC, SimComponent):
 
     def __init__(self):
-        super(MyEntityLocator, self).__init__()
+        super().__init__()
+
+    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, overwrite_cache=True) -> [
+        Entity]:
+
+        entity_list = self._get_entity_list(entity_types, global_p, path)
+
+        fp = os.path.join(path, "entity_id_to_pos_map.json")
+
+        if os.path.exists(fp) and not overwrite_cache:
+            with open(fp, "r") as f:
+                id_to_pos_map = {int(k): v for k, v in json.load(f).items()}
+
+            message("loaded id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
+            c = 0
+            for e in entity_list:
+                if e.id in id_to_pos_map.keys():
+                    c = c + 1
+                    e.center = id_to_pos_map[e.id]
+
+            message("restored id-to-pos map for {n} entities".format(n=c), self.logger)
+
+        else:
+            id_to_pos_map = {e.id: list(e.center) for e in entity_list}
+            message("saving id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
+            with open(fp, "w") as f:
+                json.dump(id_to_pos_map, f)
+
+        return entity_list
 
     @abstractmethod
-    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet) -> [Entity]:
+    def _get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str) -> [Entity]:
         return None
 
 
@@ -47,7 +78,7 @@ class MyCellListLocator(MyEntityLocator):
         self.cell_pos = cell_pos
         self.cell_types = cell_types
 
-    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
+    def _get_entity_list(self, cell_type: CellType, global_p: ParameterSet, path: str) -> [Cell]:
         assert issubclass(type(cell_type), CellType)
 
         cell_list = []
@@ -62,7 +93,7 @@ class MyCellListLocator(MyEntityLocator):
             assert r is not None and r > 0
             cell = Cell(p, r, [])
             cell.set_cell_type(cell_type, None, 0)
-
+            cell.id = i
             cell_list.append(cell)
 
         return cell_list
@@ -77,7 +108,7 @@ class MyCellGridLocator(MyEntityLocator):
     def __init__(self):
         super(MyCellGridLocator, self).__init__()
 
-    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
+    def _get_entity_list(self, cell_type: CellType, global_p: ParameterSet, path: str) -> [Cell]:
 
         assert issubclass(type(cell_type), CellType)
 
@@ -95,6 +126,7 @@ class MyCellGridLocator(MyEntityLocator):
 
             cell = Cell(p, r, [])
             cell.set_cell_type(cell_type, None, 0)
+            cell.id = i
             cell_list.append(cell)
 
         return cell_list
@@ -118,10 +150,9 @@ class MyRandomCellLocator(MyCellGridLocator):
     """
 
     def __init__(self):
+        super().__init__()
 
-        pass
-
-    def get_entity_list(self, cell_type: CellType, global_p: ParameterSet) -> [Cell]:
+    def _get_entity_list(self, cell_type: CellType, global_p: ParameterSet, path: str) -> [Cell]:
         assert issubclass(type(cell_type), CellType)
         r = cell_type.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
 
@@ -132,7 +163,7 @@ class MyRandomCellLocator(MyCellGridLocator):
             assert r is not None and r > 0
             cell = Cell(p, r, [])
             cell.set_cell_type(cell_type, None, 0)
-
+            cell.id = i
             cell_list.append(cell)
 
         return cell_list

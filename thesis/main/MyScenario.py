@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from typing import Union, List, Mapping
 
@@ -61,26 +62,34 @@ class MyScenario(SimComponent):
                 return i
         raise ModelNameNotFoundError("There is no model with this name in this scenario")
 
-    def get_sim_container(self, p: Union[ParameterSet, None], model_index):
+    def get_sim_container(self, path: str, scan_sample: Union[ScanSample, None], model_index):
 
+        if scan_sample is not None:
+            p = scan_sample.p
+            overwrite_locator_cache = scan_sample.remesh_scan_sample or scan_sample.remesh_timestep
+        else:
+            p = ParameterSet("dummy", [])
+            overwrite_locator_cache = False
         global_model = self.global_models[model_index]
 
         parameter_set = deepcopy(self.global_parameters)
         if p is not None:
             parameter_set.update(p, overwrite=True)
 
-        for locator in self.entity_locators:
-            cell_list = locator.get_entity_list(self.entity_types[0], parameter_set)
-
-        parameter_set.update(global_model.build_parameter_set(self.parameter_pool))
-
         sc = SimContainer(parameter_set)
+        sc.path = path
+        sc.top_path = path
+        parameter_set.update(global_model.build_parameter_set(self.parameter_pool))
 
         for p in global_model.get_problem_list(parameter_set):
             sc.add_problem(p)
 
         for i in self.internal_solvers:
             sc.add_internal_solver(i)
+
+        for locator in self.entity_locators:
+            cell_list = locator.get_entity_list(self.entity_types[0], parameter_set, os.path.abspath(sc.top_path),
+                                                overwrite_cache=overwrite_locator_cache)
 
         for c in cell_list:
             sc.add_entity(c)

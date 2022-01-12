@@ -41,9 +41,7 @@ class StaticSimContainerTest(MyTest):
     def test_static_pde(self):
 
         scenario = scenario_setup()
-        sc = scenario.get_sim_container(None, model_index=0)
-        sc.path = self.path
-        sc.top_path = self.path
+        sc = scenario.get_sim_container(self.path, None, model_index=0)
 
         def post_step(sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
             for f in sc.global_problems:
@@ -59,9 +57,7 @@ class StaticSimContainerTest(MyTest):
     def test_static_ode(self):
 
         scenario = scenario_setup()
-        sc = scenario.get_sim_container(None, model_index=1)
-        sc.path = self.path
-        sc.top_path = self.path
+        sc = scenario.get_sim_container(self.path, None, model_index=1)
 
         def post_step(sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
             for f in sc.global_problems:
@@ -80,9 +76,7 @@ class TimeSeriesSimContainerTest(MyTest):
     def test_pde(self):
 
         scenario = scenario_setup()
-        sc = scenario.get_sim_container(None, model_index=0)
-        sc.path = self.path
-        sc.top_path = self.path
+        sc = scenario.get_sim_container(self.path, None, model_index=0)
 
         def post_step(sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
             for f in sc.global_problems:
@@ -100,9 +94,7 @@ class TimeSeriesSimContainerTest(MyTest):
     def test_ode(self):
 
         scenario = scenario_setup()
-        sc = scenario.get_sim_container(None, model_index=1)
-        sc.path = self.path
-        sc.top_path = self.path
+        sc = scenario.get_sim_container(self.path, None, model_index=1)
 
         def post_step(sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
             for f in sc.global_problems:

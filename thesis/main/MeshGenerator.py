@@ -5,7 +5,7 @@ Created on Thu May 23 12:06:41 2019
 
 @author: Lukas Kiwitz
 """
-
+import json
 import logging
 import os
 
@@ -91,27 +91,42 @@ class MeshGenerator:
             boundary_markers = fcs.MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
             with fcs.HDF5File(fcs.MPI.comm_world, subdomain_path, "r") as f:
                 f.read(boundary_markers, "/boundaries")
+
+            with open(os.path.join(os.path.dirname(mesh_path), "id_map.json"), "r") as f:
+                id_map = {int(k): v for k, v in json.load(f).items()}
+
+            c = 0
+            message("loading patch indices from file for {n} entities".format(n=len(id_map)), self.logger)
             for i, o in enumerate(self.entityList):
-                domain_patches = self.outerDomain.get_subdomains()
-                a = domain_patches[-1]["patch"] + 1 if len(domain_patches) > 0 else 1
-                o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
-                o["patch"] = i + a
+                if o["entity"].id in id_map.keys():
+                    c = c + 1
+                    o["patch"] = id_map[o["entity"].id]
+            message("restored patch indices for {n} entities from file".format(n=c), self.logger)
 
         else:
             boundary_markers = fcs.MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
             boundary_markers.set_all(0)
             message("boundaries marked", self.logger)
 
+
             for i in self.outerDomain.get_subdomains():
                 i["entity"].get_subdomain().mark(boundary_markers, i["patch"])
             message("outer domain set", self.logger)
+
             for i, o in enumerate(self.entityList):
                 domain_patches = self.outerDomain.get_subdomains()
                 a = domain_patches[-1]["patch"] + 1 if len(domain_patches) > 0 else 1
                 o["entity"].get_compiled_subdomain().mark(boundary_markers, i + a)
                 o["patch"] = i + a
+
             message("loop complete", self.logger)
             if load_subdomain:
                 with fcs.HDF5File(fcs.MPI.comm_world, subdomain_path, "w") as f:
                     f.write(boundary_markers, "/boundaries")
+
+                id_map = {o["entity"].id: o["patch"] for o in self.entityList}
+                message("saving patch indices to file for {n} entities".format(n=len(id_map)), self.logger)
+                with open(os.path.join(os.path.dirname(mesh_path), "id_map.json"), "w") as f:
+                    json.dump(id_map, f)
+
         return mesh, boundary_markers

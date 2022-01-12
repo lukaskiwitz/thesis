@@ -259,11 +259,13 @@ class SimContainer(SimComponent):
 
         return tmp_path
 
-    def get_current_path(self) -> str:
+    def get_current_path(self, abspath=False) -> str:
 
         """Returns current path"""
-
-        return self.path
+        if abspath:
+            return os.path.abspath(self.path)
+        else:
+            return self.path
 
     def _pre_replicat(self, sc: 'SimContainer', time_index: int, replicat_index: int, t: float, T: List[float]) -> None:
         pass
@@ -393,10 +395,10 @@ class SimContainer(SimComponent):
 
         entity.p.update(self.p)
 
-        if len(self.entity_list) > 0:
-            entity.id = self.entity_list[-1].id + 1
-        else:
-            entity.id = 0
+        # if len(self.entity_list) > 0:
+        #     entity.id = self.entity_list[-1].id + 1
+        # else:
+        #     entity.id = 0
 
         entity.p.update(MiscParameter("id", entity.id), overwrite=True)
         self.entity_list.append(entity)
