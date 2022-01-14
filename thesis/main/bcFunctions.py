@@ -8,8 +8,6 @@ Created on Mon Jun 10 19:42:20 2019
 
 from thesis.main.my_debug import message
 
-# module_logger = logging.getLogger(__name__)
-
 
 def cellBC(u, p, field_quantity, area=1):
     """
@@ -19,7 +17,12 @@ def cellBC(u, p, field_quantity, area=1):
     R = p["R"]
     q = p["q"]
     k_on = p["k_on"]
+    k_off = p["k_off"]
     D = p["D"]
+    try:
+        KD = p["KD"]
+    except:
+        KD = k_off / k_on
 
     uptake = k_on * R * u
 
@@ -33,16 +36,8 @@ def cellBC(u, p, field_quantity, area=1):
             Kc = p["Kc"]
             uptake = k_on * R * Kc * u / (Kc + u)
         elif v == "patrick_saturation":
-            k_off = p["k_off"]
             k_endo = p["k_endo"]  # 1/s
-            KD = k_off / k_on
-
-            try:
-                uptake = k_endo * R * u / (KD + u)
-            except TypeError:
-                KD = float(KD)
-                k_endo = float(k_endo)
-                uptake = k_endo * R * u / (KD + u)
+            uptake = k_endo * R * u / (KD + u)
 
         elif v == "amax_saturation":
             Kc = p["Kc"]
@@ -51,7 +46,7 @@ def cellBC(u, p, field_quantity, area=1):
         else:
             raise Exception
     else:
-        message("bc type not in parameters. Using linear boundary condition", module_logger)
+        message("bc type not in parameters. Using linear boundary condition")
 
     secretion = q
     linear = secretion / (D * area)

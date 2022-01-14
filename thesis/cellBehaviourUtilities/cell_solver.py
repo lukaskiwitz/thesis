@@ -109,7 +109,7 @@ class kineticSolver(InternalSolver):
             p.get_physical_parameter("R", "IL-2").set_in_sim_unit(initial_R)
 
         else:
-            if celltype != "Tsec":
+            if celltype != "Tsec" and celltype != "Tnaive":
                 #get parameters from scan
                 N = p.get_misc_parameter("hill_factor", "misc").get_in_post_unit()
                 il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit() * 1e-9 #post is nM, neeeded in units of Km --> M

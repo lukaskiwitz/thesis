@@ -152,6 +152,41 @@ class MyRandomCellLocator(MyCellGridLocator):
     def __init__(self):
         super().__init__()
 
+    def correct_overlaps(self, positions, iterations, rho, penalty):
+        for i in range(iterations):
+            len_neighbors = 0
+            tree = cKDTree(positions)
+            for j in range(len(positions)):
+                neighbors = tree.query(positions[j], 3, distance_upper_bound=(rho + penalty) * 2, n_jobs=1)[1][1:]
+                neighbors = neighbors[neighbors != len(positions)]
+                length = len(neighbors)
+                len_neighbors += length
+                if length != 0:
+                    cell_1 = np.mean(positions[neighbors], axis=0)
+                    cell_2 = positions[j]
+                    factor = 1.01 if length > 4 else 0.1
+                    c_c_v = ((cell_2 - cell_1) / 2) * factor
+                    positions[j] += + c_c_v
+
+            if len_neighbors == 0:
+                break
+        return positions
+
+    def random_3D_vector(self, length):
+        """
+        Generates a random 3D unit vector (direction) with a uniform spherical distribution
+        Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
+        :return:
+        """
+        phi = np.random.uniform(0, np.pi * 2)
+        costheta = np.random.uniform(-1, 1)
+
+        theta = np.arccos(costheta)
+        x = np.sin(theta) * np.cos(phi)
+        y = np.sin(theta) * np.sin(phi)
+        z = np.cos(theta)
+        return np.array([x, y, z]) * length
+
     def _get_entity_list(self, cell_type: CellType, global_p: ParameterSet, path: str) -> [Cell]:
         assert issubclass(type(cell_type), CellType)
         r = cell_type.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
@@ -175,32 +210,21 @@ class MyRandomCellLocator(MyCellGridLocator):
         zz = self.make_grid(global_p, "z_grid")
 
         length = len(xx) * len(yy) * len(zz)
-        x = np.random.uniform(np.min(xx), np.max(xx), (1, length))
-        y = np.random.uniform(np.min(yy), np.max(yy), (1, length))
-        z = np.random.uniform(np.min(zz), np.max(zz), (1, length))
 
-        positions = np.vstack(list(zip(x.ravel(), y.ravel(), z.ravel())))
+        x, y, z = np.meshgrid(xx, yy, zz)
+
+        positions = np.array([np.ravel(x), np.ravel(y), np.ravel(z)]).T
+
+        steps = global_p.get_misc_parameter("steps", "geometry").get_in_sim_unit(type=int)
+        step_size = global_p.get_misc_parameter("step_size", "geometry").get_in_sim_unit(type=float)
+
+        f = lambda x: x + self.random_3D_vector(step_size)
+        for i in range(steps):
+            positions = np.array([f(xi) for xi in positions])
 
         iterations = 1000
-
-        for i in range(iterations):
-            len_neighbors = 0
-            tree = cKDTree(positions)
-            for j in range(len(positions)):
-                neighbors = tree.query(positions[j], 2, distance_upper_bound = (rho + penalty) * 2, n_jobs = 1)[1][1:]
-                neighbors = neighbors[neighbors != len(positions)]
-                length = len(neighbors)
-                len_neighbors += length
-                if length != 0:
-                    cell_1 = np.mean(positions[neighbors], axis=0)
-                    cell_2 = positions[j]
-                    factor = 1.01 if length > 4 else 0.1
-                    c_c_v = ((cell_2 - cell_1) / 2) * factor
-                    positions[j] += + c_c_v
-
-            if len_neighbors == 0:
-                break
-
+        positions = self.correct_overlaps(positions, iterations, rho, penalty)
 
         return positions
+
 
