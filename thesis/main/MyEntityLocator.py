@@ -23,7 +23,7 @@ class MyEntityLocator(ABC, SimComponent):
     def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, overwrite_cache=True) -> [
         Entity]:
 
-        entity_list = self._get_entity_list(entity_types, global_p, path)
+
 
         fp = os.path.join(path, "entity_id_to_pos_map.json")
 
@@ -33,6 +33,15 @@ class MyEntityLocator(ABC, SimComponent):
 
             message("loaded id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
             c = 0
+
+            entity_list = []
+            for id, pos in id_to_pos_map.items():
+                r = entity_types.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+                cell = Cell(pos, r, [])
+                cell.set_cell_type(entity_types, None, 0)
+                cell.id = int(id)
+                entity_list.append(cell)
+
             for e in entity_list:
                 if e.id in id_to_pos_map.keys():
                     c = c + 1
@@ -41,6 +50,7 @@ class MyEntityLocator(ABC, SimComponent):
             message("restored id-to-pos map for {n} entities".format(n=c), self.logger)
 
         else:
+            entity_list = self._get_entity_list(entity_types, global_p, path)
             id_to_pos_map = {e.id: list(e.center) for e in entity_list}
             message("saving id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
             with open(fp, "w") as f:
