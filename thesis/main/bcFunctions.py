@@ -6,8 +6,11 @@ Created on Mon Jun 10 19:42:20 2019
 @author: lukas
 """
 
+import logging
+
 from thesis.main.my_debug import message
 
+module_logger = logging.getLogger(__name__)
 
 def cellBC(u, p, field_quantity, area=1):
     """
@@ -46,7 +49,7 @@ def cellBC(u, p, field_quantity, area=1):
         else:
             raise Exception
     else:
-        message("bc type not in parameters. Using linear boundary condition")
+        message("bc type not in parameters. Using linear boundary condition", module_logger)
 
     secretion = q
     linear = secretion / (D * area)
