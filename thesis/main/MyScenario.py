@@ -62,7 +62,7 @@ class MyScenario(SimComponent):
                 return i
         raise ModelNameNotFoundError("There is no model with this name in this scenario")
 
-    def get_sim_container(self, path: str, scan_sample: Union[ScanSample, None], model_index):
+    def get_sim_container(self, path: str, scan_sample: Union[ScanSample, None], model_index, ext_cache=""):
 
         if scan_sample is not None:
             p = scan_sample.p
@@ -87,8 +87,17 @@ class MyScenario(SimComponent):
         for i in self.internal_solvers:
             sc.add_internal_solver(i)
 
+        if not ext_cache == "":
+            sc.set_ext_cache(ext_cache)
+
+        if hasattr(sc.global_problems[0], "get_mesh_path"):
+            mesh_folder_path = "/".join(sc.global_problems[0].get_mesh_path(sc.path, 0, abspath=True).split("/")[:-1])
+        else:
+            mesh_folder_path = None
+
         for locator in self.entity_locators:
             cell_list = locator.get_entity_list(self.entity_types[0], parameter_set, os.path.abspath(sc.top_path),
+                                                mesh_folder_path,
                                                 overwrite_cache=overwrite_locator_cache)
 
         for c in cell_list:

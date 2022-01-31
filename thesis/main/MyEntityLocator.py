@@ -20,12 +20,16 @@ class MyEntityLocator(ABC, SimComponent):
     def __init__(self):
         super().__init__()
 
-    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, overwrite_cache=True) -> [
+    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, mesh_folder_path,
+                        overwrite_cache=True) -> [
         Entity]:
 
+        if mesh_folder_path is not None:
+            fp = os.path.join(mesh_folder_path, "entity_id_to_pos_map.json")
+        else:
+            fp = os.path.join(path, "entity_id_to_pos_map.json")
 
-
-        fp = os.path.join(path, "entity_id_to_pos_map.json")
+        os.makedirs("/".join(fp.split("/")[:-1]), exist_ok=True)
 
         if os.path.exists(fp) and not overwrite_cache:
             with open(fp, "r") as f:

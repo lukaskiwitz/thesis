@@ -1802,14 +1802,14 @@ def run_single_step(i, dfg):
         distances = r[:, i][:, 0]
         sort_index = np.argsort(distances)
 
-            distances = np.take_along_axis(distances, sort_index, axis=0)
-            single_center_result["distance"] = distances
-            properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
-                                      scan_index_key] + y_names + groups
-            for p in properties:
-                single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
+        distances = np.take_along_axis(distances, sort_index, axis=0)
+        single_center_result["distance"] = distances
+        properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
+                                  scan_index_key] + y_names + groups
+        for p in properties:
+            single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
 
-            chunk_result.append(single_center_result)
+        chunk_result.append(single_center_result)
 
     return pd.concat(chunk_result)
 

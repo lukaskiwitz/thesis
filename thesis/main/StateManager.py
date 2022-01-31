@@ -311,16 +311,17 @@ class StateManager(SimComponent):
 
                     get_sim_container_task = sample_task.start_child("build_sim_container")
                     self.sim_container = self.scenario.get_sim_container(self.path, self.get_scan_sample(scan_index),
+                                                                         ext_cache,
                                                                          model_index=model_index)
 
                     get_sim_container_task.stop()
                     sample_task.add_child(self.sim_container.record)
 
-                    self.apply_sample_flags(self.sim_container, scan_index)
+                    # if not ext_cache == "":
+                    #     self.sim_container.set_ext_cache(ext_cache)
+                    # self.apply_sample_flags(self.sim_container, scan_index)
 
                     initialize_task = sample_task.start_child("initialize")
-                    if not ext_cache == "":
-                        self.sim_container.set_ext_cache(ext_cache)
                     self.sim_container.initialize()
                     initialize_task.stop()
 
