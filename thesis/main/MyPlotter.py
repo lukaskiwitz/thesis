@@ -796,7 +796,7 @@ class Plotter(SimComponent):
         else:
             ax.set_xlabel(self.get_label(x_name))
 
-        from matplotlib.ticker import LogLocator, AutoLocator, \
+        from matplotlib.ticker import AutoLocator, \
             ScalarFormatter
 
         if xlog:
