@@ -14,10 +14,11 @@ from thesis.main.my_debug import warning
 
 # module_logger = logging.getLogger(__name__)
 
+class UnknownCenterTypeError(Exception): pass
 
 class Plotter(SimComponent):
 
-    def __init__(self, path, groups=[]) -> None:
+    def __init__(self, path, groups=[], load_dataframes=None) -> None:
 
         super(Plotter, self).__init__()
 
@@ -95,10 +96,9 @@ class Plotter(SimComponent):
                    }
 
         sns.set_context("paper", rc=self.rc)
-        self.load(path, groups=groups)
+        self.load(path, groups=groups, load_dataframes=load_dataframes)
 
         self._prepare_color_dict()
-
         self.time_index_max, self.t_max = self.get_max_time_index()
 
     def update_rc(self, rc):
@@ -198,8 +198,16 @@ class Plotter(SimComponent):
             fields = self.global_df["field_name"].unique()
         except KeyError:
             fields = []
-        cell_types = self.cell_df["type_name"].unique()
-        t = self.cell_df[self.time_key].unique()
+
+        try:
+            cell_types = self.cell_df["type_name"].unique()
+        except KeyError:
+            cell_types = []
+
+        try:
+            t = self.cell_df[self.time_key].unique()
+        except KeyError:
+            t = []
 
         try:
             scan_names = self.global_df[self.scan_name_key].unique()
@@ -280,7 +288,7 @@ class Plotter(SimComponent):
 
         self.cell_df["activation"] = act
 
-    def load(self, path, groups=[]) -> None:
+    def load(self, path, groups=[], load_dataframes=None) -> None:
 
         if isinstance(path, str):
             path = [path]
@@ -288,7 +296,7 @@ class Plotter(SimComponent):
         acc = {}
         for p in path:
             try:
-                result = self.load_single_sim(p, groups)
+                result = self.load_single_sim(p, groups, load_dataframes=load_dataframes)
             except KeyError:
                 warning(
                     "could not load single sim at:\n{p}\nbecause dataframe did not contain necessary keys".format(p=p))
@@ -308,45 +316,80 @@ class Plotter(SimComponent):
             v.index = pd.RangeIndex(0, len(v))
             self.__setattr__(k, v)
 
-    def load_single_sim(self, path, groups) -> None:
+    def load_single_sim(self, path, groups, load_dataframes=None) -> None:
+
+        if load_dataframes is not None:
+            load = {
+                "global": True,
+                "cell": True,
+                "cell_constants": True,
+                "timing": True,
+                "ruse": True
+            }
+            load.update(load_dataframes)
+            load_dataframes = load
+        else:
+            load_dataframes = {
+                "global": True,
+                "cell": True,
+                "cell_constants": True,
+                "timing": True,
+                "ruse": True
+            }
 
         assert os.path.exists(path)
         ruse_df = pd.DataFrame()
-        try:
-            global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
-            global_df = self.reset_scan_index(global_df)
-        except FileNotFoundError as e:
-            global_df = pd.DataFrame()
+        if load_dataframes["global"]:
+            try:
+                global_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "global_df.h5"))
+                global_df = self.reset_scan_index(global_df)
+            except FileNotFoundError as e:
+                global_df = None
+        else:
+            global_df = None
 
-        try:
-            cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
-        except FileNotFoundError as e:
-            cell_df = pd.DataFrame()
-        try:
-            if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
-                cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
-            else:
+        if load_dataframes["cell"]:
+            try:
+                cell_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_df.h5"), mode="r")
+            except FileNotFoundError as e:
+                cell_df = None
+        else:
+            cell_df = None
+
+        if load_dataframes["cell_constants"]:
+            try:
+                if os.path.exists(os.path.join(path, "cell_constants_df.h5")):
+                    cell_constants: pd.DataFrame = pd.read_hdf(os.path.join(path, "cell_constants_df.h5"), mode="r")
+                else:
+                    cell_constants = pd.DataFrame()
+            except FileNotFoundError as e:
                 cell_constants = pd.DataFrame()
-        except FileNotFoundError as e:
+        else:
             cell_constants = pd.DataFrame()
 
         self.cell_constants = None
 
-        try:
-            timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
-            timing_df = self.reset_scan_index(timing_df)
-        except FileNotFoundError as e:
+        if load_dataframes["timing"]:
+            try:
+                timing_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "timing_df.h5"), mode="r")
+                timing_df = self.reset_scan_index(timing_df)
+            except FileNotFoundError as e:
+                timing_df = None
+        else:
             timing_df = None
 
-        try:
-            ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
-            ruse_df = self.reset_scan_index(ruse_df)
-        except FileNotFoundError as e:
+        if load_dataframes["ruse"]:
+            try:
+                ruse_df: pd.DataFrame = pd.read_hdf(os.path.join(path, "records/ruse.h5"), mode="r")
+                ruse_df = self.reset_scan_index(ruse_df)
+            except FileNotFoundError as e:
+                ruse_df = None
+        else:
             ruse_df = None
 
         # self.timing_df = timing_df
 
-        if self.scan_index_key not in global_df.columns:
+        if global_df is not None and self.scan_index_key not in global_df.columns:
             self.scan_index_key = "scan_index"
 
         groups = groups + [
@@ -363,73 +406,68 @@ class Plotter(SimComponent):
             # "id_id",
             # "id"
         ]
-        if self.scan_name_key in global_df.columns:
+        if global_df is not None and self.scan_name_key in global_df.columns:
             groups.append(self.scan_name_key)
 
         for g in groups:
-            if g in cell_constants:
+            if cell_constants is not None and g in cell_constants:
                 cell_df[g] = cell_constants[g]
-        cell_df = self.reset_scan_index(cell_df)
 
-        cell_df["id"] = cell_df["id"].astype("int")
-        cell_df["id_id"] = cell_df["id_id"].astype("int")
+        if cell_df is not None:
+            cell_df = self.reset_scan_index(cell_df)
+            cell_df["id"] = cell_df["id"].astype("int")
+            cell_df["id_id"] = cell_df["id_id"].astype("int")
 
-        cell_df["x"] = cell_df["x"].astype("float")
-        cell_df["y"] = cell_df["y"].astype("float")
-        cell_df["z"] = cell_df["z"].astype("float")
+            cell_df["x"] = cell_df["x"].astype("float")
+            cell_df["y"] = cell_df["y"].astype("float")
+            cell_df["z"] = cell_df["z"].astype("float")
 
-        if self.scan_name_key in list(cell_df.columns) and self.scan_name_key not in groups:
-            groups.append(self.scan_name_key)
+            if self.scan_name_key in list(cell_df.columns) and self.scan_name_key not in groups:
+                groups.append(self.scan_name_key)
 
-        groups = [g for g in groups if g in cell_df.columns]
-        grouped_cells = cell_df.groupby(groups, as_index=True)
+            groups = [g for g in groups if g in cell_df.columns]
+            grouped_cells = cell_df.groupby(groups, as_index=True)
 
-        means = grouped_cells.mean()
-        means.reset_index(inplace=True)
-        # self.means = means
+            means = grouped_cells.mean()
+            means.reset_index(inplace=True)
 
-        counts = grouped_cells.count()
-        counts.reset_index(inplace=True)
-        counts["n"] = counts["id"]
-        # counts = counts.drop(columns=counts.columns.drop(["n"]))
+            counts = grouped_cells.count()
+            counts.reset_index(inplace=True)
+            counts["n"] = counts["id"]
 
-        # groups = groups + [
-        #     "IL-2_surf_c",
-        #     "x",
-        #     "y",
-        #     "z",
-        #     "id_id",
-        #     "id"
-        # ]
+            if "type_name" in groups:
+                groups.remove("type_name")
 
-        if "type_name" in groups:
-            groups.remove("type_name")
+            total = pd.Series(np.zeros(len(counts)))
 
-        total = pd.Series(np.zeros(len(counts)))
+            for i, g in counts.groupby(groups):
+                n = g["n"].sum()
+                for o in g.index:
+                    total.iloc[o] = n
 
-        for i, g in counts.groupby(groups):
-            n = g["n"].sum()
-            for o in g.index:
-                total.iloc[o] = n
-
-        counts.reset_index(inplace=True)
-        counts["n_rel"] = counts["n"] / total
-        # self.counts = counts
+            counts.reset_index(inplace=True)
+            counts["n_rel"] = counts["n"] / total
+        else:
+            counts = None
+            means = None
 
         return {"global_df": global_df, "cell_df": cell_df, "means": means, "timing_df": timing_df, "counts": counts,
                 "ruse": ruse_df}
 
     def get_max_time_index(self) -> float:
 
-        df = self.global_df if self.time_index_key in self.global_df.columns else self.cell_df
+        try:
+            df = self.global_df if self.time_index_key in self.global_df.columns else self.cell_df
 
-        g = df[self.time_index_key].max()
-        g = [g, np.unique(df.loc[df[self.time_index_key] == g]["time"])[0]]
+            g = df[self.time_index_key].max()
+            g = [g, np.unique(df.loc[df[self.time_index_key] == g]["time"])[0]]
 
-        c = self.cell_df[self.time_index_key].max()
-        c = [c, np.unique(self.cell_df.loc[self.cell_df[self.time_index_key] == c]["time"])[0]]
+            c = self.cell_df[self.time_index_key].max()
+            c = [c, np.unique(self.cell_df.loc[self.cell_df[self.time_index_key] == c]["time"])[0]]
 
-        return np.max([g, c], axis=0)
+            return np.max([g, c], axis=0)
+        except KeyError:
+            return (None, None)
 
     def get_label(self, key) -> str:
 
@@ -762,7 +800,7 @@ class Plotter(SimComponent):
             ScalarFormatter
 
         if xlog:
-            ax.xaxis.set_major_locator(LogLocator())
+            # ax.xaxis.set_major_locator(LogLocator())
             ax.set_xscale("log")
         else:
             ax.xaxis.set_major_locator(AutoLocator())
@@ -1247,14 +1285,22 @@ class Plotter(SimComponent):
         # cell = df.loc[df.type_name == "sec"].iloc[5]
         # df = df.loc[(df.type_name == "abs") | (df.id_id == cell.id_id)]
 
+        if isinstance(center_type, str):
+            center_func = lambda df: df.loc[df["type_name"] == center_type]
+        elif isinstance(center_type, List):
+            center_func = center_type
+
+        else:
+            raise UnknownCenterTypeError
+
         if hasattr(self, "radials_df") and hue in self.radials_df.columns and y_name in self.radials_df.columns:
             ax, df, palette, hue = self.prepare_plot(self.radials_df, hue, **kwargs)
 
         else:
             print("recomputing radial profiles because hue or y_name wasn't found in cache")
             ax, df, palette, hue = self.prepare_plot(df, hue, **kwargs)
-            df = self._compute_radial_profile(df, [y_name, "type_name"] + additional_categories,
-                                              center_func=lambda df: df.loc[df["type_name"] == center_type],
+            df = self._compute_radial_profile(df, [y_name, "type_name", hue] + additional_categories,
+                                              center_func=center_func,
                                               additional_categories=additional_categories)
         df = plot_filter(df)
 
@@ -1793,14 +1839,31 @@ def run_single_step(i, dfg):
     scan_index_key = "scan_index"
 
     chunk_result = []
-    ids, r = get_distance_matrix(dfg)
 
-    for i, center in center_func(dfg).iterrows():
-        single_center_result = pd.DataFrame()
-        center_id = center["id"]
-        i = np.where(ids == center_id)[0]
-        distances = r[:, i][:, 0]
-        sort_index = np.argsort(distances)
+    if isinstance(center_func, List):
+
+        ids, r = get_distance_matrix(dfg, sources=center_func)
+        for i, center in enumerate(center_func):
+            single_center_result = pd.DataFrame()
+
+            distances = r[:, i]
+            sort_index = np.argsort(distances)
+
+            distances = np.take_along_axis(distances, sort_index, axis=0)
+            single_center_result["distance"] = distances
+            properties = ["id_id"] + ["raw_scan_index", time_index_key, scan_name_key,
+                                      scan_index_key] + y_names + groups
+            for p in properties:
+                single_center_result[p] = np.take_along_axis(np.array(dfg[p]), sort_index, axis=0)
+            chunk_result.append(single_center_result)
+    else:
+        ids, r = get_distance_matrix(dfg)
+        for i, center in center_func(dfg).iterrows():
+            single_center_result = pd.DataFrame()
+            center_id = center["id"]
+            i = np.where(ids == center_id)[0]
+            distances = r[:, i][:, 0]
+            sort_index = np.argsort(distances)
 
         distances = np.take_along_axis(distances, sort_index, axis=0)
         single_center_result["distance"] = distances
@@ -1814,7 +1877,7 @@ def run_single_step(i, dfg):
     return pd.concat(chunk_result)
 
 
-def get_distance_matrix(df):  # for single replicate
+def get_distance_matrix(df, sources=None):  # for single replicate
 
     ids = np.array(df["id"], dtype=int)
     XX = np.array([

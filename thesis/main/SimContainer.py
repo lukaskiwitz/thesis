@@ -58,6 +58,7 @@ class SimContainer(SimComponent):
     :ivar record: Class record object to store execution timing data
 
     :ivar default_sample: scan sample to reset sim object before each parameter scan
+    :ivar default_sample: scan sample for the current scan point
 
     :vartype p: Parameterset
     :vartype entity_list: List[Entity]
@@ -95,6 +96,7 @@ class SimContainer(SimComponent):
 
         self.markers: List[str] = ["type_name", "IL-2_surf_c"]
         self.default_sample: ScanSample = None
+        self.current_sample: ScanSample = None
 
 
     def initialize(self) -> None:
@@ -168,6 +170,9 @@ class SimContainer(SimComponent):
         run_task = self.record.start_child("run")
 
         for replicat_index in range(number_of_replicats):
+
+            self.reset_with_default_sample()
+            self.apply_sample(self.current_sample)
 
             # self.path = os.path.join(original_path, "replicat_{}".format(replicat_index))
             for field in self.global_problems:
@@ -529,3 +534,46 @@ class SimContainer(SimComponent):
         :return:
         """
         self.p = p
+
+    def reset_with_default_sample(self):
+
+        if self.default_sample is None:
+            return None
+
+        self.p.update(self.default_sample.p)
+
+        for f in self.global_problems:
+            f.apply_sample(self.default_sample)
+
+        for e in self.entity_list:
+            e.p.update(self.default_sample.p, overwrite=True)
+
+        for entity_type in self.default_sample.entity_types:
+            self.add_entity_type(entity_type)
+
+        for e in self.entity_list:
+            e.change_type = self.default_sample.entity_types[0].name
+
+        self.apply_type_changes(0)
+
+    def apply_sample(self, sample: ScanSample):
+
+        if sample is None:
+            return None
+
+        self.current_sample = sample
+
+        self.p.update(sample.p)
+        for f in self.global_problems:
+            f.apply_sample(sample)
+
+        for e in self.entity_list:
+            e.p.update(sample.p, overwrite=True)
+
+        for entity_type in sample.entity_types:
+            self.add_entity_type(entity_type)
+
+        for e in self.entity_list:
+            for cell_type in sample.entity_types:
+                if e.type_name == cell_type.name:
+                    e.change_type = cell_type.name

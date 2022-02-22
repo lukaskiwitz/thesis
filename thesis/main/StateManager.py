@@ -185,33 +185,35 @@ class StateManager(SimComponent):
         sample = self.get_scan_sample(scan_index)
 
         assert hasattr(sc, "default_sample")
+        sc.reset_with_default_sample()
+        sc.apply_sample(sample)
 
-        sc.p.update(sc.default_sample.p)
-        sc.p.update(sample.p)
+        # sc.p.update(sc.default_sample.p)
+        # sc.p.update(sample.p)
 
-        for f in sc.global_problems:
-            f.apply_sample(sc.default_sample)
-            f.apply_sample(sample)
-
-        for e in sc.entity_list:
-            e.p.update(sc.default_sample.p, overwrite=True)
-            e.p.update(sample.p, overwrite=True)
-
-        for entity_type in sc.default_sample.entity_types:
-            sc.add_entity_type(entity_type)
-
-        for entity_type in sample.entity_types:
-            sc.add_entity_type(entity_type)
-
-        for e in sc.entity_list:
-            for cell_type in sc.default_sample.entity_types:
-                if e.type_name == cell_type.name:
-                    e.change_type = cell_type.name
-
-        for e in sc.entity_list:
-            for cell_type in sample.entity_types:
-                if e.type_name == cell_type.name:
-                    e.change_type = cell_type.name
+        # for f in sc.global_problems:
+        #     # f.apply_sample(sc.default_sample)
+        #     f.apply_sample(sample)
+        #
+        # for e in sc.entity_list:
+        #     # e.p.update(sc.default_sample.p, overwrite=True)
+        #     e.p.update(sample.p, overwrite=True)
+        #
+        # # for entity_type in sc.default_sample.entity_types:
+        # #     sc.add_entity_type(entity_type)
+        #
+        # for entity_type in sample.entity_types:
+        #     sc.add_entity_type(entity_type)
+        #
+        # # for e in sc.entity_list:
+        # #     for cell_type in sc.default_sample.entity_types:
+        # #         if e.type_name == cell_type.name:
+        # #             e.change_type = cell_type.name
+        #
+        # for e in sc.entity_list:
+        #     for cell_type in sample.entity_types:
+        #         if e.type_name == cell_type.name:
+        #             e.change_type = cell_type.name
 
         return deepcopy(sample.p)
 
@@ -311,15 +313,11 @@ class StateManager(SimComponent):
 
                     get_sim_container_task = sample_task.start_child("build_sim_container")
                     self.sim_container = self.scenario.get_sim_container(self.path, self.get_scan_sample(scan_index),
-                                                                         ext_cache,
-                                                                         model_index=model_index)
+                                                                         model_index=model_index,
+                                                                         ext_cache=ext_cache)
 
                     get_sim_container_task.stop()
                     sample_task.add_child(self.sim_container.record)
-
-                    # if not ext_cache == "":
-                    #     self.sim_container.set_ext_cache(ext_cache)
-                    # self.apply_sample_flags(self.sim_container, scan_index)
 
                     initialize_task = sample_task.start_child("initialize")
                     self.sim_container.initialize()
