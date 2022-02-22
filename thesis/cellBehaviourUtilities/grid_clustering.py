@@ -48,7 +48,7 @@ def get_cell_grid_positions(x_dim, y_dim, z_dim, distance=20):
     return cells
 
 
-def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths):
+def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=0):
     """
     Generates clusters of cell types around an arbitrary number of apcs positions.
     Works in pseudo 2D.
@@ -63,7 +63,7 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths):
         because 0 indicates background. Values go from 0 to N_types + 1.
     """
 
-    np.random.seed(0)
+    np.random.seed(seed)
 
     individual = True
     bws = np.ones(shape=(len(fractions, ))) * np.max(cell_grid_positions)
