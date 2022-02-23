@@ -67,7 +67,7 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
 
     individual = True
     bws = np.ones(shape=(len(fractions, ))) * np.max(cell_grid_positions)
-
+    cluster_strengths = [1e-100 if cs == 0 else cs for cs in cluster_strengths]
     number_of_cell_types = len(fractions)
     cell_types = np.zeros(shape=(cell_grid_positions.shape[0], number_of_cell_types + 1), dtype=bool)
     sorted_positions = np.zeros((len(cell_grid_positions), len(fractions)), dtype=int)
@@ -89,22 +89,44 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
 
         q = cluster_strengths[t]
         l = round(len(cell_grid_positions) * N)  # Number of cells for this type
+        a = 0.5
 
-        draw_length = int(q * len(ai))
-        draw_length = draw_length if draw_length > l else l
+        def exp_choice(q, l, s):
 
-        draws = np.random.choice(draw_length, (l,), replace=False) if q > 0 else np.arange(0, l, dtype=int)
+            if l == 0:
+                return []
+
+            b = (1 / a - 1)
+            expected_value = 1 / (a * (q)) - b
+
+            def f(x, p, c):
+                return p * np.power((1 - p), (c * x))
+
+            x = np.arange(0, s, 1)
+            p = f(x, 1 / (expected_value + 1), 1 / (1 * l * a))
+            p = (1 / np.sum(p)) * p  # normalization for truncation error for large mean_distance
+
+            cutoff_index = np.max(np.nonzero(p)) + 1
+            x = x[:cutoff_index]
+            p = p[:cutoff_index]
+
+            draws = np.random.choice(x, (l,), replace=False, p=p)
+            return draws
+
+        draws = exp_choice(q, l, len(cell_grid_positions))
+
         cell_types[ai[draws], t + 1] = t + 1
 
     def resolve_conflict(conflict_row, cs):
 
-        draw_list = []
-        for o in conflict_row:
-            g = lambda x: int(1e3) * int((-x + 1)) + 1
-            draw_list = draw_list + g(cs[o]) * [o]  # this is a very crude solution
-        draw_list = np.ravel(draw_list)
+        draw_list = conflict_row
+        p = np.array([cs[o] for o in conflict_row])
+        if np.all(p == 0):
+            p = np.ones(p.shape)
 
-        ti = np.random.choice(draw_list, 1, replace=False)[0]
+        p = (1 / np.sum(p)) * p
+
+        ti = np.random.choice(draw_list, 1, replace=False, p=p)[0]
         ti = np.argwhere(draw_list == ti)[0, 0]
         winner_index = np.argwhere(conflict_row == draw_list[ti])[0, 0]
         remaining_indices = np.delete(conflict_row, winner_index)
@@ -114,10 +136,12 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
     # This loop looks for conflicts and resovles them
 
     positions_to_check = np.where(np.count_nonzero(cell_types[:, 1:], axis=1) > 1)[0]
+
     offset = np.zeros(shape=(len(fractions, )), dtype=int)
 
     counter = 0
     while len(positions_to_check) > 0:
+
         if counter > 1e4:
             raise StopIteration
 
@@ -126,24 +150,29 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
         ii = positions_to_check[i]
         nz = np.where(cell_types[ii, 1:])[0]
         assert len(nz) > 1
-
         winner_index, remaining_indices = resolve_conflict(nz, cluster_strengths)
-        # cell_types[ii, winner_index + 1] = True
 
         for o in remaining_indices:
             cell_types[ii, o + 1] = False
-            candidates = np.where(sorted_positions[offset[o]:, o] >= 0)[0]
-            for k, m in enumerate(candidates):
 
-                pi = candidates[k]
-                p = sorted_positions[offset[o]:, o][pi]
-                if cell_types[p, o + 1]:
-                    continue
-                else:
-                    cell_types[p, o + 1] = True
-                    break
+            def g(a, b):
+                r = np.random.uniform(0, 1, a.shape)
+                return (b - a) > r
 
-            sorted_positions[offset[o] + pi, o] = -1
+            candidates = np.argwhere(
+                np.all(
+                    np.logical_or(
+                        g(np.tile(cluster_strengths, (cell_types.shape[0], 1)), cluster_strengths[o]),
+                        cell_types[:, 1:][sorted_positions[:, 0]] == False)
+                    , axis=1)
+            )[:, 0]
+
+            assert (len(positions_to_check) == 1) or (len(candidates > 0))
+            if len(candidates) == 0:
+                break
+
+            p = exp_choice(cluster_strengths[o], 1, len(candidates))[0]
+            cell_types[sorted_positions[candidates[p], o], o + 1] = True
 
         positions_to_check = np.where(np.count_nonzero(cell_types[:, 1:], axis=1) > 1)[0]
 
