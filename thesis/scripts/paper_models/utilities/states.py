@@ -25,38 +25,41 @@ class updateState():
     def get_offset_ids(self,sc):
         no_of_cells = len(sc.entity_list)
         offset = self.offset
-        try:
-            a = self.geometry["z_grid"]
-            dims = 3
-            del a
-        except KeyError:
-            dims = 2
-        message("dims = " + str(dims), module_logger)
-        if dims == 3:
-            cube_size = round(np.cbrt(no_of_cells), 0)
+        if offset > 0:
+            try:
+                a = self.geometry["z_grid"]
+                dims = 3
+                del a
+            except KeyError:
+                dims = 2
+            message("dims = " + str(dims), module_logger)
+            if dims == 3:
+                cube_size = round(np.cbrt(no_of_cells), 0)
+            else:
+                cube_size = round(np.sqrt(no_of_cells), 0)
+            xr = np.arange(0, cube_size, 1)
+            yr = np.arange(0, cube_size, 1)
+
+            if dims == 3:
+                zr = np.arange(0, cube_size, 1)
+                z_offset = np.array([zr[:offset], zr[-offset:]]).flatten()
+            else:
+                zr = [None]
+                z_offset = []
+
+            x_offset = np.array([xr[:offset], xr[-offset:]]).flatten()
+            y_offset = np.array([yr[:offset], yr[-offset:]]).flatten()
+
+            anti_draws = []
+            counter = 0
+            for x in xr:
+                for y in yr:
+                    for z in zr:
+                        if x in x_offset or y in y_offset or z in z_offset:
+                            anti_draws.append(counter)
+                        counter += 1
         else:
-            cube_size = round(np.sqrt(no_of_cells), 0)
-        xr = np.arange(0, cube_size, 1)
-        yr = np.arange(0, cube_size, 1)
-
-        if dims == 3:
-            zr = np.arange(0, cube_size, 1)
-            z_offset = np.array([zr[:offset], zr[-offset:]]).flatten()
-        else:
-            zr = [None]
-            z_offset = []
-
-        x_offset = np.array([xr[:offset], xr[-offset:]]).flatten()
-        y_offset = np.array([yr[:offset], yr[-offset:]]).flatten()
-
-        anti_draws = []
-        counter = 0
-        for x in xr:
-            for y in yr:
-                for z in zr:
-                    if x in x_offset or y in y_offset or z in z_offset:
-                        anti_draws.append(counter)
-                    counter += 1
+            anti_draws = []
         return anti_draws
 
 
@@ -64,12 +67,12 @@ class updateState():
         possible_draws = np.setdiff1d(range(len(sc.entity_list)), offset_ids)
         free_draws = np.setdiff1d(possible_draws, excluded_ids)
 
-        if fraction == 0:
+        if fraction == 0 or len(free_draws) == 0:
             adj_fraction = 0
         else:
             adj_fraction = 1 / (len(free_draws) / (fraction * len(possible_draws)))
-        if np.abs(1.0 - adj_fraction) < 0.009:
-            adj_fraction = 1
+        # if np.abs(1.0 - adj_fraction) < 0.009:
+        #     adj_fraction = 1
 
         amount_of_draws = int(round(len(free_draws) * adj_fraction))
         if at_least_one == True:
@@ -79,7 +82,10 @@ class updateState():
         try:
             draws = np.random.choice(free_draws, amount_of_draws, replace=False)
         except ValueError:
-            draws = np.random.choice(free_draws, amount_of_draws - 1, replace=False)
+            if amount_of_draws > free_draws:
+                amount_of_draws = free_draws
+                message("Tried to pick more than available, set to maximum. Initial fraction was " + str(fraction), module_logger)
+            draws = np.random.choice(free_draws, amount_of_draws, replace=False)
         return draws
 
     @staticmethod
@@ -114,16 +120,18 @@ class updateState():
     def set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum):
         t_R_start = self.parameter_pool.get_template("R_start")
         t_EC50 = self.parameter_pool.get_template("EC50")
+        t_pSTAT5 = self.parameter_pool.get_template("pSTAT5")
         no_of_cells = len(Tsec_draws) + len(Th_draws) + len(Treg_draws)
-        systemic_R = int(round(no_of_cells * 0.1)) * 100 + (no_of_cells - int(round(no_of_cells * 0.1))) * 5e3
+        systemic_R = int(round(no_of_cells * 0.1)) * 100 + (no_of_cells - int(round(no_of_cells * 0.1))) * 1.5e3
         Th_R = systemic_R - len(Tsec_draws) * 100
 
         for i, e in enumerate(sc.entity_list):
             e.p.add_parameter_with_collection(t_EC50(0, in_sim=False))
+            e.p.add_parameter_with_collection(t_pSTAT5(0, in_sim=False))
             try:
                 gamma = e.p.get_physical_parameter("gamma", "IL-2").get_in_sim_unit()
             except:
-                gamma = float(e.p.get_physical_parameter("gamma", "misc").get_in_sim_unit())
+                gamma = float(e.p.get_as_dictionary()["misc_gamma"])
             if len(Tsec_draws) != 0 and e.type_name == "Tsec":
                 if q_il2_sum != None:
                     e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / len(Tsec_draws))
@@ -198,6 +206,7 @@ class updateState():
 
         Tsec_draws = self.get_draws(sc, offset_ids = offset_ids, excluded_ids=[], fraction=Tsec_fraction)
 
+
         if len(self.Tsec_distribution_array) != len(Tsec_draws):
             self.Tsec_distribution_array = Tsec_draws
         else:
@@ -246,15 +255,23 @@ class updateState():
             global_q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("global_q", "IL-2").get_in_sim_unit()
         except:
             global_q = sc.entity_list[Tsec_draws[0]].p.get_as_dictionary()["IL-2_global_q"]
+        q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("q", "IL-2").get_in_post_unit()
         if global_q == True:
-            q_il2_sum = len(sc.entity_list) * 0.1 * 30 * N_A ** -1 * 1e9
+            q_il2_sum = len(sc.entity_list) * 0.1 * q * N_A ** -1 * 1e9
             if len(Tsec_draws) != 0:
                 message("Cells q: " + str(q_il2_sum / len(Tsec_draws) / (N_A ** -1 * 1e9)), module_logger)
             else:
                 message("Cells q = 0", module_logger)
         else:
+            for draw in Tsec_draws:
+                half_time = 1
+                lamb = np.log(2) / half_time
+                beta = 1 / lamb
+                try:
+                    sc.entity_list[draw].p.get_misc_parameter("sec_start", "misc").set_in_post_unit(np.random.exponential(beta, 1) * 3600)
+                except AttributeError:
+                    pass
             if len(Tsec_draws) != 0:
-                q = sc.entity_list[Tsec_draws[0]].p.get_physical_parameter("q", "IL-2").get_in_post_unit()
                 message("Cells q: " + str(q), module_logger)
             else:
                 message("Cells q: 0", module_logger)
@@ -268,15 +285,72 @@ class updateState():
             var = sc.entity_list[0].p.get_as_dictionary()["scan_value"]
         else:
             var = sc.entity_list[0].p.get_misc_parameter("sigma", "misc").get_in_post_unit()
-        if var == 0:
-            self.set_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
-        else:
-            self.set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
-
-    def step_R_lognorm(self,sc):
-        Tsec_draws, Th_draws, Treg_draws, q_il2_sum = self.set_cell_types(sc)
         self.set_R_lognorm_parameters(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
+
 
     def reset_draw_arrays(self):
         self.Tsec_distribution_array = np.array([])
         self.Th_distribution_array = np.array([])
+
+
+
+
+    def step_close_to_ODE(self,sc):
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        print("special step, only if f_Tsec >= 0.5 !!!!!")
+        Tsec_draws, Th_draws, Treg_draws, q_il2_sum = self.set_cell_types(sc)
+        self.set_parameters_close_to_ODE(sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum)
+
+    def set_parameters_close_to_ODE(self, sc, Tsec_draws, Th_draws, Treg_draws, q_il2_sum):
+        t_R_start = self.parameter_pool.get_template("R_start")
+        t_EC50 = self.parameter_pool.get_template("EC50")
+        no_of_cells = len(Tsec_draws) + len(Th_draws) + len(Treg_draws)
+        systemic_R = int(round(no_of_cells * 0.1)) * 100 + (no_of_cells - int(round(no_of_cells * 0.1))) * 1.5e3
+        Th_R = (systemic_R - no_of_cells * 0.5 * 100)/(no_of_cells * 0.5)
+        systemic_Th_R = Th_R * len(Th_draws)
+        Tsec_R = (systemic_R - systemic_Th_R) / len(Tsec_draws)
+        message("Tsec_R: " + str(Tsec_R))
+        message("Th_R: " + str(Th_R))
+
+        for i, e in enumerate(sc.entity_list):
+            if len(Tsec_draws) != 0 and e.type_name == "Tsec":
+                if q_il2_sum != None:
+                    e.p.get_physical_parameter("q", "IL-2").set_in_sim_unit(q_il2_sum / len(Tsec_draws))
+                e.p.add_parameter_with_collection(t_R_start(Tsec_R, in_sim=False))
+                E = Tsec_R * N_A ** -1 * 1e9
+
+            elif e.type_name == "Th":
+
+                if e.p.get_as_dictionary()["scan_name_scan_name"] == "R_scan":
+                    Th_R = e.p.get_as_dictionary()["scan_value"]
+                # print(Th_start_R)
+                e.p.add_parameter_with_collection(t_R_start(Th_R, in_sim=False))
+                E = Th_R * N_A ** -1 * 1e9
+
+            elif e.type_name == "Tnaive":
+                e.p.add_parameter_with_collection(t_R_start(1e2, in_sim=False))
+                E = 0
+
+            elif e.type_name == "blank":
+                e.p.add_parameter_with_collection(t_R_start(0, in_sim=False))
+
+            if E != 0:
+                if e.p.get_as_dictionary()["scan_name_scan_name"] == "sigma":
+                    var = e.p.get_physical_parameter("sigma", "IL-2").get_in_post_unit()
+                else:
+                    var = e.p.get_misc_parameter("sigma", "misc").get_in_post_unit()
+                tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
+                mean = np.log(E) - 1 / 2 * tmp_sigma ** 2
+                R_draw = np.random.lognormal(mean, tmp_sigma)
+
+                e.p.get_physical_parameter("R", "IL-2").set_in_sim_unit(R_draw)
+                e.p.add_parameter_with_collection(t_R_start(R_draw, in_sim=True))
+

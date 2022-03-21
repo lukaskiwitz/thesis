@@ -37,6 +37,7 @@ class kineticSolver(InternalSolver):
             if pSTAT5_response == True:
                 feedback_k = il2 ** 3 / (EC50 ** 3 + il2 ** 3)
                 try:
+                    p.get_physical_parameter("pSTAT5", "IL-2").set_in_post_unit(feedback_k)
                     p.get_misc_parameter("pSTAT5", "misc").set_in_post_unit(feedback_k)
                 except:
                     pass #in case this function is importet without sc or sm
@@ -109,7 +110,19 @@ class kineticSolver(InternalSolver):
             p.get_physical_parameter("R", "IL-2").set_in_sim_unit(initial_R)
 
         else:
-            if celltype != "Tsec" and celltype != "Tnaive":
+            if celltype == "Tsec":
+                try:
+                    start_t = p.get_misc_parameter("sec_start", "misc").get_in_post_unit()
+                    p.get_physical_parameter("q", "IL-2").set_in_post_unit(10)
+                    if t1 > start_t:
+                        p.get_physical_parameter("q", "IL-2").set_in_post_unit(10)
+                        # print("started")
+                    else:
+                        p.get_physical_parameter("q", "IL-2").set_in_post_unit(0)
+                except AttributeError:
+                    pass
+                # pass
+            elif celltype != "Tsec" and celltype != "Tnaive":
                 #get parameters from scan
                 N = p.get_misc_parameter("hill_factor", "misc").get_in_post_unit()
                 il2 = p.get_physical_parameter("surf_c", "IL-2").get_in_post_unit() * 1e-9 #post is nM, neeeded in units of Km --> M
@@ -125,7 +138,11 @@ class kineticSolver(InternalSolver):
                     pass
                 else:
                     states = p.get_misc_parameter("states", "misc")
-                    EC50 = self.EC50_calculation(E_max=125e-12, E_min=0, k=860, N=1, R=R_il2)
+                    try:
+                        EC50_N = p.get_misc_parameter("EC50_N", "misc").get_in_post_unit()
+                    except:
+                        EC50_N = 1
+                    EC50 = self.EC50_calculation(E_max=125e-12, E_min=0, k=860, N=EC50_N, R=R_il2)
                     p.get_physical_parameter("EC50", "EC50").set_in_post_unit(EC50)
 
                     try:
