@@ -534,7 +534,7 @@ class PostProcessor(SimComponent):
     def save_dataframes(self, extra_cell_constants=False):
 
         df = self.cell_dataframe
-        ids = df["id_id"]
+        # ids = df["id_id"]
         if extra_cell_constants:
             cell_df_constant = df.loc[:, (df == df.iloc[0]).all()].iloc[0, :]
             cell_df = df.loc[:, (df != df.iloc[0]).any()]

@@ -10,7 +10,7 @@ from scipy.constants import N_A
 from thesis.main.BC import OuterIntegral
 from thesis.main.EntityType import CellType
 from thesis.main.MyDomainTemplate import MyBoundingBoxTemplate
-from thesis.main.MyEntityLocator import MyCellGridLocator, MyRandomCellLocator
+from thesis.main.MyEntityLocator import MyCellGridLocator, MyRandomCellLocator, MyBridsonCellLocator
 from thesis.main.MyFieldTemplate import MyCytokineTemplate, MyMeanCytokineTemplate
 from thesis.main.MyGlobalModel import MyPDEModel, MyODEModel
 from thesis.main.MyInteractionTemplate import FieldInteractionType, MyFieldInteractionTemplate
@@ -36,7 +36,7 @@ templates = {
     "threshold": PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule))),
     "Kc": PhysicalParameterTemplate(PhysicalParameter("Kc", 0.01, to_sim=1 / get_cc(ule))),
     "bw": PhysicalParameterTemplate(PhysicalParameter("bw", 10, to_sim=10 ** (6 + ule))),
-    "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 10, to_sim=1)),
+    "cluster_strength": PhysicalParameterTemplate(PhysicalParameter("strength", 0, to_sim=1)),
     "rho": PhysicalParameterTemplate(PhysicalParameter("rho", 0, to_sim=10 ** (-6 - ule))),
     "amax": PhysicalParameterTemplate(PhysicalParameter("amax", 0, to_sim=N_A ** -1 * 1e9)),
     "mc": PhysicalParameterTemplate(PhysicalParameter("mc", 0, to_sim=1)),
@@ -107,7 +107,11 @@ def setup(cytokines, cell_types, boundary, geometry_dict, numeric, custom_pool=N
 
     randomize = geometry.get_misc_parameter("randomize")
     if randomize is not None and randomize.get_in_post_unit():
-        locator = MyRandomCellLocator()
+        if randomize.get_in_post_unit() == "random_walk":
+            locator = MyRandomCellLocator()
+        elif randomize.get_in_post_unit() == "bridson":
+            locator = MyBridsonCellLocator()
+
     else:
         locator = MyCellGridLocator()
 

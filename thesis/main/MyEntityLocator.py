@@ -20,12 +20,16 @@ class MyEntityLocator(ABC, SimComponent):
     def __init__(self):
         super().__init__()
 
-    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, overwrite_cache=True) -> [
+    def get_entity_list(self, entity_types: [EntityType], global_p: ParameterSet, path: str, mesh_folder_path,
+                        overwrite_cache=True) -> [
         Entity]:
 
-        entity_list = self._get_entity_list(entity_types, global_p, path)
+        if mesh_folder_path is not None:
+            fp = os.path.join(mesh_folder_path, "entity_id_to_pos_map.json")
+        else:
+            fp = os.path.join(path, "entity_id_to_pos_map.json")
 
-        fp = os.path.join(path, "entity_id_to_pos_map.json")
+        os.makedirs("/".join(fp.split("/")[:-1]), exist_ok=True)
 
         if os.path.exists(fp) and not overwrite_cache:
             with open(fp, "r") as f:
@@ -33,6 +37,15 @@ class MyEntityLocator(ABC, SimComponent):
 
             message("loaded id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
             c = 0
+
+            entity_list = []
+            for id, pos in id_to_pos_map.items():
+                r = entity_types.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+                cell = Cell(pos, r, [])
+                cell.set_cell_type(entity_types, None, 0)
+                cell.id = int(id)
+                entity_list.append(cell)
+
             for e in entity_list:
                 if e.id in id_to_pos_map.keys():
                     c = c + 1
@@ -41,6 +54,7 @@ class MyEntityLocator(ABC, SimComponent):
             message("restored id-to-pos map for {n} entities".format(n=c), self.logger)
 
         else:
+            entity_list = self._get_entity_list(entity_types, global_p, path)
             id_to_pos_map = {e.id: list(e.center) for e in entity_list}
             message("saving id-to-pos map from file for {n} entities".format(n=len(id_to_pos_map)), self.logger)
             with open(fp, "w") as f:
@@ -228,3 +242,58 @@ class MyRandomCellLocator(MyCellGridLocator):
         return positions
 
 
+class MyBridsonCellLocator(MyCellGridLocator):
+    """
+    Implements bridson sampling to generate blue noise distribution
+    https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def _get_entity_list(self, cell_type: CellType, global_p: ParameterSet, path: str) -> [Cell]:
+
+        assert issubclass(type(cell_type), CellType)
+        r = cell_type.p.get_physical_parameter("rho", "rho").get_in_sim_unit()
+
+        self.cell_pos = self.get_random_pos(r, 3, global_p)
+
+        cell_list = []
+        for i, p in enumerate(self.cell_pos):
+            assert r is not None and r > 0
+            cell = Cell(p, r, [])
+            cell.set_cell_type(cell_type, None, 0)
+            cell.id = i
+            cell_list.append(cell)
+
+        return cell_list
+
+    def get_random_pos(self, rho, penalty, global_p):
+
+        from thesis.cellBehaviourUtilities.bridson_sampling import bridson
+        # steps = global_p.get_misc_parameter("steps", "geometry")
+        # steps = steps.get_in_sim_unit(type=int) if steps is not None else 30
+        steps = 30
+        distance = global_p.get_misc_parameter("distance", "geometry").get_in_sim_unit(type=int)
+
+        xx = self.make_grid(global_p, "x_grid")
+        yy = self.make_grid(global_p, "y_grid")
+        zz = self.make_grid(global_p, "z_grid")
+
+        BB = [xx, yy, zz]
+
+        BP1 = [np.min(i) for i in BB if len(i) > 1]
+        BP2 = [np.max(i) for i in BB if len(i) > 1]
+
+        X = bridson(steps, BP1, BP2, density_function=lambda x: distance)
+
+        positions = np.ndarray(shape=(len(X), 3))
+
+        c = 0
+        for i, x in enumerate(BB):
+            if len(x) > 1:
+                positions[:, i] = X[:, c]
+                c = c + 1
+            else:
+                positions[:, i] = np.ones(shape=(len(X))) * x[0]
+        return positions
