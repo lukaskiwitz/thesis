@@ -16,41 +16,21 @@ sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
-from scipy.constants import N_A
-# from sympy import symbols, solve
-from scipy.integrate import solve_ivp
+from copy import deepcopy
 
 from parameters import cytokines, cell_types_dict, geometry, numeric, path, ext_cache, boundary
 
 
-
-
-
-
 import thesis.main.StateManager as StateManager
-from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter, PhysicalParameterTemplate, \
-    MiscParameter
+from thesis.main.ParameterSet import ScannableParameter, PhysicalParameter
 from thesis.main.ScanContainer import ScanContainer, ScanDefintion, ScanType
 from thesis.scripts.paper_models.utilities.states import updateState
 from thesis.scenarios.box_grid import setup
 from thesis.main.my_debug import message
-import mpi4py.MPI as MPI
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
-
+basepath = deepcopy(path)
 
 """Setup/Simulation"""
-
-"""
-setting filepath for simulation results. This is setup so that it works on the itb computers.
-If ext_cache = "" the mesh will be cached for each field separately
-"""
-# ext_cache = "/extra/brunner/para_handling/static/R_lognorm/ext_cache/"
-# path = "/extra/brunner/thesis/kinetic/q_fraction_k_factor/"
-
 
 """Setting up a parameters scan now has a object oriented interface. This is the container class"""
 scan_container = ScanContainer()
@@ -64,9 +44,11 @@ scenario = setup(cytokines, deepcopy(cell_types_dict), boundary, geometry, numer
 """Imports the parameter Templates"""
 parameter_pool = scenario.parameter_pool
 
-t_gamma = parameter_pool.get_template("gamma")
-t_global_q = parameter_pool.get_template("global_q")
-t_sigma = PhysicalParameterTemplate(PhysicalParameter("sigma", 1e3, to_sim=N_A ** -1 * 1e9, is_global=True))
+"""Retrieves and entity type from sim container for scanning"""
+Tnaive = scenario.get_entity_type_by_name("Tnaive")
+Tsec = scenario.get_entity_type_by_name("Tsec")
+Th = scenario.get_entity_type_by_name("Th")
+Treg = scenario.get_entity_type_by_name("Treg")
 
 """
 Sets up a parameter scan. ScannableParameter takes a function with two arguments, 
@@ -77,55 +59,74 @@ both while defining on which entity this scan should be applied to with ScanType
 To actually run this scan setup we attach it to the scan_container with add_single_parameter_scan.
 """
 
+t_gamma = parameter_pool.get_template("gamma")
+t_global_q = parameter_pool.get_template("global_q")
 
 gamma = ScannableParameter(t_gamma(0.0), lambda x, v: v)
 global_q = ScannableParameter(t_global_q(False), lambda x, v: v)
-sigma = ScannableParameter(t_sigma(0), lambda x, v: v)
 
 Tsec_distribution_array = np.array([])
 Th_distribution_array = np.array([])
+Treg_distribution_array = np.array([])
 
-"""Retrieves and entity type from sim container for scanning"""
-Tnaive = scenario.get_entity_type_by_name("Tnaive")
-Tsec = scenario.get_entity_type_by_name("Tsec")
-Th = scenario.get_entity_type_by_name("Th")
+# gamma = feedback strength
+scan_gamma = 25
+gamma_def = ScanDefintion(gamma, "IL-2", [scan_gamma], ScanType.GLOBAL, field_quantity="il2")
 
-scan_space = np.linspace(0.001, 3, 30)
 
-Sigma_def = ScanDefintion(sigma, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
+a = np.concatenate([[0.001], np.linspace(0.01, 0.6, 40)])
+scan_space = np.around(a , 3)
 
-scan_container.add_single_parameter_scan([Sigma_def], scan_name="sigma")
-# scan_container.add_single_parameter_scan([global_q_def], scan_name="gamma")
+Tsec_fraction = ScannableParameter(PhysicalParameter("Tsec_fraction", 1, is_global=True), lambda x, v: v)
+Tsec_def = ScanDefintion(Tsec_fraction, "IL-2", scan_space, ScanType.GLOBAL, field_quantity="il2")
+
+scan_container.add_single_parameter_scan([Tsec_def, gamma_def], scan_name="Tsec_fraction", remesh_scan_sample=True)
 
 """signs up the internal solver with the sim container. 
 It can be referenced in a cell_type definition by its name field
 """
-# if cell_types_dict[0]["il2"]["bc_type"] == "linear":
-#     from thesis.cellBehaviourUtilities.cell_solver import kineticSolver
-#     scenario.internal_solvers = [kineticSolver]
-# elif cell_types_dict[0]["il2"]["bc_type"] == "R_saturation":
-#     from thesis.cellBehaviourUtilities.cell_solver import kineticSolver
-#     scenario.internal_solvers = [kineticSolver]
+
+from thesis.cellBehaviourUtilities.cell_solver import kineticSolver
+scenario.internal_solvers = [kineticSolver]
 
 """State Manager updates the parameters of simulation objects in accordance with scan samples defined above and 
 manages the orderly IO of simulation results and metadata for post processing."""
 
 stMan = StateManager.StateManager(path)
 stMan.scenario = scenario
-scenario.marker_lookup = {"Tnaive": 1, "Tsec": 2, "Th": 3}
-scenario.markers = ["type_name", "IL-2_surf_c", "IL-2_R"]
+scenario.marker_lookup = {"Tnaive": 1, "Tsec": 2, "Th": 3, "Treg": 4}
+scenario.markers = ["type_name", "IL-2_surf_c", "IL-2_R", "IL-2_pSTAT5"]
 stMan.scan_container = scan_container
 stMan.compress_log_file = True
 
 """sets up time range"""
-stMan.T = [0,1]
+
+dt = 3600  # 1h
+ramp_length = 20
+ramp_max_T = dt * 4
+
+T_length = 28
+max_T = dt * 48
+
+myRange = np.arange(0, T_length)
+def exp_func(x, a, b, c):
+    return np.round(a * np.exp(b * x) + c, 4)
+a = 2 * dt
+c = -a
+b = np.log((max_T - c) / a) / (T_length - 1)
+
+T_ramp = np.linspace(0,ramp_max_T, ramp_length)
+T = np.linspace(np.max(T_ramp), max_T, T_length)
+
+stMan.T = np.concatenate([T_ramp[:-1], T])
+kineticSolver.T = stMan.T
 
 
 """defines a function which is called by StateManager before a parameter scan. 
 Here it is used to assign cell types
 """
 
-uS = updateState(0, 0, geometry,parameter_pool, Tsec_distribution_array, Th_distribution_array, offset=0)
+uS = updateState(0, 0, geometry,parameter_pool, Tsec_distribution_array, Th_distribution_array, Treg_distribution_array, offset=0)
 
 def pre_scan(state_manager, scan_index):
     uS.step(state_manager.sim_container)
@@ -160,7 +161,7 @@ def pre_step(sc, time_index, replicat_index, t, T):
 stMan.pre_scan = pre_scan
 # stMan.pre_step = pre_step
 stMan.pre_replicat = pre_replicat
-stMan.post_replicat = post_replicat
+# stMan.post_replicat = post_replicat
 
 """Runs the ParameterScan"""
-stMan.run(model_names=["pde_model"], ext_cache=ext_cache, number_of_replicats=10)
+stMan.run(model_names=["pde_model"], ext_cache=ext_cache, number_of_replicats=20)

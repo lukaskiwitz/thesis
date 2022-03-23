@@ -1,5 +1,6 @@
 import getpass
 import os
+
 import numpy as np
 
 """defines cytokines. Currently their parameters can be changed using the scan sample interface.
@@ -12,7 +13,7 @@ cytokines = [
         "field_quantity": "il2",
         "k_on": 111.6,  # receptor binding constant 1/(nM*h),
         "D": 10,  # Diffusion constant mu^2
-        # "kd": 0.1,  # cytokine decay in medium 1/h
+        "kd": 0.1,  # cytokine decay in medium 1/s
         "hill_factor": 3,
         "k_endo": 1.1e-3,
     }
@@ -41,12 +42,12 @@ cell_types_dict = [
      },
     {
      "name": "Tsec",
-     "fraction": 0.05,
-     "il2": {"R": 100, "q": 15, "bc_type": "patrick_saturation", "global_q": False}, #"R_saturation"
+     "fraction": 0.1,
+     "il2": {"R": 1e2, "q": 10, "bc_type": "patrick_saturation", "global_q": False}, #"R_saturation"
      "misc": {"sigma": 1,
               "states":[],
               "hill_factor": 3,
-              "Km_pos": 0.65,
+              "Km_pos": 0.5,
               "Km_neg": 0.75,
               "pSTAT5_signal": True,
               "KD": 7.437e-3,
@@ -56,28 +57,29 @@ cell_types_dict = [
      },
     {
      "name": "Th",
-     "fraction": 0.95,
-     "il2": {"R": 1e3, "q": 0, "bc_type": "patrick_saturation", "global_q": False}, # "patrick_saturation"
-     "misc": {"sigma": 1,
+     "fraction": 0.9,
+     "il2": {"R": 1e3, "q": 0, "bc_type": "patrick_saturation", "global_q": False, "pSTAT5": 0}, # "R_saturation"
+     "misc": {"sigma": 1.5,
               "states":[0,0,0,0,0,0],
               "pos_half_time": 1,
               "neg_half_time": 1,
               "hill_factor": 3,
-              "Km_pos": 0.65,
-              "Km_neg": 0.75,
+              "Km_pos": 0.5,
+              "Km_neg": 0.5,
               "R_start_neg": 1.5e3,
               "R_start_pos": 1.5e3,
               "pSTAT5_signal": True,
               "KD": 7.437e-3,
               "nu": 1e-3,
               "pSTAT5": 0,
-              "name": "Th"},
+              "name": "Th",
+              "EC50_N": 1.5},
      "internal_solver": "kineticSolver"
      },
     {
         "name": "Treg",
         "fraction": 0.0,
-        "il2": {"R": 1e3, "q": 0, "bc_type": "patrick_saturation", "global_q": False},
+        "il2": {"R": 1e3, "q": 0, "bc_type": "patrick_saturation", "global_q": False, "pSTAT5": 0},
         "misc": {"sigma": 0.5,
                  "states": [0, 0, 0, 0, 0, 0],
                  "pos_half_time": 1,
@@ -101,11 +103,13 @@ geometry = {
     "margin": 40,  # margin around the cell grid
     "distance": 20,  # distance between cell centers
     "rho": 5,  # cell radius
-    "x_grid": 140,  # dimensions of the cell grid
-    "y_grid": 140,
-    "z_grid": 140,# comment out for single cell layer
+    "x_grid": 240,  # dimensions of the cell grid
+    "y_grid": 240,
+    "z_grid": 240,# comment out for single cell layer
     "norm_area": 4 * np.pi * 5 **2,
     "randomize": False,
+    "steps": 0,
+    "step_size": 1,
 }
 
 boundary = [
@@ -131,7 +135,7 @@ numeric = {
     "dofs_per_node": 13000,
     "max_mpi_nodes": int(os.cpu_count()/4),
     "cells_per_worker": 50,
-    "max_pool_size": int(os.cpu_count()/4),
+    "max_pool_size": 1,
     "min_char_length": 0.07,  # mesh, smaller = finer
     "max_char_length": 7,  # mesh, smaller = finer
     "unit_length_exponent": -6  # for concentration conversion
@@ -141,8 +145,8 @@ hdd = "extra2" if os.path.exists("/extra2") else "extra"
 
 user = getpass.getuser()
 
-model_name = "randomized"
-path = "/{extra}/{u}/paper_models/kinetics/clustering/{mn}/".format(u=user, mn=model_name, extra = hdd)
+model_name = "Tsec_scan_25"
+path = "/{extra}/{u}/paper_models/kinetics/{mn}/".format(u=user, mn=model_name, extra = hdd)
 IMGPATH = path + "images/"
 
-ext_cache = r"../../{mn}_2D_coarse_ext_cache/".format(mn=model_name)
+ext_cache = r"../{mn}_3D_ext_cache/".format(mn=model_name)

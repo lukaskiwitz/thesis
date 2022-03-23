@@ -7,40 +7,27 @@ sys.path.append("/home/brunner/thesis/thesis/main/")
 sys.path.append("/home/brunner/thesis/thesis/scenarios/")
 
 import numpy as np
+from copy import deepcopy
 from parameters import path, ext_cache
-print("loading from", path)
+
+print(path)
 
 os.environ["LOG_PATH"] = path
 
-from thesis.main.PostProcess import PostProcessor, PostProcessComputation
+from thesis.main.PostProcess import PostProcessor, PostProcessComputation, FenicsScalarFieldComputation
+from thesis.main.PostProcessUtil import get_mesh_volume
 
 
-class my_post_process(PostProcessComputation):
+class my_post_process(FenicsScalarFieldComputation):
     """Defines a custom computation"""
+    name = "h1_norm"
 
-    def __init__(self):
-        """this name will appear in output dataframe"""
-        self.name = "h1_norm"
+    def __call__(self):
 
-    def __call__(self, u, grad, c_conv, grad_conv, mesh_volume, **kwargs):
-        V = u.function_space()
-        mesh = V.mesh()
-        degree = V.ufl_element().degree()
-        W = fcs.VectorFunctionSpace(mesh, 'P', degree)
-        # grad_u = fcs.project(grad(u), W).vector().array().reshape(-1,3)
-        # grad_u = grad
-        h1: float = fcs.sqrt(fcs.assemble(fcs.dot(grad*grad_conv, grad*grad_conv)  * fcs.dX)) / mesh_volume
-        # conc: float = fcs.sqrt(fcs.assemble(fcs.dot(u, u) * fcs.dX)) * c_conv / mesh_volume
-        # print(gradient, conc)
+        mesh_volume = get_mesh_volume(self.u.function_space().mesh())
+        h1: float = fcs.sqrt(fcs.assemble(fcs.dot(self.grad*self.grad_conv, self.grad*self.grad_conv)  * fcs.dX)) / mesh_volume
 
-        # g = np.reshape(grad.vector().vec().array, (u.vector().vec().size, 3))
-        # g = np.transpose(g)
-        #
-        # my_grad = np.sqrt(np.power(g[0], 2) + np.power(g[1], 2) + np.power(g[2], 2))
-        # my_grad = np.mean(my_grad) * grad_conv
-        # h1 = 0
         return h1
-
 
 """number of threads can be passed as first cli argument"""
 if len(sys.argv) > 1:
@@ -52,6 +39,11 @@ else:
 # user = getpass.getuser()
 # path = "/extra/brunner/thesis/kinetic/q_fraction_k_factor/"
 
+basepath = deepcopy(path)
+
+# length = 10
+# for i in range(length):
+#     path = basepath[:-1] + "_" + str(i) + "/"
 """
 setting filepath to look for sim results. This is setup so that it works on the itb computers.
 """
@@ -68,7 +60,7 @@ pp.image_settings = {
     "dpi": 350,
 }
 
-pp.computations.append(my_post_process())
+pp.computations.append(my_post_process)
 
 """carries out the operations in pp.computations in parallel and stores the result in xml file"""
 pp.run_post_process(threads, kde=False)
