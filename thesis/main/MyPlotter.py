@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Rectangle
+from matplotlib.ticker import StrMethodFormatter
 from scipy.spatial import distance_matrix
 
 from thesis.main.SimComponent import SimComponent
@@ -36,9 +37,10 @@ class Plotter(SimComponent):
         self.model_index_key: str = "model_index"
         self.model_name_key: str = "model_name"
         self.scan_name_key: str = "scan_name_scan_name"
-        self.scan_index_key: str = "scan_value"
+        self.scan_index_key: str = "scan_index"
+
         self.path_name: str = "path_name"
-        self.scan_ticks = []
+        self.scan_ticks = {}
         self.legend_axes = None
         self.legend_figure = None
 
@@ -104,7 +106,6 @@ class Plotter(SimComponent):
     def update_rc(self, rc):
 
         self.rc.update(rc)
-
         sns.set_context("paper", rc=self.rc)
 
     def subplots(self, n, m, figsize=(10, 5), external_legend="axes", gridspec_args=None, reset_filter=True) -> None:
@@ -216,17 +217,25 @@ class Plotter(SimComponent):
         else:
             self.color_dict = self.get_color_dict(np.concatenate([fields, t, cell_types, scan_names]))
 
-    def get_categorical_color(self, kvp, palette_name="Dark2") -> Dict:
+    def get_categorical_color(self, key, values, palette_name="Dark2") -> Dict:
 
-        key, value = kvp
-
-        if kvp in self.color_dict.keys():
-            return self.color_dict[kvp]
+        p = {}
+        if key in self.color_dict.keys():
+            if isinstance(self.color_dict[key], Dict):
+                for v in values:
+                    if v in self.color_dict[key]:
+                        p[v] = self.color_dict[key][v]
+                return p
+            elif isinstance(self.color_dict[key], str):
+                return self.color_dict.keys()[key]
         else:
-            keys = list(self.color_dict.keys())
-            keys.append(kvp)
-            self.color_dict = self.get_color_dict(keys, palette_name=palette_name)
-            return self.color_dict[kvp]
+            from matplotlib import cm
+            # palette = sns.color_palette(palette_name, len(values), as_cmap = True)
+            palette = cm.get_cmap(palette_name, len(values))
+            color_dict = {v: palette(i) for i, v in enumerate(values)}
+            self.color_dict[key] = color_dict
+
+            return self.color_dict[key]
 
     def get_continuous_color(self, key, palette_name="viridids"):
 
@@ -236,19 +245,19 @@ class Plotter(SimComponent):
             self.color_dict[key] = palette_name
             return palette_name
 
-    def get_palette(self, df, key, palette_name="Dark2", categorical=None) -> Dict:
+    def get_palette(self, df, key, palette_name="Dark2", categorical_palette=None) -> Dict:
 
         if key is None:
             return None
 
         values = df[key].unique()
 
-        if len(values) > 5 or (key in self.color_dict.keys() and isinstance(self.color_dict[key], str)):
+        if (len(values) > 5 and (categorical_palette == False)) or (
+                key in self.color_dict.keys() and isinstance(self.color_dict[key], str)) or (
+                categorical_palette == False):
             return self.get_continuous_color(key, palette_name=palette_name)
         else:
-            p = {}
-            for v in values:
-                p[v] = self.get_categorical_color((key, v), palette_name=palette_name)
+            p = self.get_categorical_color(key, values, palette_name=palette_name)
 
         return p
 
@@ -388,6 +397,7 @@ class Plotter(SimComponent):
             ruse_df = None
 
         # self.timing_df = timing_df
+        self.scan_index_key: str = [v for v in global_df.columns if "scan_value" in v][0]
 
         if global_df is not None and self.scan_index_key not in global_df.columns:
             self.scan_index_key = "scan_index"
@@ -483,14 +493,14 @@ class Plotter(SimComponent):
 
     def get_scan_ticks(self) -> (List, List):
 
-        scan_axis_name = self.scan_index_key
-
-        df = self.global_df if self.scan_index_key in self.global_df.columns else self.cell_df
-
-        axis_df = df.loc[df[scan_axis_name].notna()]
-        ticks = axis_df[self.scan_index_key].unique()
-
-        labels = axis_df[scan_axis_name]
+        if len(self.scan_ticks.keys()) > 0:
+            return np.array(list(self.scan_ticks.keys())), np.array(list(self.scan_ticks.values()))
+        else:
+            scan_axis_name = self.scan_index_key
+            df = self.global_df if self.scan_index_key in self.global_df.columns else self.cell_df
+            axis_df = df.loc[df[scan_axis_name].notna()]
+            ticks = axis_df[self.scan_index_key].unique()
+            labels = ticks.copy()  # axis_df[scan_axis_name].unique()
         return np.array(ticks), np.array(labels)
 
         # scale = self.scan_scale
@@ -571,7 +581,7 @@ class Plotter(SimComponent):
             labels = [i._text for i in ax.get_legend().texts]
             for i, l in enumerate(labels):
                 try:
-                    labels[i] = np.round(float(l), 2)
+                    labels[i] = np.round(float(l), 3)
                 except ValueError:
                     continue
 
@@ -641,7 +651,7 @@ class Plotter(SimComponent):
             ax = self.get_subplot_axes(**split_kwargs(kwargs, ["overlay", "gs_slice"]))
         if reduce:
             df = self.reduce_df(df, self.scan_index_key)
-        palette = self.get_palette(df, hue, **split_kwargs(kwargs, ["palette_name"]))
+        palette = self.get_palette(df, hue, **split_kwargs(kwargs, ["palette_name", "categorical_palette"]))
 
         if "subtitle" in kwargs:
             ax.set_title(kwargs["subtitle"])
@@ -794,18 +804,21 @@ class Plotter(SimComponent):
             ax.set_xticks(ticks)
             ax.set_xticklabels(labels)
         else:
+            ticks, labels = self.get_scan_ticks()
+            ax.set_xticks(ticks)
+            ax.set_xticklabels(labels)
             ax.set_xlabel(self.get_label(x_name))
 
-        from matplotlib.ticker import AutoLocator, \
-            ScalarFormatter
+        from matplotlib.ticker import AutoLocator
 
         if xlog:
             # ax.xaxis.set_major_locator(LogLocator())
             ax.set_xscale("log")
         else:
-            ax.xaxis.set_major_locator(AutoLocator())
+            if len(self.scan_ticks.keys()) == 0:
+                ax.xaxis.set_major_locator(AutoLocator())
 
-        ax.xaxis.set_major_formatter(ScalarFormatter())
+        ax.xaxis.set_major_formatter(StrMethodFormatter("{x:g}"))
 
         if ylim:
             ax.set_ylim(ylim)
@@ -818,9 +831,12 @@ class Plotter(SimComponent):
         ax, df, palette, hue = self.prepare_plot(self.cell_df, hue, **kwargs)
         df = df.loc[df[self.time_key] == self.t_max]
 
+        if x_name is None:
+            x_name = self.scan_index_key
+
         df, ci = self.compute_ci(
             df,
-            [self.scan_index_key, self.replicat_index_key, self.model_index_key, self.time_index_key, hue, style],
+            [x_name, self.replicat_index_key, self.model_index_key, self.time_index_key, hue, style],
             ci=ci, estimator=estimator, y_names=[y_name])
 
         if cummulative:
@@ -833,8 +849,7 @@ class Plotter(SimComponent):
             else:
                 df = df.groupby([self.time_index_key, self.scan_index_key]).sum()
             df = df.reset_index()
-        if x_name is None:
-            x_name = self.scan_index_key
+
         sns.lineplot(x=x_name, y=y_name, data=df, hue=hue, ax=ax, style=style, legend=legend,
                      palette=palette, ci=ci, dashes=dashes, marker=marker)
 
@@ -1420,9 +1435,11 @@ class Plotter(SimComponent):
                     group_by_columns.remove(g)
 
             if y_names is not None:
-                df = df[list(set(group_by_columns + y_names))]
+                index = [o for o in list(set(group_by_columns + y_names)) if o in df.columns.array]
+                df = df[index]
 
-            gb = df.groupby(list(set(group_by_columns)))
+            index = [o for o in list(set(group_by_columns)) if o in df.columns.array]
+            gb = df.groupby(index)
 
             if estimator is None:
                 return gb.mean().reset_index(), "sd"
