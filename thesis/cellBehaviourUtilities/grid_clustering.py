@@ -50,7 +50,7 @@ def get_cell_grid_positions(x_dim, y_dim, z_dim, distance=20):
 
 def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=0):
     """
-    Generates clusters of cell types around an arbitrary number of apcs positions.
+    Generates clusters of cell types around an arbitrary number of apc positions.
     Works in pseudo 2D.
 
     :param cell_grid_positions: Iterable with shape (N,3). The list of possible position for cells
