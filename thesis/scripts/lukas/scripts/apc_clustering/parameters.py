@@ -73,10 +73,10 @@ cell_types_dict = [
          "pSTAT_k": 860,
          "pSTAT_N": 1},
      "internal_solver": "",
-     "clustering": {"strength": 0}
+     "clustering": {"strength": 1}
      },
 ]
-mode = "sheet"
+mode = "box"
 
 if mode == "sheet":
 
@@ -115,9 +115,9 @@ else:
         "margin": 12,  # margin around the cell grid
         "distance": 12,  # distance between cell centers
         "rho": 5,  # cell radius
-        "x_grid": 200,  # dimensions of the cell grid
-        "y_grid": 200,
-        "z_grid": 200,  # comment out for single cell layer
+        "x_grid": 300,  # dimensions of the cell grid
+        "y_grid": 300,
+        "z_grid": 300,  # comment out for single cell layer
         "norm_area": 4 * np.pi * 5 ** 2
     }
 
@@ -130,18 +130,18 @@ else:
         "newton_atol": 1e-35,
         "newton_rtol": 1e-3,  # newton method relative tolerance
         "dofs_per_node": int(30000),
-        "max_mpi_nodes": os.cpu_count(),
+        "max_mpi_nodes": 8,#os.cpu_count(),
         "cells_per_worker": 50,
         "max_pool_size": 1,
         "min_char_length": 1,  # mesh
         "max_char_length": 5,  # mesh
         "unit_length_exponent": -6  # for concentration conversion
     }
-    name = "200_3D"
+    name = "300_3D"
 
 user = getpass.getuser()
 model_name = "Treg_competition_parallel_patrick_parameters"
-scan_name = "IL-7_testing"
+scan_name = "multiple_apc_dry_run"
 
 hdd = "extra2" if os.path.exists("/extra2") else "extra"
 path = "/{hdd}/{u}/{mn}/{n}/{sn}/".format(u=user, n=name, mn=model_name, sn=scan_name, hdd=hdd)

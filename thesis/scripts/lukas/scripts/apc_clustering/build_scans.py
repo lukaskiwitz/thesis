@@ -189,7 +189,7 @@ def update_state(sc, replicat_index):
     bp1 = [np.min(cell_grid_positions[:, i]) + 50 for i in range(cell_grid_positions.shape[1]) if flat_dims[i] == False]
     bp2 = [np.max(cell_grid_positions[:, i]) - 50 for i in range(cell_grid_positions.shape[1]) if flat_dims[i] == False]
 
-    apcs = bridson(30, bp1, bp2, density_function=lambda x: 120)  # density_function returns the distance between apcs
+    apcs = bridson(30, bp1, bp2, density_function=lambda x: 80)  # density_function returns the distance between apcs
 
     for i, fi in enumerate(flat_dims):
         if fi:

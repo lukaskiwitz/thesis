@@ -291,14 +291,11 @@ def do_plotting(path_list, mode=None, filter=lambda df: df, file_prefix=None, hu
     return plotter
 
 
-path = "/extra/kiwitz/Treg_competition_parallel_patrick_parameters/200_3D/dataframes_20220227_run_replicats_new_parameters_box_replicats_steady_state"
-# path = "/extra/kiwitz/Treg_competition_parallel_patrick_parameters/200_3D/dataframes_20220227_run_replicats_new_parameters_box_replicats_tsec_cluster_steady_state"
 
-path_list = [p + "/" for p in glob.glob("/".join(path.split("/")[:-1]) + "*/*")]
+# path_list = [p + "/" for p in glob.glob("/".join(path.split("/")[:-1]) + "*/*")]
 
-path_list = [path]
-IMGPATH = os.path.join(path, "images/")
-os.makedirs(IMGPATH, exist_ok=True)
+# path_list = [path]
+
 # plotter = Plotter(path_list)
 # try:
 #     plotter = Plotter(path_list)
@@ -385,15 +382,32 @@ scan_ticks = {
 #     ax[1].plot(x,f(a,x), color = color_dict["fractions_sec"][a],linewidth = 2)
 # plt.show()
 
-path = "/extra2/kiwitz/Treg_competition_parallel_patrick_parameters/300_2D/dataframes_20220307_replicats_large_scan_steady_state"
+from parameters import path
+import os
+
+# path = os.path.join(path,"../dataframes_IL-7_testing_steady_state/")
+path = os.path.join(path,"../dataframes_multiple_apc_dry_run_steady_state/")
+
+IMGPATH = os.path.join(path, "images/")
+os.makedirs(IMGPATH, exist_ok=True)
 
 g = lambda df: df.loc[
     (df["fractions_treg"].isin([0, 0.025, 0.05, 0.2]))
     & (df.scan_value.isin(df.scan_value.unique()[:-1]))
     ]
 
-f = lambda df: g(df.loc[df.scan_name_scan_name.str.contains(r"fsec_0.1")])
-plotter = do_plotting(path, mode="steady_state", filter=f, hue="fractions_treg", file_prefix="fsec_0.1",
+f = lambda df: g(df.loc[df.scan_name_scan_name.str.contains(r"treg_cs_strength_scan")])
+plotter = do_plotting(path, mode="steady_state", filter=f, hue="fractions_treg", file_prefix="treg_scan",
+                      color_dict=color_dict, scan_ticks=scan_ticks)
+
+
+g = lambda df: df.loc[
+    (df["fractions_sec"].isin([0.01,0.05,0.1,0.2]))
+    & (df.scan_value.isin(df.scan_value.unique()[:-1]))
+    ]
+
+f = lambda df: g(df.loc[df.scan_name_scan_name.str.contains(r"sec_cs_strength_scan")])
+plotter = do_plotting(path, mode="steady_state", filter=f, hue="fractions_sec", file_prefix="tsec_scan",
                       color_dict=color_dict, scan_ticks=scan_ticks)
 
 # path = "/extra/kiwitz/Treg_competition_parallel_patrick_parameters/200_3D/dataframes_20220227_run_replicats_new_parameters_box_replicats_tsec_cluster_steady_state/"

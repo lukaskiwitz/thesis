@@ -22,14 +22,14 @@ def run(parameter_dict):
     os.system("python run.py " + parameter_file_path)
 
 
-NUMBER_OF_SAMPLES = 16
-SAMPLES_IN_PARALLEL = 4
+NUMBER_OF_SAMPLES = 8
+SAMPLES_IN_PARALLEL = 1
 
 conditions = [
+    {ScanAxis.treg_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0.2, ScanAxis.sigma: 1, ScanAxis.fsec: 0.1},
     {ScanAxis.treg_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0.025, ScanAxis.sigma: 1,
      ScanAxis.fsec: 0.1},
     {ScanAxis.treg_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0.05, ScanAxis.sigma: 1, ScanAxis.fsec: 0.1},
-    {ScanAxis.treg_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0.2, ScanAxis.sigma: 1, ScanAxis.fsec: 0.1},
     {ScanAxis.treg_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0, ScanAxis.sigma: 1, ScanAxis.fsec: 0.1},
     {ScanAxis.sec_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0, ScanAxis.sigma: 1, ScanAxis.fsec: 0.01},
     {ScanAxis.sec_cs_strength: [0, 1, NUMBER_OF_SAMPLES], ScanAxis.ftreg: 0, ScanAxis.sigma: 1, ScanAxis.fsec: 0.05},

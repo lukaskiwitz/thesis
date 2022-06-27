@@ -17,4 +17,4 @@ scan_value_name, scan_scale, scan_kwargs = extract_scan_axis_from_dictionary(sca
 scan_samples, scan_name = build_scan_function(scenario, scan_value_name, scan_scale, **scan_kwargs)
 
 old_path = os.path.join("/".join(old_path.split("/")[:-2]), "meshing_run")
-compute_samples_points(scan_samples[0:1], scenario, old_path, [0, 1], ext_cache=ext_cache)
+compute_samples_points(scan_samples[0:1], scenario, old_path, [0, 1], ext_cache=ext_cache, number_of_replicats=1)

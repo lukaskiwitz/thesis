@@ -20,7 +20,8 @@ T = 100
 dt = 3
 time_range = np.linspace(0, T, int(np.ceil(T / dt))) * 3600
 
-number_of_replicats = 10
+
+number_of_replicats = 1
 
 start = 0
 stop = 1  # 1 == no refinement
