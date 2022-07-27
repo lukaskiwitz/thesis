@@ -183,6 +183,7 @@ class StateManager(SimComponent):
         sc.path = os.path.join(self.get_scan_folder(scan_index), "m_{}/".format(model_index))
         sc.relative_path = os.path.relpath(sc.path, os.path.commonpath([self.get_scan_folder(scan_index), self.path]))
         sample = self.get_scan_sample(scan_index)
+        self.apply_sample_flags(sc, scan_index)
 
         assert hasattr(sc, "default_sample")
         sc.reset_with_default_sample()
