@@ -166,10 +166,10 @@ class SimContainer(SimComponent):
         Runs the simulation of given time range.
         :param T: time range; dt is calculated from the differences of successive elements.
         """
-
         run_task = self.record.start_child("run")
 
         for replicat_index in range(number_of_replicats):
+
 
             self.reset_with_default_sample()
             self.apply_sample(self.current_sample)
@@ -183,8 +183,6 @@ class SimContainer(SimComponent):
 
             self.t = T[0]
             for time_index, t in enumerate(T[1:]):
-                run_task.info.update({"time_index": time_index})
-                run_task.update_child_info()
 
                 self._pre_step(self, time_index + 1, replicat_index, T[time_index + 1], T)  # internal use
 
@@ -194,7 +192,7 @@ class SimContainer(SimComponent):
 
                 # self.move_cells(time_index, dt)
 
-                run_task.start_child("step")
+                run_task.start_child("step",info = {"time_index":time_index,"replicat_index":replicat_index})
                 self.step(dt, time_index, replicat_index)
                 run_task.stop_child("step")
 
@@ -209,7 +207,7 @@ class SimContainer(SimComponent):
             self.post_replicat(self, T[-1], replicat_index, t, T)  # user defined
 
         run_task.stop()
-
+        return run_task
     def move_cells(self, time_index: int, dt: float) -> None:
 
         return None

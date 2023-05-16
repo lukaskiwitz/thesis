@@ -261,9 +261,8 @@ class StateManager(SimComponent):
 
         for model_index in model_indicies:
 
-            model_task = run_task.start_child("global_model")
+            model_task = run_task.start_child("global_model",info = {"model_index":model_index})
 
-            sample_task = model_task.start_child("scan_sample")
 
             self.scan_tree.serialize_to_element_tree(self.scan_container)
             self.scan_container = self.scan_tree.deserialize_from_element_tree()
@@ -275,13 +274,11 @@ class StateManager(SimComponent):
             self.scan_tree.write_element_tree()
 
             for scan_index in range(n_samples):
-                if not sample_task.running:
-                    sample_task.start()
 
                 scan_name = self.scan_container.scan_samples[scan_index].p.get_misc_parameter("scan_name",
                                                                                               "scan_name").get_in_sim_unit()
-                sample_task.info.update({"scan_index": scan_index, "scan_name": scan_name})
-                sample_task.update_child_info()
+                sample_task = model_task.start_child("scan_sample",info = {"scan_index": scan_index, "scan_name": scan_name})
+
                 try:
                     def post_replicat(sc, time_index, replicat_index, t, T):
 
@@ -351,7 +348,6 @@ class StateManager(SimComponent):
                     if self.T is None:
                         T = np.arange(0, self.N * self.dt, self.dt)
                         self.time_series_bar.total = len(T) - 1
-
                         self.sim_container.run(T, number_of_replicats=number_of_replicats)
 
                     else:

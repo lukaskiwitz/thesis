@@ -52,15 +52,18 @@ class Record(SimComponent):
             if not v.is_leaf():
                 v.update_child_info()
 
-    def start_child(self, task_name):
+    def start_child(self, task_name, info = None):
 
+        if info is None:
+            info = {}
         if not task_name in self.child_tasks.keys():
             task = TaskRecord(task_name)
+            task.info = info
             self.child_tasks[task_name] = task
 
         else:
             task = self.child_tasks[task_name]
-
+            task.info = info
         task.info.update(self.info)
 
         task.start()
@@ -69,7 +72,13 @@ class Record(SimComponent):
 
     def add_child(self, task):
 
+
+        if task.record_name in self.child_tasks.keys():
+            task.history = self.child_tasks[task.record_name].history
+            task.child_tasks.update(self.child_tasks[task.record_name].child_tasks)
+
         self.child_tasks[task.record_name] = task
+        task.info.update(self.info)
 
     def stop_child(self, task_name):
 
