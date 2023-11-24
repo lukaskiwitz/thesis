@@ -269,7 +269,7 @@ class MyBridsonCellLocator(MyCellGridLocator):
         return cell_list
 
     def get_random_pos(self, rho, penalty, global_p):
-
+        # np.random.seed(int(np.random.uniform() * 100))
         from thesis.cellBehaviourUtilities.bridson_sampling import bridson
         # steps = global_p.get_misc_parameter("steps", "geometry")
         # steps = steps.get_in_sim_unit(type=int) if steps is not None else 30

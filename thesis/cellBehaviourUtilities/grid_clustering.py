@@ -48,10 +48,10 @@ def get_cell_grid_positions(x_dim, y_dim, z_dim, distance=20):
     return cells
 
 
-def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=0):
+def make_clusters(cell_grid_positions, apcs, fractions_dict, cluster_strengths, seed=0):
     """
-    Generates clusters of cell types around an arbitrary number of apcs positions.
-    Works in pseudo 2D.
+    Generates clusters of cell types around an arbitrary number of apc positions.
+    Also works in pseudo 2D.
 
     :param cell_grid_positions: Iterable with shape (N,3). The list of possible position for cells
     :param apcs: Iterable with shape (N,3).  The list of clustering centers. Must not be on cell grid
@@ -63,8 +63,8 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
         because 0 indicates background. Values go from 0 to N_types + 1.
     """
 
-    np.random.seed(seed)
-
+    # np.random.seed(seed)
+    fractions = list(fractions_dict.values())
     individual = True
     bws = np.ones(shape=(len(fractions, ))) * np.max(cell_grid_positions)
     cluster_strengths = [1e-100 if cs == 0 else cs for cs in cluster_strengths]
@@ -88,8 +88,8 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
         sorted_positions[:, t] = ai
 
         q = cluster_strengths[t]
-        l = round(len(cell_grid_positions) * N)  # Number of cells for this type
-        a = 0.5
+        l = int(np.around(len(cell_grid_positions) * N))  # Number of cells for this type
+        a = 0.1
 
         def exp_choice(q, l, s):
 
@@ -117,17 +117,20 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
 
         cell_types[ai[draws], t + 1] = t + 1
 
-    def resolve_conflict(conflict_row, cs):
+    def resolve_conflict(conflict_row, cluster_strengths, fractions_dict_keys=()):
 
         draw_list = conflict_row
-        p = np.array([cs[o] for o in conflict_row])
+        p = np.array([cluster_strengths[o] for o in conflict_row])
         if np.all(p == 0):
             p = np.ones(p.shape)
 
         p = (1 / np.sum(p)) * p
+        if "Tsec" in np.array(fractions_dict_keys)[conflict_row]:
+            ti = np.argwhere(np.array(fractions_dict_keys)[conflict_row] == "Tsec")[0]
+        else:
+            not_index = np.random.choice(draw_list, 1, replace=False, p=p)[0]
+            ti = np.argwhere(draw_list == not_index)[0, 0]
 
-        ti = np.random.choice(draw_list, 1, replace=False, p=p)[0]
-        ti = np.argwhere(draw_list == ti)[0, 0]
         winner_index = np.argwhere(conflict_row == draw_list[ti])[0, 0]
         remaining_indices = np.delete(conflict_row, winner_index)
 
@@ -136,8 +139,6 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
     # This loop looks for conflicts and resovles them
 
     positions_to_check = np.where(np.count_nonzero(cell_types[:, 1:], axis=1) > 1)[0]
-
-    offset = np.zeros(shape=(len(fractions, )), dtype=int)
 
     counter = 0
     while len(positions_to_check) > 0:
@@ -148,9 +149,11 @@ def make_clusters(cell_grid_positions, apcs, fractions, cluster_strengths, seed=
         counter += 1
         i = np.random.choice(len(positions_to_check), 1, replace=False)[0]
         ii = positions_to_check[i]
-        nz = np.where(cell_types[ii, 1:])[0]
-        assert len(nz) > 1
-        winner_index, remaining_indices = resolve_conflict(nz, cluster_strengths)
+        nz = np.where(cell_types[ii, 1:])[0]  # check where two celltypes would be chosen
+        assert len(nz) > 1  # make sure there is a conflict
+        winner_index, remaining_indices = resolve_conflict(nz, cluster_strengths, list(
+            fractions_dict.keys()))  # winner_index is the index of nz,
+        # remaining_indices are the entries of nz, so the indices of cell_types[ii, 1:]
 
         for o in remaining_indices:
             cell_types[ii, o + 1] = False

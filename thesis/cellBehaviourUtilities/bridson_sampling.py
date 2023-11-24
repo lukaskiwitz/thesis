@@ -38,7 +38,6 @@ def bridson(k, BP1, BP2, density_function=lambda x: 50):
     while len(active_list) > 0:
 
         tree = cKDTree(X)
-
         ai = np.random.randint(0, len(active_list))
         x_i = active_list[ai]
         r = density_function(x_i)

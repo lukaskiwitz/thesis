@@ -79,8 +79,8 @@ def updateState(sc, t):
         e.p.add_parameter_with_collection(MiscParameter("id", int(i)))
 
     ran = random.Random()
-    ran.seed(t)
-    np.random.seed(t)
+    # ran.seed(t)
+    # np.random.seed(t)
 
     Treg_frac = sc.p.get_physical_parameter("Treg", "fractions").get_in_sim_unit()
     e_frac = sc.p.get_physical_parameter("sec", "fractions").get_in_sim_unit()

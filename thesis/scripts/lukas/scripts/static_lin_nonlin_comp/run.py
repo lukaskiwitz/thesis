@@ -51,7 +51,7 @@ def updateState(sc, t):
     The pseudo random seed depends on t, so that cell placement is repeatable. """
 
     ran = random.Random()
-    ran.seed(t)
+    # ran.seed(t)
 
     for i, e in enumerate(sc.entity_list):
 

@@ -12,22 +12,22 @@ from thesis.main.my_debug import message
 
 module_logger = logging.getLogger(__name__)
 
-def cellBC(u, p, field_quantity, area=1):
+def cellBC(I, p, field_quantity, area=1):
     """
     Defines integral boundary conditions for the cell.
     """
-
     R = p["R"]
     q = p["q"]
     k_on = p["k_on"]
     k_off = p["k_off"]
     D = p["D"]
+    # print(k_on.__float__())
     try:
         KD = p["KD"]
     except:
         KD = k_off / k_on
 
-    uptake = k_on * R * u
+    uptake = k_on * R * I
 
     if "bc_type" in p.keys():
 
@@ -37,15 +37,19 @@ def cellBC(u, p, field_quantity, area=1):
             pass
         elif v == "R_saturation":
             Kc = p["Kc"]
-            uptake = k_on * R * Kc * u / (Kc + u)
+            uptake = k_on * R * Kc * I / (Kc + I)
         elif v == "patrick_saturation":
             k_endo = p["k_endo"]  # 1/s
-            uptake = k_endo * R * u / (KD + u)
+            uptake = k_endo * R * I / (KD + I)
+        elif v == "k_off_saturation":
+            KD = k_off / k_on
+            k_endo = p["k_endo"]  # 1/s
+            uptake = k_endo * R * I / (KD + I)
 
         elif v == "amax_saturation":
             Kc = p["Kc"]
             amax = p["amax"]
-            uptake = amax * u / (Kc + u)
+            uptake = amax * I / (Kc + I)
         else:
             raise Exception
     else:

@@ -19,7 +19,7 @@ def updateState(sc, t):
 
 
     ran = random.Random()
-    ran.seed(t)
+    # ran.seed(t)
 
     for i, e in enumerate(sc.entity_list):
 

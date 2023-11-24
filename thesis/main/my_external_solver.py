@@ -53,10 +53,18 @@ def prepare_solver():
 
     ds = fcs.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
 
+
     if p.get_misc_parameter("linear", "numeric").get_in_sim_unit(type=bool):
         solver, u = linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
     else:
-        solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
+        try:
+            const_prod = p.get_misc_parameter("constant_production", "numeric").get_in_sim_unit(type=bool)
+        except AttributeError:
+            const_prod = False
+        if const_prod:
+            solver, u = production_non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
+        else:
+            solver, u = non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=fq)
 
     return solver, result_path, u
 
@@ -113,6 +121,66 @@ def linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None
 
     return solver, u
 
+
+def production_non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None):
+    dirichlet_bc = []
+    integral_bc = []
+
+    v = fcs.TestFunction(V)
+    u = fcs.Function(V)
+    du = fcs.TrialFunction(V)
+
+    for bc in dirichlet:
+        dirichlet_bc.append(fcs.DirichletBC(V, bc[0], boundary_markers, bc[1]))
+
+    for bc in integral:
+
+        p_bc = bc["p"]
+        f = dill.loads(bc["f"])
+        area = bc["area"]
+        patch = bc["patch"]
+
+        # field_quantity = bc["field_quantity"]
+
+        for k, value in p_bc.items():
+            try:
+                p_bc[k] = fcs.Constant(value)
+            except:
+                pass
+
+        r = f(u, p_bc, fq, area=area)
+        integral_bc.append(r * v * ds(patch))
+
+    D = fcs.Constant(p.get_physical_parameter_by_field_quantity("D", fq).get_in_sim_unit())
+    kd = fcs.Constant(p.get_physical_parameter_by_field_quantity("kd", fq).get_in_sim_unit())
+    alpha = fcs.Constant(p.get_physical_parameter_by_field_quantity("alpha", fq).get_in_sim_unit())
+
+    F = -D * (fcs.dot(fcs.grad(u), fcs.grad(v)) * fcs.dx) - u * kd * v * fcs.dx + D * (sum(integral_bc)) + v * alpha * fcs.dx
+
+    problem = fcs.NonlinearVariationalProblem(F, u, dirichlet_bc, J=fcs.derivative(F, u, du))
+
+    # instantiates fenics solver
+    solver = fcs.NonlinearVariationalSolver(problem)
+
+    # solver.parameters['newton_solver']['relaxation_parameter'] = 1.5
+    solver.parameters["newton_solver"]["linear_solver"] = p.get_misc_parameter(
+        "linear_solver", "numeric").get_in_sim_unit()
+    if not (solver.parameters["newton_solver"]["linear_solver"] in LINEAR_FENICS_SOLVERS):
+        solver.parameters["newton_solver"]["preconditioner"] = p.get_misc_parameter(
+            "preconditioner", "numeric").get_in_sim_unit()
+
+    solver.parameters["newton_solver"]["absolute_tolerance"] = p.get_misc_parameter(
+        "newton_atol", "numeric").get_in_sim_unit(type=float)
+
+    solver.parameters["newton_solver"]["relative_tolerance"] = p.get_misc_parameter(
+        "newton_rtol", "numeric").get_in_sim_unit(type=float)
+
+    solver.parameters["newton_solver"]["krylov_solver"]["absolute_tolerance"] = p.get_misc_parameter(
+        "krylov_atol", "numeric").get_in_sim_unit(type=float)
+    solver.parameters["newton_solver"]["krylov_solver"]["relative_tolerance"] = p.get_misc_parameter(
+        "krylov_rtol", "numeric").get_in_sim_unit(type=float)
+
+    return solver, u
 
 def non_linear_solver(u, v, V, p, ds, integral, dirichlet, boundary_markers, fq=None):
     dirichlet_bc = []

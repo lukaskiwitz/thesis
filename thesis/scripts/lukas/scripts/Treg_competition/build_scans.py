@@ -122,7 +122,7 @@ def scan_2(scenario, f_scale, cs_strength=1, pSTAT_ec50=1, treg_k=860, treg_half
 def update_state(sc, replicat_index):
     from thesis.cellBehaviourUtilities.grid_clustering import make_clusters
 
-    np.random.seed(replicat_index)
+    # np.random.seed(replicat_index)
     cell_grid_positions = []
     for i, e in enumerate(sc.entity_list):
         cell_grid_positions.append(e.center)

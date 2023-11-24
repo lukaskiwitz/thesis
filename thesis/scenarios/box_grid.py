@@ -31,6 +31,7 @@ templates = {
     "k_off": PhysicalParameterTemplate(PhysicalParameter("k_off", 0.83, to_sim=1 / 60 ** 2, is_global=True)),
     "k_endo": PhysicalParameterTemplate(PhysicalParameter("k_endo", 1.1e-3, to_sim=1, is_global=True)),
     "q": PhysicalParameterTemplate(PhysicalParameter("q", 0, to_sim=N_A ** -1 * 1e9)),
+    "alpha": PhysicalParameterTemplate(PhysicalParameter("alpha", 0, to_sim=N_A ** -1 * 1e9)),
     "D": PhysicalParameterTemplate(PhysicalParameter("D", 10, to_sim=1, is_global=True)),
     "kd": PhysicalParameterTemplate(PhysicalParameter("kd", 0.1, to_sim=1 / (60 ** 2), is_global=True)),
     "threshold": PhysicalParameterTemplate(PhysicalParameter("ths", 0.1, to_sim=1 / get_cc(ule))),
@@ -235,7 +236,7 @@ def assign_fractions(sc, t):
         The pseudo random seed depends on t, so that cell placement is repeatable. """
 
     ran = random.Random()
-    ran.seed(t)
+    # ran.seed(t)
 
     for i, e in enumerate(sc.entity_list):
 
@@ -255,8 +256,8 @@ def assign_fractions(sc, t):
 def distribute_receptors(entity_list, replicat_index, type_name, var=1):
     R = np.unique(
         [e.p.get_physical_parameter("R", "IL-2").get_in_post_unit() for e in entity_list if e.type_name == type_name])
-    R_start = np.unique([e.p.get_physical_parameter("R_start", "R_start").get_in_post_unit() for e in entity_list if
-                         e.type_name == type_name])
+    # R_start = np.unique([e.p.get_physical_parameter("R_start", "R_start").get_in_post_unit() for e in entity_list if
+    #                      e.type_name == type_name])
 
     if len(R) == 0: return None
     assert len(R) == 1
@@ -264,7 +265,7 @@ def distribute_receptors(entity_list, replicat_index, type_name, var=1):
     E = R[0]
     if E == 0:
         return None
-    np.random.seed(replicat_index)
+    # np.random.seed(replicat_index)
 
     tmp_sigma = np.sqrt(np.log((var * E) ** 2 / E ** 2 + 1))
     mean = np.log(E) - 1 / 2 * tmp_sigma ** 2
