@@ -99,9 +99,11 @@ Note: If your are on the itb computers this will work well without a change.
 3.Run
 
 For simple models run
+
 `python run.py; python post_process.py number_of_threads;`
 
 For bigger scans a run_all.py and list_post_process.py is available. We recommend a HPC to run
+
 `python run_all.py; python list_post_process.py; python create_df.py; python combine_dfs.py`
 
 The first time any model is run it will need to
