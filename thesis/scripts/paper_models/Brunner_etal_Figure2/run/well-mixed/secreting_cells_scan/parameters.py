@@ -14,7 +14,7 @@ p = {
 	"k_off": 23.06e-5, # 1/s
 	"k_endo": 0.00046, # 1/s
 	"K_D": 45343.81237655793, # molecules. k_off/k_on #care for correct units, k_on in molecules!
-	"kd": 0.1, # 1/s
+	"kd": 0.1/3600, # 1/s
 	"R_Tsec": 1e2, # molecules/cell
 	"R_Th": 1e4, # molecules/cell
 	"R_Treg": 5e3, # molecules/cell

@@ -7,7 +7,7 @@ from thesis.scripts.paper_models.utilities.plot_helper import my_load_df, my_int
 # bc = "standard"
 bc = "saturated"
 
-saving_string = r"/home/brunner/Documents/Current work/2023_11_03/boxplot_static_surf_c.pdf"
+saving_string = r"/home/brunner/Documents/Current work/2023_12_08/boxplot_static_surf_c.pdf"
 offset = 0
 replicat = "replicat_index"
 
@@ -142,8 +142,8 @@ plt.ylim(0, 25)
 
 plt.xlabel(r"secreting cells (%)")
 plt.yticks([0,12.5,25])
-plt.xlim((1.5, 49))
-plt.xticks([2, 10, 40], [2, 10, 40])
+plt.xlim((3, 51))
+plt.xticks([3, 10, 40], [3, 10, 40])
 
 fig.savefig(saving_string, bbox_inches='tight', transparent=True)
 plt.tight_layout()

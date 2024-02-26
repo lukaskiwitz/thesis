@@ -8,7 +8,7 @@ from thesis.scripts.paper_models.utilities.plot_helper import my_load_df, my_int
 # bc = "standard"
 bc = "saturated"
 
-saving_string = r"/home/brunner/Documents/Current work/2023_11_03/boxplot_static_activation.pdf"
+saving_string = r"/home/brunner/Documents/Current work/2023_12_08/boxplot_static_activation.pdf"
 offset = 0
 replicat = "replicat_index"
 
@@ -71,6 +71,7 @@ for frac in fracs:
 boxplot_data = []
 # fracs = np.sort(big_c_df["IL-2_Tsec_fraction"].unique())
 fracs = [0.02, 0.0295, 0.058, 0.0675, 0.096, 0.153, 0.2005, 0.305, 0.4]
+fracs = [0.02, 0.0295, 0.039, 0.058, 0.077, 0.096, 0.115, 0.1435, 0.2005, 0.248, 0.305, 0.4]
 
 for frac in fracs:
     frac_df = big_c_df.loc[(np.abs(big_c_df["IL-2_Tsec_fraction"] - frac) < 1e-3) & (big_c_df["time_index"] == 0.)]
@@ -158,8 +159,8 @@ plt.yscale("linear")
 plt.ylim(-2, 104)
 plt.xlabel(r"secreting cells (%)")
 plt.yticks([0,50,100])
-plt.xlim((2.1, 40))
-plt.xticks([2, 10, 40], [2, 10, 40])
+plt.xlim((3, 51))
+plt.xticks([3, 10, 40], [3, 10, 40])
 
 fig.savefig(saving_string, bbox_inches='tight', transparent=True)
 plt.tight_layout()
