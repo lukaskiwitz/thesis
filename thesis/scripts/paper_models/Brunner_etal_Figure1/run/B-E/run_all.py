@@ -24,6 +24,7 @@ def run(parameter_dict):
 
 
 conditions = [{ScanAxis.ftreg: 0, ScanAxis.fth: 1, ScanAxis.fsec: [0.02, 0.4, 41]}]
+# conditions = [{ScanAxis.ftreg: 0, ScanAxis.fth: 1, ScanAxis.fsec: [0.1, 0.1, 1]}]
 
 
 a = ["_".join([str(k)+"_"+str(v) if not isinstance(v,List) else str(k) for k,v in i.items()]) for i in conditions]

@@ -30,7 +30,7 @@ cell_types_dict = [
 
      "name": "Tnaive",
      "fraction": 0,
-     "il2": {"R": 1e2, "q": 0, "bc_type": "patrick_saturation", "global_q": False},  # [Receptor number per cell, secretion in molecules/s]
+     "il2": {"R": 1e2, "q": 0, "bc_type": "linear", "global_q": False},  # [Receptor number per cell, secretion in molecules/s]
      "clustering": {"strength": 0},
      "misc": {"sigma":1,
               "gamma": 1,
@@ -48,7 +48,7 @@ cell_types_dict = [
     {
      "name": "Tsec",
      "fraction": 0.1,
-     "il2": {"R": 0, "q": 10, "bc_type": "patrick_saturation", "global_q": False}, #"R_saturation"
+     "il2": {"R": 0, "q": 10, "bc_type": "linear", "global_q": False}, #"R_saturation"
      "clustering": {"strength": 0},
      "misc": {"sigma": 0,
               "gamma": 1,
@@ -66,7 +66,7 @@ cell_types_dict = [
     {
      "name": "Th",
      "fraction": 0.9,
-     "il2": {"R": 1e4, "q": 0, "bc_type": "patrick_saturation", "global_q": False, "pSTAT5": 0}, # "R_saturation"
+     "il2": {"R": 1e4, "q": 0, "bc_type": "linear", "global_q": False, "pSTAT5": 0}, # "R_saturation"
      "clustering": {"strength": 0},
      "EC50": {"EC50": 0},
      "R_start": {"R_start": 1e4},
@@ -92,7 +92,7 @@ cell_types_dict = [
     {
         "name": "Treg",
         "fraction": 0.0,
-        "il2": {"R": 1e5, "q": 0, "bc_type": "patrick_saturation", "global_q": False, "pSTAT5": 0},
+        "il2": {"R": 1e5, "q": 0, "bc_type": "linear", "global_q": False, "pSTAT5": 0},
         "clustering": {"strength": 0},
         "EC50": {"EC50": 0},
         "R_start": {"R_start": 1e5},
@@ -170,7 +170,7 @@ elif mode == "grid":
         "krylov_rtol": 1e-5,
         "newton_atol": 1e-35,
         "newton_rtol": 1e-2,  # newton method relative tolerance
-        "dofs_per_node": int(60000),
+        "dofs_per_node": int(30000),
         "max_mpi_nodes": os.cpu_count(),
         "cells_per_worker": 50,
         "max_pool_size": 1,
@@ -195,7 +195,7 @@ else:
     numeric = {
         "linear_solver": "gmres",
         "preconditioner": "amg",
-        "linear": False,
+        "linear": True,
         "krylov_atol": 1e-35,
         "krylov_rtol": 1e-5,
         "newton_atol": 1e-35,
@@ -213,7 +213,7 @@ else:
 user = getpass.getuser()
 model_name = "Figure_1C"
 # scan_name = "pos_treg_0"
-scan_name = "act_over_Tsec_large_2"
+scan_name = "act_over_Tsec_large_linear"
 
 hdd = "extra2" if os.path.exists("/extra2") else "extra"
 path = f"/{hdd}/{user}/paper_models/kinetics/{model_name}/{scan_name}/"

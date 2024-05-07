@@ -5,16 +5,13 @@ import os
 from thesis.scripts.paper_models.utilities.plotting_rc import rc_ticks
 from thesis.scripts.paper_models.utilities.plot_helper import my_load_df, my_interpolation
 
-# bc = "standard"
-bc = "saturated"
-
-saving_string = r"/home/brunner/Documents/Current work/2023_12_08/boxplot_static_activation.pdf"
+saving_string = r"/home/brunner/Documents/Current work/2024_03_15/boxplot_static_activation_full_range.pdf"
 offset = 0
 replicat = "replicat_index"
 
 print("loading data")
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
-path = '/extra2/brunner/paper_models/ODE/saturated/activation_q_10_R_1e4_Tsec_scan_5/'
+path = '/extra2/brunner/paper_models/ODE/saturated/activation_q_10_R_1e4_Tsec_scan_6/'
 ODE_c_df, ODE_g_df = my_load_df(path, offset = 0, custom_ending = "_combined")
 ODE_c_df["IL-2_surf_c"] *= 1e3
 
@@ -70,7 +67,7 @@ for frac in fracs:
 #%%
 boxplot_data = []
 # fracs = np.sort(big_c_df["IL-2_Tsec_fraction"].unique())
-fracs = [0.02, 0.0295, 0.058, 0.0675, 0.096, 0.153, 0.2005, 0.305, 0.4]
+# fracs = [0.02, 0.0295, 0.058, 0.0675, 0.096, 0.153, 0.2005, 0.305, 0.4]
 fracs = [0.02, 0.0295, 0.039, 0.058, 0.077, 0.096, 0.115, 0.1435, 0.2005, 0.248, 0.305, 0.4]
 
 for frac in fracs:
@@ -87,7 +84,8 @@ for frac in fracs:
     boxplot_data.append(np.array(act_list_2) * 100)
 #%%
 np.random.seed(1)
-rc_ticks['figure.figsize'] = (1.67475 * 1.32, 1.386 * 1.27)
+# rc_ticks['figure.figsize'] = (1.67475 * 1.32, 1.386 * 1.27)
+rc_ticks['figure.figsize'] = (1.67475, 1.386)
 
 sns.set_theme(context = "talk", style = "ticks", rc = rc_ticks)
 fig,ax = plt.subplots()
@@ -156,7 +154,12 @@ plt.scatter(ODE_c_df["IL-2_Tsec_fraction"].unique()[change_idx + 1] * 100, np.me
 plt.ylabel(r"pSTAT$^+$ T$_{\rm resp}$ cells (%)")
 plt.xscale("log")
 plt.yscale("linear")
-plt.ylim(-2, 104)
+
+zero_offset_percent = 5
+ymax = 105
+ymin = -ymax/100 * zero_offset_percent
+plt.ylim(ymin, ymax)
+
 plt.xlabel(r"secreting cells (%)")
 plt.yticks([0,50,100])
 plt.xlim((3, 51))

@@ -72,7 +72,7 @@ for c, c_df in enumerate([spatial_cell_df]):
                                  "std": std,
                                  "surface_c": surf_c})
 #%%
-rc_ticks['figure.figsize'] = (1.67475 * 1.32, 0.81)
+rc_ticks['figure.figsize'] = (1.386 * 1.26, 1.386 * 1.27)
 sns.set_theme(context="talk", style="ticks", rc=rc_ticks)
 fig, ax = plt.subplots()
 
@@ -90,54 +90,60 @@ for entry in results[:1]:
         alphaed_color[-1] = alphas[e]
         palette.append(alphaed_color)
     ax = sns.scatterplot(data = df, x = "std", y = "activation", hue = "IL-2_Tsec_fraction", legend=False, palette=palette, linewidth=0.05)
-plt.xlabel(r"")
+plt.xlabel("surface conc. s.d. (pM)")
 plt.xscale("linear")
 plt.yscale("linear")
 plt.xlim(0, 15)
-plt.ylabel("%pSTAT$^+$")
-plt.xticks([0,5,10,15], ["", "", "", ""])
+
+zero_offset_percent = 5
+ymax = 100
+ymin = -ymax/100 * zero_offset_percent
+plt.ylim(ymin, ymax)
+
+plt.ylabel(r"pSTAT$^+$ T$_{\rm resp}$ cells (%)")
+plt.xticks([0,5,10,15])
 plt.yticks([0,50,100])
 
 fig.savefig(saving_string + f"Fig1_activation_over_CV_local_q_full.pdf", bbox_inches='tight', transparent=True)
 fig.tight_layout()
 plt.show()
+# #%%
+# rc_ticks['figure.figsize'] = (1.67475 * 1.32, 0.81)
+# sns.set_theme(context="talk", style="ticks", rc=rc_ticks)
+# fig, ax = plt.subplots()
+#
+# for entry in results[:1]:
+#     df = pd.DataFrame(entry)
+#     color = "#aa0000ff"
+#     from matplotlib.colors import to_rgba
+#     from copy import deepcopy
+#     rgba_color = list(to_rgba(color))
+#     palette = []
+#     alphas = np.logspace(-3,0, len(df["IL-2_Tsec_fraction"].unique()))
+#     for e,entry in enumerate(np.sort(df["IL-2_Tsec_fraction"].unique())):
+#         alphaed_color = deepcopy(rgba_color)
+#         alphaed_color[-1] = alphas[e]
+#         palette.append(alphaed_color)
+#     ax = sns.scatterplot(data = df, x = "std", y = "surface_c", hue = "IL-2_Tsec_fraction", legend=False, palette=palette, linewidth=0.05)
+# plt.ylabel(r"conc. avg." "\n" r"(pM)")
+# plt.xlabel("surface conc. s.d. (pM)")
+# plt.xscale("linear")
+# plt.yscale("linear")
+# plt.xlim((0,15))
+# plt.xticks([0,5,10,15])
+# plt.ylim(0, 30)
+# plt.yticks([0, 15, 30])
+#
+# fig.savefig(saving_string + f"Fig1_surf_c_over_CV_local_q_full.pdf", bbox_inches='tight', transparent=True)
+# fig.tight_layout()
+# plt.show()
+
 #%%
-rc_ticks['figure.figsize'] = (1.67475 * 1.32, 0.81)
-sns.set_theme(context="talk", style="ticks", rc=rc_ticks)
-fig, ax = plt.subplots()
-
-for entry in results[:1]:
-    df = pd.DataFrame(entry)
-    color = "#aa0000ff"
-    from matplotlib.colors import to_rgba
-    from copy import deepcopy
-    rgba_color = list(to_rgba(color))
-    palette = []
-    alphas = np.logspace(-3,0, len(df["IL-2_Tsec_fraction"].unique()))
-    for e,entry in enumerate(np.sort(df["IL-2_Tsec_fraction"].unique())):
-        alphaed_color = deepcopy(rgba_color)
-        alphaed_color[-1] = alphas[e]
-        palette.append(alphaed_color)
-    ax = sns.scatterplot(data = df, x = "std", y = "surface_c", hue = "IL-2_Tsec_fraction", legend=False, palette=palette, linewidth=0.05)
-plt.ylabel(r"conc. avg." "\n" r"(pM)")
-plt.xlabel("surface conc. s.d. (pM)")
-plt.xscale("linear")
-plt.yscale("linear")
-plt.xlim((0,15))
-plt.xticks([0,5,10,15])
-plt.ylim(0, 30)
-plt.yticks([0, 15, 30])
-
-fig.savefig(saving_string + f"Fig1_surf_c_over_CV_local_q_full.pdf", bbox_inches='tight', transparent=True)
-fig.tight_layout()
-plt.show()
-
-#%%
-from scipy.stats import spearmanr
-x = df["std"].values
-y = df.surface_c.values
-res = spearmanr(x,y)
-print("surface spearman:", res)
+# from scipy.stats import spearmanr
+# x = df["std"].values
+# y = df.surface_c.values
+# res = spearmanr(x,y)
+# print("surface spearman:", res)
 
 x = df["std"].values
 y = df.activation.values

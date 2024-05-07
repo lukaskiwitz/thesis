@@ -17,13 +17,13 @@ def I_lin(R_resp, q, f_Tsec, f_Treg, k_on, R_Tsec, R_Treg, N_cells, kd):
         + kd
     return A/B
 
-p["satu"] = True
+p["satu"] = False
 Tregs = False
 
 save_df = True
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
 bc = "saturated" if p["satu"] else "linear"
-save_df_path = hdd + f"/brunner/paper_models/ODE/{bc}/activation_q_10_R_1e4_Tsec_scan_5/"
+save_df_path = hdd + f"/brunner/paper_models/ODE/{bc}/activation_q_10_R_1e4_Tsec_scan_linear/"
 
 p["f_Treg"] = 0.25 if Tregs == True else 0.0
 
@@ -33,7 +33,7 @@ fractions = np.linspace(0.5, 55, 60)*0.01
 length = len(fractions)
 
 
-systemic_R = p["f_Tsec"] * p["R_Tsec"] + (1 - p["f_Tsec"]) * p["R_Th"]
+# systemic_R = p["f_Tsec"] * p["R_Tsec"] + (1 - p["f_Tsec"]) * p["R_Th"]
 
 result = np.empty(length)
 std = np.empty(length)

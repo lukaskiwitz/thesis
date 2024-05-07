@@ -41,7 +41,6 @@ base_path = hdd + "/brunner/paper_models/ODE/saturated/kinetics/gamma_"
 
 
 p["R_Th"] = 1.5e3
-p["k_endo"] = 0.0011
 p["IL-2_sigma"] = 1
 p["IL-2_Treg_fraction"] = 0
 p["kd"] = 0.1/3600

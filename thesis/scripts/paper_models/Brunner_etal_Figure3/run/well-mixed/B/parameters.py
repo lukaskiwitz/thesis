@@ -12,7 +12,7 @@ p = {
 	"R":1e2, # molecules/cell
 	"k_on": 3.1e7, # 1/(M s)
 	"k_off": 23.06e-5, # 1/s
-	"k_endo": 0.00046, # 1/s
+	"k_endo": 0.0011, # 1/s
 	"K_D": 45343.81237655793, # molecules. k_off/k_on #care for correct units, k_on in molecules!
 	"kd": 0.1, # 1/s
 	"R_Tsec": 1e2, # molecules/cell

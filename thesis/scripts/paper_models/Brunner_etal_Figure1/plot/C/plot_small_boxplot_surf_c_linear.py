@@ -5,13 +5,14 @@ import os
 from thesis.scripts.paper_models.utilities.plotting_rc import rc_ticks
 from thesis.scripts.paper_models.utilities.plot_helper import my_load_df, my_interpolation
 
-saving_string = r"/home/brunner/Documents/Current work/2024_03_15/boxplot_static_surf_c_full_range.pdf"
+saving_string = r"/home/brunner/Documents/Current work/2024_03_15/boxplot_static_surf_c_linear.pdf"
 offset = 0
 replicat = "replicat_index"
 
 print("loading data")
 hdd = "/extra2" if os.path.exists("/extra2") else "/extra"
-path = '/extra2/brunner/paper_models/ODE/saturated/activation_q_10_R_1e4_Tsec_scan_6/'
+# path = '/extra2/brunner/paper_models/ODE/saturated/activation_q_10_R_1e4_Tsec_scan_6/'
+path = '/extra2/brunner/paper_models/ODE/linear/activation_q_10_R_1e4_Tsec_scan_linear/'
 ODE_c_df, ODE_g_df = my_load_df(path, offset = 0, custom_ending = "_combined")
 ODE_c_df["IL-2_surf_c"] *= 1e3
 
@@ -19,9 +20,10 @@ import getpass
 hdd = "extra2" if os.path.exists("/extra2") else "extra"
 user = getpass.getuser()
 
-base_path = "/extra2/brunner/paper_models/kinetics/Figure_1C/dataframes_act_over_Tsec_large_2_steady_state/"
-
+base_path = "/extra2/brunner/paper_models/kinetics/Figure_1C/dataframes_act_over_Tsec_large_linear_steady_state/"
 big_c_df, big_g_df = my_load_df(base_path, offset=offset, custom_ending="")
+# base_path = "/extra2/brunner/paper_models/statics/test/"
+# big_c_df = pd.read_hdf(base_path + "cell_df" + "" + ".h5", mode="r")
 
 try:
     print(np.sort(big_c_df["IL-2_Tsec_fraction"].unique()))
@@ -43,10 +45,12 @@ def EC50_calculation(E_max, E_min, k, N, R):
     return (E_max * k ** N + E_min * R ** N) / (k ** N + R ** N)
 
 # fracs = [0.051, 0.076, 0.126, 0.2, 0.3, 0.4]
-ODE_fracs = ODE_c_df["IL-2_Tsec_fraction"].unique()[ODE_c_df["IL-2_Tsec_fraction"].unique() <= 0.4]
+# ODE_fracs = ODE_c_df["IL-2_Tsec_fraction"].unique()[np.where((ODE_c_df["IL-2_Tsec_fraction"].unique() > 0.04) &
+#                                                              (ODE_c_df["IL-2_Tsec_fraction"].unique() < 0.2))]
+ODE_fracs = [0.04194915, 0.07889831, 0.12508475, 0.19898305]
 ODE_boxplot_data = []
 for frac in ODE_fracs:
-    ODE_frac_df = ODE_c_df.loc[(ODE_c_df["IL-2_Tsec_fraction"] == frac)]
+    ODE_frac_df = ODE_c_df.loc[np.abs((ODE_c_df["IL-2_Tsec_fraction"] - frac)) < 1e-5]
     ODE_frac_df = ODE_frac_df.loc[ODE_frac_df["type_name"] == "Th"]
 
     act_list = []
@@ -63,6 +67,7 @@ for frac in ODE_fracs:
 boxplot_data = []
 # fracs = np.sort(big_c_df["IL-2_Tsec_fraction"].unique())
 fracs = [0.02, 0.0295, 0.039, 0.058, 0.077, 0.096, 0.115, 0.1435, 0.2005, 0.248, 0.305, 0.4]
+fracs = [0.039, 0.0865, 0.1245, 0.2005]
 
 for frac in fracs:
     frac_df = big_c_df.loc[(np.abs(big_c_df["IL-2_Tsec_fraction"] - frac) < 1e-3) & (big_c_df["time_index"] == 0.)]
@@ -75,8 +80,9 @@ for frac in fracs:
     boxplot_data.append(np.array(act_list_2))
 #%%
 np.random.seed(1)
-# rc_ticks['figure.figsize'] = (1.67475 * 1.32, 1.386 * 1.27)
-rc_ticks['figure.figsize'] = (1.67475, 1.386)
+# rc_ticks['figure.figsize'] = (1.67475 * 0.85, 1.386 * 1.27)
+rc_ticks['figure.figsize'] = (1.67475 * 0.85, 1.386)
+
 sns.set_theme(context = "talk", style = "ticks", rc = rc_ticks)
 fig,ax = plt.subplots()
 
@@ -106,14 +112,13 @@ rgb_colors = [[rgba_1] * len(fracs),
               [rgba_3] * len(fracs)]
 four_colours = [[color1] * len(fracs) * 2, [color2] * len(fracs) * 2, [color3] * len(fracs) * 2]
 
-for b, bdata in enumerate([boxplot_data]):
-    x = [5, 10, 15, 20, 30, 40]
+for b, bdata in enumerate([boxplot_data, ODE_boxplot_data]):
     x = np.array(fracs) * 100
+    x = [4, 8, 12, 16]
     alphas = np.linspace(1,1, len(bdata))
     whisker_alphas = np.array([[a] * 2 for a in alphas]).flatten()
-    w = 0.04 * 4
-    width = lambda p, w: 10 ** (np.log10(p) + w / 2.) - 10 ** (np.log10(p) - w / 2.)
-    boxp = plt.boxplot(bdata, positions=x, flierprops=flierprops, boxprops=boxprops, whiskerprops=whiskerprops, widths=width(x, w), patch_artist=True)
+    w = 3
+    boxp = plt.boxplot(bdata, positions=x, flierprops=flierprops, boxprops=boxprops, whiskerprops=whiskerprops, widths=w, patch_artist=True)
 
     for element in ["fliers", "means", "medians"]:
         for e,entry in enumerate(boxp[element]):
@@ -129,24 +134,22 @@ for b, bdata in enumerate([boxplot_data]):
     for e,entry in enumerate(bdata):
         factor = 1/1
         subsample = np.random.choice(entry, int(len(entry) * factor), replace=False)
-        plt.scatter(x[e] + np.random.normal(0, 1, size=len(subsample))/1, subsample, color = two_colours[b][e],
+        plt.scatter(x[e] + np.random.normal(0, 1, size=len(subsample))/1.2, subsample, color = two_colours[b][e],
                  alpha=alphas[e], s=0.75, linewidth=0)
 
-plt.plot(ODE_fracs * 100, np.mean(ODE_boxplot_data, axis=1), color=color2, linewidth=0.9)
+# plt.plot(ODE_fracs * 100, np.mean(ODE_boxplot_data, axis=1), color=color2, linewidth=0.9)
 
 plt.ylabel(r"surface conc. avg. (pM)")
-plt.xscale("log")
+plt.xscale("linear")
 plt.yscale("linear")
-
-zero_offset_percent = 5
-ymax = 25
-ymin = -ymax/100 * zero_offset_percent
-plt.ylim(ymin, ymax)
+plt.ylim(0, 12)
 
 plt.xlabel(r"secreting cells (%)")
-plt.yticks([0,12.5,25])
-plt.xlim((3, 51))
-plt.xticks([3, 10, 40], [3, 10, 40])
+plt.yticks([0,6,12])
+# plt.xticks([3, 10, 40], [3, 10, 40])
+plt.xticks([4, 8, 12, 16], [4, 8, 12, 20])
+# plt.xlim((2, 18))
+plt.title("linear")
 
 fig.savefig(saving_string, bbox_inches='tight', transparent=True)
 plt.tight_layout()
